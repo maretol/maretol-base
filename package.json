@@ -1,0 +1,16 @@
+{
+  "name": "maretol-base",
+  "version": "1.0.0",
+  "description": "maretol-baseのworkspaceのroot",
+  "main": "index.js",
+  "scripts": {
+    "dev-page": "npm run --workspace=pages dev"
+  },
+  "author": "maretol",
+  "private": true,
+  "workspaces": [
+    "pages",
+    "cms-data-fetcher",
+    "ogp-data-fetcher"
+  ]
+}

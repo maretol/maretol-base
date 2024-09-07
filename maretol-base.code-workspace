@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "maretol-base root",
+			"path": "."
+		},
+		{
+			"name": "maretol-base page",
+			"path": "pages"
+		},
+		{
+			"name": "worker cms-data-fetcher",
+			"path": "cms-data-fetcher"
+		},
+		{
+			"name": "worker ogp-data-fetcher",
+			"path": "ogp-data-fetcher"
+		}
+	],
+	"settings": {}
+}
