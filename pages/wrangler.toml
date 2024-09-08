@@ -6,7 +6,7 @@ compatibility_flags = [ "nodejs_compat" ]
 [vars]
 HOST = "https://stg.maretol.xyz"
 
-[[env.production.vars]]
+[env.production.vars]
 HOST = "https://www.maretol.xyz"
 
 # staging(preview)のservice binding
