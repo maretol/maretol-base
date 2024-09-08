@@ -43,13 +43,15 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./page
+        working-directory: ./pages
     steps:
       - uses: actions/checkout@v4
       - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: pwd
+        run: pwd
       - name: build
         run: npm run pages:build
       - name: deploy by wrangler
@@ -77,6 +79,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: pwd
+        run: pwd
       - name: deploy by wrangler
         id: deploy
         uses: cloudflare/wrangler-action@v3
@@ -102,6 +106,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: pwd
+        run: pwd
       - name: deploy by wrangler
         id: deploy
         uses: cloudflare/wrangler-action@v3
