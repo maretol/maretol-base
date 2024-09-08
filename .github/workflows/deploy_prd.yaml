@@ -57,6 +57,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./pages
           command: pages deploy
       - name: show done command
         env:
@@ -82,6 +83,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./ogp-data-fetcher
           command: deploy
       - name: show done command
         env:
@@ -107,6 +109,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./cms-data-fetcher
           command: deploy
       - name: show done command
         env:
