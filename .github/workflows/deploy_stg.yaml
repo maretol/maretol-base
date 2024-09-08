@@ -41,7 +41,9 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.page == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
-    working-directory: ./page
+    defaults:
+      run:
+        working-directory: ./page
     steps:
       - uses: actions/checkout@v4
       - name: setup node
@@ -64,7 +66,9 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.ogp-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
-    working-directory: ./ogp-data-fetcher
+    defaults:
+      run:
+        working-directory: ./ogp-data-fetcher
     steps:
       - uses: actions/checkout@v4
       - name: setup node
@@ -87,7 +91,9 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.cms-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
-    working-directory: ./cms-data-fetcher
+    defaults:
+      run:
+        working-directory: ./cms-data-fetcher
     steps:
       - uses: actions/checkout@v4
       - name: setup node
