@@ -14,3 +14,5 @@ compatibility_flags = ["nodejs_compat"]
 
 [dev]
 port=8787
+
+[env.staging]

@@ -6,3 +6,5 @@ compatibility_flags = ["nodejs_compat"]
 
 [dev]
 port = 45678
+
+[env.staging]
