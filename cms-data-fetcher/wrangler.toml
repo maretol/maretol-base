@@ -4,13 +4,8 @@ main = "src/index.ts"
 compatibility_date = "2024-08-21"
 compatibility_flags = ["nodejs_compat"]
 
-# Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
-# Docs:
-# - https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-# Note: Use secrets to store sensitive data.
-# - https://developers.cloudflare.com/workers/configuration/secrets/
-[vars]
-# APIキーの設定なのでSecretsを利用
-
 [dev]
-port=8787
+port = 8787
+
+[env.staging]
+name = "cms-data-fetcher-stg"

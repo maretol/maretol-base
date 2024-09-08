@@ -6,3 +6,6 @@ compatibility_flags = ["nodejs_compat"]
 
 [dev]
 port = 45678
+
+[env.staging]
+name = "ogp-data-fetcher-stg"

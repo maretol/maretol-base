@@ -4,12 +4,29 @@ compatibility_date = "2024-09-02"
 compatibility_flags = [ "nodejs_compat" ]
 
 [vars]
-CMS_API_KEY = ""
-CMS_PARSER_API_KEY = ""
-HOST = "https://www.maretol.xyz"
-OGP_FETCHER_API_KEY = ""
+HOST = "https://stg.maretol.xyz"
 
-# [[services]]
-# binding = ""
-# services = ""
-# environment = ""
+[[env.production.vars]]
+HOST = "https://www.maretol.xyz"
+
+# staging(preview)のservice binding
+[[services]]
+binding = "ogp-fetcher"
+service = "ogp-data-fetcher-stg"
+environment = "production"
+
+[[services]]
+binding = "cms-fetcher"
+service = "cms-data-fetcher-stg"
+environment = "production"
+
+# productionのservice binding
+[[env.production.services]]
+binding = "ogp-fetcher"
+service = "ogp-data-fetcher"
+environment = "production"
+
+[[env.production.services]]
+binding = "cms-fetcher"
+service = "cms-data-fetcher"
+environment = "production"
