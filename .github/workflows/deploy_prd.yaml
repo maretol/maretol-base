@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "page/**"
+      - "pages/**"
       - "ogp-data-fetcher/**"
       - "cms-data-fetcher/**"
       - ".github/workflows/deploy_prd.yaml"
@@ -17,7 +17,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
-      page: ${{ steps.filter.outputs.page }}
+      pages: ${{ steps.filter.outputs.pages }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
       cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
       workflow: ${{ steps.filter.outputs.workflow }}
@@ -28,8 +28,8 @@ jobs:
         uses: dorny/paths-filter@v3
         with:
           filters: |
-            page:
-              - "page/**"
+            pages:
+              - "pages/**"
             ogp-data-fetcher:
               - "ogp-data-fetcher/**"
             cms-data-fetcher:
@@ -37,9 +37,9 @@ jobs:
             workflow:
               - ".github/workflows/**"
 
-  deploy-page:
+  deploy-pages:
     needs: changes
-    if: ${{ needs.changes.outputs.page == 'true' || needs.changes.outputs.workflow == 'true' }}
+    if: ${{ needs.changes.outputs.pages == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
     defaults:
       run:
