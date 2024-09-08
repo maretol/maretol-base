@@ -5,9 +5,10 @@ on:
     branches:
       - development
     paths:
-      - "page"
-      - "ogp-data-fetcher"
-      - "cms-data-fetcher"
+      - "page/**"
+      - "ogp-data-fetcher/**"
+      - "cms-data-fetcher/**"
+      - ".github/workflows/deploy_stg.yaml"
 
 env:
   NODE_VERSION: 20.16.0
@@ -16,6 +17,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     outputs:
+      workflow: ${{ steps.filter.outputs.workflow }}
       page: ${{ steps.filter.outputs.page }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
       cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
@@ -32,10 +34,12 @@ jobs:
               - "ogp-data-fetcher/**"
             cms-data-fetcher:
               - "cms-data-fetcher/**"
+            workflow:
+              - ".github/workflows/**"
 
   deploy-page:
     needs: changes
-    if: ${{ needs.changes.outputs.page == 'true' }}
+    if: ${{ needs.changes.outputs.page == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
     working-directory: ./page
     steps:
@@ -58,7 +62,7 @@ jobs:
 
   deploy-ogp-data-fetcher:
     needs: changes
-    if: ${{ needs.changes.outputs.ogp-data-fetcher == 'true' }}
+    if: ${{ needs.changes.outputs.ogp-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
     working-directory: ./ogp-data-fetcher
     steps:
@@ -81,7 +85,7 @@ jobs:
 
   deploy-cms-data-fetcher:
     needs: changes
-    if: ${{ needs.changes.outputs.cms-data-fetcher == 'true' }}
+    if: ${{ needs.changes.outputs.cms-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
     working-directory: ./cms-data-fetcher
     steps:
