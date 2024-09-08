@@ -23,3 +23,5 @@ $ wrangler secret put <KEY> --env ENV
 ```
 
 Secrets自体は外には出さないので、ローカルに .secrets で保管している
+
+また、pagesの方ではコンソールからしか登録できないようなのでそっちでやる
