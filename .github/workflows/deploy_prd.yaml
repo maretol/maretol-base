@@ -1,0 +1,102 @@
+name: deploy production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "page"
+      - "ogp-data-fetcher"
+      - "cms-data-fetcher"
+
+env:
+  NODE_VERSION: 20.16.0
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      page: ${{ steps.filter.outputs.page }}
+      ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
+      cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: path filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            page:
+              - "page/**"
+            ogp-data-fetcher:
+              - "ogp-data-fetcher/**"
+            cms-data-fetcher:
+              - "cms-data-fetcher/**"
+  deploy-page:
+    needs: changes
+    if: ${{ needs.changes.outputs.page == 'true' }}
+    runs-on: ubuntu-latest
+    working-directory: ./page
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: deploy by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: pages deploy
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
+
+  deploy-ogp-data-fetcher:
+    needs: changes
+    if: ${{ needs.changes.outputs.ogp-data-fetcher == 'true' }}
+    runs-on: ubuntu-latest
+    working-directory: ./ogp-data-fetcher
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: deploy by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
+
+  deploy-cms-data-fetcher:
+    needs: changes
+    if: ${{ needs.changes.outputs.cms-data-fetcher == 'true' }}
+    runs-on: ubuntu-latest
+    working-directory: ./cms-data-fetcher
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: deploy by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          command: deploy
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
