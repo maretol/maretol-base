@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy",
+    "deploy-prd": "wrangler deploy",
+    "deploy-stg": "wrangler deploy -e staging",
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest",
