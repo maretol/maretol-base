@@ -20,6 +20,7 @@ jobs:
       page: ${{ steps.filter.outputs.page }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
       cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
+      workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - uses: actions/checkout@v4
       - name: path filter
