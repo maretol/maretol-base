@@ -60,7 +60,8 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages deploy --branch development --config wrangler.toml
+          workingDirectory: ./pages
+          command: pages deploy --branch development
       - name: show done command
         env:
           CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
@@ -87,6 +88,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./ogp-data-fetcher
           command: deploy -e staging --config wrangler.toml
       - name: show done command
         env:
@@ -114,6 +116,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./cms-data-fetcher
           command: deploy -e staging --config wrangler.toml
       - name: show done command
         env:
