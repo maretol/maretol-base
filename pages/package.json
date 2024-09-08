@@ -9,7 +9,7 @@
     "lint": "next lint",
     "pages:build": "npx @cloudflare/next-on-pages",
     "deploy-dev": "npm run pages:build && wrangler pages dev",
-    "deploy-stg": "npm run pages:build && wrangler pages deploy -e preview",
+    "deploy-stg": "npm run pages:build && wrangler pages deploy --branch development",
     "deploy-prd": "npm run pages:build && wrangler pages deploy"
   },
   "dependencies": {
