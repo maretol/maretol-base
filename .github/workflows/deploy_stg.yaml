@@ -16,6 +16,8 @@ env:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    environment:
+      name: stg
     outputs:
       workflow: ${{ steps.filter.outputs.workflow }}
       pages: ${{ steps.filter.outputs.pages }}
@@ -41,6 +43,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.pages == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
+    environment:
+      name: stg
     defaults:
       run:
         working-directory: ./pages
@@ -71,6 +75,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.ogp-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
+    environment:
+      name: stg
     defaults:
       run:
         working-directory: ./ogp-data-fetcher
@@ -99,6 +105,8 @@ jobs:
     needs: changes
     if: ${{ needs.changes.outputs.cms-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
+    environment:
+      name: stg
     defaults:
       run:
         working-directory: ./cms-data-fetcher
