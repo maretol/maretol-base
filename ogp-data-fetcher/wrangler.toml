@@ -3,9 +3,15 @@ name = "ogp-data-fetcher"
 main = "src/index.ts"
 compatibility_date = "2024-08-21"
 compatibility_flags = ["nodejs_compat"]
+routes = [
+    { pattern = "api.maretol.xyz/ogp/*", zone_id = "31496a0d39ec10f74dc1d4d381b683e7" }
+]
 
 [dev]
 port = 45678
 
 [env.staging]
 name = "ogp-data-fetcher-stg"
+routes = [
+    { pattern = "dev-api.maretol.xyz/ogp/*", zone_id = "31496a0d39ec10f74dc1d4d381b683e7" }
+]
