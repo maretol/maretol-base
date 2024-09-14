@@ -55,6 +55,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
+        working-directory: ./
         run: npm ci
       - name: build
         working-directory: ./
