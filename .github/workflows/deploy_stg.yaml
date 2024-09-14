@@ -54,6 +54,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        run: npm ci
       - name: build
         working-directory: ./
         run: npm run build:page
