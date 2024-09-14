@@ -4,7 +4,7 @@ compatibility_date = "2024-09-02"
 compatibility_flags = [ "nodejs_compat" ]
 
 [vars]
-HOST = "https://stg.maretol.xyz"
+HOST = "https://development.maretol-base-v2.pages.dev"
 
 [env.production.vars]
 HOST = "https://www.maretol.xyz"

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "pages:build": "npx @cloudflare/next-on-pages",
-    "deploy-dev": "npm run pages:build && wrangler pages dev --binding CMS_FETCHER=cms-data-fetcher-stg OGP_FETCHER=ogp-data-fetcher-stg",
+    "run-dev": "npm run pages:build && wrangler pages dev",
     "deploy-stg": "npm run pages:build && wrangler pages deploy --branch development",
     "deploy-prd": "npm run pages:build && wrangler pages deploy"
   },
@@ -23,7 +23,8 @@
     "react": "^18",
     "react-dom": "^18",
     "tailwind-merge": "^2.5.2",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "wrangler": "^3.78.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240909.0",
