@@ -11,22 +11,22 @@ HOST = "https://www.maretol.xyz"
 
 # staging(preview)のservice binding
 [[services]]
-binding = "ogp-fetcher"
+binding = "OGP_FETCHER"
 service = "ogp-data-fetcher-stg"
 environment = "production"
 
 [[services]]
-binding = "cms-fetcher"
+binding = "CMS_FETCHER"
 service = "cms-data-fetcher-stg"
 environment = "production"
 
 # productionのservice binding
 [[env.production.services]]
-binding = "ogp-fetcher"
+binding = "OGP_FETCHER"
 service = "ogp-data-fetcher"
 environment = "production"
 
 [[env.production.services]]
-binding = "cms-fetcher"
+binding = "CMS_FETCHER"
 service = "cms-data-fetcher"
 environment = "production"

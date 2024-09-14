@@ -1,11 +1,15 @@
-import { FacebookIcon, TwitterIcon, X } from 'lucide-react'
+import { TwitterIcon, X } from 'lucide-react'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import ShareCopyAndPasteButton from './share_client'
 
 const titleFormat = '${title} | Maretol Base'
 
-export default function ShareButton(props: { variant: 'twitter' | 'x' | 'facebook' | 'copy_and_paste'; url: string; title: string }) {
+export default function ShareButton(props: {
+  variant: 'twitter' | 'x' | 'facebook' | 'copy_and_paste'
+  url: string
+  title: string
+}) {
   if (props.variant === 'twitter') {
     return <ShareTwitterButton {...props} />
   } else if (props.variant === 'x') {
@@ -29,7 +33,7 @@ function ShareTwitterButton({ url, title }: { url: string; title: string }) {
   return (
     <Link href={href} target="_blank" rel="noopener noreferrer">
       <Button variant="secondary" className="p-3">
-        <TwitterIcon size={20} />
+        <TwitterIcon size={20} /> {/* ブランドアイコンは非推奨になってた */}
       </Button>
     </Link>
   )
@@ -49,7 +53,7 @@ function ShareFacebookButton({ url }: { url: string }) {
   return (
     <Link href={url} target="_blank" rel="noopener noreferrer" hidden>
       <Button variant="secondary" className="p-3">
-        <FacebookIcon size={24} />
+        {/* <FacebookIcon size={24} /> ** 非推奨になってたので一旦消す（どっちみち使ってないし） ** */}
       </Button>
     </Link>
   )

@@ -4,12 +4,13 @@
   "description": "maretol-baseのworkspaceのroot",
   "main": "index.js",
   "scripts": {
-    "dev:page": "npm run --workspace=pages dev",
+    "dev:page": "npm run --workspace=pages deploy-dev",
     "dev:ogp": "npm run --workspace=ogp-data-fetcher dev",
     "dev:cms": "npm run --workspace=cms-data-fetcher dev",
     "deploy:ogp": "npm run --workspace=ogp-data-fetcher deploy-prd",
     "deploy:cms": "npm run --workspace=cms-data-fetcher deploy-prd",
-    "deploy:page": "npm run --workspace=pages deploy-prd"
+    "deploy:page": "npm run --workspace=pages deploy-prd",
+    "build:page": "npm run --workspace=pages pages:build"
   },
   "author": "maretol",
   "private": true,

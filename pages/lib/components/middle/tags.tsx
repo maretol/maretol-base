@@ -1,4 +1,4 @@
-import { categoryAPIResult } from '@/lib/api/result'
+import { categoryAPIResult } from 'api-types'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 

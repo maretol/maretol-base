@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "pages:build": "npx @cloudflare/next-on-pages",
-    "deploy-dev": "npm run pages:build && wrangler pages dev --binding CMS_DATA_FETCHER= OGP_DATA_FETCHER=",
+    "deploy-dev": "npm run pages:build && wrangler pages dev --binding CMS_FETCHER=cms-data-fetcher-stg OGP_FETCHER=ogp-data-fetcher-stg",
     "deploy-stg": "npm run pages:build && wrangler pages deploy --branch development",
     "deploy-prd": "npm run pages:build && wrangler pages deploy"
   },
@@ -26,6 +26,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

@@ -1,4 +1,4 @@
-export const runtime="edge";
+export const runtime = 'edge'
 
 export default function Home() {
   return (
@@ -7,5 +7,5 @@ export default function Home() {
         <p>Hello World</p>
       </main>
     </div>
-  );
+  )
 }
