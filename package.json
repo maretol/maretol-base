@@ -16,6 +16,7 @@
   "workspaces": [
     "pages",
     "cms-data-fetcher",
-    "ogp-data-fetcher"
+    "ogp-data-fetcher",
+    "packages/*"
   ]
 }

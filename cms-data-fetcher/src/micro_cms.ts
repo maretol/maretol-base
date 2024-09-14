@@ -1,4 +1,5 @@
 import { createClient } from 'microcms-js-sdk'
+import { categoryAPIResult, contentsAPIResult, infoAPIResult } from 'api-types'
 
 // offset, limit の指定のみで記事コンテンツを取得するAPIアクセス
 export async function getContents(apiKey: string, offset: number, limit: number) {

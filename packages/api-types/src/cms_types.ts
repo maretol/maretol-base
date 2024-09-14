@@ -44,3 +44,5 @@ type infoAPIResult = {
   main_text: string
   parsed_content: ParsedContent[]
 }
+
+export type { RequestJSONType, ParsedContent, contentsAPIResult, categoryAPIResult, infoAPIResult }

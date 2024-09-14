@@ -15,6 +15,10 @@
 		{
 			"name": "worker ogp-data-fetcher",
 			"path": "ogp-data-fetcher"
+		},
+		{
+			"name": "package api-types",
+			"path": "packages/api-types"
 		}
 	],
 	"settings": {
@@ -37,6 +41,9 @@
 		"[json]": {
 			"editor.tabSize": 2,
 			"editor.defaultFormatter": "esbenp.prettier-vscode"
+		},
+		"[jsonc]": {
+			"editor.tabSize": 2,
 		},
 		"editor.formatOnSave": true
 	}

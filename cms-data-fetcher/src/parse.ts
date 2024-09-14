@@ -1,4 +1,5 @@
 import { load } from 'cheerio'
+import { ParsedContent } from 'api-types'
 
 export function parse(content: string) {
   const $ = load(content)
@@ -62,7 +63,9 @@ function isYouTube(text: string) {
 
 function isTwitter(text: string) {
   return (
-    text.indexOf('https://twitter.com/') === 0 || text.indexOf('https://www.twitter.com/') === 0 || text.indexOf('https://x.com/') === 0
+    text.indexOf('https://twitter.com/') === 0 ||
+    text.indexOf('https://www.twitter.com/') === 0 ||
+    text.indexOf('https://x.com/') === 0
   )
 }
 

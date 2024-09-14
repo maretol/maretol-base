@@ -30,7 +30,7 @@ export default {
     const draftKey = searchParams.get('draftKey') || undefined
 
     switch (pathname) {
-      case '/cms_data/get_contents':
+      case '/cms/get_contents':
         const offset = parseInt(offsetStr)
         const limit = parseInt(limitStr)
         const contents = await getContents(cmsApiKey, offset, limit)
@@ -39,7 +39,7 @@ export default {
         })
         return Response.json(contents)
 
-      case '/cms_data/get_content':
+      case '/cms/get_content':
         if (tagIDsStr !== undefined) {
           const tagIDs = tagIDsStr.split('+')
           const offset = parseInt(offsetStr)
@@ -54,11 +54,11 @@ export default {
           content.parsed_content = parse(content.content)
           return Response.json(content)
         }
-      case '/cms_data/get_tags':
+      case '/cms/get_tags':
         const tags = await getTags(cmsApiKey)
         return Response.json(tags)
 
-      case '/cms_data/get_info':
+      case '/cms/get_info':
         const info = await getInfo(cmsApiKey)
         info.forEach((i) => {
           i.parsed_content = parse(i.main_text)
