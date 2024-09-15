@@ -1,12 +1,17 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
-import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
 
-export async function GET(request: NextRequest, {}: { params: { cms_path: string } }) {
+// cms_path の値によって処理が変わるが、それらはWorker側で吸収しているのでそのまま渡す
+export async function GET(request: Request) {
   const { env } = getRequestContext()
 
-  const response = await env.CMS_FETCHER.fetch(request)
+  const response = await env.CMS_FETCHER.fetch(request.clone())
 
-  return Response.json(response.body)
+  if (response.status !== 200) {
+    return new Response(await response.text(), { status: response.status })
+  }
+
+  return Response.json(await response.json())
 }

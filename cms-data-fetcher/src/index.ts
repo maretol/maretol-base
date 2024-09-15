@@ -29,44 +29,40 @@ export default {
     const articleID = searchParams.get('article_id') || ''
     const draftKey = searchParams.get('draftKey') || undefined
 
-    switch (pathname) {
-      case '/cms/get_contents':
+    if (pathname.includes('/cms/get_contents')) {
+      const offset = parseInt(offsetStr)
+      const limit = parseInt(limitStr)
+      const contents = await getContents(cmsApiKey, offset, limit)
+      contents.contents.forEach((c) => {
+        c.parsed_content = parse(c.content)
+      })
+      return Response.json(contents)
+    } else if (pathname.includes('/cms/get_content')) {
+      if (tagIDsStr !== undefined) {
+        const tagIDs = tagIDsStr.split('+')
         const offset = parseInt(offsetStr)
         const limit = parseInt(limitStr)
-        const contents = await getContents(cmsApiKey, offset, limit)
+        const contents = await getContentsByTag(cmsApiKey, tagIDs, offset, limit)
         contents.contents.forEach((c) => {
           c.parsed_content = parse(c.content)
         })
         return Response.json(contents)
-
-      case '/cms/get_content':
-        if (tagIDsStr !== undefined) {
-          const tagIDs = tagIDsStr.split('+')
-          const offset = parseInt(offsetStr)
-          const limit = parseInt(limitStr)
-          const contents = await getContentsByTag(cmsApiKey, tagIDs, offset, limit)
-          contents.contents.forEach((c) => {
-            c.parsed_content = parse(c.content)
-          })
-          return Response.json(contents)
-        } else {
-          const content = await getContent(cmsApiKey, articleID, draftKey)
-          content.parsed_content = parse(content.content)
-          return Response.json(content)
-        }
-      case '/cms/get_tags':
-        const tags = await getTags(cmsApiKey)
-        return Response.json(tags)
-
-      case '/cms/get_info':
-        const info = await getInfo(cmsApiKey)
-        info.forEach((i) => {
-          i.parsed_content = parse(i.main_text)
-        })
-        return Response.json(info)
-
-      default:
-        return new Response('ok', { status: 200 })
+      } else {
+        const content = await getContent(cmsApiKey, articleID, draftKey)
+        content.parsed_content = parse(content.content)
+        return Response.json(content)
+      }
+    } else if (pathname.includes('/cms/get_tags')) {
+      const tags = await getTags(cmsApiKey)
+      return Response.json(tags)
+    } else if (pathname.includes('/cms/get_info')) {
+      const info = await getInfo(cmsApiKey)
+      info.forEach((i) => {
+        i.parsed_content = parse(i.main_text)
+      })
+      return Response.json(info)
+    } else {
+      return new Response('ok', { status: 200 })
     }
   },
 } satisfies ExportedHandler<Env>
