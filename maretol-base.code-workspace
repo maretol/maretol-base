@@ -45,6 +45,9 @@
 		"[jsonc]": {
 			"editor.tabSize": 2,
 		},
-		"editor.formatOnSave": true
+		"editor.formatOnSave": true,
+		"files.associations": {
+			"*.css": "tailwindcss"
+		}
 	}
 }

@@ -29,7 +29,7 @@ async function getCMSContents(offset?: number, limit?: number) {
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
   const res = await fetch(request)
-  const data = (await res.json()) as contentsAPIResult
+  const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
 
   return data
 }
@@ -51,7 +51,7 @@ async function getCMSContent(articleID: string, draftKey?: string) {
   return data
 }
 
-async function getCMSContentWithTags(tagIDs: string[], offset?: number, limit?: number) {
+async function getCMSContentsWithTags(tagIDs: string[], offset?: number, limit?: number) {
   const { env } = getRequestContext()
   const host = env.HOST
   const url = new URL(host + '/api/cms/get_content')
@@ -64,7 +64,7 @@ async function getCMSContentWithTags(tagIDs: string[], offset?: number, limit?: 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
   const res = await fetch(request)
-  const data = (await res.json()) as contentsAPIResult
+  const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
 
   return data
 }
@@ -79,7 +79,7 @@ async function getTags() {
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
   const res = await fetch(request)
-  const data = (await res.json()) as categoryAPIResult
+  const data = (await res.json()) as categoryAPIResult[]
 
   return data
 }
@@ -94,9 +94,9 @@ async function getInfo() {
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
   const res = await fetch(request)
-  const data = (await res.json()) as infoAPIResult
+  const data = (await res.json()) as infoAPIResult[]
 
   return data
 }
 
-export { getOGPData, getCMSContents, getCMSContent, getCMSContentWithTags, getTags, getInfo }
+export { getOGPData, getCMSContents, getCMSContent, getCMSContentsWithTags, getTags, getInfo }
