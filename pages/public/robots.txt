@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /.well-known/
 Disallow: /_next/
+Disallow: /tag
 
 Sitemap: https://www.maretol.xyz/rss/feed.rdf
 Sitemap: https://www.maretol.xyz/static_page.txt
