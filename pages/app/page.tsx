@@ -1,7 +1,9 @@
 import { getCMSContents } from '@/lib/api/workers'
 import { pageLimit } from '@/lib/static'
-import { Article } from '@/lib/components/large/article'
-import Pagenation from '@/lib/components/middle/pagenation'
+import { Article } from '@/components/large/article'
+import Pagenation from '@/components/middle/pagenation'
+
+export const runtime = 'edge'
 
 export default async function Mainpage({
   searchParams,

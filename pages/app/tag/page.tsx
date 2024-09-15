@@ -1,10 +1,10 @@
 import { getCMSContentsWithTags, getTags } from '@/lib/api/workers'
-import { Article } from '@/lib/components/large/article'
+import { Article } from '@/components/large/article'
 import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 import { pageLimit } from '@/lib/static'
-import TagSelector from '@/lib/components/middle/tagsearch'
-import Pagenation from '@/lib/components/middle/pagenation'
+import TagSelector from '@/components/middle/tagsearch'
+import Pagenation from '@/components/middle/pagenation'
 
 export const runtime = 'edge'
 

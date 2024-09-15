@@ -1,6 +1,6 @@
 import { rewriteImageURL } from '@/lib/image'
 import { originImageOption } from '@/lib/static'
-import ClientImage from '@/lib/components/small/client_image'
+import ClientImage from '@/components/small/client_image'
 import { getOGPData } from '@/lib/api/workers'
 
 export default async function LinkCard({ link }: { link: string }) {

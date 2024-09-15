@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /.well-known/
+Disallow: /_next/
+
+Sitemap: https://www.maretol.xyz/rss/feed.rdf
+Sitemap: https://www.maretol.xyz/static_page.txt

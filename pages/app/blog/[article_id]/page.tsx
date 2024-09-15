@@ -4,7 +4,7 @@ import { contentsAPIResult } from 'api-types'
 import { getHostname } from '@/lib/env'
 import { getOGPImage, rewriteImageURL } from '@/lib/image'
 import { ogpImageOption } from '@/lib/static'
-import { FullArticle } from '@/lib/components/large/article'
+import { FullArticle } from '@/components/large/article'
 import { Metadata } from 'next'
 
 export const runtime = 'edge'

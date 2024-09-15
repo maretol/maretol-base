@@ -9,7 +9,6 @@ export default function YouTubeArea({ videoURL }: { videoURL: string }) {
   return (
     <iframe
       src={`https://www.youtube.com/embed/${videoID}`}
-      frameBorder="0"
       sandbox={defaultSandbox}
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
       allowFullScreen

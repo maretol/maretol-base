@@ -1,7 +1,7 @@
 'use client'
 
-import ClientImage from '@/lib/components/small/client_image'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/lib/components/ui/dialog'
+import ClientImage from '@/components/small/client_image'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useRouter } from 'next/navigation'
 import { useCallback } from 'react'
 

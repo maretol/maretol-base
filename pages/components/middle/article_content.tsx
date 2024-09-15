@@ -26,15 +26,16 @@ export default async function ArticleContent({
 
   return (
     <div className={cn('space-y-5', className)}>
-      {contents.map((elem, i) => {
+      {contents.map((c, i) => {
         // sampleの場合はコンテンツは6つまででいい
         if (sampleFlag && i > 5) {
           return
         }
-        const tagName = elem.tag_name
-        const attrs = elem.attributes
-        const text = elem.text
-        const innerHTML = elem.inner_html
+        const tagName = c.tag_name
+        const attrs = c.attributes
+        const text = c.text
+        const tag = 'content_image' // c.tag // 今後 c.tag を入れる。image等の別ソースコンテンツで利用するが、現在はcontent_imageのみ
+        const innerHTML = c.inner_html
 
         // h1 ~ h5
         // 正規表現でヒットさせる
@@ -76,18 +77,18 @@ export default async function ArticleContent({
 
         // p
         if (tagName === 'p') {
-          const pOption = elem.p_option
+          const pOption = c.p_option
           if (pOption === null || pOption === 'normal') {
             // 本来 p タグは p_option が入っているが、万が一の場合の抜け道
             // 通常テキストの場合と同じ扱い
             return <P key={i} innerHTML={innerHTML || text} attrs={attrs} />
           } else if (pOption === 'image') {
             // 自前の画像URLを画像系コンポーネントで表示
-            const [tag, src] = text.split(':::')
+            const src = text
             return <ContentImage key={i} tag={tag} src={src} articleID={articleID} />
           } else if (pOption === 'comic') {
             // 漫画系の場合、漫画ビューアを混ぜたコンポーネントを表示
-            const [tag, src] = text.split(':::')
+            const src = text
             return <ContentImage key={i} tag={tag} src={src} articleID={articleID} />
           } else if (pOption === 'youtube') {
             // YouTubeの埋め込み
