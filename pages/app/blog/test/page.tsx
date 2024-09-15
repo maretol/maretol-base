@@ -1,5 +1,5 @@
 import { getInfo } from '@/lib/api/workers'
-import { FullArticle } from '@/lib/components/large/article'
+import { FullArticle } from '@/components/large/article'
 
 export const runtime = 'edge'
 
