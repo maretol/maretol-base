@@ -1,4 +1,4 @@
-type APIResult = {
+type OGPResult = {
   success: boolean
   header_title: string
   og_title: string
@@ -7,3 +7,5 @@ type APIResult = {
   og_url: string
   og_site_name: string
 }
+
+export type { OGPResult }

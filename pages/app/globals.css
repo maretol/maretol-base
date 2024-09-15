@@ -2,26 +2,198 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 3.9%;
+
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 86%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 96.1%;
+    --muted-foreground: 0 0% 45.1%;
+
+    --accent: 0 0% 96.1%;
+    --accent-foreground: 0 0% 9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 89.8%;
+    --input: 0 0% 89.8%;
+    --ring: 0 0% 3.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 0 0% 3.9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 0 0% 3.9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+h1 {
+  font-size: 20pt;
+}
+
+h2 {
+  font-size: 16pt;
+}
+
+ol {
+  @apply pl-6;
+  counter-reset: number;
+  li {
+    @apply pl-2 list-decimal list-outside;
+    ol {
+      li {
+        @apply pl-2 list-roman;
+        ol {
+          li {
+            @apply pl-2 list-alpha;
+          }
+        }
+      }
+    }
+  }
+}
+
+ul {
+  @apply pl-6;
+  li {
+    @apply pl-2 list-disc list-outside;
+    ul {
+      li {
+        @apply pl-2 list-square;
+        ul {
+          li {
+            @apply pl-2 list-circle;
+          }
+        }
+      }
+    }
+  }
+}
+
+p {
+  line-height: normal;
+}
+
+blockquote {
+  @apply bg-gray-100 text-gray-700 p-3 rounded-sm border-l-8 border-l-gray-500;
+}
+
+pre code {
+  @apply flex bg-gray-700 text-gray-100 p-4 rounded-sm w-full overflow-x-auto;
+}
+
+code {
+  @apply bg-gray-700 text-gray-100 p-1 rounded-sm w-max;
+}
+
+.content-sample {
+  img[class='inner-image'] {
+    @apply rounded-lg w-[300px] shadow-xl;
+  }
+  a {
+    pointer-events: none;
+  }
+}
+
+.content img[class='inner-image'] {
+  @apply rounded-lg max-w-[500px] shadow-xl w-full;
+}
+
+.content-sample,
+.content {
+  p[class='code-filename'] {
+    @apply px-4 py-1 rounded-sm bg-gray-300 text-gray-700 h-auto text-base;
+  }
+  p a {
+    @apply inline-block h-auto w-auto;
+  }
+  hr {
+    @apply border-t-2 border-gray-400 my-4;
+  }
+  h1 {
+    @apply text-2xl underline decoration-double decoration-blue-900 w-full underline-offset-4 pt-6;
+  }
+  h2 {
+    @apply text-xl underline decoration-blue-900 underline-offset-4 decoration-2 pt-4;
+  }
+  h3 {
+    @apply text-lg font-bold underline underline-offset-4 pt-3;
+  }
+  h4 {
+    @apply font-semibold underline decoration-dotted underline-offset-4 pt-2;
+  }
+  h5 {
+    @apply underline decoration-dotted pt-2 underline-offset-4;
+  }
+  a {
+    @apply underline underline-offset-2 decoration-gray-300 hover:decoration-gray-500;
+  }
+  iframe {
+    @apply w-full max-w-xl;
+  }
+  table {
+    @apply w-auto;
+    tbody {
+      tr {
+        @apply border-b-2 border-gray-600;
+        td {
+          @apply py-2 pr-6 pl-4 border-r border-gray-400;
+        }
+        th {
+          @apply py-2 pr-6 pl-4 border-r border-gray-100 bg-gray-400;
+          p {
+            @apply font-bold;
+          }
+        }
+      }
+    }
   }
 }

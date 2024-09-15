@@ -3,9 +3,17 @@ name = "cms-data-fetcher"
 main = "src/index.ts"
 compatibility_date = "2024-08-21"
 compatibility_flags = ["nodejs_compat"]
+routes = [
+    { pattern = "api.maretol.xyz", custom_domain = true },
+    { pattern = "api.maretol.xyz/cms/*", zone_name = "maretol.xyz" }
+]
 
 [dev]
 port = 8787
 
 [env.staging]
 name = "cms-data-fetcher-stg"
+routes = [
+    { pattern = "dev-api.maretol.xyz", custom_domain = true },
+    { pattern = "dev-api.maretol.xyz/cms/*", zone_name = "maretol.xyz" }
+]

@@ -8,20 +8,30 @@
     "start": "next start",
     "lint": "next lint",
     "pages:build": "npx @cloudflare/next-on-pages",
-    "deploy-dev": "npm run pages:build && wrangler pages dev",
+    "run-dev": "npm run pages:build && wrangler pages dev",
     "deploy-stg": "npm run pages:build && wrangler pages deploy --branch development",
     "deploy-prd": "npm run pages:build && wrangler pages deploy"
   },
   "dependencies": {
     "@cloudflare/next-on-pages": "^1.13.2",
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-slot": "^1.1.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.439.0",
     "next": "14.2.8",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "tailwind-merge": "^2.5.2",
+    "tailwindcss-animate": "^1.0.7",
+    "wrangler": "^3.78.2"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240909.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.20",
     "eslint": "^8",
     "eslint-config-next": "14.2.8",
     "postcss": "^8",
