@@ -5,10 +5,10 @@ on:
     branches:
       - main
     paths:
-      - "pages/**"
-      - "ogp-data-fetcher/**"
-      - "cms-data-fetcher/**"
-      - ".github/workflows/deploy_prd.yaml"
+      - 'pages/**'
+      - 'ogp-data-fetcher/**'
+      - 'cms-data-fetcher/**'
+      - '.github/workflows/deploy_prd.yaml'
 
 env:
   NODE_VERSION: 20.16.0
@@ -54,8 +54,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
       - name: build
-        run: npm run pages:build
+        working-directory: ./
+        run: npm run build:page
       - name: deploy by wrangler
         id: deploy
         uses: cloudflare/wrangler-action@v3
