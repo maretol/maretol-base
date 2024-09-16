@@ -54,7 +54,7 @@ async function getCMSContent(articleID: string, draftKey?: string) {
 async function getCMSContentsWithTags(tagIDs: string[], offset?: number, limit?: number) {
   const { env } = getRequestContext()
   const host = env.HOST
-  const url = new URL(host + '/api/cms/get_content')
+  const url = new URL(host + '/api/cms/get_contents_with_tag')
   url.searchParams.set('tag_id', tagIDs.join('+'))
   if (offset) url.searchParams.set('offset', offset?.toString() || '0')
   if (limit) url.searchParams.set('limit', limit?.toString() || '10')

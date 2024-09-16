@@ -9,7 +9,6 @@ export async function GET(request: Request) {
   if (getLocalEnv() === 'local') {
     return await fetchLocal(request)
   }
-
   const { env } = getRequestContext()
 
   const response = await env.CMS_FETCHER.fetch(request.clone())
@@ -26,7 +25,7 @@ async function fetchLocal(request: Request) {
   const url = new URL(request.url)
   const path = url.pathname
   const query = url.search
-  const localUrl = 'http://localhost:8787/api/' + path + query
-  const response = await fetch(localUrl, { ...request })
+  const localUrl = 'http://localhost:8787' + path + query
+  const response = await fetch(localUrl, { headers: request.headers, method: request.method })
   return Response.json(await response.json())
 }
