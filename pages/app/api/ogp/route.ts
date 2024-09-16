@@ -29,7 +29,7 @@ async function fetchLocal(request: Request) {
   const url = new URL(request.url)
   const path = url.pathname
   const query = url.search
-  const localUrl = 'http://localhost:45678/api/' + path + query
+  const localUrl = 'http://localhost:45678' + path + query
   const response = await fetch(localUrl, { headers: request.headers, method: request.method })
   return Response.json(await response.json())
 }

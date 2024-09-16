@@ -10,6 +10,14 @@
 
 設定は wrangler.toml に記述してそれに全任する
 
+### staging
+
+development ブランチが自動で staging 環境としてデプロイされる
+
+Workers は `[worker-name]-stg` という名称で、Pages は標準の Pages のプレビュー機能でデプロイされる
+
+それぞれの連携は wrangler.toml に定義されている
+
 ## secrets
 
 シークレットは wrangler コマンドで登録する
@@ -49,3 +57,11 @@ page 自体には 2 種類の dev 起動がある。一つは next dev の起動
 もう一つが `npm run dev:page` に当てられている方で、これはビルド後に wrangler の local 起動を行うもの
 
 wrangler の動作確認で利用する。
+
+どちらも環境変数に対しては @cloudflare/next-on-pages の getRequestContext() が呼び出す env から取り出すことを想定している。この処理によって取り出される env は .dev.vars ファイルと wrangler.toml ファイルを起動時に読んでいる様子なので、 next dev の起動でもこちらの env 設定が利用される
+
+### packages
+
+現在は API 関係の型定義ファイルを別パッケージに切り出して双方から参照している
+
+ただ API のレスポンスに完全に一致した型を用意できてないのでどっかしらで修正したい
