@@ -3,6 +3,10 @@ function getHostname() {
 }
 
 function getLocalEnv() {
+  if (getNodeEnv() === 'development') {
+    // local起動は指定して local を返す
+    return 'local'
+  }
   return process.env.LOCAL || ''
 }
 
