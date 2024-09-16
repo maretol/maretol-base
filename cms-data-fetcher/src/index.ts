@@ -29,7 +29,19 @@ export default {
     const articleID = searchParams.get('article_id') || ''
     const draftKey = searchParams.get('draftKey') || undefined
 
-    if (pathname.includes('/cms/get_contents')) {
+    if (pathname.includes('/cms/get_contents_with_tag')) {
+      if (tagIDsStr === undefined) {
+        return Response.json({ contents: [], total: 0 })
+      }
+      const tagIDs = tagIDsStr.split('+')
+      const offset = parseInt(offsetStr)
+      const limit = parseInt(limitStr)
+      const contents = await getContentsByTag(cmsApiKey, tagIDs, offset, limit)
+      contents.contents.forEach((c) => {
+        c.parsed_content = parse(c.content)
+      })
+      return Response.json(contents)
+    } else if (pathname.includes('/cms/get_contents')) {
       const offset = parseInt(offsetStr)
       const limit = parseInt(limitStr)
       const contents = await getContents(cmsApiKey, offset, limit)
@@ -38,20 +50,9 @@ export default {
       })
       return Response.json(contents)
     } else if (pathname.includes('/cms/get_content')) {
-      if (tagIDsStr !== undefined) {
-        const tagIDs = tagIDsStr.split('+')
-        const offset = parseInt(offsetStr)
-        const limit = parseInt(limitStr)
-        const contents = await getContentsByTag(cmsApiKey, tagIDs, offset, limit)
-        contents.contents.forEach((c) => {
-          c.parsed_content = parse(c.content)
-        })
-        return Response.json(contents)
-      } else {
-        const content = await getContent(cmsApiKey, articleID, draftKey)
-        content.parsed_content = parse(content.content)
-        return Response.json(content)
-      }
+      const content = await getContent(cmsApiKey, articleID, draftKey)
+      content.parsed_content = parse(content.content)
+      return Response.json(content)
     } else if (pathname.includes('/cms/get_tags')) {
       const tags = await getTags(cmsApiKey)
       return Response.json(tags)
