@@ -21,11 +21,15 @@ export async function GET(request: Request) {
 }
 
 // ローカル実行時用
+// これでビルド時にインポートされるのかわからんので後で調べる
 async function fetchLocal(request: Request) {
-  const url = new URL(request.url)
-  const path = url.pathname
-  const query = url.search
-  const localUrl = 'http://localhost:8787' + path + query
-  const response = await fetch(localUrl, { headers: request.headers, method: request.method })
+  const cms = await import('cms-data-fetcher')
+
+  const { env, ctx } = getRequestContext()
+  const API_KEY = env.CMS_FETCHER_API_KEY
+  const CMS_API_KEY = process.env.CMS_API_KEY || ''
+
+  const response = await cms.fetchCMSLocal.default.fetch(request, { API_KEY, CMS_API_KEY }, ctx)
+
   return Response.json(await response.json())
 }
