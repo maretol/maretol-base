@@ -9,7 +9,6 @@ export async function GET(request: Request) {
   if (getLocalEnv() === 'local') {
     return await fetchLocal(request)
   }
-
   const { env } = getRequestContext()
 
   const response = await env.OGP_FETCHER.fetch(request.clone())
@@ -26,10 +25,11 @@ export async function GET(request: Request) {
 }
 
 async function fetchLocal(request: Request) {
-  const url = new URL(request.url)
-  const path = url.pathname
-  const query = url.search
-  const localUrl = 'http://localhost:45678' + path + query
-  const response = await fetch(localUrl, { headers: request.headers, method: request.method })
+  const ogp = await import('ogp-data-fetcher')
+
+  const { env, ctx } = getRequestContext()
+  const API_KEY = env.OGP_FETCHER_API_KEY
+
+  const response = await ogp.fetchOGPLocal.default.fetch(request, { API_KEY }, ctx)
   return Response.json(await response.json())
 }

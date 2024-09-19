@@ -4,8 +4,10 @@ import { contentsAPIResult } from 'api-types'
 import { getHostname } from '@/lib/env'
 import { getOGPImage, rewriteImageURL } from '@/lib/image'
 import { ogpImageOption } from '@/lib/static'
-import { FullArticle } from '@/components/large/article'
 import { Metadata } from 'next'
+import BlogPageArticle from './article'
+import { Suspense } from 'react'
+import LoadingBlogPage from './loading_article'
 
 export const runtime = 'edge'
 
@@ -61,21 +63,9 @@ export default async function BlogArticlePage({
   const path = `/blog/${articleID}`
   const url = `${host}${path}`
 
-  const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
-
   return (
-    <div>
-      <FullArticle
-        id={content.id}
-        title={content.title}
-        createdAt={content.createdAt}
-        updatedAt={content.updatedAt}
-        categories={content.categories}
-        rawContent={content.content}
-        parsedContents={content.parsed_content}
-        type="blog"
-        shareURL={url}
-      />
-    </div>
+    <Suspense fallback={<LoadingBlogPage />}>
+      <BlogPageArticle articleID={articleID} draftKey={draftKey} url={url} />
+    </Suspense>
   )
 }
