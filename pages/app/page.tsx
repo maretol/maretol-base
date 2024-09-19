@@ -1,7 +1,7 @@
-import { getCMSContents } from '@/lib/api/workers'
 import { pageLimit } from '@/lib/static'
-import { Article } from '@/components/large/article'
-import Pagenation from '@/components/middle/pagenation'
+import MainPageArticles from './article'
+import { Suspense } from 'react'
+import LoadingMainPage from './loading_article'
 
 export const runtime = 'edge'
 
@@ -15,24 +15,10 @@ export default async function Mainpage({
   const offset = (pageNumber - 1) * pageLimit
   const limit = pageLimit
 
-  const { contents, total } = await getCMSContents(offset, limit)
   return (
-    <div className="flex flex-col justify-center gap-10">
-      {contents.map((content) => (
-        <Article
-          key={content.id}
-          id={content.id}
-          title={content.title}
-          updatedAt={content.updatedAt}
-          categories={content.categories}
-          rawContent={''}
-          parsedContents={content.parsed_content}
-        />
-      ))}
-      <div className="flex justify-center">
-        <Pagenation path="/" currentPage={pageNumber} totalPage={Math.ceil(total / limit)} />
-      </div>
-    </div>
+    <Suspense fallback={<LoadingMainPage />}>
+      <MainPageArticles pageNumber={pageNumber} offset={offset} limit={limit} />
+    </Suspense>
   )
 }
 

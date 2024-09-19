@@ -9,6 +9,8 @@ import { cn } from '@/lib/utils'
 import Br from './article_dom/br'
 import Blockquote from './article_dom/blockquote'
 import { ParsedContent } from 'api-types'
+import { Suspense } from 'react'
+import LoadingLinkcard from './loading_dom/loading_linkcard'
 
 export default async function ArticleContent({
   contents,
@@ -98,7 +100,11 @@ export default async function ArticleContent({
             return <TwitterArea key={i} twitterURL={text} />
           } else if (pOption === 'url') {
             // URLのみの場合、リンクカードに対応させる
-            return <LinkCard key={i} link={text} />
+            return (
+              <Suspense key={i} fallback={<LoadingLinkcard link={text} />}>
+                <LinkCard link={text} />
+              </Suspense>
+            )
           } else if (pOption === 'empty') {
             // 空行の場合。改行をいれる
             return <Br key={i} />

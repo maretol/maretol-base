@@ -2,6 +2,7 @@
   "name": "ogp-data-fetcher",
   "version": "0.0.0",
   "private": true,
+  "main": "index.js",
   "scripts": {
     "deploy-prd": "wrangler deploy",
     "deploy-stg": "wrangler deploy -e staging",
