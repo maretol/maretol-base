@@ -24,6 +24,7 @@ export async function GET(request: Request) {
   return Response.json(await response.json())
 }
 
+// ローカル実行時用
 async function fetchLocal(request: Request) {
   const ogp = await import('ogp-data-fetcher')
 

@@ -1,0 +1,119 @@
+name: deploy dryrun
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - 'pages/**'
+      - 'ogp-data-fetcher/**'
+      - 'cms-data-fetcher/**'
+      - '.github/workflows/deploy_dryrun.yaml'
+
+env:
+  NODE_VERSION: 20.16.0
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    environment:
+      name: prd
+    outputs:
+      pages: ${{ steps.filter.outputs.pages }}
+      ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
+      cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
+      workflow: ${{ steps.filter.outputs.workflow }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: path filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            pages:
+              - "pages/**"
+            ogp-data-fetcher:
+              - "ogp-data-fetcher/**"
+            cms-data-fetcher:
+              - "cms-data-fetcher/**"
+            workflow:
+              - ".github/workflows/**"
+
+  # pages には dry-run がないのでビルドだけ行う
+  build-pages:
+    needs: changes
+    if: ${{ needs.changes.outputs.pages == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    defaults:
+      run:
+        working-directory: ./pages
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
+      - name: build
+        working-directory: ./
+        run: npm run build:page
+
+  deploy-dry-ogp-data-fetcher:
+    needs: changes
+    if: ${{ needs.changes.outputs.ogp-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    defaults:
+      run:
+        working-directory: ./ogp-data-fetcher
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: deploy dry run by wrangler
+        id: deploy-dry
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./ogp-data-fetcher
+          command: deploy -e staging --config wrangler.toml --dry-run
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
+
+  deploy-dry-cms-data-fetcher:
+    needs: changes
+    if: ${{ needs.changes.outputs.cms-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    defaults:
+      run:
+        working-directory: ./cms-data-fetcher
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: deploy dry run by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./cms-data-fetcher
+          command: deploy -e staging --config wrangler.toml --dry-run
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
