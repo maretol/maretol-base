@@ -21,7 +21,6 @@ export async function GET(request: Request) {
 }
 
 // ローカル実行時用
-// これでビルド時にインポートされるのかわからんので後で調べる
 async function fetchLocal(request: Request) {
   const cms = await import('cms-data-fetcher')
 
