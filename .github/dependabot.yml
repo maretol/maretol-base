@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directories:
+      - 'pages/'
+      - 'cms-data-fetcher/'
+      - 'ogp-data-fetcher/'
+    schedule:
+      interval: 'daily'
+    target-branch: 'development'
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    target-branch: 'development'
