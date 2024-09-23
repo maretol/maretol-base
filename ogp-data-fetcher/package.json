@@ -13,10 +13,10 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.4.5",
-    "@cloudflare/workers-types": "^4.20240821.1",
+    "@cloudflare/workers-types": "^4.20240919.0",
     "typescript": "^5.5.2",
     "vitest": "1.5.0",
-    "wrangler": "^3.60.3"
+    "wrangler": "^3.78.7"
   },
   "dependencies": {
     "open-graph-scraper-lite": "^2.1.0"
