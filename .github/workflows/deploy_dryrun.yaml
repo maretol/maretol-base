@@ -1,9 +1,11 @@
 name: deploy dryrun
 
 on:
-  push:
+
+  pull_request:
     branches:
       - development
+      - pre-development
     paths:
       - 'pages/**'
       - 'ogp-data-fetcher/**'
