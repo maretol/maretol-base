@@ -7,9 +7,9 @@ updates:
       - 'ogp-data-fetcher/'
     schedule:
       interval: 'daily'
-    target-branch: 'development'
+    target-branch: 'pre-development'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'daily'
-    target-branch: 'development'
+    target-branch: 'pre-development'
