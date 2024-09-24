@@ -12,7 +12,7 @@ export default async function BlogArticleTestPage() {
       <FullArticle
         id={'test'}
         title="Test"
-        createdAt={testPageContent.createdAt}
+        publishedAt={testPageContent.publishedAt}
         updatedAt={testPageContent.updatedAt}
         categories={[]}
         rawContent={testPageContent.main_text}

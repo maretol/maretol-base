@@ -32,7 +32,7 @@ export default async function About() {
       <FullArticle
         id={'about'}
         title="このページについて"
-        createdAt={aboutPageContents.createdAt}
+        publishedAt={aboutPageContents.publishedAt}
         updatedAt={aboutPageContents.updatedAt}
         categories={[]}
         rawContent={''}
