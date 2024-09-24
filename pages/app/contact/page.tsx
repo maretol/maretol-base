@@ -32,7 +32,7 @@ export default async function ContactPage() {
       <FullArticle
         id={'contact'}
         title="連絡先"
-        createdAt={contactPageContents.createdAt}
+        publishedAt={contactPageContents.publishedAt}
         updatedAt={contactPageContents.updatedAt}
         categories={[]}
         rawContent={contactPageContents.main_text}
