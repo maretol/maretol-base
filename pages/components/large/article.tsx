@@ -21,7 +21,7 @@ type ArticleProps = {
 }
 
 type FullAtricleProps = ArticleProps & {
-  createdAt: string
+  publishedAt: string
   type: 'blog' | 'info'
   shareURL: string
 }
@@ -64,7 +64,7 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
 export async function FullArticle({
   id,
   title,
-  createdAt,
+  publishedAt,
   updatedAt,
   categories,
   parsedContents,
@@ -78,7 +78,7 @@ export async function FullArticle({
         <CardDescription>
           {type === 'blog' ? (
             <>
-              作成日{convertJST(createdAt)} <br />
+              作成日{convertJST(publishedAt)} <br />
               最終更新{convertJST(updatedAt)}
             </>
           ) : (

@@ -17,7 +17,7 @@ export default async function BlogPageArticle({
       <FullArticle
         id={content.id}
         title={content.title}
-        createdAt={content.createdAt}
+        publishedAt={content.publishedAt}
         updatedAt={content.updatedAt}
         categories={content.categories}
         rawContent={''}
