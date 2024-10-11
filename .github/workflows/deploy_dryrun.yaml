@@ -1,16 +1,10 @@
 name: deploy dryrun
 
 on:
-
   pull_request:
     branches:
       - development
       - pre-development
-    paths:
-      - 'pages/**'
-      - 'ogp-data-fetcher/**'
-      - 'cms-data-fetcher/**'
-      - '.github/workflows/deploy_dryrun.yaml'
 
 env:
   NODE_VERSION: 20.16.0
