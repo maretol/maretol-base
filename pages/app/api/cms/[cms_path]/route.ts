@@ -11,7 +11,8 @@ export async function GET(request: Request) {
   }
   const { env } = getRequestContext()
 
-  const response = await env.CMS_FETCHER.fetch(request.clone())
+  const clone = request.clone() as Request
+  const response = await env.CMS_FETCHER.fetch(clone)
 
   if (response.status !== 200) {
     return new Response(await response.text(), { status: response.status })

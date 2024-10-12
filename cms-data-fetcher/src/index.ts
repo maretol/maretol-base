@@ -11,7 +11,7 @@ export interface Env {
 }
 
 export default {
-  async fetch(request, env, ctx): Promise<Response> {
+  async fetch(request: Request, env, ctx): Promise<Response> {
     // APIキーの認証
     const apiKey = request.headers.get('x-api-key')
     if (apiKey !== env.API_KEY) {
