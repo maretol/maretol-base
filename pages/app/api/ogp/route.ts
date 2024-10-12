@@ -1,17 +1,18 @@
 import { getLocalEnv } from '@/lib/env'
 import { getRequestContext } from '@cloudflare/next-on-pages'
 import { OGPResult } from 'api-types'
+import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   if (getLocalEnv() === 'local') {
     return await fetchLocal(request)
   }
   const { env } = getRequestContext()
 
-  const response = await env.OGP_FETCHER.fetch(request.clone())
+  const response = await env.OGP_FETCHER.fetch(request)
 
   if (response.status !== 200) {
     console.log('error: ', await response.text())
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
 }
 
 // ローカル実行時用
-async function fetchLocal(request: Request) {
+async function fetchLocal(request: NextRequest) {
   const ogp = await import('ogp-data-fetcher')
 
   const { env, ctx } = getRequestContext()
