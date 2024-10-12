@@ -3,9 +3,11 @@
 name: npm install after dependabot
 
 on:
-  push:
+  pull_request:
     branches:
-      - dependabot/npm_and_yarn/pages/**
+      - pre-development
+    paths:
+      - 'pages/**'
 
 env:
   NODE_VERSION: 20.16.0

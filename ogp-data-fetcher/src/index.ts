@@ -18,7 +18,7 @@ export interface Env {
 }
 
 export default {
-  async fetch(request, env, ctx): Promise<Response> {
+  async fetch(request: Request, env, ctx): Promise<Response> {
     const apiKey = request.headers.get('x-api-key')
     if (apiKey !== env.API_KEY) {
       return new Response('internal server error', { status: 500 })
