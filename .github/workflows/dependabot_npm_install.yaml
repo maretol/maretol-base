@@ -8,6 +8,7 @@ on:
       - pre-development
     paths:
       - 'pages/**'
+  workflow_dispatch:
 
 env:
   NODE_VERSION: 20.16.0
