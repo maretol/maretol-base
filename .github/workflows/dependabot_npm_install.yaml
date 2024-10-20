@@ -50,3 +50,7 @@ jobs:
           git add .
           git commit -m "[bot]chore(deps): update dependencies"
           git push
+
+  recall-deploy-dry:
+    needs: npm-install
+    uses: ./.github/workflows/deploy_dryrun.yaml
