@@ -8,6 +8,7 @@ on:
       - pre-development
     paths:
       - 'pages/**'
+  workflow_dispatch:
 
 env:
   NODE_VERSION: 20.16.0
@@ -22,6 +23,8 @@ jobs:
       name: bot
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: setup node
         uses: actions/setup-node@v4
@@ -31,10 +34,23 @@ jobs:
       - name: npm install
         run: npm install
 
-      - name: commit and push
+      - name: get diff
+        id: diff
+        continue-on-error: true
         run: |
+          git add -N .
+          git diff --name-only --exit-code
+
+      - name: commit and push
+        if: steps.diff.outcome == 'failure'
+        run: |
+          set -x
           git config user.name "maretol-bot"
           git config user.email "maretol+bot@users.noreply.github.com"
           git add .
           git commit -m "[bot]chore(deps): update dependencies"
           git push
+
+  recall-deploy-dry:
+    needs: npm-install
+    uses: ./.github/workflows/deploy_dryrun.yaml
