@@ -5,8 +5,13 @@ updates:
       - 'pages/'
       - 'cms-data-fetcher/'
       - 'ogp-data-fetcher/'
+      - '/'
     schedule:
       interval: 'daily'
+    groups:
+      dependencies:
+        patterns:
+          - '*'
     target-branch: 'pre-development'
   - package-ecosystem: 'github-actions'
     directory: '/'
