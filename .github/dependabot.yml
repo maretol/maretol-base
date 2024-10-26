@@ -9,7 +9,7 @@ updates:
     schedule:
       interval: 'daily'
     groups:
-      dependensies:
+      dependencies:
         patterns:
           - '*'
     target-branch: 'pre-development'
