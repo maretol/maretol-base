@@ -5,6 +5,7 @@ on:
     branches:
       - development
       - pre-development
+  workflow_call:
 
 env:
   NODE_VERSION: 20.16.0
