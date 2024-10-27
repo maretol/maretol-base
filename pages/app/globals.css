@@ -75,10 +75,6 @@
   }
 }
 
-h1 {
-  font-size: 20pt;
-}
-
 h2 {
   font-size: 16pt;
 }
@@ -154,24 +150,6 @@ code {
   }
   p a {
     @apply inline-block h-auto w-auto;
-  }
-  hr {
-    @apply border-t-2 border-gray-400 my-4;
-  }
-  h1 {
-    @apply text-2xl underline decoration-double decoration-blue-900 w-full underline-offset-4 pt-6;
-  }
-  h2 {
-    @apply text-xl underline decoration-blue-900 underline-offset-4 decoration-2 pt-4;
-  }
-  h3 {
-    @apply text-lg font-bold underline underline-offset-4 pt-3;
-  }
-  h4 {
-    @apply font-semibold underline decoration-dotted underline-offset-4 pt-2;
-  }
-  h5 {
-    @apply underline decoration-dotted pt-2 underline-offset-4;
   }
   a {
     @apply underline underline-offset-2 decoration-gray-300 hover:decoration-gray-500;

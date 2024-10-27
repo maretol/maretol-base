@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitleH1 } from '../ui/card'
 import Link from 'next/link'
 import { convertJST } from '@/lib/time'
 import Tags from '../middle/tags'
@@ -35,11 +35,11 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
   return (
     <Card key={id}>
       <CardHeader>
-        <CardTitle>
+        <CardTitleH1>
           <Link href={`blog/${id}`} className="hover:underline">
             {title}
           </Link>
-        </CardTitle>
+        </CardTitleH1>
         <CardDescription>{convertJST(updatedAt)}</CardDescription>
         <CardContent className="pl-0 pt-2 pb-0">
           <Tags tags={categories} />
@@ -74,7 +74,7 @@ export async function FullArticle({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitleH1>{title}</CardTitleH1>
         <CardDescription>
           {type === 'blog' ? (
             <>
@@ -122,10 +122,10 @@ export function ImageArticle({ id, title, categories, imageSrc, shareURL }: Imag
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>
+        <CardTitleH1>
           <div className="text-base">Image</div>
           <div className="">{title}</div>
-        </CardTitle>
+        </CardTitleH1>
         <CardContent className="pl-0 pt-2 pb-0">
           <Tags tags={categories} />
         </CardContent>
