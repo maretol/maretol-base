@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 
-export default function LoadingBlogCard({ link }: { link: string }) {
+export default function LoadingBlogCard() {
   return (
     <div className="flex max-w-xl bg-gray-300">
       <Button variant={'outline'} className="no-underline bg-gray-300 h-full w-full" disabled>
