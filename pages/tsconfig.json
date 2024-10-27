@@ -24,11 +24,12 @@
     "paths": {
       "@/*": [
         "./*"
-      ],
+      ]
     },
     "types": [
-      "@cloudflare/workers-types",
-    ]
+      "@cloudflare/workers-types"
+    ],
+    "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",

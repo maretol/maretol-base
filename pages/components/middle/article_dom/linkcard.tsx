@@ -7,7 +7,7 @@ export default async function LinkCard({ link }: { link: string }) {
   const headerTitle = 'No Page Title'
   let ogpTitle = ''
   let ogpDescription = ''
-  let ogpImage = getNoImage()
+  let ogpImage = ''
   let ogpUrl = ''
   let ogpSite = ''
 
@@ -16,7 +16,7 @@ export default async function LinkCard({ link }: { link: string }) {
   if (linkResult.success) {
     ogpTitle = linkResult.og_title
     ogpDescription = linkResult.og_description
-    ogpImage = linkResult.og_image
+    ogpImage = linkResult.og_image !== '' ? linkResult.og_image : getNoImage()
     ogpUrl = linkResult.og_url
     ogpSite = linkResult.og_site_name
   } else {

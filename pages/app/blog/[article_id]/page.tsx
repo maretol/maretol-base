@@ -11,13 +11,14 @@ import LoadingBlogPage from './loading_article'
 
 export const runtime = 'edge'
 
-export async function generateMetadata({
-  params,
-  searchParams,
-}: {
-  params: { article_id: string }
-  searchParams: { [key: string]: string | undefined }
-}) {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ article_id: string }>
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const articleID = params.article_id
   const draftKey = searchParams['draftKey']
 
@@ -49,13 +50,14 @@ export async function generateMetadata({
   } as Metadata
 }
 
-export default async function BlogArticlePage({
-  params,
-  searchParams,
-}: {
-  params: { article_id: string }
-  searchParams: { [key: string]: string | undefined }
-}) {
+export default async function BlogArticlePage(
+  props: {
+    params: Promise<{ article_id: string }>
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const articleID = params.article_id
   const draftKey = searchParams['draftKey']
 
