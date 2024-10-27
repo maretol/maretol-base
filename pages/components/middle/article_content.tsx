@@ -11,6 +11,8 @@ import Blockquote from './article_dom/blockquote'
 import { ParsedContent } from 'api-types'
 import { Suspense } from 'react'
 import LoadingLinkcard from './loading_dom/loading_linkcard'
+import BlogCard from './article_dom/blogcard'
+import LoadingBlogCard from './loading_dom/loading_blogcard'
 
 export default async function ArticleContent({
   contents,
@@ -103,6 +105,13 @@ export default async function ArticleContent({
             return (
               <Suspense key={i} fallback={<LoadingLinkcard link={text} />}>
                 <LinkCard link={text} />
+              </Suspense>
+            )
+          } else if (pOption === 'blog') {
+            // ブログの別記事の場合、専用のリンクカードにいれる
+            return (
+              <Suspense key={i} fallback={<LoadingBlogCard link={text} />}>
+                <BlogCard link={text} />
               </Suspense>
             )
           } else if (pOption === 'empty') {
