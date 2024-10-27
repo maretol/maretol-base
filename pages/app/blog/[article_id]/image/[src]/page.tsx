@@ -12,13 +12,14 @@ import { getHostname } from '@/lib/env'
 export const runtime = 'edge'
 
 // metadata定義
-export async function generateMetadata({
-  params,
-  searchParams,
-}: {
-  params: { article_id: string; src: string }
-  searchParams: { [key: string]: string | undefined }
-}) {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ article_id: string; src: string }>
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const articleID = params.article_id
   const draftKey = searchParams['draftKey']
   const imageSrcBase64 = decodeURIComponent(params.src)
@@ -51,13 +52,14 @@ export async function generateMetadata({
   } as Metadata
 }
 
-export default async function ImagePage({
-  params,
-  searchParams,
-}: {
-  params: { article_id: string; src: string }
-  searchParams: { [key: string]: string | undefined }
-}) {
+export default async function ImagePage(
+  props: {
+    params: Promise<{ article_id: string; src: string }>
+    searchParams: Promise<{ [key: string]: string | undefined }>
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   // base64エンコーディングだが、パスパラメータに入った時点でURIエンコードもされているため先にそのデコードをする
   const imageSrcBase64 = decodeURIComponent(params.src)
   const imageSrc = Buffer.from(imageSrcBase64, 'base64').toString('utf-8')

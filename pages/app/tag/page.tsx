@@ -8,11 +8,12 @@ import Pagenation from '@/components/middle/pagenation'
 
 export const runtime = 'edge'
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined }
-}) {
+export async function generateMetadata(
+  props: {
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  }
+) {
+  const searchParams = await props.searchParams;
   const rawTagIDs = searchParams['tag_id']
   const tagIDs = getTagIDs(rawTagIDs)
 
@@ -34,11 +35,12 @@ export async function generateMetadata({
   }
 }
 
-export default async function TagPage({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string[] | string | undefined }
-}) {
+export default async function TagPage(
+  props: {
+    searchParams: Promise<{ [key: string]: string[] | string | undefined }>
+  }
+) {
+  const searchParams = await props.searchParams;
   const rawTagIDs = searchParams['tag_id']
   const rawTagNames = searchParams['tag_name']
   const page = searchParams['p']
