@@ -49,7 +49,7 @@ export default async function ArticleContent({
 
         // hr
         if (tagName === 'hr') {
-          return <hr key={i} />
+          return <hr key={i} className="border-gray-500" />
         }
 
         // table。面倒なのでそのままにするができれば適当なコンポーネントに
