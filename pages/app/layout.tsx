@@ -1,6 +1,6 @@
 import React from 'react'
 import type { Metadata, Viewport } from 'next'
-import { Inter as FontSans } from 'next/font/google'
+import { M_PLUS_1 } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -14,9 +14,9 @@ import ClientImage from '@/components/small/client_image'
 
 export const runtime = 'edge'
 
-const fontSans = FontSans({
+const fontMPlus1 = M_PLUS_1({
   subsets: ['latin'],
-  variable: '--font-sans',
+  variable: '--font-mplus1',
 })
 
 export const viewport: Viewport = {
@@ -54,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon='{"token": "e7ad45139e61492b95a8686432f438e4"}'
       />
-      <body className={cn('min-h-screen bg-background font-sans antialiased bg-gray-300', fontSans.variable)}>
+      <body className={cn('min-h-screen bg-background font-sans antialiased bg-gray-300', fontMPlus1.variable)}>
         <div className="flex justify-center pb-10" id="top">
           <div className="max-w-[1500px] w-full sm:mx-6">
             <div className="my-10">
