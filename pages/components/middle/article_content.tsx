@@ -110,7 +110,7 @@ export default async function ArticleContent({
           } else if (pOption === 'blog') {
             // ブログの別記事の場合、専用のリンクカードにいれる
             return (
-              <Suspense key={i} fallback={<LoadingBlogCard link={text} />}>
+              <Suspense key={i} fallback={<LoadingBlogCard />}>
                 <BlogCard link={text} />
               </Suspense>
             )
