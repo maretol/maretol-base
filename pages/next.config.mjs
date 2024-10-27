@@ -6,7 +6,7 @@ const nextConfig = {
     domains: ['www.maretol.xyz'],
   },
   webpack: (config, option) => {
-    if (option.isServer) {
+    if (!option.dev) {
       config.externals.push({
         'cms-data-fetcher': 'cms-data-fetcher',
         'ogp-data-fetcher': 'ogp-data-fetcher',

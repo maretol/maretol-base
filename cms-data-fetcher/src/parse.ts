@@ -35,6 +35,8 @@ function getPOption(text: string) {
     pOpt = 'youtube'
   } else if (isTwitter(text)) {
     pOpt = 'twitter'
+  } else if (isBlog(text)) {
+    pOpt = 'blog'
   } else if (isURL(text)) {
     pOpt = 'url'
   } else if (text === '') {
@@ -67,6 +69,11 @@ function isTwitter(text: string) {
     text.indexOf('https://www.twitter.com/') === 0 ||
     text.indexOf('https://x.com/') === 0
   )
+}
+
+// ブログ記事のリンクの場合
+function isBlog(text: string) {
+  return text.indexOf('https://www.maretol.xyz/blog/') === 0 || text.indexOf('https://maretol.xyz/blog/') === 0
 }
 
 function isURL(text: string) {
