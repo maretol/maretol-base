@@ -54,7 +54,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon='{"token": "e7ad45139e61492b95a8686432f438e4"}'
       />
-      <body className={cn('min-h-screen bg-background font-sans antialiased bg-gray-300', fontMPlus1.variable)}>
+      <body
+        className={cn('min-h-screen bg-background antialiased bg-gray-300', fontMPlus1.className, fontMPlus1.variable)}
+      >
         <div className="flex justify-center pb-10" id="top">
           <div className="max-w-[1500px] w-full sm:mx-6">
             <div className="my-10">
