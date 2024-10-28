@@ -3,7 +3,7 @@ export default function Hn({ tag, text }: { tag: string; text: string }) {
   if (tag === 'h1') {
     return (
       <div className="pt-6 space-y-0">
-        <div className="">
+        <div className="ml-1 mb-1">
           <h2 className="text-xl font-bold">{text}</h2>
         </div>
         <hr className="h-[4px] bg-gradient-to-r from-blue-900 to-60% rounded-lg border-none" />
