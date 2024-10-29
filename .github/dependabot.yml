@@ -12,9 +12,9 @@ updates:
       dependencies:
         patterns:
           - '*'
-    target-branch: 'pre-development'
+    target-branch: 'development'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'daily'
-    target-branch: 'pre-development'
+    target-branch: 'development'
