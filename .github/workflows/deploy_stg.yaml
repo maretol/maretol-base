@@ -10,6 +10,7 @@ on:
       - 'cms-data-fetcher/**'
       - '.github/workflows/deploy_stg.yaml'
       - '.github/dependabot.yml'
+  workflow_call:
 
 env:
   NODE_VERSION: 20.16.0
