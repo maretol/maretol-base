@@ -8,7 +8,9 @@ type ParsedContent = {
   class: string
   attributes: { [name: string]: string }
   inner_html: string | null
+  raw_text: string
   text: string
+  sub_texts: { [key: string]: string } | null
   p_option: string | null
 }
 
