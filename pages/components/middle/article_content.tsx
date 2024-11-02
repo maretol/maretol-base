@@ -29,7 +29,7 @@ export default async function ArticleContent({
   const className = sampleFlag ? sampleClassName : contentClassName
 
   return (
-    <div className={cn('space-y-5', className)}>
+    <div className={cn('space-y-2', className)}>
       {contents.map((c, i) => {
         // sampleの場合はコンテンツは6つまででいい
         if (sampleFlag && i > 5) {
@@ -48,7 +48,11 @@ export default async function ArticleContent({
 
         // hr
         if (tagName === 'hr') {
-          return <hr key={i} className="border-gray-500" />
+          return (
+            <div key={i} className="py-8">
+              <hr className="border-gray-500" />
+            </div>
+          )
         }
 
         // table。面倒なのでそのままにするができれば適当なコンポーネントに
@@ -75,7 +79,7 @@ export default async function ArticleContent({
 
         // blockquote
         if (tagName === 'blockquote') {
-          return <Blockquote key={i} innerHTML={innerHTML || ''} />
+          return <Blockquote key={i} innerHTML={innerHTML || ''} text={text} />
         }
 
         // p
@@ -90,13 +94,21 @@ export default async function ArticleContent({
             const src = text
             const tag = 'content_image'
             const subText = c.sub_texts
-            return <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+            return (
+              <div key={i} className="py-6">
+                <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+              </div>
+            )
           } else if (pOption === 'photo') {
             // photo.maretol.xyz の画像を表示
             const tag = 'content_photo'
             const src = text
             const subText = c.sub_texts
-            return <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+            return (
+              <div key={i} className="py-6">
+                <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+              </div>
+            )
           } else if (pOption === 'comic') {
             // 漫画系の場合、漫画ビューアを混ぜたコンポーネントを表示
             const tag = 'content_comic'
@@ -112,16 +124,20 @@ export default async function ArticleContent({
           } else if (pOption === 'url') {
             // URLのみの場合、リンクカードに対応させる
             return (
-              <Suspense key={i} fallback={<LoadingLinkcard link={text} />}>
-                <LinkCard link={text} />
-              </Suspense>
+              <div key={i} className="py-6">
+                <Suspense fallback={<LoadingLinkcard link={text} />}>
+                  <LinkCard link={text} />
+                </Suspense>
+              </div>
             )
           } else if (pOption === 'blog') {
             // ブログの別記事の場合、専用のリンクカードにいれる
             return (
-              <Suspense key={i} fallback={<LoadingBlogCard />}>
-                <BlogCard link={text} />
-              </Suspense>
+              <div key={i} className="py-6">
+                <Suspense fallback={<LoadingBlogCard />}>
+                  <BlogCard link={text} />
+                </Suspense>
+              </div>
             )
           } else if (pOption === 'empty') {
             // 空行の場合。改行をいれる

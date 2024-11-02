@@ -118,10 +118,6 @@ p {
   line-height: normal;
 }
 
-blockquote {
-  @apply bg-gray-100 text-gray-700 p-3 rounded-sm border-l-8 border-l-gray-500;
-}
-
 pre code {
   @apply flex bg-gray-700 text-gray-100 p-4 rounded-sm w-full overflow-x-auto;
 }
@@ -174,4 +170,10 @@ code {
       }
     }
   }
+}
+
+.content-h2 {
+  border-image-source: linear-gradient(to right, rgb(30 58 138 / 1), rgb(30 58 138 / 0) 60%);
+  border-image-slice: 1;
+  @apply border-b-[4px] to-60% border-blue-900;
 }
