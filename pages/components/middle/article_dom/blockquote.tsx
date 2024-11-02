@@ -1,6 +1,4 @@
-import { getOGPData } from '@/lib/api/workers'
-
-export default async function Blockquote({
+export default function Blockquote({
   innerHTML,
   text,
 }: {
