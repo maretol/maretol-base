@@ -38,7 +38,6 @@ export default async function ArticleContent({
         const tagName = c.tag_name
         const attrs = c.attributes
         const text = c.text
-        const tag = 'content_image' // c.tag // 今後 c.tag を入れる。image等の別ソースコンテンツで利用するが、現在はcontent_imageのみ
         const innerHTML = c.inner_html
 
         // h1 ~ h5
@@ -89,11 +88,21 @@ export default async function ArticleContent({
           } else if (pOption === 'image') {
             // 自前の画像URLを画像系コンポーネントで表示
             const src = text
-            return <ContentImage key={i} tag={tag} src={src} articleID={articleID} />
+            const tag = 'content_image'
+            const subText = c.sub_texts
+            return <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+          } else if (pOption === 'photo') {
+            // photo.maretol.xyz の画像を表示
+            const tag = 'content_photo'
+            const src = text
+            const subText = c.sub_texts
+            return <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
           } else if (pOption === 'comic') {
             // 漫画系の場合、漫画ビューアを混ぜたコンポーネントを表示
+            const tag = 'content_comic'
             const src = text
-            return <ContentImage key={i} tag={tag} src={src} articleID={articleID} />
+            const subText = c.sub_texts
+            return <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
           } else if (pOption === 'youtube') {
             // YouTubeの埋め込み
             return <YouTubeArea key={i} videoURL={text} />

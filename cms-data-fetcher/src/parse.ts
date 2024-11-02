@@ -7,9 +7,11 @@ export function parse(content: string) {
   const details = $('body > *').map((index, element) => {
     const tagName = element.tagName
     const attrs = element.attribs
-    const text = $(element).text()
+    const raw_text = $(element).text()
+    const text = getText(raw_text)
     const innerHTML = $(element).html()
     const pOpt = tagName === 'p' ? getPOption(text) : null
+    const sub_texts = getSubText(raw_text)
     return {
       index,
       tag_name: tagName,
@@ -17,6 +19,7 @@ export function parse(content: string) {
       attributes: attrs,
       inner_html: innerHTML,
       text,
+      sub_texts,
       p_option: pOpt,
     } as ParsedContent
   })
@@ -28,6 +31,8 @@ function getPOption(text: string) {
   let pOpt = 'normal'
   if (isImage(text)) {
     pOpt = 'image'
+  } else if (isPhoto(text)) {
+    pOpt = 'photo'
   } else if (isComic(text)) {
     // 現状選べない。そのうち実装してなんとかする
     pOpt = 'comic'
@@ -55,6 +60,17 @@ function isImage(text: string) {
   }
 }
 
+function isPhoto(text: string) {
+  if (text.indexOf('https://photos.maretol.xyz') === 0) {
+    const photoURL = text.split('@@')[0] // 画像URL。@@以降はキャプション
+    const ext = photoURL.split('.').pop() || ''
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+      return true
+    }
+  }
+  return
+}
+
 function isComic(text: string) {
   return text.indexOf('content_comic:::') === 0
 }
@@ -78,4 +94,27 @@ function isBlog(text: string) {
 
 function isURL(text: string) {
   return text.indexOf('https://') === 0
+}
+
+// サブテキストが付与されている場合、本文のみを返す
+function getText(text: string) {
+  if (text.split('@@').length > 1) {
+    return text.split('@@')[0]
+  }
+  return text
+}
+
+// サブテキストのフォーマットは [main text]@@[subtext_key1]::[subtext1_value]@@[subtext_key2]::[subtext2_value] とする
+// 上記のフォーマットをパースして key: value の形を返す。main text は返さない
+function getSubText(text: string) {
+  if (text.split('@@').length > 1) {
+    const subText = text.split('@@').slice(1)
+    const subTextObj: { [key: string]: string } = {}
+    subText.forEach((sub) => {
+      const [key, value] = sub.split('::')
+      subTextObj[key] = value
+    })
+    return subTextObj
+  }
+  return null
 }
