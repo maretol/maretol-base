@@ -75,10 +75,6 @@
   }
 }
 
-h2 {
-  font-size: 16pt;
-}
-
 ol {
   @apply pl-6;
   counter-reset: number;
@@ -114,10 +110,6 @@ ul {
   }
 }
 
-p {
-  line-height: normal;
-}
-
 pre code {
   @apply flex bg-gray-700 text-gray-100 p-4 rounded-sm w-full overflow-x-auto;
 }
@@ -148,7 +140,7 @@ code {
     @apply inline-block h-auto w-auto;
   }
   a {
-    @apply underline underline-offset-2 decoration-gray-300 hover:decoration-gray-500;
+    @apply underline-offset-2 decoration-gray-300 hover:decoration-gray-500;
   }
   iframe {
     @apply w-full max-w-xl;

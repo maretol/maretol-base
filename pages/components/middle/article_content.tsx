@@ -29,7 +29,7 @@ export default async function ArticleContent({
   const className = sampleFlag ? sampleClassName : contentClassName
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn(className)}>
       {contents.map((c, i) => {
         // sampleの場合はコンテンツは6つまででいい
         if (sampleFlag && i > 5) {
