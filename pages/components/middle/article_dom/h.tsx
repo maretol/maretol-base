@@ -2,20 +2,15 @@
 export default function Hn({ tag, text }: { tag: string; text: string }) {
   if (tag === 'h1') {
     return (
-      <div className="pt-6 space-y-0">
-        <div className="ml-1 mb-1">
-          <h2 className="text-xl font-bold">{text}</h2>
-        </div>
-        <hr className="h-[4px] bg-gradient-to-r from-blue-900 to-60% rounded-lg border-none" />
+      <div className="pt-6 pb-3 space-y-0">
+        <h2 className="text-xl font-bold pl-2 pb-1 content-h2">{text}</h2>
       </div>
     )
   }
   if (tag === 'h2') {
     return (
-      <div className="pt-6 space-y-0">
-        <div className="border-l-4 border-blue-900 pl-3">
-          <h3 className="text-lg font-bold">{text}</h3>
-        </div>
+      <div className="pt-6 pb-3 space-y-0">
+        <h3 className="text-lg font-bold border-blue-900 pl-3 border-l-4">{text}</h3>
       </div>
     )
   }

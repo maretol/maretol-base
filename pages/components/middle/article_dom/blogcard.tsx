@@ -7,11 +7,9 @@ import { convertJST } from '@/lib/time'
 import Link from 'next/link'
 
 export default async function BlogCard({ link }: { link: string }) {
-  console.log('link: ', link)
   const linkURL = new URL(link)
   const linkPath = linkURL.pathname
   const articleID = linkPath.split('/')[2]
-  console.log('articleID: ', articleID)
   const linkArticle = await getCMSContent(articleID)
 
   const articleTitle = linkArticle.title
