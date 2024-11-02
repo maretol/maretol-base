@@ -71,10 +71,10 @@ export default async function ArticleContent({
 
         // list
         if (tagName === 'ul') {
-          return <ul key={i} dangerouslySetInnerHTML={{ __html: innerHTML || '' }} />
+          return <ul key={i} dangerouslySetInnerHTML={{ __html: innerHTML || '' }} className="py-4" />
         }
         if (tagName === 'ol') {
-          return <ol key={i} dangerouslySetInnerHTML={{ __html: innerHTML || '' }} />
+          return <ol key={i} dangerouslySetInnerHTML={{ __html: innerHTML || '' }} className="py-4" />
         }
 
         // blockquote
