@@ -35,7 +35,7 @@ export default async function LinkCard({ link }: { link: string }) {
           <div className="row-span-3 w-36 h-24">
             <ClientImage src={image} alt={ogpTitle} width={200} height={200} className="object-contain w-36 h-24" />
           </div>
-          <div className="col-span-2 w-96 flex-auto mr-2">
+          <div className="col-span-2 w-96 flex-auto ml-2">
             <p className="text-lg line-clamp-1 font-semibold pt-1">{title}</p>
             <p className="text-sm line-clamp-3">{ogpDescription}</p>
           </div>

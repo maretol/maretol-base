@@ -7,13 +7,15 @@ export default function YouTubeArea({ videoURL }: { videoURL: string }) {
     return <p>YouTubeの埋め込みがありましたがURLが不正ですなようです</p>
   }
   return (
-    <iframe
-      src={`https://www.youtube.com/embed/${videoID}`}
-      sandbox={defaultSandbox}
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowFullScreen
-      width={560}
-      height={315}
-    ></iframe>
+    <div className="py-6">
+      <iframe
+        src={`https://www.youtube.com/embed/${videoID}`}
+        sandbox={defaultSandbox}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        width={560}
+        height={315}
+      ></iframe>
+    </div>
   )
 }
