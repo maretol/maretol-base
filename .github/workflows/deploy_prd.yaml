@@ -128,3 +128,12 @@ jobs:
         env:
           CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: echo $CMD_OUTPUT
+
+  status:
+    needs: [deploy-pages, deploy-ogp-data-fetcher, deploy-cms-data-fetcher]
+    runs-on: ubuntu-latest
+    environment:
+      name: prd
+    steps:
+      - name: show status
+        run: echo "deployed"
