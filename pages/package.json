@@ -13,7 +13,7 @@
     "deploy-prd": "npm run pages:build && wrangler pages deploy"
   },
   "dependencies": {
-    "@cloudflare/next-on-pages": "^1.13.6",
+    "@cloudflare/next-on-pages": "^1.13.7",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-slot": "^1.1.0",
     "class-variance-authority": "^0.7.1",
@@ -24,7 +24,7 @@
     "react-dom": "^19",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "wrangler": "^3.92.0"
+    "wrangler": "^3.94.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20241205.0",
