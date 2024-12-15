@@ -137,6 +137,7 @@ jobs:
 
   status:
     needs: [deploy-pages, deploy-ogp-data-fetcher, deploy-cms-data-fetcher]
+    if: always()
     runs-on: ubuntu-latest
     environment:
       name: stg
