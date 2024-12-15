@@ -113,3 +113,13 @@ jobs:
         env:
           CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: echo $CMD_OUTPUT
+
+  status:
+    needs: [build-pages, deploy-dry-ogp-data-fetcher, deploy-dry-cms-data-fetcher]
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    steps:
+      - name: show status
+        run: echo "deploy dryrun done"
