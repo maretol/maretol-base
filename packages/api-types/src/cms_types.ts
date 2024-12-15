@@ -50,6 +50,7 @@ type infoAPIResult = {
   publishedAt: string
   revisedAt: string
   page_pathname: string
+  title: string | undefined
   main_text: string
   parsed_content: ParsedContent[]
   table_of_contents: TableOfContents

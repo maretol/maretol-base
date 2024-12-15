@@ -54,6 +54,8 @@ function getPOption(text: string) {
     pOpt = 'twitter'
   } else if (isBlog(text)) {
     pOpt = 'blog'
+  } else if (isArtifact(text)) {
+    pOpt = 'artifact'
   } else if (isURL(text)) {
     pOpt = 'url'
   } else if (text === '') {
@@ -104,6 +106,13 @@ function isTwitter(text: string) {
 // ブログ記事のリンクの場合
 function isBlog(text: string) {
   return text.indexOf('https://www.maretol.xyz/blog/') === 0 || text.indexOf('https://maretol.xyz/blog/') === 0
+}
+
+// artifactのリンクの場合
+function isArtifact(text: string) {
+  return (
+    text.indexOf('https://www.maretol.xyz/artifacts/') === 0 || text.indexOf('https://maretol.xyz/artifacts/') === 0
+  )
 }
 
 function isURL(text: string) {
