@@ -116,7 +116,7 @@ jobs:
 
   status:
     needs: [build-pages, deploy-dry-ogp-data-fetcher, deploy-dry-cms-data-fetcher]
-    if: ${{ needs.build-pages.outputs.pages == 'true' || needs.deploy-dry-ogp-data-fetcher.outputs.ogp-data-fetcher == 'true' || needs.deploy-dry-cms-data-fetcher.outputs.cms-data-fetcher == 'true' }}
+    if: always()
     runs-on: ubuntu-latest
     environment:
       name: stg
