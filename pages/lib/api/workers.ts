@@ -1,5 +1,8 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
 import { categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
+import { getNodeEnv } from '../env'
+
+const revalidateTime = getNodeEnv() === 'production' ? 60 : 0
 
 async function getOGPData(targetURL: string) {
   const { env } = getRequestContext()
@@ -11,7 +14,7 @@ async function getOGPData(targetURL: string) {
 
   const request = new Request(url, { headers: { 'x-api-key': ogpAPIKey }, method: 'GET' })
 
-  const res = await fetch(request)
+  const res = await fetch(request, { next: { revalidate: revalidateTime } })
   const data = (await res.json()) as OGPResult
 
   return data
@@ -28,7 +31,7 @@ async function getCMSContents(offset?: number, limit?: number) {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request)
+  const res = await fetch(request, { next: { revalidate: revalidateTime } })
   const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
 
   return data
@@ -45,7 +48,7 @@ async function getCMSContent(articleID: string, draftKey?: string) {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request)
+  const res = await fetch(request, { next: { revalidate: revalidateTime } })
   const data = (await res.json()) as contentsAPIResult
 
   return data
@@ -63,7 +66,7 @@ async function getCMSContentsWithTags(tagIDs: string[], offset?: number, limit?:
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request)
+  const res = await fetch(request, { next: { revalidate: revalidateTime } })
   const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
 
   return data
@@ -78,7 +81,7 @@ async function getTags() {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request)
+  const res = await fetch(request, { next: { revalidate: revalidateTime } })
   const data = (await res.json()) as categoryAPIResult[]
 
   return data
@@ -93,7 +96,7 @@ async function getInfo() {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request)
+  const res = await fetch(request, { next: { revalidate: revalidateTime } })
   const data = (await res.json()) as infoAPIResult[]
 
   return data

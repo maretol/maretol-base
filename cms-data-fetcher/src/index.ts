@@ -38,7 +38,9 @@ export default {
       const limit = parseInt(limitStr)
       const contents = await getContentsByTag(cmsApiKey, tagIDs, offset, limit)
       contents.contents.forEach((c) => {
-        c.parsed_content = parse(c.content)
+        const parsed = parse(c.content)
+        c.parsed_content = parsed.contents_array
+        c.table_of_contents = parsed.table_of_contents
       })
       return Response.json(contents)
     } else if (pathname.includes('/cms/get_contents')) {
@@ -46,12 +48,16 @@ export default {
       const limit = parseInt(limitStr)
       const contents = await getContents(cmsApiKey, offset, limit)
       contents.contents.forEach((c) => {
-        c.parsed_content = parse(c.content)
+        const parsed = parse(c.content)
+        c.parsed_content = parsed.contents_array
+        c.table_of_contents = parsed.table_of_contents
       })
       return Response.json(contents)
     } else if (pathname.includes('/cms/get_content')) {
       const content = await getContent(cmsApiKey, articleID, draftKey)
-      content.parsed_content = parse(content.content)
+      const parsed = parse(content.content)
+      content.parsed_content = parsed.contents_array
+      content.table_of_contents = parsed.table_of_contents
       return Response.json(content)
     } else if (pathname.includes('/cms/get_tags')) {
       const tags = await getTags(cmsApiKey)
@@ -59,7 +65,9 @@ export default {
     } else if (pathname.includes('/cms/get_info')) {
       const info = await getInfo(cmsApiKey)
       info.forEach((i) => {
-        i.parsed_content = parse(i.main_text)
+        const parsed = parse(i.main_text)
+        i.parsed_content = parsed.contents_array
+        i.table_of_contents = parsed.table_of_contents
       })
       return Response.json(info)
     } else {

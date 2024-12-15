@@ -14,6 +14,12 @@ type ParsedContent = {
   p_option: string | null
 }
 
+type TableOfContents = {
+  id: string
+  title: string
+  level: number
+}[]
+
 type contentsAPIResult = {
   id: string
   createdAt: string
@@ -23,6 +29,7 @@ type contentsAPIResult = {
   title: string
   content: string
   parsed_content: ParsedContent[]
+  table_of_contents: TableOfContents
   ogp_image: string | undefined | null
   categories: categoryAPIResult[]
 }
@@ -45,6 +52,7 @@ type infoAPIResult = {
   page_pathname: string
   main_text: string
   parsed_content: ParsedContent[]
+  table_of_contents: TableOfContents
 }
 
-export type { RequestJSONType, ParsedContent, contentsAPIResult, categoryAPIResult, infoAPIResult }
+export type { RequestJSONType, ParsedContent, TableOfContents, contentsAPIResult, categoryAPIResult, infoAPIResult }

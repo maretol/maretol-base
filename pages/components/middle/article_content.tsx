@@ -8,20 +8,23 @@ import LinkCard from './article_dom/linkcard'
 import { cn } from '@/lib/utils'
 import Br from './article_dom/br'
 import Blockquote from './article_dom/blockquote'
-import { ParsedContent } from 'api-types'
+import { ParsedContent, TableOfContents } from 'api-types'
 import { Suspense } from 'react'
 import LoadingLinkcard from './loading_dom/loading_linkcard'
 import BlogCard from './article_dom/blogcard'
 import LoadingBlogCard from './loading_dom/loading_blogcard'
+import Table from './article_dom/table_of_contents'
 
 export default async function ArticleContent({
   contents,
   articleID,
   sample,
+  tableOfContents,
 }: {
   contents: ParsedContent[]
   articleID: string
   sample?: boolean
+  tableOfContents?: TableOfContents
 }) {
   const sampleFlag = sample || false
   const sampleClassName = 'content-sample line-clamp-6 max-h-72'
@@ -43,7 +46,7 @@ export default async function ArticleContent({
         // h1 ~ h5
         // 正規表現でヒットさせる
         if (tagName.match(/h[1-5]/)) {
-          return <Hn key={i} tag={tagName} text={text} />
+          return <Hn key={i} tag={tagName} text={text} attrs={attrs} />
         }
 
         // hr
@@ -142,6 +145,13 @@ export default async function ArticleContent({
           } else if (pOption === 'empty') {
             // 空行の場合。改行をいれる
             return <Br key={i} />
+          } else if (pOption === 'table_of_contents') {
+            if (tableOfContents) {
+              return <Table key={i} toc={tableOfContents} />
+            } else {
+              // 目次情報がない場合は何も表示しない
+              return <></>
+            }
           }
           // どれにも該当しない場合。ほぼないはずだが、新規の p_option が追加された場合必要になる
           return <P key={i} innerHTML={innerHTML || text} attrs={attrs} />
