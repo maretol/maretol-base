@@ -14,6 +14,7 @@ import LoadingLinkcard from './loading_dom/loading_linkcard'
 import BlogCard from './article_dom/blogcard'
 import LoadingBlogCard from './loading_dom/loading_blogcard'
 import Table from './article_dom/table_of_contents'
+import ArtifactCard from './article_dom/artifactcard'
 
 export default async function ArticleContent({
   contents,
@@ -139,6 +140,14 @@ export default async function ArticleContent({
               <div key={i} className="py-6">
                 <Suspense fallback={<LoadingBlogCard />}>
                   <BlogCard link={text} />
+                </Suspense>
+              </div>
+            )
+          } else if (pOption === 'artifact') {
+            return (
+              <div key={i} className="py-6">
+                <Suspense fallback={<LoadingBlogCard />}>
+                  <ArtifactCard link={text} />
                 </Suspense>
               </div>
             )
