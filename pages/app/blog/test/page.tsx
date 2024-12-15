@@ -17,6 +17,7 @@ export default async function BlogArticleTestPage() {
         categories={[]}
         rawContent={testPageContent.main_text}
         parsedContents={testPageContent.parsed_content}
+        tableOfContents={testPageContent.table_of_contents}
         type="blog"
         shareURL={``}
       />
