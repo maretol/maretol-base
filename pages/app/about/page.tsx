@@ -37,6 +37,7 @@ export default async function About() {
         categories={[]}
         rawContent={''}
         parsedContents={aboutPageContents.parsed_content}
+        tableOfContents={aboutPageContents.table_of_contents}
         type="info"
         shareURL={url}
       />

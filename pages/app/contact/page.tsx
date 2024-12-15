@@ -37,6 +37,7 @@ export default async function ContactPage() {
         categories={[]}
         rawContent={contactPageContents.main_text}
         parsedContents={contactPageContents.parsed_content}
+        tableOfContents={contactPageContents.table_of_contents}
         type="info"
         shareURL={url}
       />

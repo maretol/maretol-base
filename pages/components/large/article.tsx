@@ -9,7 +9,7 @@ import ArticleContent from '../middle/article_content'
 import { rewriteImageURL } from '@/lib/image'
 import { originImageOption } from '@/lib/static'
 import ClientImage from '../small/client_image'
-import { categoryAPIResult, ParsedContent } from 'api-types'
+import { categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
 
 type ArticleProps = {
   id: string
@@ -24,6 +24,7 @@ type FullAtricleProps = ArticleProps & {
   publishedAt: string
   type: 'blog' | 'info'
   shareURL: string
+  tableOfContents: TableOfContents
 }
 
 type ImageArticleProps = ArticleProps & {
@@ -68,6 +69,7 @@ export async function FullArticle({
   updatedAt,
   categories,
   parsedContents,
+  tableOfContents,
   type,
   shareURL,
 }: FullAtricleProps) {
@@ -91,8 +93,8 @@ export async function FullArticle({
           </CardContent>
         )}
       </CardHeader>
-      <CardContent className="my-8">
-        <ArticleContent contents={parsedContents} articleID={id} />
+      <CardContent className="mb-8">
+        <ArticleContent contents={parsedContents} articleID={id} tableOfContents={tableOfContents} />
       </CardContent>
       <CardFooter>
         <div className="w-full">
