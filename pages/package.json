@@ -24,10 +24,10 @@
     "react-dom": "^19",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "wrangler": "^3.95.0"
+    "wrangler": "^3.96.0"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241205.0",
+    "@cloudflare/workers-types": "^4.20241216.0",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
