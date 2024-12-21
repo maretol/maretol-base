@@ -4,8 +4,8 @@ export default function Hn({ tag, text, attrs }: { tag: string; text: string; at
 
   if (tag === 'h1') {
     return (
-      <div className="pt-6 pb-3 space-y-0">
-        <h2 id={id} className="text-xl font-bold pl-2 pb-1 content-h2">
+      <div className="mt-2 pt-6 pb-3 space-y-0">
+        <h2 id={id} className="text-2xl font-bold pl-2 pb-1 content-h2">
           {text}
         </h2>
       </div>
@@ -13,7 +13,7 @@ export default function Hn({ tag, text, attrs }: { tag: string; text: string; at
   }
   if (tag === 'h2') {
     return (
-      <div className="pt-6 pb-3 space-y-0">
+      <div className="ml-1 mt-3 pt-6 pb-2 space-y-0">
         <h3 id={id} className="text-lg font-bold border-blue-900 pl-3 border-l-4">
           {text}
         </h3>

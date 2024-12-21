@@ -6,6 +6,14 @@ const revalidateTime = getNodeEnv() === 'production' ? 60 : 0
 
 async function getOGPData(targetURL: string) {
   const { env } = getRequestContext()
+
+  // cacheに有無を確認する
+  const cache = await env.OGP_FETCHER_CACHE.get(targetURL)
+  if (cache) {
+    const data = JSON.parse(cache) as OGPResult
+    return data
+  }
+
   const host = env.HOST
   const url = new URL(host + '/api/ogp')
   url.searchParams.set('target', targetURL)
@@ -15,7 +23,18 @@ async function getOGPData(targetURL: string) {
   const request = new Request(url, { headers: { 'x-api-key': ogpAPIKey }, method: 'GET' })
 
   const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  if (!res.ok) {
+    return { success: false } as OGPResult
+  }
+
   const data = (await res.json()) as OGPResult
+  if (!data.success) {
+    return data
+  }
+
+  // 成功時はcacheに保存する
+  // 有効期限は3日
+  await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl: 60 * 60 * 24 * 3 })
 
   return data
 }
