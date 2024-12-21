@@ -20,6 +20,10 @@ binding = "CMS_FETCHER"
 service = "cms-data-fetcher-stg"
 environment = "production"
 
+[[kv_namespaces]]
+binding = "OGP_FETCHER_CACHE"
+id = "e12d978b90ba4e798961650595d5e9a8"
+
 # productionのservice binding
 [[env.production.services]]
 binding = "OGP_FETCHER"
@@ -30,3 +34,8 @@ environment = "production"
 binding = "CMS_FETCHER"
 service = "cms-data-fetcher"
 environment = "production"
+
+# OGPのキャッシュはstgとprdで共通のものを使う
+[[env.production.kv_namespaces]]
+binding = "OGP_FETCHER_CACHE"
+id = "e12d978b90ba4e798961650595d5e9a8"
