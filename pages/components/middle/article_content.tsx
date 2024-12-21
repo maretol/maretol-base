@@ -159,7 +159,7 @@ export default async function ArticleContent({
               return <Table key={i} toc={tableOfContents} />
             } else {
               // 目次情報がない場合は何も表示しない
-              return <></>
+              return
             }
           }
           // どれにも該当しない場合。ほぼないはずだが、新規の p_option が追加された場合必要になる
