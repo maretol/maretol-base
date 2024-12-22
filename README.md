@@ -44,6 +44,10 @@ OGP Fetcher や CMS Fetcher はシンプルに `npm run dev:ogp` や `npm run de
 
 ローカルでの動作確認時は、x-api-key ヘッダーを指定する必要があるので両方それを行うこと
 
+OGP Fetcher は取得データを Cloudflare KV にキャッシュするようになっている。キャッシュ期間は 3 日（72 時間）
+
+ローカル起動時はローカルに .wrangler でキャッシュされるので削除時はそのファイルを消す
+
 ### pages
 
 ~~前提として pages はバックエンドの処理として workers の処理を必要としている。~~
