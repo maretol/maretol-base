@@ -2,6 +2,7 @@ import { rewriteImageURL } from '@/lib/image'
 import { originImageOption } from '@/lib/static'
 import ClientImage from '@/components/small/client_image'
 import { getOGPData } from '@/lib/api/workers'
+import Link from 'next/link'
 
 export default async function LinkCard({ link }: { link: string }) {
   const headerTitle = 'No Page Title'
@@ -22,11 +23,12 @@ export default async function LinkCard({ link }: { link: string }) {
       ogpTitle = linkResult.og_title
       ogpDescription = linkResult.og_description
       ogpImage = linkResult.og_image !== '' ? linkResult.og_image : getNoImage()
-      ogpUrl = linkResult.og_url
+      ogpUrl = linkResult.og_url !== '' ? linkResult.og_url : link
       ogpSite = linkResult.og_site_name
     } else {
-      ogpTitle = 'Error'
-      ogpDescription = 'エラーが発生しました。データを表示できません。'
+      ogpTitle = 'Missing data fetching'
+      ogpDescription = 'リンク先の情報取得でエラーが発生しました。リンクは機能しています'
+      ogpUrl = link
     }
 
     title = ogpTitle !== '' ? ogpTitle : headerTitle
@@ -38,13 +40,12 @@ export default async function LinkCard({ link }: { link: string }) {
     title = 'Title was not readable.'
     site = title
     image = getNoImage()
-    ogpUrl = link
-    ogpDescription = 'Error but this link is available.'
+    ogpDescription = 'リンク先の情報取得でエラーが発生しました。リンクは機能しています'
   }
 
   return (
     <div className="max-w-xl h-100 no-underline border-2 border-gray-300 rounded-md">
-      <a href={ogpUrl} target="_blank" className="no-underline hover:underline">
+      <Link href={link} target="_blank" className="no-underline hover:underline">
         <div className="flex flex-row h-24">
           <div className="row-span-3 w-36 h-24">
             <ClientImage src={image} alt={ogpTitle} width={200} height={200} className="object-contain w-36 h-24" />
@@ -56,9 +57,9 @@ export default async function LinkCard({ link }: { link: string }) {
         </div>
         <div className="p-1 bg-gray-300 rounded-b-md">
           <p className="no-underline text-sm line-clamp-1">{site}</p>
-          <p className="no-underline text-sm line-clamp-1">{link}</p>
+          <p className="no-underline text-sm line-clamp-1">{ogpUrl}</p>
         </div>
-      </a>
+      </Link>
     </div>
   )
 }
