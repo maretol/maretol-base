@@ -34,27 +34,37 @@ export default {
     const result = await fetch(target)
     const options = {
       html: await result.text(),
+      onlyGetOpenGraphInfo: true,
     }
-    const data = await ogs(options)
+    console.log('here')
+    try {
+      const data = await ogs(options)
 
-    const ogp = data.result
-    const status = ogp.success
-    const title = ogp.ogTitle || ''
-    const description = ogp.ogDescription || ''
-    const image = ogp.ogImage?.[0].url || ''
-    const ogURL = ogp.ogUrl || ''
-    const sitename = ogp.ogSiteName || ''
+      const ogp = data.result
+      const status = ogp.success
+      const title = ogp.ogTitle || ''
+      const description = ogp.ogDescription || ''
+      const image = ogp.ogImage?.[0].url || ''
+      const ogURL = ogp.ogUrl || ''
+      const sitename = ogp.ogSiteName || ''
 
-    const responseBody = {
-      success: status,
-      header_title: title,
-      og_title: title,
-      og_description: description,
-      og_image: image,
-      og_url: ogURL,
-      og_site_name: sitename,
-    } as OGPResult
+      const responseBody = {
+        success: status,
+        header_title: title,
+        og_title: title,
+        og_description: description,
+        og_image: image,
+        og_url: ogURL,
+        og_site_name: sitename,
+      } as OGPResult
 
-    return Response.json(responseBody)
+      return Response.json(responseBody)
+    } catch (e) {
+      console.error(e)
+      const responseBody = {
+        success: false,
+      } as OGPResult
+      return Response.json(responseBody)
+    }
   },
 } satisfies ExportedHandler<Env>
