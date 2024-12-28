@@ -52,6 +52,8 @@ function getPOption(text: string) {
     pOpt = 'youtube'
   } else if (isTwitter(text)) {
     pOpt = 'twitter'
+  } else if (isAmazon(text)) {
+    pOpt = 'amazon'
   } else if (isBlog(text)) {
     pOpt = 'blog'
   } else if (isArtifact(text)) {
@@ -101,6 +103,10 @@ function isTwitter(text: string) {
     text.indexOf('https://www.twitter.com/') === 0 ||
     text.indexOf('https://x.com/') === 0
   )
+}
+
+function isAmazon(text: string) {
+  return text.indexOf('https://www.amazon.co.jp/') === 0 || text.indexOf('https://amzn.to/') === 0
 }
 
 // ブログ記事のリンクの場合
