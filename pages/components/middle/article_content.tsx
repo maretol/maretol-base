@@ -15,6 +15,7 @@ import BlogCard from './article_dom/blogcard'
 import LoadingBlogCard from './loading_dom/loading_blogcard'
 import Table from './article_dom/table_of_contents'
 import ArtifactCard from './article_dom/artifactcard'
+import AmazonArea from './article_dom/amazon'
 
 export default async function ArticleContent({
   contents,
@@ -125,6 +126,9 @@ export default async function ArticleContent({
           } else if (pOption === 'twitter') {
             // Twitterの埋め込み
             return <TwitterArea key={i} twitterURL={text} />
+          } else if (pOption === 'amazon') {
+            // Amazonのリンク
+            return <AmazonArea key={i} amazonURL={text} />
           } else if (pOption === 'url') {
             // URLのみの場合、リンクカードに対応させる
             return (
