@@ -1,5 +1,5 @@
 import { createClient } from 'microcms-js-sdk'
-import { categoryAPIResult, contentsAPIResult, infoAPIResult } from 'api-types'
+import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult } from 'api-types'
 
 // offset, limit の指定のみで記事コンテンツを取得するAPIアクセス
 export async function getContents(apiKey: string, offset: number, limit: number) {
@@ -154,4 +154,62 @@ export async function getInfo(apiKey: string) {
   }
 
   return response.contents
+}
+
+export async function getBandeDessinees(apiKey: string, offset: number, limit: number) {
+  if (apiKey === undefined) {
+    throw new Error('API_KEY is undefined')
+  }
+
+  const client = createClient({
+    serviceDomain: 'maretol-comic',
+    apiKey: apiKey,
+  })
+
+  const response = await client
+    .getList<bandeDessineeResult>({
+      endpoint: 'bande-dessinee',
+      queries: { offset: offset, limit: limit },
+    })
+    .then((res) => {
+      return res
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
+  if (response === undefined) {
+    throw new Error('api access error')
+  }
+
+  return response.contents
+}
+
+export async function getBandeDessinee(apiKey: string, contentID: string, draftKey?: string) {
+  if (apiKey === undefined) {
+    throw new Error('API_KEY is undefined')
+  }
+
+  const client = createClient({
+    serviceDomain: 'maretol-comic',
+    apiKey: apiKey,
+  })
+
+  const response = await client
+    .getList<bandeDessineeResult>({
+      endpoint: 'bande-dessinee',
+      queries: { ids: contentID, draftKey: draftKey },
+    })
+    .then((res) => {
+      return res
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
+  if (response === undefined) {
+    throw new Error('api access error')
+  }
+
+  return response.contents[0]
 }

@@ -56,4 +56,24 @@ type infoAPIResult = {
   table_of_contents: TableOfContents
 }
 
-export type { RequestJSONType, ParsedContent, TableOfContents, contentsAPIResult, categoryAPIResult, infoAPIResult }
+type bandeDessineeResult = {
+  id: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  title_name: string
+  publish_date: string
+  publish_evnet: string
+  contents_url: string
+  description: string
+}
+
+export type {
+  RequestJSONType,
+  ParsedContent,
+  TableOfContents,
+  contentsAPIResult,
+  categoryAPIResult,
+  infoAPIResult,
+  bandeDessineeResult,
+}
