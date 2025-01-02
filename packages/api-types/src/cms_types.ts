@@ -62,10 +62,14 @@ type bandeDessineeResult = {
   updatedAt: string
   publishedAt: string
   title_name: string
-  publish_date: string
-  publish_evnet: string
+  publish_date: string | null
+  publish_event: string | null
   contents_url: string
   description: string
+  next_id: string | null
+  previous_id: string | null
+  parsed_description: ParsedContent[]
+  table_of_contents: TableOfContents
 }
 
 export type {

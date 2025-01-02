@@ -28,8 +28,9 @@ async function fetchLocal(request: Request) {
   const { env, ctx } = getRequestContext()
   const API_KEY = env.CMS_FETCHER_API_KEY
   const CMS_API_KEY = process.env.CMS_API_KEY || ''
+  const CMS_API_KEY_BD = process.env.CMS_API_KEY_BD || ''
 
-  const response = await cms.fetchCMSLocal.default.fetch(request, { API_KEY, CMS_API_KEY }, ctx)
+  const response = await cms.fetchCMSLocal.default.fetch(request, { API_KEY, CMS_API_KEY, CMS_API_KEY_BD }, ctx)
 
   return Response.json(await response.json())
 }

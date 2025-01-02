@@ -15,7 +15,6 @@ export default async function BlogArticleTestPage() {
         publishedAt={testPageContent.publishedAt}
         updatedAt={testPageContent.updatedAt}
         categories={[]}
-        rawContent={testPageContent.main_text}
         parsedContents={testPageContent.parsed_content}
         tableOfContents={testPageContent.table_of_contents}
         type="blog"

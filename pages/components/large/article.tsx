@@ -16,7 +16,6 @@ type ArticleProps = {
   title: string
   updatedAt: string
   categories: categoryAPIResult[]
-  rawContent: string
   parsedContents: ParsedContent[]
 }
 

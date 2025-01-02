@@ -93,10 +93,18 @@ export default {
         const offset = parseInt(offsetStr)
         const limit = parseInt(limitStr)
         const contents = await getBandeDessinees(cmsApiKey_bd, offset, limit)
+        contents.bandeDessinees.forEach((bd) => {
+          const parsed = parse(bd.description)
+          bd.parsed_description = parsed.contents_array
+          bd.table_of_contents = parsed.table_of_contents
+        })
         return Response.json(contents)
       } else {
         // マンガの指定がある場合そのマンガを取得
         const content = await getBandeDessinee(cmsApiKey_bd, contentID)
+        const parsed = parse(content.description)
+        content.parsed_description = parsed.contents_array
+        content.table_of_contents = parsed.table_of_contents
         return Response.json(content)
       }
     } else {

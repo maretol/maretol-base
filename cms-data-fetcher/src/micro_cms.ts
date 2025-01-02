@@ -182,7 +182,7 @@ export async function getBandeDessinees(apiKey: string, offset: number, limit: n
     throw new Error('api access error')
   }
 
-  return response.contents
+  return { bandeDessinees: response.contents, total: response.totalCount }
 }
 
 export async function getBandeDessinee(apiKey: string, contentID: string, draftKey?: string) {
