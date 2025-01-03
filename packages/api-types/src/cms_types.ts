@@ -56,4 +56,37 @@ type infoAPIResult = {
   table_of_contents: TableOfContents
 }
 
-export type { RequestJSONType, ParsedContent, TableOfContents, contentsAPIResult, categoryAPIResult, infoAPIResult }
+type bandeDessineeResult = {
+  id: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  title_name: string
+  publish_date: string | null
+  publish_event: string | null
+  contents_url: string
+  description: string
+  next_id: string | null
+  previous_id: string | null
+  series: bandeDessineeSerires | null
+  parsed_description: ParsedContent[]
+  table_of_contents: TableOfContents
+}
+
+type bandeDessineeSerires = {
+  id: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  series_name: string
+}
+
+export type {
+  RequestJSONType,
+  ParsedContent,
+  TableOfContents,
+  contentsAPIResult,
+  categoryAPIResult,
+  infoAPIResult,
+  bandeDessineeResult,
+}

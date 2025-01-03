@@ -1,5 +1,5 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
-import { categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
+import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
 import { getNodeEnv } from '../env'
 
 const revalidateTime = getNodeEnv() === 'production' ? 60 : 0
@@ -121,4 +121,47 @@ async function getInfo() {
   return data
 }
 
-export { getOGPData, getCMSContents, getCMSContent, getCMSContentsWithTags, getTags, getInfo }
+async function getBandeDessinee(offset?: number, limit?: number) {
+  const { env } = getRequestContext()
+  const host = env.HOST
+  const url = new URL(host + '/api/cms/bande_dessinee')
+  if (offset) url.searchParams.set('offset', offset?.toString() || '0')
+  if (limit) url.searchParams.set('limit', limit?.toString() || '10')
+
+  const cmsAPIKey = env.CMS_FETCHER_API_KEY
+
+  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
+
+  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const data = (await res.json()) as { bandeDessinees: bandeDessineeResult[]; total: number }
+
+  return data
+}
+
+async function getBandeDessineeByID(contentID: string, draftKey?: string) {
+  const { env } = getRequestContext()
+  const host = env.HOST
+  const url = new URL(host + '/api/cms/bande_dessinee')
+  url.searchParams.set('content_id', contentID)
+  if (draftKey) url.searchParams.set('draftKey', draftKey)
+
+  const cmsAPIKey = env.CMS_FETCHER_API_KEY
+
+  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
+
+  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const data = (await res.json()) as bandeDessineeResult
+
+  return data
+}
+
+export {
+  getOGPData,
+  getCMSContents,
+  getCMSContent,
+  getCMSContentsWithTags,
+  getTags,
+  getInfo,
+  getBandeDessinee,
+  getBandeDessineeByID,
+}

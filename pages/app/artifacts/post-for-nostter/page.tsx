@@ -35,7 +35,6 @@ export default async function PostForNostter() {
         publishedAt={postForNostterContent.publishedAt}
         updatedAt={postForNostterContent.updatedAt}
         categories={[]}
-        rawContent={''}
         parsedContents={postForNostterContent.parsed_content}
         tableOfContents={postForNostterContent.table_of_contents}
         type="info"

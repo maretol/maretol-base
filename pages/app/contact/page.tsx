@@ -35,7 +35,6 @@ export default async function ContactPage() {
         publishedAt={contactPageContents.publishedAt}
         updatedAt={contactPageContents.updatedAt}
         categories={[]}
-        rawContent={contactPageContents.main_text}
         parsedContents={contactPageContents.parsed_content}
         tableOfContents={contactPageContents.table_of_contents}
         type="info"
