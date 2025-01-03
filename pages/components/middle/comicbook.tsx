@@ -3,12 +3,13 @@
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '../ui/button'
-import { rewriteImageURL } from '@/lib/image'
+import { getHeaderImage, rewriteImageURL } from '@/lib/image'
 import { originImageOption } from '@/lib/static'
 import ClientImage from '../small/client_image'
 import { preload } from 'react-dom'
 import ComicImage from '../small/comic_image'
 import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 type ComicBookProps = {
   originPageSrc: string[]
@@ -24,7 +25,7 @@ type pageState = {
 
 export default function ComicBook(props: ComicBookProps) {
   const { originPageSrc, coverPageSrc, backCoverPageSrc, startPageLeftRight } = props
-
+  const headerImage = getHeaderImage()
   const [currentPage, setCurrentPage] = useState(0)
 
   const memoPageList = useMemo(() => {
@@ -76,17 +77,31 @@ export default function ComicBook(props: ComicBookProps) {
 
   return (
     <div className="h-screen w-full bg-gray-700 static" onKeyDown={keyEvent} tabIndex={0}>
-      <div className="absolute left-0 top-0 h-full flex justify-center items-center bg-gray-500 opacity-50">
-        <Button className="h-full w-full" variant="ghost" onClick={leftClick}>
+      <div
+        className={cn(
+          'absolute top-0 left-0 w-full flex justify-center items-center bg-gray-300',
+          'transition-opacity ease-in-out duration-100 opacity-0 hover:opacity-70'
+        )}
+      >
+        <div className="pt-10 bg-gray-300 w-full max-w-[1500px]">
+          <Button variant={'link'} className="p-0" asChild>
+            <Link href="/">
+              <ClientImage src={headerImage} width={500} height={200} alt="Maretol Base" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+      <div className="absolute left-0 top-0 h-full w-1/4 flex justify-center items-center opacity-70">
+        <Button className="h-full w-full flex justify-start items-center" variant="frame" onClick={leftClick}>
           <ChevronLeftIcon className="text-white h-20 w-20" />
         </Button>
       </div>
-      <div className="absolute right-0 top-0 h-full flex justify-center items-center bg-gray-500 opacity-50">
-        <Button className="h-full w-full" variant="ghost" onClick={rightClick}>
+      <div className="absolute right-0 top-0 h-full w-1/4 flex justify-center items-center opacity-70">
+        <Button className="h-full w-full flex justify-end items-center" variant="frame" onClick={rightClick}>
           <ChevronRightIcon className="text-white h-20 w-20" />
         </Button>
       </div>
-      <div className="text-white h-full w-full">
+      <div className="text-white h-[97%] w-full">
         {memoPageList.map((page, i) => {
           const src = typeof page.src === 'string' ? page.src : page.src[0]
           switch (page.position) {
@@ -116,7 +131,9 @@ export default function ComicBook(props: ComicBookProps) {
                   key={i}
                   className={cn('h-full w-full flex justify-center items-center', i === currentPage ? '' : 'hidden')}
                 >
-                  <ComicImage src={src} alt="" className="w-auto h-full max-h-fit max-w-[50%]" />
+                  <div className="w-[50%] h-full flex items-center justify-end">
+                    <ComicImage src={src} alt="" className="w-auto h-full max-h-fit max-w-full" />
+                  </div>
                   <div className="w-[50%]"></div>
                 </div>
               )
@@ -127,11 +144,16 @@ export default function ComicBook(props: ComicBookProps) {
                   className={cn('h-full w-full flex justify-center items-center', i === currentPage ? '' : 'hidden')}
                 >
                   <div className="w-[50%]" />
-                  <ComicImage src={src} alt="" className="w-auto h-full max-h-fit max-w-[50%]" />
+                  <div className="w-[50%] h-full flex items-center justify-start">
+                    <ComicImage src={src} alt="" className="w-auto h-full max-h-fit max-w-full" />
+                  </div>
                 </div>
               )
           }
         })}
+      </div>
+      <div className="bg-gray-700 h-[3%] text-white text-center items-center justify-center flex">
+        <p>現在スマートフォン等の縦長画面には対応できていません</p>
       </div>
     </div>
   )

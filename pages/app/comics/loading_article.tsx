@@ -1,4 +1,5 @@
 import { LoadingArticle } from '@/components/large/loading_article'
+import { LoadingComics } from '@/components/large/loading_comics'
 
 export default function LoadingComicsPage() {
   // 1-5のリスト
@@ -7,7 +8,7 @@ export default function LoadingComicsPage() {
   return (
     <div className="flex flex-col justify-center gap-10">
       {list.map((_, i) => (
-        <LoadingArticle key={i} /> // マンガ一覧ページではデザインを変える可能性が高いので後で別のを用意する
+        <LoadingComics key={i} /> // マンガ一覧ページではデザインを変える可能性が高いので後で別のを用意する
       ))}
     </div>
   )

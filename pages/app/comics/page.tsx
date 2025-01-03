@@ -12,6 +12,7 @@ export default async function ComicsPage(props: {
 }) {
   const searchParams = await props.searchParams
   const page = searchParams['p']
+  const seriesId = searchParams['series']
   const pageNumber = isPage(page) ? Number(page) : 1
   const offset = (pageNumber - 1) * pageLimit
   const limit = pageLimit

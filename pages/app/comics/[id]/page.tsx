@@ -1,6 +1,7 @@
 import { metadata } from '@/app/layout'
-import { ComicBookPage } from '@/components/large/comics'
+import { ComicBookPage, ComicDetailPage } from '@/components/large/comics'
 import ClientImage from '@/components/small/client_image'
+import FooterButtons from '@/components/small/footer'
 import { getBandeDessineeByID } from '@/lib/api/workers'
 import { getHostname } from '@/lib/env'
 import { rewriteImageURL } from '@/lib/image'
@@ -75,7 +76,38 @@ export default async function ComicPage(props: {
         parsedDescription={data.parsed_description}
         next={data.next_id}
         previous={data.previous_id}
+        seriesId={data.series?.id ?? null}
+        seriesName={data.series?.series_name ?? null}
       />
+      <div className="flex justify-center w-full">
+        <div className="w-full max-w-[1500px]">
+          <ComicDetailPage
+            id={id}
+            titleName={title}
+            publishedAt={data.publishedAt}
+            updatedAt={data.updatedAt}
+            publishDate={data.publish_date}
+            publishEvent={data.publish_event}
+            contentsUrl={data.contents_url}
+            nextId={data.next_id}
+            seriesId={data.series?.id ?? null}
+            seriesName={data.series?.series_name ?? null}
+            previousId={data.previous_id}
+            parsedDescription={data.parsed_description}
+            tableOfContents={data.table_of_contents}
+          />
+          <div className="my-10">
+            <footer className="text-center text-sm text-gray-500">
+              <FooterButtons />
+              <div>
+                © 2024 Maretol
+                <br />
+                DO NOT REPOST WITHOUT PERMISSION
+              </div>
+            </footer>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

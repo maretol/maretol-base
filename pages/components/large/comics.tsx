@@ -7,8 +7,10 @@ import { imageOption, originImageOption } from '@/lib/static'
 import ArticleContent from '../middle/article_content'
 import { Button } from '../ui/button'
 import Link from 'next/link'
-import { BookImageIcon } from 'lucide-react'
+import { ArrowLeftSquareIcon, ArrowRightSquareIcon, BookImageIcon, HomeIcon } from 'lucide-react'
 import ComicBook from '../middle/comicbook'
+import ShareButton from '../small/share'
+import { getHostname } from '@/lib/env'
 
 type ComicArticleProps = {
   id: string
@@ -20,6 +22,8 @@ type ComicArticleProps = {
   contentsUrl: string
   nextId: string | null
   previousId: string | null
+  seriesId: string | null
+  seriesName: string | null
   parsedDescription: ParsedContent[]
   tableOfContents: TableOfContents
 }
@@ -37,6 +41,8 @@ type ComicBookProps = {
   parsedDescription: ParsedContent[]
   next: string | null
   previous: string | null
+  seriesId: string | null
+  seriesName: string | null
 }
 
 export async function ComicOverview(props: ComicArticleProps) {
@@ -56,6 +62,11 @@ export async function ComicOverview(props: ComicArticleProps) {
   const title = props.titleName
   // マンガページのリンクURL
   const linkURL = `/comics/${props.id}`
+  // 公開日・イベント情報
+  const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : 'Web初公開'
+  const publishEvent = props.publishEvent ? props.publishEvent : 'Web初公開'
+  // シリーズ設定
+  const series = props.seriesName || 'シリーズ設定なし'
 
   return (
     <Card className="w-full">
@@ -83,11 +94,12 @@ export async function ComicOverview(props: ComicArticleProps) {
             <div className="w-full space-y-3 font-semibold">
               <h2 className="text-xl font-bold pl-2 pb-1 content-h2">作品情報</h2>
               <div>
-                {props.publishDate && <p>初公開日 : {convertJSTDate(props.publishDate)}</p>}
-                {props.publishEvent && <p>イベント : {props.publishEvent}</p>}
+                <p>初公開イベント名 : {publishEvent}</p>
+                <p>初公開イベント日 : {publishDate} </p>
+                <p>シリーズ名 : {series}</p>
               </div>
             </div>
-            <div>
+            <div className="w-full space-y-3">
               <h2 className="text-xl font-bold pl-2 pb-1 content-h2">概要</h2>
               <ArticleContent contents={[description[0]]} sample articleID={props.id} />
             </div>
@@ -116,8 +128,6 @@ export async function ComicBookPage(props: ComicBookProps) {
   const pageSrcArray = Array.from({ length: props.lastPageNumber - props.firstPageNumber + 1 }, (_, i) => {
     return getPageImageSrc(props.baseUrl, props.filename, props.firstPageNumber + i, props.format)
   })
-  // ページソースをCDN経由アドレスに切り替える
-  const pageSrcArrayRewritten = pageSrcArray.map((src) => rewriteImageURL(originImageOption, src))
 
   return (
     <div>
@@ -127,21 +137,88 @@ export async function ComicBookPage(props: ComicBookProps) {
         backCoverPageSrc={backCoverPageSrc}
         startPageLeftRight={props.firstPageLeftRight}
       />
-      <p>
-        ページ数: {props.firstPageNumber} から {props.lastPageNumber}
-      </p>
-      <p>フォーマット: {props.format}</p>
-      <p>ファイル名: {props.filename}</p>
-      <p>表紙の画像URL : {coverPageSrc}</p>
-      {pageSrcArray.map((src, i) => {
-        return (
-          <p key={i}>
-            {i + props.firstPageNumber}ページ: {src}
-          </p>
-        )
-      })}
-      <p>裏表紙の画像URL : {backCoverPageSrc}</p>
     </div>
+  )
+}
+
+export async function ComicDetailPage(props: ComicArticleProps) {
+  const url = getHostname() + '/comics/' + props.id
+  const isNextExist = props.nextId !== null
+  const isPreviousExist = props.previousId !== null
+  const isSereies = props.seriesName !== null
+
+  const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : 'Web初公開'
+  const publishEvent = props.publishEvent ? props.publishEvent : 'Web初公開'
+  const seriesName = props.seriesName || 'シリーズ設定なし'
+
+  return (
+    <Card className="w-full">
+      <CardContent className="py-2">
+        <div className="mt-5 space-y-2">
+          <h1 className="text-2xl font-bold pl-2 pb-1 content-h2">{props.titleName}</h1>
+          <div className="flex items-center justify-end gap-2">
+            <ShareButton variant="twitter" url={url} title={props.titleName + ' | Maretol Base'} />
+            <ShareButton variant="copy_and_paste" url={url} title={props.titleName + ' | Maretol Base'} />
+          </div>
+          <div className="w-full font-semibold flex justify-center items-center gap-10">
+            <Button disabled={!isNextExist} variant="secondary" className="w-80 gap-1" asChild={isNextExist}>
+              <Link href={`/comics/${props.nextId}`} className="flex items-center justify-center gap-1">
+                <ArrowLeftSquareIcon className="w-4 h-4" />
+                次のエピソード
+              </Link>
+            </Button>
+            <Button disabled={!isPreviousExist} variant="secondary" className="w-80 gap-1" asChild={isPreviousExist}>
+              <Link href={`/comics/${props.previousId}`} className="flex items-center justify-center gap-1">
+                前のエピソード
+                <ArrowRightSquareIcon className="w-4 h-4" />
+              </Link>
+            </Button>
+          </div>
+          <div className="w-full font-semibold flex justify-center items-center gap-10">
+            <Button disabled={!isSereies} variant="secondary" className="w-80 gap-1" asChild={isSereies}>
+              <Link href={`/comics?series=${props.seriesId}`} className="flex items-center justify-center gap-1">
+                {isSereies ? 'シリーズ一覧' : 'シリーズ設定なし'}
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+      <CardContent className="my-1 space-y-3">
+        <h2 className="text-xl font-bold pb-1 border-blue-900 pl-3 border-l-4">作品詳細</h2>
+        <div className="space-y-4 font-semibold">
+          <div>
+            <p>タイトル : {props.titleName}</p>
+            <p>シリーズ名 : {seriesName}</p>
+          </div>
+          <div>
+            <p>作成日 : {convertJST(props.publishedAt)}</p>
+            <p>最終更新日 : {convertJST(props.updatedAt)}</p>
+          </div>
+          <div>
+            <p>初公開イベント名 : {publishEvent}</p>
+            <p>初公開イベント日 : {publishDate}</p>
+          </div>
+        </div>
+        <div className="space-x-4 flex justify-center">
+          <Button className="w-48 gap-1" asChild>
+            <Link href="/comics">
+              <BookImageIcon className="w-4 h-4" />
+              マンガトップ
+            </Link>
+          </Button>
+          <Button className="w-48 gap-1" asChild>
+            <Link href="/">
+              <HomeIcon className="w-4 h-4" />
+              ホーム
+            </Link>
+          </Button>
+        </div>
+      </CardContent>
+      <hr className="border-gray-600 mx-4 h-8" />
+      <CardContent>
+        <ArticleContent contents={props.parsedDescription} articleID={props.id} />
+      </CardContent>
+    </Card>
   )
 }
 

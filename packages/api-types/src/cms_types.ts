@@ -68,8 +68,17 @@ type bandeDessineeResult = {
   description: string
   next_id: string | null
   previous_id: string | null
+  series: bandeDessineeSerires | null
   parsed_description: ParsedContent[]
   table_of_contents: TableOfContents
+}
+
+type bandeDessineeSerires = {
+  id: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  series_name: string
 }
 
 export type {

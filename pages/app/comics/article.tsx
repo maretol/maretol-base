@@ -1,4 +1,5 @@
 import { ComicOverview } from '@/components/large/comics'
+import { LoadingComics } from '@/components/large/loading_comics'
 import Pagenation from '@/components/middle/pagenation'
 import { getBandeDessinee } from '@/lib/api/workers'
 
@@ -25,6 +26,8 @@ export default async function ComicsPageArticles({
           publishDate={bandeDessinee.publish_date}
           publishEvent={bandeDessinee.publish_event}
           contentsUrl={bandeDessinee.contents_url}
+          seriesId={bandeDessinee.series?.id ?? null}
+          seriesName={bandeDessinee.series?.series_name ?? null}
           nextId={bandeDessinee.next_id}
           previousId={bandeDessinee.previous_id}
           parsedDescription={bandeDessinee.parsed_description}
