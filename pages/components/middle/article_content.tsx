@@ -17,6 +17,7 @@ import Table from './article_dom/table_of_contents'
 import ArtifactCard from './article_dom/artifactcard'
 import AmazonArea from './article_dom/amazon'
 import ComicPageCard from './article_dom/comiccard'
+import LoadingComicCard from './loading_dom/loading_comiccard'
 
 export default async function ArticleContent({
   contents,
@@ -154,7 +155,7 @@ export default async function ArticleContent({
             // 漫画ページへのリンク
             return (
               <div key={i} className="py-6">
-                <Suspense fallback={<div>loading comic</div>}>
+                <Suspense fallback={<LoadingComicCard />}>
                   <ComicPageCard link={text} />
                 </Suspense>
               </div>
