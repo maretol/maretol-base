@@ -12,7 +12,8 @@
     "deploy:cms": "npm run --workspace=cms-data-fetcher deploy-prd",
     "deploy:page": "npm run --workspace=pages deploy-prd",
     "deploy-stg:page": "npm run --workspace=pages deploy-stg",
-    "build:page": "npm run --workspace=pages pages:build"
+    "build:page": "npm run --workspace=pages pages:build",
+    "lint:page": "npm run --workspace=pages lint"
   },
   "author": "maretol",
   "private": true,

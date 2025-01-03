@@ -7,6 +7,18 @@ import { pageLimit } from '@/lib/static'
 
 export const runtime = 'edge'
 
+export async function generateMetadata(props: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
+  const searchParams = await props.searchParams
+  const page = searchParams['p']
+  const pageNumber = isPage(page) ? Number(page) : 1
+
+  return {
+    title: `Comics : page ${pageNumber} | Maretol Base`,
+  }
+}
+
 export default async function ComicsPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {

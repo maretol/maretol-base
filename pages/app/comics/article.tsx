@@ -28,6 +28,8 @@ export default async function ComicsPageArticles({
           contentsUrl={bandeDessinee.contents_url}
           seriesId={bandeDessinee.series?.id ?? null}
           seriesName={bandeDessinee.series?.series_name ?? null}
+          tagId={bandeDessinee.tag.id}
+          tagName={bandeDessinee.tag.tag_name}
           nextId={bandeDessinee.next_id}
           previousId={bandeDessinee.previous_id}
           parsedDescription={bandeDessinee.parsed_description}
