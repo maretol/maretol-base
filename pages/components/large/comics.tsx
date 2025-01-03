@@ -7,7 +7,7 @@ import { imageOption, originImageOption } from '@/lib/static'
 import ArticleContent from '../middle/article_content'
 import { Button } from '../ui/button'
 import Link from 'next/link'
-import { ArrowLeftSquareIcon, ArrowRightSquareIcon, BookImageIcon, HomeIcon } from 'lucide-react'
+import { ArrowLeftSquareIcon, ArrowRightSquareIcon, ArrowUpSquareIcon, BookImageIcon, HomeIcon } from 'lucide-react'
 import ComicBook from '../middle/comicbook'
 import ShareButton from '../small/share'
 import { getHostname } from '@/lib/env'
@@ -24,6 +24,8 @@ type ComicArticleProps = {
   previousId: string | null
   seriesId: string | null
   seriesName: string | null
+  tagId: string
+  tagName: string
   parsedDescription: ParsedContent[]
   tableOfContents: TableOfContents
 }
@@ -43,6 +45,8 @@ type ComicBookProps = {
   previous: string | null
   seriesId: string | null
   seriesName: string | null
+  tagId: string
+  tagName: string
 }
 
 export async function ComicOverview(props: ComicArticleProps) {
@@ -66,12 +70,14 @@ export async function ComicOverview(props: ComicArticleProps) {
   const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : 'Web初公開'
   const publishEvent = props.publishEvent ? props.publishEvent : 'Web初公開'
   // シリーズ設定
-  const series = props.seriesName || 'シリーズ設定なし'
+  const series = props.seriesName || '-'
+  // ジャンル設定
+  const tag = props.tagName || '-'
 
   return (
     <Card className="w-full">
       <CardHeader className="py-2"></CardHeader>
-      <div className="flex sm:flex-row flex-col">
+      <div className="flex sm:flex-row flex-col mb-4">
         <CardContent className="sm:max-w-full flex flex-row justify-center pb-0">
           <ClientImage src={coverImageURL} alt={title} width={400} height={800} className="m-2" />
         </CardContent>
@@ -96,7 +102,8 @@ export async function ComicOverview(props: ComicArticleProps) {
               <div>
                 <p>初公開イベント名 : {publishEvent}</p>
                 <p>初公開イベント日 : {publishDate} </p>
-                <p>シリーズ名 : {series}</p>
+                <p>シリーズ : {series}</p>
+                <p>ジャンル : {tag}</p>
               </div>
             </div>
             <div className="w-full space-y-3">
@@ -149,7 +156,8 @@ export async function ComicDetailPage(props: ComicArticleProps) {
 
   const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : 'Web初公開'
   const publishEvent = props.publishEvent ? props.publishEvent : 'Web初公開'
-  const seriesName = props.seriesName || 'シリーズ設定なし'
+  const seriesName = props.seriesName || '-'
+  const tagName = props.tagName || '-'
 
   return (
     <Card className="w-full">
@@ -164,12 +172,12 @@ export async function ComicDetailPage(props: ComicArticleProps) {
             <Button disabled={!isNextExist} variant="secondary" className="w-80 gap-1" asChild={isNextExist}>
               <Link href={`/comics/${props.nextId}`} className="flex items-center justify-center gap-1">
                 <ArrowLeftSquareIcon className="w-4 h-4" />
-                次のエピソード
+                Next episode
               </Link>
             </Button>
             <Button disabled={!isPreviousExist} variant="secondary" className="w-80 gap-1" asChild={isPreviousExist}>
               <Link href={`/comics/${props.previousId}`} className="flex items-center justify-center gap-1">
-                前のエピソード
+                Previous episode
                 <ArrowRightSquareIcon className="w-4 h-4" />
               </Link>
             </Button>
@@ -177,7 +185,8 @@ export async function ComicDetailPage(props: ComicArticleProps) {
           <div className="w-full font-semibold flex justify-center items-center gap-10">
             <Button disabled={!isSereies} variant="secondary" className="w-80 gap-1" asChild={isSereies}>
               <Link href={`/comics?series=${props.seriesId}`} className="flex items-center justify-center gap-1">
-                {isSereies ? 'シリーズ一覧' : 'シリーズ設定なし'}
+                <ArrowUpSquareIcon className="w-4 h-4" />
+                This series
               </Link>
             </Button>
           </div>
@@ -188,7 +197,8 @@ export async function ComicDetailPage(props: ComicArticleProps) {
         <div className="space-y-4 font-semibold">
           <div>
             <p>タイトル : {props.titleName}</p>
-            <p>シリーズ名 : {seriesName}</p>
+            <p>シリーズ : {seriesName}</p>
+            <p>ジャンル : {tagName}</p>
           </div>
           <div>
             <p>作成日 : {convertJST(props.publishedAt)}</p>
@@ -203,13 +213,13 @@ export async function ComicDetailPage(props: ComicArticleProps) {
           <Button className="w-48 gap-1" asChild>
             <Link href="/comics">
               <BookImageIcon className="w-4 h-4" />
-              マンガトップ
+              Comics Page Top
             </Link>
           </Button>
           <Button className="w-48 gap-1" asChild>
             <Link href="/">
               <HomeIcon className="w-4 h-4" />
-              ホーム
+              Page Home
             </Link>
           </Button>
         </div>

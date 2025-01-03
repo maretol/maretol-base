@@ -16,6 +16,7 @@ import LoadingBlogCard from './loading_dom/loading_blogcard'
 import Table from './article_dom/table_of_contents'
 import ArtifactCard from './article_dom/artifactcard'
 import AmazonArea from './article_dom/amazon'
+import ComicPageCard from './article_dom/comiccard'
 
 export default async function ArticleContent({
   contents,
@@ -114,12 +115,6 @@ export default async function ArticleContent({
                 <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
               </div>
             )
-          } else if (pOption === 'comic') {
-            // 漫画系の場合、漫画ビューアを混ぜたコンポーネントを表示
-            const tag = 'content_comic'
-            const src = text
-            const subText = c.sub_texts
-            return <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
           } else if (pOption === 'youtube') {
             // YouTubeの埋め込み
             return <YouTubeArea key={i} videoURL={text} />
@@ -152,6 +147,15 @@ export default async function ArticleContent({
               <div key={i} className="py-6">
                 <Suspense fallback={<LoadingBlogCard />}>
                   <ArtifactCard link={text} />
+                </Suspense>
+              </div>
+            )
+          } else if (pOption === 'comic') {
+            // 漫画ページへのリンク
+            return (
+              <div key={i} className="py-6">
+                <Suspense fallback={<div>loading comic</div>}>
+                  <ComicPageCard link={text} />
                 </Suspense>
               </div>
             )
