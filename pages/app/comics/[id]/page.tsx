@@ -1,6 +1,5 @@
 import { metadata } from '@/app/layout'
 import { ComicBookPage, ComicDetailPage } from '@/components/large/comics'
-import ClientImage from '@/components/small/client_image'
 import FooterButtons from '@/components/small/footer'
 import { getBandeDessineeByID } from '@/lib/api/workers'
 import { getHostname } from '@/lib/env'
@@ -78,6 +77,8 @@ export default async function ComicPage(props: {
         previous={data.previous_id}
         seriesId={data.series?.id ?? null}
         seriesName={data.series?.series_name ?? null}
+        tagId={data.tag.id}
+        tagName={data.tag.tag_name}
       />
       <div className="flex justify-center w-full">
         <div className="w-full max-w-[1500px]">
@@ -92,6 +93,8 @@ export default async function ComicPage(props: {
             nextId={data.next_id}
             seriesId={data.series?.id ?? null}
             seriesName={data.series?.series_name ?? null}
+            tagId={data.tag.id}
+            tagName={data.tag.tag_name}
             previousId={data.previous_id}
             parsedDescription={data.parsed_description}
             tableOfContents={data.table_of_contents}

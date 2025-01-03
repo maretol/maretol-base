@@ -45,8 +45,7 @@ function getPOption(text: string) {
     pOpt = 'image'
   } else if (isPhoto(text)) {
     pOpt = 'photo'
-  } else if (isComic(text)) {
-    // 現状選べない。そのうち実装してなんとかする
+  } else if (isComicPage(text)) {
     pOpt = 'comic'
   } else if (isYouTube(text)) {
     pOpt = 'youtube'
@@ -89,8 +88,8 @@ function isPhoto(text: string) {
   return
 }
 
-function isComic(text: string) {
-  return text.indexOf('content_comic:::') === 0
+function isComicPage(text: string) {
+  return text.indexOf('https://www.maretol.xyz/comics/') === 0 || text.indexOf('https://maretol.xyz/comics/') === 0
 }
 
 function isYouTube(text: string) {

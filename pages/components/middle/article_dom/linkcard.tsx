@@ -1,4 +1,4 @@
-import { rewriteImageURL } from '@/lib/image'
+import { getNoImage, rewriteImageURL } from '@/lib/image'
 import { originImageOption } from '@/lib/static'
 import ClientImage from '@/components/small/client_image'
 import { getOGPData } from '@/lib/api/workers'
@@ -62,8 +62,4 @@ export default async function LinkCard({ link }: { link: string }) {
       </Link>
     </div>
   )
-}
-
-function getNoImage() {
-  return rewriteImageURL(originImageOption, 'https://r2.maretol.xyz/assets/no_image.png')
 }
