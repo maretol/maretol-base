@@ -2,7 +2,7 @@ import { Article } from '@/components/large/article'
 import Pagenation from '@/components/middle/pagenation'
 import { getCMSContents } from '@/lib/api/workers'
 
-export default async function MainPageArticles({
+export default async function BlogPageArticles({
   pageNumber,
   offset,
   limit,
@@ -25,7 +25,7 @@ export default async function MainPageArticles({
         />
       ))}
       <div className="flex justify-center">
-        <Pagenation path="/" currentPage={pageNumber} totalPage={Math.ceil(total / limit)} />
+        <Pagenation path="/blog" currentPage={pageNumber} totalPage={Math.ceil(total / limit)} />
       </div>
     </div>
   )

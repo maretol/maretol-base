@@ -35,7 +35,6 @@ export default async function About() {
         publishedAt={aboutPageContents.publishedAt}
         updatedAt={aboutPageContents.updatedAt}
         categories={[]}
-        rawContent={''}
         parsedContents={aboutPageContents.parsed_content}
         tableOfContents={aboutPageContents.table_of_contents}
         type="info"
