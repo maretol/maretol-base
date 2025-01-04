@@ -1,19 +1,18 @@
 'use client'
 
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { use, useCallback, useMemo, useState } from 'react'
 import { Button } from '../ui/button'
 import { getHeaderImage } from '@/lib/image'
 import ClientImage from '../small/client_image'
 import ComicImage from '../small/comic_image'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
+import { BandeDessineeConfig, bandeDessineeResult } from 'api-types'
 
 type ComicBookProps = {
-  originPageSrc: string[]
-  coverPageSrc: string
-  backCoverPageSrc: string
-  startPageLeftRight: 'left' | 'right'
+  cmsResult: Promise<bandeDessineeResult>
+  configResult: Promise<BandeDessineeConfig>
 }
 
 type pageState = {
@@ -22,7 +21,22 @@ type pageState = {
 }
 
 export default function ComicBook(props: ComicBookProps) {
-  const { originPageSrc, coverPageSrc, backCoverPageSrc, startPageLeftRight } = props
+  const { cmsResult, configResult } = props
+  const data = use(cmsResult)
+  const config = use(configResult)
+
+  const baseUrl = data.contents_url.replaceAll('/index.json', '')
+  const filename = config.filename
+  const startPage = config.first_page
+  const lastPage = config.last_page
+  const format = config.format
+  const pageArray = Array.from({ length: lastPage - startPage + 1 }, (_, i) => i + startPage)
+
+  const coverPageSrc = baseUrl + '/' + config.cover
+  const backCoverPageSrc = baseUrl + '/' + config.back_cover
+  const startPageLeftRight = config.first_page_left_right
+  const originPageSrc = pageArray.map((i) => getPageImageSrc(baseUrl, filename, i, format))
+
   const headerImage = getHeaderImage()
   const [currentPage, setCurrentPage] = useState(0)
 
@@ -109,7 +123,7 @@ export default function ComicBook(props: ComicBookProps) {
                   key={i}
                   className={cn('h-full w-full flex justify-center items-center', i === currentPage ? '' : 'hidden')}
                 >
-                  <ComicImage src={src} alt="" className="w-auto h-full max-h-fit max-w-fit" />
+                  <ComicImage src={src} alt="" className="h-full w-full max-h-fit max-w-max" />
                 </div>
               )
             case 'pair':
@@ -155,4 +169,10 @@ export default function ComicBook(props: ComicBookProps) {
       </div>
     </div>
   )
+}
+
+function getPageImageSrc(baseUrl: string, filename: string, pageNumber: number, format: string) {
+  // 3桁まで0埋め
+  const pageNumberStr = pageNumber.toString().padStart(3, '0')
+  return `${baseUrl}/${filename}_${pageNumberStr}.${format}`
 }

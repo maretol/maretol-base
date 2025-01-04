@@ -1,12 +1,15 @@
 import { metadata } from '@/app/layout'
-import { ComicBookPage, ComicDetailPage } from '@/components/large/comics'
+import { ComicDetailPage } from '@/components/large/comics'
+import { LoadingComicBook } from '@/components/large/loading_comics'
+import ComicBook from '@/components/middle/comicbook'
 import FooterButtons from '@/components/small/footer'
 import { getBandeDessineeByID } from '@/lib/api/workers'
 import { getHostname } from '@/lib/env'
 import { rewriteImageURL } from '@/lib/image'
-import { ogpImageOption, originImageOption } from '@/lib/static'
+import { ogpImageOption } from '@/lib/static'
 import { BandeDessineeConfig } from 'api-types'
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 
 export const runtime = 'edge'
 
@@ -18,7 +21,7 @@ export async function generateMetadata(props: {
   const draftKey = (await props.searchParams)['draftKey']
   const data = await getBandeDessineeByID(id, draftKey)
   const contentsUrl = data.contents_url
-  const contentsUrlResponse = await fetch(contentsUrl, { next: { revalidate: 60 } })
+  const contentsUrlResponse = await fetch(contentsUrl, { next: { revalidate: 300 } })
   const config = (await contentsUrlResponse.json()) as BandeDessineeConfig
   const contentsBaseUrl = contentsUrl.replaceAll('/index.json', '')
 
@@ -50,36 +53,18 @@ export default async function ComicPage(props: {
 }) {
   const id = (await props.params).id
   const draftKey = (await props.searchParams)['draftKey']
-  const data = await getBandeDessineeByID(id, draftKey)
-  const contentsUrl = data.contents_url
-  const contentsUrlResponse = await fetch(contentsUrl, { next: { revalidate: 60 } })
-  const config = (await contentsUrlResponse.json()) as BandeDessineeConfig
-  const contentsBaseUrl = contentsUrl.replaceAll('/index.json', '')
+  const asyncData = getBandeDessineeByID(id, draftKey)
+  const data = await asyncData
+  const rawConfig = await fetch(data.contents_url, { next: { revalidate: 300 } })
+  const config = rawConfig.json<BandeDessineeConfig>()
 
   const title = data.title_name
-  const firstPage = config.first_page
-  const lastPage = config.last_page
 
   return (
     <div className="p-0 m-0">
-      <ComicBookPage
-        id={id}
-        baseUrl={contentsBaseUrl}
-        coverImage={config.cover}
-        backCoverImage={config.back_cover}
-        firstPageNumber={firstPage}
-        lastPageNumber={lastPage}
-        firstPageLeftRight={config.first_page_left_right}
-        format={config.format}
-        filename={config.filename}
-        parsedDescription={data.parsed_description}
-        next={data.next_id}
-        previous={data.previous_id}
-        seriesId={data.series?.id ?? null}
-        seriesName={data.series?.series_name ?? null}
-        tagId={data.tag.id}
-        tagName={data.tag.tag_name}
-      />
+      <Suspense fallback={<LoadingComicBook />}>
+        <ComicBook cmsResult={asyncData} configResult={config} />
+      </Suspense>
       <div className="flex justify-center w-full">
         <div className="w-full max-w-[1500px]">
           <ComicDetailPage

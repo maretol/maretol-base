@@ -1,5 +1,4 @@
 import { ComicOverview } from '@/components/large/comics'
-import { LoadingComics } from '@/components/large/loading_comics'
 import Pagenation from '@/components/middle/pagenation'
 import { getBandeDessinee } from '@/lib/api/workers'
 
