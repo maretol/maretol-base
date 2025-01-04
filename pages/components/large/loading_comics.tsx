@@ -1,3 +1,4 @@
+import { LoaderCircleIcon } from 'lucide-react'
 import { Card, CardContent } from '../ui/card'
 import { Skeleton } from '../ui/skeleton'
 
@@ -28,5 +29,13 @@ export function LoadingComics() {
         <Skeleton className="w-full h-12" />
       </CardContent>
     </Card>
+  )
+}
+
+export function LoadingComicBook() {
+  return (
+    <div className="w-full h-screen flex justify-center items-center bg-gray-700">
+      <LoaderCircleIcon className="w-24 h-24 text-white animate-spin" />
+    </div>
   )
 }
