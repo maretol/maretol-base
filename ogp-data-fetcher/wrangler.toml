@@ -1,7 +1,7 @@
 #:schema node_modules/wrangler/config-schema.json
 name = "ogp-data-fetcher"
 main = "src/index.ts"
-compatibility_date = "2024-08-21"
+compatibility_date = "2024-11-11"
 compatibility_flags = ["nodejs_compat"]
 routes = [
 #     { pattern = "api.maretol.xyz", custom_domain = true }, # ドメインはCMSの方優先でやる
