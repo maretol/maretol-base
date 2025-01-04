@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitleH1
 import { convertJST, convertJSTDate } from '@/lib/time'
 import ClientImage from '../small/client_image'
 import { rewriteImageURL } from '@/lib/image'
-import { imageOption, originImageOption } from '@/lib/static'
+import { imageOption } from '@/lib/static'
 import ArticleContent from '../middle/article_content'
 import { Button } from '../ui/button'
 import Link from 'next/link'
@@ -52,7 +52,7 @@ type ComicBookProps = {
 export async function ComicOverview(props: ComicArticleProps) {
   const contentsUrl = props.contentsUrl
 
-  const contentsJSON = await fetch(contentsUrl)
+  const contentsJSON = await fetch(contentsUrl, { next: { revalidate: 60 } })
   const contentsConfig = (await contentsJSON.json()) as BandeDessineeConfig
 
   const contentsBaseURL = contentsUrl.replaceAll('/index.json', '')
@@ -67,8 +67,8 @@ export async function ComicOverview(props: ComicArticleProps) {
   // マンガページのリンクURL
   const linkURL = `/comics/${props.id}`
   // 公開日・イベント情報
-  const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : 'Web初公開'
-  const publishEvent = props.publishEvent ? props.publishEvent : 'Web初公開'
+  const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : '-'
+  const publishEvent = props.publishEvent || '-'
   // シリーズ設定
   const series = props.seriesName || '-'
   // ジャンル設定
@@ -154,8 +154,8 @@ export async function ComicDetailPage(props: ComicArticleProps) {
   const isPreviousExist = props.previousId !== null
   const isSereies = props.seriesName !== null
 
-  const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : 'Web初公開'
-  const publishEvent = props.publishEvent ? props.publishEvent : 'Web初公開'
+  const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : '-'
+  const publishEvent = props.publishEvent || '-'
   const seriesName = props.seriesName || '-'
   const tagName = props.tagName || '-'
 
@@ -165,8 +165,8 @@ export async function ComicDetailPage(props: ComicArticleProps) {
         <div className="mt-5 space-y-2">
           <h1 className="text-2xl font-bold pl-2 pb-1 content-h2">{props.titleName}</h1>
           <div className="flex items-center justify-end gap-2">
-            <ShareButton variant="twitter" url={url} title={props.titleName + ' | Maretol Base'} />
-            <ShareButton variant="copy_and_paste" url={url} title={props.titleName + ' | Maretol Base'} />
+            <ShareButton variant="twitter" url={url} title={props.titleName} />
+            <ShareButton variant="copy_and_paste" url={url} title={props.titleName} />
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
             <Button disabled={!isNextExist} variant="secondary" className="w-80 gap-1" asChild={isNextExist}>

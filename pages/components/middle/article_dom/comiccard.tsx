@@ -21,7 +21,8 @@ export default async function ComicPageCard({ link }: { link: string }) {
     const series = data.series?.series_name || '-'
     const shortDescription = data.parsed_description[0].text
     const configURL = data.contents_url
-    const config = (await fetch(configURL).then((res) => res.json())) as BandeDessineeConfig
+    const configResponse = await fetch(configURL, { next: { revalidate: 60 } })
+    const config = (await configResponse.json()) as BandeDessineeConfig
 
     const baseURL = configURL.replaceAll('index.json', '')
     const coverURL = baseURL + config.cover
