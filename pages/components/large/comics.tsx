@@ -1,4 +1,4 @@
-import { BandeDessineeConfig, ParsedContent, TableOfContents } from 'api-types'
+import { ParsedContent, TableOfContents } from 'api-types'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitleH1 } from '../ui/card'
 import { convertJST, convertJSTDate } from '@/lib/time'
 import ClientImage from '../small/client_image'
@@ -25,6 +25,8 @@ type ComicArticleProps = {
   seriesName: string | null
   tagId: string
   tagName: string
+  cover: string | null
+  firstPage: string // 1ページ目のファイル名。結合済みで渡す
   parsedDescription: ParsedContent[]
   tableOfContents: TableOfContents
 }
@@ -32,14 +34,12 @@ type ComicArticleProps = {
 export async function ComicOverview(props: ComicArticleProps) {
   const contentsUrl = props.contentsUrl
 
-  const contentsJSON = await fetch(contentsUrl, { next: { revalidate: 300 } })
-  const contentsConfig = (await contentsJSON.json()) as BandeDessineeConfig
-
   const contentsBaseURL = contentsUrl.replaceAll('/index.json', '')
 
-  // 表紙
-  const coverImageOriginURL = contentsBaseURL + '/' + contentsConfig.cover
-  const coverImageURL = rewriteImageURL(imageOption, coverImageOriginURL)
+  // 表紙、または1ページ目の画像URL
+  const imageFile = props.cover || props.firstPage
+  const imageOriginURL = contentsBaseURL + '/' + imageFile
+  const imageURL = rewriteImageURL(imageOption, imageOriginURL)
   // 説明文
   const description = props.parsedDescription
   // マンガのタイトル
@@ -59,7 +59,9 @@ export async function ComicOverview(props: ComicArticleProps) {
       <CardHeader className="py-2"></CardHeader>
       <div className="flex sm:flex-row flex-col mb-4">
         <CardContent className="sm:max-w-96 sm:min-w-48 w-auto h-auto pb-0 pt-2 pr-0">
-          <ClientImage src={coverImageURL} alt={title} width={400} height={800} className="w-auto h-auto" />
+          <div className="shadow-md">
+            <ClientImage src={imageURL} alt={title} width={400} height={800} className="w-auto h-auto" />
+          </div>
         </CardContent>
         <div className="w-full">
           <CardHeader className="pt-2">

@@ -4,7 +4,6 @@ import { getBandeDessineeByID } from '@/lib/api/workers'
 import { getNoImage, rewriteImageURL } from '@/lib/image'
 import { ogpImageOption } from '@/lib/static'
 import { convertJST } from '@/lib/time'
-import { BandeDessineeConfig } from 'api-types'
 import Link from 'next/link'
 
 export default async function ComicPageCard({ link }: { link: string }) {
@@ -21,11 +20,10 @@ export default async function ComicPageCard({ link }: { link: string }) {
     const series = data.series?.series_name || '-'
     const shortDescription = data.parsed_description[0].text
     const configURL = data.contents_url
-    const configResponse = await fetch(configURL, { next: { revalidate: 60 } })
-    const config = (await configResponse.json()) as BandeDessineeConfig
 
     const baseURL = configURL.replaceAll('index.json', '')
-    const coverURL = baseURL + config.cover
+    const sumnailImage = data.cover || data.filename + '_00' + data.first_page + data.format[0]
+    const coverURL = baseURL + sumnailImage
 
     return (
       <div className="flex max-w-xl">
@@ -51,8 +49,10 @@ export default async function ComicPageCard({ link }: { link: string }) {
                 <div>
                   <p className="text-wrap line-clamp-2">{shortDescription}</p>
                 </div>
-                <div className="h-full flex flex-row items-end justify-end">
-                  <Button className="w-full h-8 bg-gray-800">Read this</Button>
+                <div className="h-full flex flex-row items-end justify-end hover:opacity-70 transition-opacity">
+                  <div className="w-full h-8 bg-gray-800 text-gray-200 rounded-md flex items-center justify-center font-semibold">
+                    Read this
+                  </div>
                 </div>
               </div>
             </div>

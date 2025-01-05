@@ -70,6 +70,13 @@ type bandeDessineeResult = {
   previous_id: string | null
   series: bandeDessineeSerires | null
   tag: bandeDessineeTag
+  cover: string | null
+  back_cover: string | null
+  format: string[]
+  filename: string
+  first_page: number
+  last_page: number
+  first_left_right: ('right' | 'left')[]
   parsed_description: ParsedContent[]
   table_of_contents: TableOfContents
 }
