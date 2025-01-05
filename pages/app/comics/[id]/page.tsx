@@ -16,8 +16,11 @@ export async function generateMetadata(props: {
   params: Promise<{ id: string }>
   searchParams: Promise<{ [key: string]: string | undefined }>
 }) {
-  const id = (await props.params).id
-  const draftKey = (await props.searchParams)['draftKey']
+  const searchParams = await props.searchParams
+  const params = await props.params
+  const id = params.id
+  const draftKey = searchParams['draftKey']
+
   const data = await getBandeDessineeByID(id, draftKey)
   const contentsUrl = data.contents_url
   const contentsBaseUrl = contentsUrl.replaceAll('/index.json', '')
@@ -50,8 +53,10 @@ export default async function ComicPage(props: {
   params: Promise<{ id: string }>
   searchParams: Promise<{ [key: string]: string | undefined }>
 }) {
-  const id = (await props.params).id
-  const draftKey = (await props.searchParams)['draftKey']
+  const params = await props.params
+  const searchParams = await props.searchParams
+  const id = params.id
+  const draftKey = searchParams['draftKey']
   const asyncData = getBandeDessineeByID(id, draftKey)
   const data = await asyncData
 
