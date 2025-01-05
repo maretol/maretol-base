@@ -149,11 +149,8 @@ async function getBandeDessineeByID(contentID: string, draftKey?: string) {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  console.log('fetch start')
   const res = await fetch(request, { cache: 'no-store' })
-  console.log('fetch finished')
   const data = (await res.json()) as bandeDessineeResult
-  console.log('data set')
 
   return data
 }
