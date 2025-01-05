@@ -34,10 +34,13 @@ jobs:
           filters: |
             pages:
               - "pages/**"
+              - "packages/api-types/**"
             ogp-data-fetcher:
               - "ogp-data-fetcher/**"
+              - "packages/api-types/src/ogp_types.ts"
             cms-data-fetcher:
               - "cms-data-fetcher/**"
+              - "packages/api-types/src/cms_types.ts"
             workflow:
               - ".github/workflows/**"
 

@@ -1,12 +1,14 @@
 import { metadata } from '@/app/layout'
-import { ComicBookPage, ComicDetailPage } from '@/components/large/comics'
+import { ComicDetailPage } from '@/components/large/comics'
+import { LoadingComicBook } from '@/components/large/loading_comics'
+import ComicBook from '@/components/middle/comicbook'
 import FooterButtons from '@/components/small/footer'
 import { getBandeDessineeByID } from '@/lib/api/workers'
 import { getHostname } from '@/lib/env'
 import { rewriteImageURL } from '@/lib/image'
-import { ogpImageOption, originImageOption } from '@/lib/static'
-import { BandeDessineeConfig } from 'api-types'
+import { ogpImageOption } from '@/lib/static'
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 
 export const runtime = 'edge'
 
@@ -14,16 +16,19 @@ export async function generateMetadata(props: {
   params: Promise<{ id: string }>
   searchParams: Promise<{ [key: string]: string | undefined }>
 }) {
-  const id = (await props.params).id
-  const draftKey = (await props.searchParams)['draftKey']
+  const searchParams = await props.searchParams
+  const params = await props.params
+  const id = params.id
+  const draftKey = searchParams['draftKey']
+
   const data = await getBandeDessineeByID(id, draftKey)
   const contentsUrl = data.contents_url
-  const contentsUrlResponse = await fetch(contentsUrl, { next: { revalidate: 60 } })
-  const config = (await contentsUrlResponse.json()) as BandeDessineeConfig
   const contentsBaseUrl = contentsUrl.replaceAll('/index.json', '')
 
   const title = data.title_name
-  const coverImageURL = contentsBaseUrl + '/' + config.cover
+  // TODO: 1ページ目のファイル指定はもっときれいにする
+  const ogpImageFile = data.cover || data.filename + '_00' + data.first_page + data.format[0]
+  const coverImageURL = contentsBaseUrl + '/' + ogpImageFile
   const ogpImage = rewriteImageURL(ogpImageOption, coverImageURL)
 
   return {
@@ -48,38 +53,21 @@ export default async function ComicPage(props: {
   params: Promise<{ id: string }>
   searchParams: Promise<{ [key: string]: string | undefined }>
 }) {
-  const id = (await props.params).id
-  const draftKey = (await props.searchParams)['draftKey']
-  const data = await getBandeDessineeByID(id, draftKey)
-  const contentsUrl = data.contents_url
-  const contentsUrlResponse = await fetch(contentsUrl, { next: { revalidate: 60 } })
-  const config = (await contentsUrlResponse.json()) as BandeDessineeConfig
-  const contentsBaseUrl = contentsUrl.replaceAll('/index.json', '')
+  const params = await props.params
+  const searchParams = await props.searchParams
+  const id = params.id
+  const draftKey = searchParams['draftKey']
+  const asyncData = getBandeDessineeByID(id, draftKey)
+  const data = await asyncData
 
   const title = data.title_name
-  const firstPage = config.first_page
-  const lastPage = config.last_page
+  const firstPage = data.filename + '_00' + data.first_page + data.format[0]
 
   return (
     <div className="p-0 m-0">
-      <ComicBookPage
-        id={id}
-        baseUrl={contentsBaseUrl}
-        coverImage={config.cover}
-        backCoverImage={config.back_cover}
-        firstPageNumber={firstPage}
-        lastPageNumber={lastPage}
-        firstPageLeftRight={config.first_page_left_right}
-        format={config.format}
-        filename={config.filename}
-        parsedDescription={data.parsed_description}
-        next={data.next_id}
-        previous={data.previous_id}
-        seriesId={data.series?.id ?? null}
-        seriesName={data.series?.series_name ?? null}
-        tagId={data.tag.id}
-        tagName={data.tag.tag_name}
-      />
+      <Suspense fallback={<LoadingComicBook />}>
+        <ComicBook cmsResult={asyncData} />
+      </Suspense>
       <div className="flex justify-center w-full">
         <div className="w-full max-w-[1500px]">
           <ComicDetailPage
@@ -95,6 +83,8 @@ export default async function ComicPage(props: {
             seriesName={data.series?.series_name ?? null}
             tagId={data.tag.id}
             tagName={data.tag.tag_name}
+            cover={data.cover}
+            firstPage={firstPage}
             previousId={data.previous_id}
             parsedDescription={data.parsed_description}
             tableOfContents={data.table_of_contents}
