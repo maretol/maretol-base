@@ -112,6 +112,9 @@ export function ComicDetailPage(props: ComicArticleProps) {
   const isNextExist = props.nextId !== null
   const isPreviousExist = props.previousId !== null
   const isSereies = props.seriesName !== null
+  const nextLink = isNextExist ? `/comics/${props.nextId}` : ''
+  const previousLink = isPreviousExist ? `/comics/${props.previousId}` : ''
+  const seriesLink = isSereies ? `/comics?series=${props.seriesId}` : ''
 
   const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : '-'
   const publishEvent = props.publishEvent || '-'
@@ -129,13 +132,13 @@ export function ComicDetailPage(props: ComicArticleProps) {
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
             <Button disabled={!isNextExist} variant="secondary" className="w-80 gap-1" asChild={isNextExist}>
-              <Link href={`/comics/${props.nextId}`} className="flex items-center justify-center gap-1">
+              <Link href={nextLink} className="flex items-center justify-center gap-1">
                 <ArrowLeftSquareIcon className="w-4 h-4" />
                 Next episode
               </Link>
             </Button>
             <Button disabled={!isPreviousExist} variant="secondary" className="w-80 gap-1" asChild={isPreviousExist}>
-              <Link href={`/comics/${props.previousId}`} className="flex items-center justify-center gap-1">
+              <Link href={previousLink} className="flex items-center justify-center gap-1">
                 Previous episode
                 <ArrowRightSquareIcon className="w-4 h-4" />
               </Link>
@@ -143,7 +146,7 @@ export function ComicDetailPage(props: ComicArticleProps) {
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
             <Button disabled={!isSereies} variant="secondary" className="w-80 gap-1" asChild={isSereies}>
-              <Link href={`/comics?series=${props.seriesId}`} className="flex items-center justify-center gap-1">
+              <Link href={seriesLink} className="flex items-center justify-center gap-1">
                 <ArrowUpSquareIcon className="w-4 h-4" />
                 This series
               </Link>

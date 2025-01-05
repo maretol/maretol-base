@@ -139,6 +139,7 @@ async function getBandeDessinee(offset?: number, limit?: number) {
 }
 
 async function getBandeDessineeByID(contentID: string, draftKey?: string) {
+  console.log('getBandeDessineeByID is called. contentID: ' + contentID + ', draftKey: ' + draftKey)
   const { env } = getRequestContext()
   const host = env.HOST
   const url = new URL(host + '/api/cms/bande_dessinee')
@@ -152,6 +153,7 @@ async function getBandeDessineeByID(contentID: string, draftKey?: string) {
   const res = await fetch(request, { next: { revalidate: revalidateTime } })
   const data = (await res.json()) as bandeDessineeResult
 
+  console.log('getBandeDessineeByID is finished')
   return data
 }
 
