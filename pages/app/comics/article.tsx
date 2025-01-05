@@ -31,6 +31,8 @@ export default async function ComicsPageArticles({
           tagName={bandeDessinee.tag.tag_name}
           nextId={bandeDessinee.next_id}
           previousId={bandeDessinee.previous_id}
+          cover={bandeDessinee.cover}
+          firstPage={bandeDessinee.filename + '_00' + bandeDessinee.first_page + bandeDessinee.format[0]}
           parsedDescription={bandeDessinee.parsed_description}
           tableOfContents={bandeDessinee.table_of_contents}
         />

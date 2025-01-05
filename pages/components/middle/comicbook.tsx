@@ -8,11 +8,10 @@ import ClientImage from '../small/client_image'
 import ComicImage from '../small/comic_image'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import { BandeDessineeConfig, bandeDessineeResult } from 'api-types'
+import { bandeDessineeResult } from 'api-types'
 
 type ComicBookProps = {
   cmsResult: Promise<bandeDessineeResult>
-  configResult: Promise<BandeDessineeConfig>
 }
 
 type pageState = {
@@ -21,27 +20,31 @@ type pageState = {
 }
 
 export default function ComicBook(props: ComicBookProps) {
-  const { cmsResult, configResult } = props
+  const { cmsResult } = props
   const data = use(cmsResult)
-  const config = use(configResult)
 
   const baseUrl = data.contents_url.replaceAll('/index.json', '')
-  const filename = config.filename
-  const startPage = config.first_page
-  const lastPage = config.last_page
-  const format = config.format
+  const filename = data.filename
+  const startPage = data.first_page
+  const lastPage = data.last_page
+  const format = data.format[0]
   const pageArray = Array.from({ length: lastPage - startPage + 1 }, (_, i) => i + startPage)
 
-  const coverPageSrc = baseUrl + '/' + config.cover
-  const backCoverPageSrc = baseUrl + '/' + config.back_cover
-  const startPageLeftRight = config.first_page_left_right
+  const coverPageSrc = data.cover ? baseUrl + '/' + data.cover : null
+  const backCoverPageSrc = data.back_cover ? baseUrl + '/' + data.back_cover : null
+  const startPageLeftRight = data.first_left_right[0]
   const originPageSrc = pageArray.map((i) => getPageImageSrc(baseUrl, filename, i, format))
 
   const headerImage = getHeaderImage()
   const [currentPage, setCurrentPage] = useState(0)
 
   const memoPageList = useMemo(() => {
-    const pageList = [{ position: 'center', src: coverPageSrc }] as pageState[] // 表紙
+    const pageList: pageState[] = []
+    // 表紙が指定済みの場合（ない場合スキップ
+    if (coverPageSrc) {
+      pageList.push({ position: 'center', src: coverPageSrc })
+    }
+
     if (startPageLeftRight === 'left') {
       // 本文1ページ目が左だった場合、最初のページは左だけで、そこから残りのページは2ページペアで処理する
       pageList.push({ position: 'left', src: originPageSrc[0] })
@@ -64,7 +67,11 @@ export default function ComicBook(props: ComicBookProps) {
         pageList.push({ position: 'pair', src: [originPageSrc[i], originPageSrc[i + 1]] })
       }
     }
-    pageList.push({ position: 'center', src: backCoverPageSrc }) // 裏表紙
+    // 裏表紙が指定済みの場合（ない場合スキップ
+    if (backCoverPageSrc) {
+      pageList.push({ position: 'center', src: backCoverPageSrc }) // 裏表紙
+    }
+
     return pageList
   }, [startPageLeftRight, coverPageSrc, backCoverPageSrc, originPageSrc])
 
@@ -104,12 +111,20 @@ export default function ComicBook(props: ComicBookProps) {
         </div>
       </div>
       <div className="absolute left-0 top-0 h-full w-1/4 flex justify-center items-center opacity-70">
-        <Button className="h-full w-full flex justify-start items-center" variant="frame" onClick={leftClick}>
+        <Button
+          className="h-full w-full flex justify-start items-center outline-none shadow-none"
+          variant="frame"
+          onClick={leftClick}
+        >
           <ChevronLeftIcon className="text-white h-20 w-20" />
         </Button>
       </div>
       <div className="absolute right-0 top-0 h-full w-1/4 flex justify-center items-center opacity-70">
-        <Button className="h-full w-full flex justify-end items-center" variant="frame" onClick={rightClick}>
+        <Button
+          className="h-full w-full flex justify-end items-center outline-none shadow-none"
+          variant="frame"
+          onClick={rightClick}
+        >
           <ChevronRightIcon className="text-white h-20 w-20" />
         </Button>
       </div>
