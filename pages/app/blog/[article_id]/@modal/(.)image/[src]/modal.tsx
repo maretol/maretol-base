@@ -26,7 +26,7 @@ export default function Modal({ imageSrc }: { imageSrc: string }) {
             alt=""
             width={1000}
             height={1000}
-            className="mb-5 mt-0 w-full max-w-fit h-full max-h-fit shadow-lg"
+            className="my-10 w-full max-w-fit h-full max-h-fit shadow-lg"
           />
         </div>
       </DialogContent>

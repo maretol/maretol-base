@@ -13,7 +13,8 @@
     "deploy:page": "npm run --workspace=pages deploy-prd",
     "deploy-stg:page": "npm run --workspace=pages deploy-stg",
     "build:page": "npm run --workspace=pages pages:build",
-    "lint:page": "npm run --workspace=pages lint"
+    "lint:page": "npm run --workspace=pages lint",
+    "test:cms": "npm run --workspace=cms-data-fetcher test"
   },
   "author": "maretol",
   "private": true,
