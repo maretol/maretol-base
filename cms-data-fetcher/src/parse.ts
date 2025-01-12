@@ -40,35 +40,41 @@ export function parse(content: string) {
 }
 
 function getPOption(text: string) {
-  let pOpt = 'normal'
-  if (isImage(text)) {
-    pOpt = 'image'
-  } else if (isPhoto(text)) {
-    pOpt = 'photo'
-  } else if (isComicPage(text)) {
-    pOpt = 'comic'
-  } else if (isYouTube(text)) {
-    pOpt = 'youtube'
-  } else if (isTwitter(text)) {
-    pOpt = 'twitter'
-  } else if (isAmazon(text)) {
-    pOpt = 'amazon'
-  } else if (isBlog(text)) {
-    pOpt = 'blog'
-  } else if (isArtifact(text)) {
-    pOpt = 'artifact'
-  } else if (isURL(text)) {
-    pOpt = 'url'
-  } else if (text === '') {
-    pOpt = 'empty'
-  } else if (isCommand(text)) {
-    pOpt = text.replaceAll('/', '')
+  // URLではない場合
+  if (!URL.canParse(text)) {
+    if (text === '') {
+      return 'empty'
+    } else if (isCommand(text)) {
+      return text.replaceAll('/', '')
+    }
+    return 'normal'
   }
-  return pOpt
+
+  // URLの場合
+  const textURL = new URL(text)
+  if (isImage(textURL.hostname, text)) {
+    return 'image'
+  } else if (isPhoto(textURL.hostname, text)) {
+    return 'photo'
+  } else if (isComicPage(textURL.hostname, textURL.pathname)) {
+    return 'comic'
+  } else if (isYouTube(textURL.hostname)) {
+    return 'youtube'
+  } else if (isTwitter(textURL.hostname)) {
+    return 'twitter'
+  } else if (isAmazon(textURL.hostname)) {
+    return 'amazon'
+  } else if (isBlog(textURL.hostname, textURL.pathname)) {
+    return 'blog'
+  } else if (isArtifact(textURL.hostname, textURL.pathname)) {
+    return 'artifact'
+  } else {
+    return 'url'
+  }
 }
 
-function isImage(text: string) {
-  if (text.indexOf('https://r2.maretol.xyz/') === 0) {
+function isImage(hostname: string, text: string) {
+  if (hostname === 'r2.maretol.xyz') {
     const ext = text.split('.').pop() || ''
     if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
       return true
@@ -77,53 +83,43 @@ function isImage(text: string) {
   }
 }
 
-function isPhoto(text: string) {
-  if (text.indexOf('https://photos.maretol.xyz') === 0) {
-    const photoURL = text.split('@@')[0] // 画像URL。@@以降はタイトルやキャプション
-    const ext = photoURL.split('.').pop() || ''
-    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
-      return true
-    }
-  } else if (text.indexOf('https://capture.maretol.xyz') === 0) {
+function isPhoto(hostname: string, text: string) {
+  const photoDomain = ['photos.maretol.xyz', 'capture.maretol.xyz']
+  if (photoDomain.includes(hostname)) {
     const photoURL = text.split('@@')[0] // 画像URL。@@以降はタイトルやキャプション
     const ext = photoURL.split('.').pop() || ''
     if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
       return true
     }
   }
-  return
+  return false
 }
 
-function isComicPage(text: string) {
-  return text.indexOf('https://www.maretol.xyz/comics/') === 0 || text.indexOf('https://maretol.xyz/comics/') === 0
+function isComicPage(hostname: string, pathname: string) {
+  const comicDomain = ['maretol.xyz', 'www.maretol.xyz']
+  return comicDomain.includes(hostname) && pathname.indexOf('/comics/') === 0
 }
 
-function isYouTube(text: string) {
-  return text.indexOf('https://youtu.be/') === 0 || text.indexOf('https://www.youtube.com/') === 0
+function isYouTube(hostname: string) {
+  return ['youtu.be', 'www.youtube.com'].includes(hostname)
 }
 
-function isTwitter(text: string) {
-  return (
-    text.indexOf('https://twitter.com/') === 0 ||
-    text.indexOf('https://www.twitter.com/') === 0 ||
-    text.indexOf('https://x.com/') === 0
-  )
+function isTwitter(hostname: string) {
+  return ['twitter.com', 'www.twitter.com', 'x.com'].includes(hostname)
 }
 
-function isAmazon(text: string) {
-  return text.indexOf('https://www.amazon.co.jp/') === 0 || text.indexOf('https://amzn.to/') === 0
+function isAmazon(hostname: string) {
+  return ['www.amazon.co.jp', 'amzn.to'].includes(hostname)
 }
 
 // ブログ記事のリンクの場合
-function isBlog(text: string) {
-  return text.indexOf('https://www.maretol.xyz/blog/') === 0 || text.indexOf('https://maretol.xyz/blog/') === 0
+function isBlog(hostname: string, pathname: string) {
+  return ['maretol.xyz', 'www.maretol.xyz'].includes(hostname) && pathname.indexOf('/blog/') === 0
 }
 
 // artifactのリンクの場合
-function isArtifact(text: string) {
-  return (
-    text.indexOf('https://www.maretol.xyz/artifacts/') === 0 || text.indexOf('https://maretol.xyz/artifacts/') === 0
-  )
+function isArtifact(hostname: string, pathname: string) {
+  return ['maretol.xyz', 'www.maretol.xyz'].includes(hostname) && pathname.indexOf('/artifacts/') === 0
 }
 
 function isURL(text: string) {
@@ -156,3 +152,5 @@ function getSubText(text: string) {
   }
   return null
 }
+
+export { getPOption }
