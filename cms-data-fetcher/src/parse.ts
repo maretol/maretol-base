@@ -79,7 +79,13 @@ function isImage(text: string) {
 
 function isPhoto(text: string) {
   if (text.indexOf('https://photos.maretol.xyz') === 0) {
-    const photoURL = text.split('@@')[0] // 画像URL。@@以降はキャプション
+    const photoURL = text.split('@@')[0] // 画像URL。@@以降はタイトルやキャプション
+    const ext = photoURL.split('.').pop() || ''
+    if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+      return true
+    }
+  } else if (text.indexOf('https://capture.maretol.xyz') === 0) {
+    const photoURL = text.split('@@')[0] // 画像URL。@@以降はタイトルやキャプション
     const ext = photoURL.split('.').pop() || ''
     if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
       return true
