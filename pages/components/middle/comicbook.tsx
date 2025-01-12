@@ -95,7 +95,7 @@ export default function ComicBook(props: ComicBookProps) {
   }
 
   return (
-    <div className="h-[95vh] w-full bg-gray-700 static" onKeyDown={keyEvent} tabIndex={0}>
+    <div className="h-[95vh] min-h-[95vh] w-full bg-gray-700 static" onKeyDown={keyEvent} tabIndex={0}>
       <div
         className={cn(
           'absolute top-0 left-0 w-full flex justify-center items-center bg-gray-300',
