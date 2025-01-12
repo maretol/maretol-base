@@ -18,14 +18,11 @@ describe('parse_getPOptionのテスト', () => {
     expect(result).toBe('image')
   })
   it('写真の場合', () => {
-    const text = 'https://photos.maretol.xyz/test.jpg'
-    const result = getPOption(text)
-    expect(result).toBe('photo')
-  })
-  it('写真（スクリーンショット）の場合', () => {
-    const text = 'https://capture.maretol.xyz/test.jpg'
-    const result = getPOption(text)
-    expect(result).toBe('photo')
+    const text = ['https://photos.maretol.xyz/test.jpg', 'https://capture.maretol.xyz/test.jpg']
+    text.forEach((t) => {
+      const result = getPOption(t)
+      expect(result).toBe('photo')
+    })
   })
   it('写真でサブテキストがあった場合', () => {
     const text = 'https://photos.maretol.xyz/test.jpg@@subtext_key::subtext_value@@subtext::サブテキスト'
@@ -38,39 +35,25 @@ describe('parse_getPOptionのテスト', () => {
     expect(result).toBe('comic')
   })
   it('YouTubeリンクの場合', () => {
-    const text = 'https://www.youtube.com/watch?v=test'
-    const result = getPOption(text)
-    expect(result).toBe('youtube')
-  })
-  it('Youtube短縮URLリンクの場合', () => {
-    const text = 'https://youtu.be/test'
-    const result = getPOption(text)
-    expect(result).toBe('youtube')
-  })
-  it('Twitterリンクの場合', () => {
-    const text = 'https://twitter.com/test'
-    const result = getPOption(text)
-    expect(result).toBe('twitter')
-  })
-  it('Twitterリンク（wwwあり）の場合', () => {
-    const text = 'https://www.twitter.com/test'
-    const result = getPOption(text)
-    expect(result).toBe('twitter')
-  })
-  it('Xリンクの場合', () => {
-    const text = 'https://x.com/test'
-    const result = getPOption(text)
-    expect(result).toBe('twitter')
-  })
+    const text = ['https://www.youtube.com/watch?v=test', 'https://youtu.be/test']
+    text.forEach((t) => {
+      const result = getPOption(t)
+      expect(result).toBe('youtube')
+    })
+  }),
+    it('Twitterリンクの場合', () => {
+      const text = ['https://twitter.com/test', 'https://www.twitter.com/test', 'https://x.com/test']
+      text.forEach((t) => {
+        const result = getPOption(t)
+        expect(result).toBe('twitter')
+      })
+    })
   it('Amazonリンクの場合', () => {
-    const text = 'https://www.amazon.co.jp/test'
-    const result = getPOption(text)
-    expect(result).toBe('amazon')
-  })
-  it('Amazon短縮URLリンクの場合', () => {
-    const text = 'https://amzn.to/test'
-    const result = getPOption(text)
-    expect(result).toBe('amazon')
+    const text = ['https://www.amazon.co.jp/test', 'https://amzn.to/test']
+    text.forEach((t) => {
+      const result = getPOption(t)
+      expect(result).toBe('amazon')
+    })
   })
   it('ブログリンクの場合', () => {
     const text = 'https://www.maretol.xyz/blog/test'
@@ -91,5 +74,12 @@ describe('parse_getPOptionのテスト', () => {
     const text = '/test_command'
     const result = getPOption(text)
     expect(result).toBe('test_command')
+  })
+  it('特殊なテキストの場合', () => {
+    const text = ['text://hogehoge', '途中にURLが入っている場合。https://example.comみたいな']
+    text.forEach((t) => {
+      const result = getPOption(t)
+      expect(result).toBe('normal')
+    })
   })
 })
