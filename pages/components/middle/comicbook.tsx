@@ -95,7 +95,7 @@ export default function ComicBook(props: ComicBookProps) {
   }
 
   return (
-    <div className="h-screen w-full bg-gray-700 static" onKeyDown={keyEvent} tabIndex={0}>
+    <div className="h-[95vh] w-full bg-gray-700 static" onKeyDown={keyEvent} tabIndex={0}>
       <div
         className={cn(
           'absolute top-0 left-0 w-full flex justify-center items-center bg-gray-300',
@@ -138,7 +138,7 @@ export default function ComicBook(props: ComicBookProps) {
                   key={i}
                   className={cn('h-full w-full flex justify-center items-center', i === currentPage ? '' : 'hidden')}
                 >
-                  <ComicImage src={src} alt="" className="h-full w-full max-h-fit max-w-max" />
+                  <ComicImage src={src} alt="" className="h-full w-auto" />
                 </div>
               )
             case 'pair':
