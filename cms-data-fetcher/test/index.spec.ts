@@ -28,7 +28,7 @@ describe('parse_getPOptionのテスト', () => {
     expect(result).toBe('photo')
   })
   it('写真でサブテキストがあった場合', () => {
-    const text = 'https://photos.maretol.xyz/test.jpg@@subtext_key::subtext_value@@subtext_key2::サブテキスト'
+    const text = 'https://photos.maretol.xyz/test.jpg@@subtext_key::subtext_value@@subtext::サブテキスト'
     const result = getPOption(text)
     expect(result).toBe('photo')
   })
