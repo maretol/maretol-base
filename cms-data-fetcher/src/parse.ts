@@ -68,8 +68,11 @@ function getPOption(text: string) {
     return 'blog'
   } else if (isArtifact(textURL.hostname, textURL.pathname)) {
     return 'artifact'
-  } else {
+  } else if (isURL(textURL)) {
     return 'url'
+  } else {
+    // URLとしてパースできたが、http/https以外のプロトコルの場合は通常のテキストとして扱う
+    return 'normal'
   }
 }
 
@@ -122,8 +125,8 @@ function isArtifact(hostname: string, pathname: string) {
   return ['maretol.xyz', 'www.maretol.xyz'].includes(hostname) && pathname.indexOf('/artifacts/') === 0
 }
 
-function isURL(text: string) {
-  return text.indexOf('https://') === 0
+function isURL(url: URL) {
+  return url.protocol === 'http:' || url.protocol === 'https:'
 }
 
 function isCommand(text: string) {
