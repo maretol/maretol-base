@@ -24,6 +24,10 @@ environment = "production"
 binding = "OGP_FETCHER_CACHE"
 id = "e12d978b90ba4e798961650595d5e9a8"
 
+[[kv_namespaces]]
+binding = "CMS_CACHE"
+id = "d646b5cb3f0944219d81897d4117e20f"
+
 # productionのservice binding
 [[env.production.services]]
 binding = "OGP_FETCHER"
@@ -39,3 +43,8 @@ environment = "production"
 [[env.production.kv_namespaces]]
 binding = "OGP_FETCHER_CACHE"
 id = "e12d978b90ba4e798961650595d5e9a8"
+
+# CMSのキャッシュもstgとprdで共通のものを使う
+[[env.production.kv_namespaces]]
+binding = "CMS_CACHE"
+id = "d646b5cb3f0944219d81897d4117e20f"

@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { PlaceholderImageBase64 } from './placeholder'
 
 export default function ComicImage({ src, alt, className }: { src: string; alt: string; className?: string }) {
   const imageLoader = ({ src }: { src: string }) => {
@@ -8,5 +9,16 @@ export default function ComicImage({ src, alt, className }: { src: string; alt: 
     return url.replace('#{option}', 'format=auto').replace('#{origin}', src)
   }
 
-  return <Image loader={imageLoader} src={src} width={500} height={1000} priority alt={alt} className={className} />
+  return (
+    <Image
+      loader={imageLoader}
+      src={src}
+      width={500}
+      height={1000}
+      priority
+      alt={alt}
+      className={className}
+      placeholder={`data:image/png;base64,${PlaceholderImageBase64}`}
+    />
+  )
 }
