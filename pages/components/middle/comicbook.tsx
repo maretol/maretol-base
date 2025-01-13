@@ -33,11 +33,13 @@ type doublePageState = {
 type pageOption = {
   mode_static: boolean // モード固定
   controller_visible: boolean // コントローラー表示
+  controller_disabled: boolean // コントローラー無効
 }
 
 const initPageOption: pageOption = {
   mode_static: false,
   controller_visible: false,
+  controller_disabled: false,
 }
 
 // シングルモードとダブルモード（見開き）の切り替えの幅のしきい値
@@ -191,6 +193,17 @@ export default function ComicBook(props: ComicBookProps) {
     [pageOption]
   )
 
+  const changeContollerDisabled = useCallback(
+    (controller_disabled: boolean) => {
+      setPageOption((props) => {
+        const newProps = { ...props, controller_disabled }
+        localStorage.setItem('page_option', JSON.stringify(newProps))
+        return newProps
+      })
+    },
+    [pageOption]
+  )
+
   useEffect(() => {
     const opt = localStorage.getItem('page_option')
     if (opt) {
@@ -294,33 +307,35 @@ export default function ComicBook(props: ComicBookProps) {
                 }
               })}
           </CarouselContent>
-          <div
-            className={cn(
-              'absolute left-0 bottom-0 h-1/4 w-72 flex justify-center items-center opacity-70',
-              pageOption.controller_visible && 'bg-white bg-opacity-10'
-            )}
-          >
-            <Button
-              className="h-full w-full flex justify-end items-end outline-none shadow-none"
-              variant="frame"
-              onClick={leftClick}
+          <div className={cn(pageOption.controller_disabled && 'hidden')} onKeyDown={keyEvent} tabIndex={0}>
+            <div
+              className={cn(
+                'absolute left-0 bottom-0 h-1/4 w-1/10 flex justify-center items-center opacity-70',
+                pageOption.controller_visible && 'bg-white bg-opacity-10'
+              )}
             >
-              <ChevronLeftIcon className="text-white h-20 w-20" />
-            </Button>
-          </div>
-          <div
-            className={cn(
-              'absolute right-0 bottom-0 h-1/4 w-72 flex justify-center items-center opacity-70',
-              pageOption.controller_visible && 'bg-white bg-opacity-10'
-            )}
-          >
-            <Button
-              className="h-full w-full flex justify-start items-end outline-none shadow-none"
-              variant="frame"
-              onClick={rightClick}
+              <Button
+                className="h-full w-full flex justify-end items-end outline-none shadow-none"
+                variant="frame"
+                onClick={leftClick}
+              >
+                <ChevronLeftIcon className="text-white h-20 w-20" />
+              </Button>
+            </div>
+            <div
+              className={cn(
+                'absolute right-0 bottom-0 h-1/4 w-1/10 flex justify-center items-center opacity-70',
+                pageOption.controller_visible && 'bg-white bg-opacity-10'
+              )}
             >
-              <ChevronRightIcon className="text-white h-20 w-20" />
-            </Button>
+              <Button
+                className="h-full w-full flex justify-start items-end outline-none shadow-none"
+                variant="frame"
+                onClick={rightClick}
+              >
+                <ChevronRightIcon className="text-white h-20 w-20" />
+              </Button>
+            </div>
           </div>
         </Carousel>
       </div>
@@ -372,15 +387,24 @@ export default function ComicBook(props: ComicBookProps) {
                 <SettingsIcon className="h-6 w-6" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="top">
+            <PopoverContent side="top" className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Switch
-                  id="controller"
+                  id="controller_visible"
                   className="data-[state=checked]:bg-blue-900"
                   checked={pageOption.controller_visible}
                   onCheckedChange={changeContollerVisible}
                 />
-                <Label htmlFor="controller">ページ送りボタンを見やすくする</Label>
+                <Label htmlFor="controller_visible">ページ送りボタンを見やすくする</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="controller_disabled"
+                  className="data-[state=checked]:bg-blue-900"
+                  checked={pageOption.controller_disabled}
+                  onCheckedChange={changeContollerDisabled}
+                />
+                <Label htmlFor="controller_disabled">ページ送りボタンを非表示にする</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Switch
