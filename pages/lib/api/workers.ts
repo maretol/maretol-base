@@ -1,8 +1,9 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
 import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
-import { getNodeEnv } from '../env'
+import { getLocalEnv, getNodeEnv } from '../env'
 
-const revalidateTime = getNodeEnv() === 'production' ? 60 : 0
+// const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
+const dev = getNodeEnv() === 'development'
 
 async function getOGPData(targetURL: string) {
   const { env } = getRequestContext()
@@ -22,7 +23,7 @@ async function getOGPData(targetURL: string) {
 
   const request = new Request(url, { headers: { 'x-api-key': ogpAPIKey }, method: 'GET' })
 
-  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const res = await fetch(request, { cache: 'no-store' })
   if (!res.ok) {
     return { success: false } as OGPResult
   }
@@ -33,14 +34,22 @@ async function getOGPData(targetURL: string) {
   }
 
   // 成功時はcacheに保存する
-  // 有効期限は3日
-  await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl: 60 * 60 * 24 * 3 })
+  // 有効期限は3日。devのときは1秒
+  const expirationTtl = dev ? 1 : 60 * 60 * 24 * 3
+  await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
 async function getCMSContents(offset?: number, limit?: number) {
   const { env } = getRequestContext()
+
+  const cache = await env.CMS_CACHE.get(`contents_${offset}_${limit}`)
+  if (cache) {
+    const data = JSON.parse(cache) as { contents: contentsAPIResult[]; total: number }
+    return data
+  }
+
   const host = env.HOST
   const url = new URL(host + '/api/cms/get_contents')
   if (offset) url.searchParams.set('offset', offset?.toString() || '0')
@@ -50,14 +59,26 @@ async function getCMSContents(offset?: number, limit?: number) {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const res = await fetch(request, { cache: 'no-store' })
   const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
+
+  // cacheに保存する
+  // 有効期間は1分。長く保持すると、記事の更新が反映されないため
+  await env.CMS_CACHE.put(`contents_${offset}_${limit}`, JSON.stringify(data), { expirationTtl: 60 })
 
   return data
 }
 
 async function getCMSContent(articleID: string, draftKey?: string) {
   const { env } = getRequestContext()
+
+  const cache = await env.CMS_CACHE.get(`content_${articleID}`)
+  if (cache && !draftKey) {
+    // draftKeyがある場合はキャッシュを使わない
+    const data = JSON.parse(cache) as contentsAPIResult
+    return data
+  }
+
   const host = env.HOST
   const url = new URL(host + '/api/cms/get_content')
   url.searchParams.set('article_id', articleID)
@@ -67,14 +88,36 @@ async function getCMSContent(articleID: string, draftKey?: string) {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const res = await fetch(request, { cache: 'no-store' })
   const data = (await res.json()) as contentsAPIResult
+
+  // draftKeyがある場合はキャッシュを使わないため
+  if (draftKey) {
+    return data
+  }
+
+  // cacheに保存する
+  // 公開日から3日以内の場合は1分、それ以降は1日
+  const now = new Date()
+  const publishedAt = new Date(data.publishedAt)
+  const diff = now.getTime() - publishedAt.getTime()
+  const expirationTtl = diff < 1000 * 60 * 60 * 24 * 3 ? 60 : 60 * 60 * 24
+  await env.CMS_CACHE.put(`content_${articleID}`, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
 async function getCMSContentsWithTags(tagIDs: string[], offset?: number, limit?: number) {
   const { env } = getRequestContext()
+
+  // tagIDsをソートしてキャッシュのキーにしてcacheの有無を確認
+  tagIDs = tagIDs.sort()
+  const cache = await env.CMS_CACHE.get(`contents_with_tags_${tagIDs.join('_')}_${offset}_${limit}`)
+  if (cache) {
+    const data = JSON.parse(cache) as { contents: contentsAPIResult[]; total: number }
+    return data
+  }
+
   const host = env.HOST
   const url = new URL(host + '/api/cms/get_contents_with_tag')
   url.searchParams.set('tag_id', tagIDs.join('+'))
@@ -85,14 +128,28 @@ async function getCMSContentsWithTags(tagIDs: string[], offset?: number, limit?:
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const res = await fetch(request, { cache: 'no-store' })
   const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
+
+  // cacheに保存する
+  // 有効期間は1分。長く保持すると、記事の更新が反映されないため
+  await env.CMS_CACHE.put(`contents_with_tags_${tagIDs.join('_')}_${offset}_${limit}`, JSON.stringify(data), {
+    expirationTtl: 60,
+  })
 
   return data
 }
 
 async function getTags() {
   const { env } = getRequestContext()
+
+  // cacheに有無を確認する
+  const cache = await env.CMS_CACHE.get('tags')
+  if (cache) {
+    const data = JSON.parse(cache) as categoryAPIResult[]
+    return data
+  }
+
   const host = env.HOST
   const url = new URL(host + '/api/cms/get_tags')
 
@@ -100,14 +157,26 @@ async function getTags() {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const res = await fetch(request, { cache: 'no-store' })
   const data = (await res.json()) as categoryAPIResult[]
+
+  // cacheに保存する
+  // 有効期間は1時間
+  await env.CMS_CACHE.put('tags', JSON.stringify(data), { expirationTtl: 60 * 60 })
 
   return data
 }
 
 async function getInfo() {
   const { env } = getRequestContext()
+
+  // cacheに有無を確認する
+  const cache = await env.CMS_CACHE.get('info')
+  if (cache) {
+    const data = JSON.parse(cache) as infoAPIResult[]
+    return data
+  }
+
   const host = env.HOST
   const url = new URL(host + '/api/cms/get_info')
 
@@ -115,14 +184,25 @@ async function getInfo() {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const res = await fetch(request, { cache: 'no-store' })
   const data = (await res.json()) as infoAPIResult[]
+
+  // cacheに保存する
+  // 有効期間は1日
+  await env.CMS_CACHE.put('info', JSON.stringify(data), { expirationTtl: 60 * 60 * 24 })
 
   return data
 }
 
 async function getBandeDessinee(offset?: number, limit?: number) {
   const { env } = getRequestContext()
+
+  const cache = await env.CMS_CACHE.get(`bande_dessinee_${offset}_${limit}`)
+  if (cache) {
+    const data = JSON.parse(cache) as { bandeDessinees: bandeDessineeResult[]; total: number }
+    return data
+  }
+
   const host = env.HOST
   const url = new URL(host + '/api/cms/bande_dessinee')
   if (offset) url.searchParams.set('offset', offset?.toString() || '0')
@@ -132,14 +212,26 @@ async function getBandeDessinee(offset?: number, limit?: number) {
 
   const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
 
-  const res = await fetch(request, { next: { revalidate: revalidateTime } })
+  const res = await fetch(request, { cache: 'no-store' })
   const data = (await res.json()) as { bandeDessinees: bandeDessineeResult[]; total: number }
+
+  // cacheに保存する
+  // 有効期間は5分
+  await env.CMS_CACHE.put(`bande_dessinee_${offset}_${limit}`, JSON.stringify(data), { expirationTtl: 60 * 5 })
 
   return data
 }
 
 async function getBandeDessineeByID(contentID: string, draftKey?: string) {
   const { env } = getRequestContext()
+
+  const cache = await env.CMS_CACHE.get(`bande_dessinee_${contentID}`)
+  if (cache && !draftKey) {
+    // draftKeyがある場合はキャッシュを使わない
+    const data = JSON.parse(cache) as bandeDessineeResult
+    return data
+  }
+
   const host = env.HOST
   const url = new URL(host + '/api/cms/bande_dessinee')
   url.searchParams.set('content_id', contentID)
@@ -151,6 +243,19 @@ async function getBandeDessineeByID(contentID: string, draftKey?: string) {
 
   const res = await fetch(request, { cache: 'no-store' })
   const data = (await res.json()) as bandeDessineeResult
+
+  // draftKeyがある場合はキャッシュを使わない
+  if (draftKey) {
+    return data
+  }
+
+  // cacheに保存する
+  // 有効期間は更新日時から1日以内の場合は1分、それ以降は1日
+  const now = new Date()
+  const updatedAt = new Date(data.updatedAt)
+  const diff = now.getTime() - updatedAt.getTime()
+  const expirationTtl = diff < 1000 * 60 * 60 * 24 ? 60 : 60 * 60 * 24
+  await env.CMS_CACHE.put(`bande_dessinee_${contentID}`, JSON.stringify(data), { expirationTtl })
 
   return data
 }
