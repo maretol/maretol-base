@@ -245,7 +245,7 @@ export default function ComicBook(props: ComicBookProps) {
           </Button>
         </div>
       </div>
-      <div className={cn('text-white h-[97%] w-full relative', 'comic-zone')}>
+      <div className={cn('text-white h-full max-h-[96%] w-full relative', 'comic-zone')}>
         <Carousel opts={{ direction: 'rtl', duration: 17 }} dir="rtl" setApi={setApi} className="h-full w-full">
           <CarouselContent className="h-full w-full -pl-4">
             {mode === 'single' &&
@@ -310,7 +310,7 @@ export default function ComicBook(props: ComicBookProps) {
           <div className={cn(pageOption.controller_disabled && 'hidden')} onKeyDown={keyEvent} tabIndex={0}>
             <div
               className={cn(
-                'absolute left-0 bottom-0 h-1/4 w-1/10 flex justify-center items-center opacity-70',
+                'absolute left-0 bottom-0 h-1/4 w-1/6 flex justify-center items-center opacity-70',
                 pageOption.controller_visible && 'bg-white bg-opacity-10'
               )}
             >
@@ -324,7 +324,7 @@ export default function ComicBook(props: ComicBookProps) {
             </div>
             <div
               className={cn(
-                'absolute right-0 bottom-0 h-1/4 w-1/10 flex justify-center items-center opacity-70',
+                'absolute right-0 bottom-0 h-1/4 w-1/6 flex justify-center items-center opacity-70',
                 pageOption.controller_visible && 'bg-white bg-opacity-10'
               )}
             >
@@ -339,16 +339,16 @@ export default function ComicBook(props: ComicBookProps) {
           </div>
         </Carousel>
       </div>
-      <div className="bg-gray-700 h-[3%] w-full text-white text-center flex justify-center items-center static">
-        <div className="flex justify-center items-center w-full">
+      <div className="relative bg-gray-700 h-[4%] w-full text-white text-center flex justify-center items-center">
+        <div className="flex justify-center items-center w-[90%]">
           {mode === 'single' && (
             <div className="w-max flex justify-center items-center space-x-2">
               <Slider
                 dir="rtl"
                 min={0}
-                max={singlePageList.length}
+                max={singlePageList.length - 1}
                 value={[currentPage]}
-                className="w-96"
+                className="w-72"
                 onValueChange={(value: number[]) => {
                   const [v] = value
                   setCurrentPage(v)
@@ -365,7 +365,7 @@ export default function ComicBook(props: ComicBookProps) {
               <Slider
                 dir="rtl"
                 min={0}
-                max={doublePageList.length}
+                max={doublePageList.length - 1}
                 value={[currentPage]}
                 className="w-96"
                 onValueChange={(value: number[]) => {
@@ -380,7 +380,7 @@ export default function ComicBook(props: ComicBookProps) {
             </div>
           )}
         </div>
-        <div className="relative right-0">
+        <div className="absolute right-0 inset-y-0">
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" className="h-full">
