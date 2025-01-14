@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from 'lucide-react'
-import React, { use, useCallback, useEffect, useMemo, useState } from 'react'
+import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../ui/button'
 import { getHeaderImage } from '@/lib/image'
 import ClientImage from '../small/client_image'
@@ -66,10 +66,12 @@ export default function ComicBook(props: ComicBookProps) {
   const headerImage = getHeaderImage()
   const [currentPage, setCurrentPage] = useState(0)
   const [scrollSnaps, setScrollSnaps] = useState<number[]>()
-  const [api, setApi] = useState<CarouselApi>()
-  const [width, height] = useWindowSize()
   const [mode, setMode] = useState<'single' | 'double'>('single')
   const [pageOption, setPageOption] = useState<pageOption>(initPageOption)
+  const [api, setApi] = useState<CarouselApi>()
+  const [zoneFlag, setZoneFlag] = useState<'next' | 'prev' | 'none'>('none')
+  const [width, height] = useWindowSize()
+  const comicDivRef = useRef<HTMLDivElement>(null)
 
   const singlePageList = useMemo(() => {
     const pageList: siglePageState[] = []
@@ -152,6 +154,32 @@ export default function ComicBook(props: ComicBookProps) {
       leftClick()
     }
     if (key === 'ArrowRight') {
+      rightClick()
+    }
+  }
+
+  const mouseMoveEvent = (e: React.MouseEvent<HTMLDivElement>) => {
+    const comicWidth = comicDivRef.current?.clientWidth
+    if (!comicWidth) return
+    const nextZone = comicWidth / 3
+    const prevZone = (comicWidth / 3) * 2
+    if (e.clientX < nextZone) {
+      setZoneFlag('next')
+    } else if (e.clientX > prevZone) {
+      setZoneFlag('prev')
+    } else {
+      setZoneFlag('none')
+    }
+  }
+
+  const mouseClickEvent = (e: React.MouseEvent<HTMLDivElement>) => {
+    const comicWidth = comicDivRef.current?.clientWidth
+    if (!comicWidth) return
+    const nextZone = comicWidth / 3
+    const prevZone = (comicWidth / 3) * 2
+    if (e.clientX < nextZone) {
+      leftClick()
+    } else if (e.clientX > prevZone) {
       rightClick()
     }
   }
@@ -245,7 +273,12 @@ export default function ComicBook(props: ComicBookProps) {
           </Button>
         </div>
       </div>
-      <div className={cn('text-white h-full max-h-[96%] w-full relative', 'comic-zone')}>
+      <div
+        className={cn('text-white h-full max-h-[96%] w-full relative', 'comic-zone')}
+        ref={comicDivRef}
+        onClick={mouseClickEvent}
+        onMouseMove={mouseMoveEvent}
+      >
         <Carousel opts={{ direction: 'rtl', duration: 17 }} dir="rtl" setApi={setApi} className="h-full w-full">
           <CarouselContent className="h-full w-full -pl-4">
             {mode === 'single' &&
@@ -308,34 +341,22 @@ export default function ComicBook(props: ComicBookProps) {
               })}
           </CarouselContent>
           <div className={cn(pageOption.controller_disabled && 'hidden')} onKeyDown={keyEvent} tabIndex={0}>
-            <div
+            <ChevronLeftIcon
               className={cn(
-                'absolute left-0 bottom-0 h-1/4 w-1/6 flex justify-center items-center opacity-70',
-                pageOption.controller_visible && 'bg-white bg-opacity-10'
+                'text-white h-20 w-20',
+                'absolute left-0 top-1/2 flex justify-center items-center opacity-30',
+                pageOption.controller_visible && 'opacity-100',
+                zoneFlag === 'next' && 'opacity-100'
               )}
-            >
-              <Button
-                className="h-full w-full flex justify-end items-end outline-none shadow-none"
-                variant="frame"
-                onClick={leftClick}
-              >
-                <ChevronLeftIcon className="text-white h-20 w-20" />
-              </Button>
-            </div>
-            <div
+            />
+            <ChevronRightIcon
               className={cn(
-                'absolute right-0 bottom-0 h-1/4 w-1/6 flex justify-center items-center opacity-70',
-                pageOption.controller_visible && 'bg-white bg-opacity-10'
+                'text-white h-20 w-20',
+                'absolute right-0 top-1/2 flex justify-center items-center opacity-30',
+                pageOption.controller_visible && 'opacity-100',
+                zoneFlag === 'prev' && 'opacity-100'
               )}
-            >
-              <Button
-                className="h-full w-full flex justify-start items-end outline-none shadow-none"
-                variant="frame"
-                onClick={rightClick}
-              >
-                <ChevronRightIcon className="text-white h-20 w-20" />
-              </Button>
-            </div>
+            />
           </div>
         </Carousel>
       </div>
