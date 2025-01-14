@@ -17,16 +17,16 @@ export default function Modal({ imageSrc }: { imageSrc: string }) {
   )
   return (
     <Dialog defaultOpen onOpenChange={onClose}>
-      <DialogContent className="w-max h-max m-0 p-0">
+      <DialogContent className="max-w-[96dvw] max-h-[96dvh] h-auto w-auto m-0 py-10 px-0 bg-blue-300 bg-opacity-30 border-0">
         <DialogTitle></DialogTitle>
         <DialogDescription></DialogDescription>
-        <div className="flex justify-center items-center p-0 m-0 overflow-hidden">
+        <div className="p-2 w-max h-max">
           <ClientImage
             src={imageSrc}
             alt=""
-            width={1000}
-            height={1000}
-            className="my-10 w-full max-w-fit h-full max-h-fit shadow-lg"
+            width={100}
+            height={100}
+            className="h-fit w-auto max-h-[95dvh] shadow-lg overflow-contain"
           />
         </div>
       </DialogContent>

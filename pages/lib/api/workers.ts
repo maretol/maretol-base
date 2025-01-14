@@ -44,8 +44,8 @@ async function getOGPDataOrigin(targetURL: string) {
   }
 
   // 成功時はcacheに保存する
-  // 有効期限は3日。devのときは1秒
-  const expirationTtl = dev ? 1 : 60 * 60 * 24 * 3
+  // 有効期限は3日。devのときは60秒
+  const expirationTtl = dev ? 60 : 60 * 60 * 24 * 3
   await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl })
 
   return data
