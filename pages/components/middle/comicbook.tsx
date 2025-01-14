@@ -184,6 +184,10 @@ export default function ComicBook(props: ComicBookProps) {
     }
   }
 
+  const mouseLeaveEvent = () => {
+    setZoneFlag('none')
+  }
+
   const onInit = useCallback(
     (api: CarouselApi) => {
       setScrollSnaps(api?.scrollSnapList())
@@ -278,6 +282,7 @@ export default function ComicBook(props: ComicBookProps) {
         ref={comicDivRef}
         onClick={mouseClickEvent}
         onMouseMove={mouseMoveEvent}
+        onMouseLeave={mouseLeaveEvent}
       >
         <Carousel opts={{ direction: 'rtl', duration: 17 }} dir="rtl" setApi={setApi} className="h-full w-full">
           <CarouselContent className="h-full w-full -pl-4">
