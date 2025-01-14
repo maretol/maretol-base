@@ -1,11 +1,21 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
 import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
 import { getLocalEnv, getNodeEnv } from '../env'
+import { cache } from 'react'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
 
-async function getOGPData(targetURL: string) {
+const getOGPData = cache(getOGPDataOrigin)
+const getCMSContents = cache(getCMSContentsOrigin)
+const getCMSContent = cache(getCMSContentOrigin)
+const getCMSContentsWithTags = cache(getCMSContentsWithTagsOrigin)
+const getTags = cache(getTagsOrigin)
+const getInfo = cache(getInfoOrigin)
+const getBandeDessinee = cache(getBandeDessineeOrigin)
+const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
+
+async function getOGPDataOrigin(targetURL: string) {
   const { env } = getRequestContext()
 
   // cacheに有無を確認する
@@ -41,7 +51,7 @@ async function getOGPData(targetURL: string) {
   return data
 }
 
-async function getCMSContents(offset?: number, limit?: number) {
+async function getCMSContentsOrigin(offset?: number, limit?: number) {
   const { env } = getRequestContext()
 
   const cache = await env.CMS_CACHE.get(`contents_${offset}_${limit}`)
@@ -63,13 +73,13 @@ async function getCMSContents(offset?: number, limit?: number) {
   const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
 
   // cacheに保存する
-  // 有効期間は1分。長く保持すると、記事の更新が反映されないため
-  await env.CMS_CACHE.put(`contents_${offset}_${limit}`, JSON.stringify(data), { expirationTtl: 60 })
+  // 有効期間は30分。長く保持すると、記事の更新が反映されないため
+  await env.CMS_CACHE.put(`contents_${offset}_${limit}`, JSON.stringify(data), { expirationTtl: 60 * 30 })
 
   return data
 }
 
-async function getCMSContent(articleID: string, draftKey?: string) {
+async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   const { env } = getRequestContext()
 
   const cache = await env.CMS_CACHE.get(`content_${articleID}`)
@@ -107,7 +117,7 @@ async function getCMSContent(articleID: string, draftKey?: string) {
   return data
 }
 
-async function getCMSContentsWithTags(tagIDs: string[], offset?: number, limit?: number) {
+async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, limit?: number) {
   const { env } = getRequestContext()
 
   // tagIDsをソートしてキャッシュのキーにしてcacheの有無を確認
@@ -140,7 +150,7 @@ async function getCMSContentsWithTags(tagIDs: string[], offset?: number, limit?:
   return data
 }
 
-async function getTags() {
+async function getTagsOrigin() {
   const { env } = getRequestContext()
 
   // cacheに有無を確認する
@@ -167,7 +177,7 @@ async function getTags() {
   return data
 }
 
-async function getInfo() {
+async function getInfoOrigin() {
   const { env } = getRequestContext()
 
   // cacheに有無を確認する
@@ -194,7 +204,7 @@ async function getInfo() {
   return data
 }
 
-async function getBandeDessinee(offset?: number, limit?: number) {
+async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   const { env } = getRequestContext()
 
   const cache = await env.CMS_CACHE.get(`bande_dessinee_${offset}_${limit}`)
@@ -222,7 +232,7 @@ async function getBandeDessinee(offset?: number, limit?: number) {
   return data
 }
 
-async function getBandeDessineeByID(contentID: string, draftKey?: string) {
+async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) {
   const { env } = getRequestContext()
 
   const cache = await env.CMS_CACHE.get(`bande_dessinee_${contentID}`)
