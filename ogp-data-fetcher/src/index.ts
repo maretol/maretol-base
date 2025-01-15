@@ -31,7 +31,7 @@ export default {
       return new Response('Bad Request', { status: 400 })
     }
 
-    const result = await fetch(target)
+    const result = await fetch(target, { headers: { 'User-Agent': 'bot' } })
     const options = {
       html: await result.text(),
       onlyGetOpenGraphInfo: true,
