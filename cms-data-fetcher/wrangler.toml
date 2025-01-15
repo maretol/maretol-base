@@ -17,3 +17,6 @@ routes = [
     { pattern = "dev-api.maretol.xyz", custom_domain = true },
     { pattern = "dev-api.maretol.xyz/cms/*", zone_name = "maretol.xyz" }
 ]
+
+[observability]
+enabled = true
