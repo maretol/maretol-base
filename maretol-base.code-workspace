@@ -25,7 +25,7 @@
 			"path": "packages/api-types"
 		},
 		{
-			"name": "package cms-cache-key",
+			"name": "package cms-cache-key-gen",
 			"path": "packages/cms-cache-key-gen"
 		}
 	],
