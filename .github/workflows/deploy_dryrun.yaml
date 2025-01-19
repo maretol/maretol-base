@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: 20.16.0
+  WRANGLER_VERSION: 3.99.0
 
 jobs:
   changes:
@@ -84,6 +85,7 @@ jobs:
         id: deploy-dry
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: ./ogp-data-fetcher
@@ -112,6 +114,7 @@ jobs:
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: ./cms-data-fetcher
@@ -140,6 +143,7 @@ jobs:
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: ./cms-cache-purger
