@@ -2,6 +2,7 @@ import { type Request as WorkerRequest, type ExecutionContext, type KVNamespace 
 import crypto from 'node:crypto'
 import { WebhookPayload } from './cms_webhook_types'
 import { generateContentKey } from 'cms-cache-key-gen'
+import { contentsAPIResult } from 'api-types'
 
 export interface Env {
   CACHE_KV_NAMESPACE: KVNamespace
