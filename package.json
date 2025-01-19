@@ -22,6 +22,7 @@
     "pages",
     "cms-data-fetcher",
     "ogp-data-fetcher",
-    "packages/*"
+    "packages/*",
+    "cms-cache-purger"
   ]
 }

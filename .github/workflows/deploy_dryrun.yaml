@@ -29,12 +29,16 @@ jobs:
             pages:
               - "pages/**"
               - "packages/api-types/**"
+              - "packages/cms-cache-key-gen/**"
             ogp-data-fetcher:
               - "ogp-data-fetcher/**"
               - "packages/api-types/src/ogp_types.ts"
             cms-data-fetcher:
               - "cms-data-fetcher/**"
               - "packages/api-types/src/cms_types.ts"
+            cms-cache-purger:
+              - "cms-cache-purger/**"
+              - "packages/cms-cache-key-gen/**"
             workflow:
               - ".github/workflows/**"
 
@@ -117,8 +121,36 @@ jobs:
           CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: echo $CMD_OUTPUT
 
+  deploy-dry-cms-cache-purger:
+    needs: changes
+    if: ${{ needs.changes.outputs.cms-cache-purger == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    defaults:
+      run:
+        working-directory: ./cms-cache-purger
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: deploy dry run by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./cms-cache-purger
+          command: deploy -e staging --config wrangler.toml --dry-run
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
+
   status:
-    needs: [build-pages, deploy-dry-ogp-data-fetcher, deploy-dry-cms-data-fetcher]
+    needs: [build-pages, deploy-dry-ogp-data-fetcher, deploy-dry-cms-data-fetcher, deploy-dry-cms-cache-purger]
     if: always()
     runs-on: ubuntu-latest
     environment:
