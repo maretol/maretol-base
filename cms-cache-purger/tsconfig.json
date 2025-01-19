@@ -20,9 +20,7 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "exclude": [
-    "test"
-  ],
+  "exclude": [],
   "include": [
     "worker-configuration.d.ts",
     "src/**/*.ts"

@@ -17,3 +17,6 @@ name = "cms-cache-purger-stg"
 routes = [
     { "pattern" = "dev-api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }
 ]
+
+[observability]
+enabled = true
