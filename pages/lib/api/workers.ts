@@ -1,6 +1,15 @@
 import { getRequestContext } from '@cloudflare/next-on-pages'
 import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
-import { getLocalEnv, getNodeEnv } from '../env'
+import { getNodeEnv } from '../env'
+import {
+  generateBandeDessineeContentKey,
+  generateBandeDessineeKey,
+  generateContentKey,
+  generateContentsKey,
+  generateContentsWithTagsKey,
+  generateInfoKey,
+  generateTagsKey,
+} from 'cms-cache-key-gen'
 import { cache } from 'react'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
@@ -54,7 +63,11 @@ async function getOGPDataOrigin(targetURL: string) {
 async function getCMSContentsOrigin(offset?: number, limit?: number) {
   const { env } = getRequestContext()
 
-  const cache = await env.CMS_CACHE.get(`contents_${offset}_${limit}`)
+  const offsetStr = offset?.toString() || '0'
+  const limitStr = limit?.toString() || '10'
+
+  const cacheKey = generateContentsKey(offsetStr, limitStr)
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache) {
     const data = JSON.parse(cache) as { contents: contentsAPIResult[]; total: number }
     return data
@@ -62,8 +75,8 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
 
   const host = env.HOST
   const url = new URL(host + '/api/cms/get_contents')
-  if (offset) url.searchParams.set('offset', offset?.toString() || '0')
-  if (limit) url.searchParams.set('limit', limit?.toString() || '10')
+  url.searchParams.set('offset', offsetStr)
+  url.searchParams.set('limit', limitStr)
 
   const cmsAPIKey = env.CMS_FETCHER_API_KEY
 
@@ -74,7 +87,7 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
 
   // cacheに保存する
   // 有効期間は30分。長く保持すると、記事の更新が反映されないため
-  await env.CMS_CACHE.put(`contents_${offset}_${limit}`, JSON.stringify(data), { expirationTtl: 60 * 30 })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 * 30 })
 
   return data
 }
@@ -82,7 +95,8 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
 async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   const { env } = getRequestContext()
 
-  const cache = await env.CMS_CACHE.get(`content_${articleID}`)
+  const cacheKey = generateContentKey(articleID)
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache && !draftKey) {
     // draftKeyがある場合はキャッシュを使わない
     const data = JSON.parse(cache) as contentsAPIResult
@@ -112,7 +126,7 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   const publishedAt = new Date(data.publishedAt)
   const diff = now.getTime() - publishedAt.getTime()
   const expirationTtl = diff < 1000 * 60 * 60 * 24 * 3 ? 60 : 60 * 60 * 24
-  await env.CMS_CACHE.put(`content_${articleID}`, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
 }
@@ -121,8 +135,10 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
   const { env } = getRequestContext()
 
   // tagIDsをソートしてキャッシュのキーにしてcacheの有無を確認
-  tagIDs = tagIDs.sort()
-  const cache = await env.CMS_CACHE.get(`contents_with_tags_${tagIDs.join('_')}_${offset}_${limit}`)
+  const offsetStr = offset?.toString() || '0'
+  const limitStr = limit?.toString() || '10'
+  const cacheKey = generateContentsWithTagsKey(tagIDs, offsetStr, limitStr)
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache) {
     const data = JSON.parse(cache) as { contents: contentsAPIResult[]; total: number }
     return data
@@ -131,8 +147,8 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
   const host = env.HOST
   const url = new URL(host + '/api/cms/get_contents_with_tag')
   url.searchParams.set('tag_id', tagIDs.join('+'))
-  if (offset) url.searchParams.set('offset', offset?.toString() || '0')
-  if (limit) url.searchParams.set('limit', limit?.toString() || '10')
+  url.searchParams.set('offset', offsetStr)
+  url.searchParams.set('limit', limitStr)
 
   const cmsAPIKey = env.CMS_FETCHER_API_KEY
 
@@ -143,9 +159,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
 
   // cacheに保存する
   // 有効期間は1分。長く保持すると、記事の更新が反映されないため
-  await env.CMS_CACHE.put(`contents_with_tags_${tagIDs.join('_')}_${offset}_${limit}`, JSON.stringify(data), {
-    expirationTtl: 60,
-  })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
 
   return data
 }
@@ -154,7 +168,8 @@ async function getTagsOrigin() {
   const { env } = getRequestContext()
 
   // cacheに有無を確認する
-  const cache = await env.CMS_CACHE.get('tags')
+  const cacheKey = generateTagsKey()
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache) {
     const data = JSON.parse(cache) as categoryAPIResult[]
     return data
@@ -172,7 +187,7 @@ async function getTagsOrigin() {
 
   // cacheに保存する
   // 有効期間は1時間
-  await env.CMS_CACHE.put('tags', JSON.stringify(data), { expirationTtl: 60 * 60 })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 * 60 })
 
   return data
 }
@@ -181,7 +196,8 @@ async function getInfoOrigin() {
   const { env } = getRequestContext()
 
   // cacheに有無を確認する
-  const cache = await env.CMS_CACHE.get('info')
+  const cacheKey = generateInfoKey()
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache) {
     const data = JSON.parse(cache) as infoAPIResult[]
     return data
@@ -199,7 +215,7 @@ async function getInfoOrigin() {
 
   // cacheに保存する
   // 有効期間は1日
-  await env.CMS_CACHE.put('info', JSON.stringify(data), { expirationTtl: 60 * 60 * 24 })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 * 60 * 24 })
 
   return data
 }
@@ -207,7 +223,10 @@ async function getInfoOrigin() {
 async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   const { env } = getRequestContext()
 
-  const cache = await env.CMS_CACHE.get(`bande_dessinee_${offset}_${limit}`)
+  const offsetStr = offset?.toString() || '0'
+  const limitStr = limit?.toString() || '10'
+  const cacheKey = generateBandeDessineeKey(offsetStr, limitStr)
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache) {
     const data = JSON.parse(cache) as { bandeDessinees: bandeDessineeResult[]; total: number }
     return data
@@ -227,7 +246,7 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
 
   // cacheに保存する
   // 有効期間は5分
-  await env.CMS_CACHE.put(`bande_dessinee_${offset}_${limit}`, JSON.stringify(data), { expirationTtl: 60 * 5 })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 * 5 })
 
   return data
 }
@@ -235,7 +254,8 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
 async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) {
   const { env } = getRequestContext()
 
-  const cache = await env.CMS_CACHE.get(`bande_dessinee_${contentID}`)
+  const cacheKey = generateBandeDessineeContentKey(contentID)
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache && !draftKey) {
     // draftKeyがある場合はキャッシュを使わない
     const data = JSON.parse(cache) as bandeDessineeResult
@@ -265,7 +285,7 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   const updatedAt = new Date(data.updatedAt)
   const diff = now.getTime() - updatedAt.getTime()
   const expirationTtl = diff < 1000 * 60 * 60 * 24 ? 60 : 60 * 60 * 24
-  await env.CMS_CACHE.put(`bande_dessinee_${contentID}`, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
 }

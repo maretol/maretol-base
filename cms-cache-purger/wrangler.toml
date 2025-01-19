@@ -1,0 +1,25 @@
+name = "cms-cache-purger"
+main = "src/index.ts"
+compatibility_date = "2024-11-11"
+compatibility_flags = ["nodejs_compat"]
+routes = [
+    { pattern = "api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }
+]
+kv_namespaces = [
+    { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
+]
+
+[dev]
+port = 30223
+
+[env.staging]
+name = "cms-cache-purger-stg"
+routes = [
+    { "pattern" = "dev-api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }
+]
+kv_namespaces = [
+    { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
+]
+
+[observability]
+enabled = true
