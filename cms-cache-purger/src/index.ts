@@ -1,8 +1,8 @@
 import { type Request as WorkerRequest, type ExecutionContext, type KVNamespace } from '@cloudflare/workers-types'
 import crypto from 'node:crypto'
 import { WebhookPayload } from './cms_webhook_types'
-import { generateContentKey } from 'cms-cache-key-gen'
 import { contentsAPIResult } from 'api-types'
+import { generateContentKey } from 'cms-cache-key-gen'
 
 export interface Env {
   CACHE_KV_NAMESPACE: KVNamespace
