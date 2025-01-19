@@ -5,7 +5,8 @@
   "main": "index.js",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",
-    "@types/node": "^22.10.7"
+    "@types/node": "^22.10.7",
+    "cms-cache-key-gen": "^1.0.0"
   },
   "scripts": {
     "deploy-prd": "wrangler deploy",
