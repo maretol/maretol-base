@@ -17,6 +17,9 @@ name = "cms-cache-purger-stg"
 routes = [
     { "pattern" = "dev-api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }
 ]
+kv_namespaces = [
+    { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
+]
 
 [observability]
 enabled = true
