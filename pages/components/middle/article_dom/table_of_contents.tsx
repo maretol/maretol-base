@@ -13,48 +13,40 @@ export default function Table({ toc }: { toc: TableOfContents }) {
             const levelDown = beforeLevel > t.level
             beforeLevel = t.level
             return (
-              <div key={i} className={`ml-2` + (levelDown ? ' mt-1' : '')}>
-                <p className="font-semibold">
-                  <Link className="hover:underline" href={`#${t.id}`}>
-                    {t.title}
-                  </Link>
-                </p>
+              <div key={i} className={`ml-2 w-fit` + (levelDown ? ' mt-1' : '')}>
+                <Link className="hover:underline" href={`#${t.id}`}>
+                  <p className="font-semibold text-black">{t.title}</p>
+                </Link>
               </div>
             )
           } else if (t.level === 2) {
             const levelDown = beforeLevel > t.level
             beforeLevel = t.level
             return (
-              <div key={i} className={`ml-6` + (levelDown ? ' mt-1' : '')}>
-                <p className="font-semibold">
-                  <Link className="hover:underline" href={`#${t.id}`}>
-                    {t.title}
-                  </Link>
-                </p>
+              <div key={i} className={`ml-6 w-fit` + (levelDown ? ' mt-1' : '')}>
+                <Link className="hover:underline" href={`#${t.id}`}>
+                  <p className="font-semibold text-black">{t.title}</p>
+                </Link>
               </div>
             )
           } else if (t.level === 3) {
             const levelDown = beforeLevel > t.level
             beforeLevel = t.level
             return (
-              <div key={i} className={`ml-10` + (levelDown ? ' mt-1' : '')}>
-                <p className="font-semibold">
-                  <Link className="hover:underline" href={`#${t.id}`}>
-                    {t.title}
-                  </Link>
-                </p>
+              <div key={i} className={`ml-10 w-fit` + (levelDown ? ' mt-1' : '')}>
+                <Link className="hover:underline" href={`#${t.id}`}>
+                  <p className="font-semibold text-black">{t.title}</p>
+                </Link>
               </div>
             )
           } else {
             const levelDown = beforeLevel > t.level
             beforeLevel = t.level
             return (
-              <div key={i} className={`ml-14` + (levelDown ? ' mt-1' : '')}>
-                <p className="font-semibold">
-                  <Link className="hover:underline" href={`#${t.id}`}>
-                    {t.title}
-                  </Link>
-                </p>
+              <div key={i} className={`ml-14 w-fit` + (levelDown ? ' mt-1' : '')}>
+                <Link className="hover:underline" href={`#${t.id}`}>
+                  <p className="font-semibold text-black">{t.title}</p>
+                </Link>
               </div>
             )
           }

@@ -47,9 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon='{"token": "e7ad45139e61492b95a8686432f438e4"}'
       />
-      <body
-        className={cn('min-h-screen bg-background antialiased bg-gray-300', fontMPlus1.className, fontMPlus1.variable)}
-      >
+      <body className={cn('min-h-screen antialiased bg-gray-300', fontMPlus1.className, fontMPlus1.variable)}>
         {children}
       </body>
     </html>

@@ -17,7 +17,7 @@ export default function Modal({ imageSrc }: { imageSrc: string }) {
   )
   return (
     <Dialog defaultOpen onOpenChange={onClose}>
-      <DialogContent className="max-w-[96dvw] max-h-[96dvh] h-auto w-auto m-0 py-10 px-0 bg-blue-300 bg-opacity-30 border-0">
+      <DialogContent className="max-w-[96dvw] max-h-[96dvh] h-auto w-auto m-0 py-10 px-0 bg-blue-100/90 border-0">
         <DialogTitle></DialogTitle>
         <DialogDescription></DialogDescription>
         <div className="p-2 w-max h-max">
