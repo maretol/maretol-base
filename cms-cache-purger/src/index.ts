@@ -60,6 +60,7 @@ export default {
   },
 }
 
+// TODO: キーがなかった場合の考慮がなされていない
 async function deleteContentsCache(env: Env) {
   const list = await env.CACHE_KV_NAMESPACE.list<string>({ prefix: 'contents_' })
   // すべての contents_ から始まるキーを削除する
