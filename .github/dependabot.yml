@@ -5,6 +5,7 @@ updates:
       - 'pages/'
       - 'cms-data-fetcher/'
       - 'ogp-data-fetcher/'
+      - 'cms-cache-purger/'
       - '/'
     schedule:
       interval: 'daily'

@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@config "../tailwind.config.ts";
 
 @layer base {
   :root {
@@ -111,11 +111,11 @@ ul {
 }
 
 pre code {
-  @apply flex bg-gray-700 text-gray-100 p-4 rounded-sm w-full overflow-x-auto;
+  @apply flex bg-gray-700 text-gray-100 p-4 rounded-xs w-full overflow-x-auto;
 }
 
 code {
-  @apply bg-gray-700 text-gray-100 p-1 rounded-sm w-max;
+  @apply bg-gray-700 text-gray-100 p-1 rounded-xs w-max;
 }
 
 .content-sample {
@@ -134,10 +134,10 @@ code {
 .content-sample,
 .content {
   p[class='code-filename'] {
-    @apply px-4 py-1 rounded-sm bg-gray-300 text-gray-700 h-auto text-base;
+    @apply px-4 py-1 rounded-xs bg-gray-300 text-gray-700 h-auto text-base;
   }
   p a {
-    @apply inline-block h-auto w-auto;
+    @apply inline-block h-auto w-auto hover:underline text-blue-900;
   }
   a {
     @apply underline-offset-2 decoration-gray-300 hover:decoration-gray-500;
