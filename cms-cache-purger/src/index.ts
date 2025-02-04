@@ -4,7 +4,7 @@ import { WebhookPayload } from './cms_webhook_types'
 import { generateContentKey, generateInfoKey, generateTagsKey } from 'cms-cache-key-gen'
 
 export interface Env {
-  CACHE_KV_NAMESPACE: KVNamespace
+  CMS_CACHE: KVNamespace
   API_KEY: string
   SECRET: string
 }
@@ -66,28 +66,28 @@ export default {
 }
 
 async function deleteContentsCache(env: Env) {
-  const list = await env.CACHE_KV_NAMESPACE.list<string>({ prefix: 'contents_' })
+  const list = await env.CMS_CACHE.list<string>({ prefix: 'contents_' })
   // すべての contents_ から始まるキーを削除する
   list.keys.forEach(async (key) => {
-    await env.CACHE_KV_NAMESPACE.delete(key.name)
+    await env.CMS_CACHE.delete(key.name)
   })
 }
 
 async function deleteContentCache(env: Env, contentID: string) {
   const cacheKey = generateContentKey(contentID)
-  const cache = await env.CACHE_KV_NAMESPACE.get(cacheKey)
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (!cache) {
     // キャッシュがなかったのでパス
     return
   }
-  await env.CACHE_KV_NAMESPACE.delete(cacheKey)
+  await env.CMS_CACHE.delete(cacheKey)
 }
 
 async function deleteCache(env: Env, cacheKey: string) {
-  const cache = await env.CACHE_KV_NAMESPACE.get(cacheKey)
+  const cache = await env.CMS_CACHE.get(cacheKey)
   if (!cache) {
     // キャッシュがなかったのでパス
     return
   }
-  await env.CACHE_KV_NAMESPACE.delete(cacheKey)
+  await env.CMS_CACHE.delete(cacheKey)
 }
