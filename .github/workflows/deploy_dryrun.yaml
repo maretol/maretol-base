@@ -19,6 +19,7 @@ jobs:
       pages: ${{ steps.filter.outputs.pages }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
       cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
+      cms-cache-purger: ${{ steps.filter.outputs.cms-cache-purger }}
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - uses: actions/checkout@v4
