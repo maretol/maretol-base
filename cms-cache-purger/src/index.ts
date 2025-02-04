@@ -55,7 +55,7 @@ export default {
       // infoのキャッシュを削除する
       const cacheKey = generateInfoKey()
       await deleteCache(env, cacheKey)
-    } else if (bodyJSON.api === 'category') {
+    } else if (bodyJSON.api === 'categories') {
       // categoryのキャッシュを削除する
       const cacheKey = generateTagsKey()
       await deleteCache(env, cacheKey)
