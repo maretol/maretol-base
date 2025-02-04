@@ -1,7 +1,7 @@
 import { type Request as WorkerRequest, type ExecutionContext, type KVNamespace } from '@cloudflare/workers-types'
 import crypto from 'node:crypto'
 import { WebhookPayload } from './cms_webhook_types'
-import { generateContentKey } from 'cms-cache-key-gen'
+import { generateContentKey, generateInfoKey, generateTagsKey } from 'cms-cache-key-gen'
 
 export interface Env {
   CACHE_KV_NAMESPACE: KVNamespace
@@ -53,14 +53,18 @@ export default {
       }
     } else if (bodyJSON.api === 'info') {
       // infoのキャッシュを削除する
-      await env.CACHE_KV_NAMESPACE.delete('info')
+      const cacheKey = generateInfoKey()
+      await deleteCache(env, cacheKey)
+    } else if (bodyJSON.api === 'category') {
+      // categoryのキャッシュを削除する
+      const cacheKey = generateTagsKey()
+      await deleteCache(env, cacheKey)
     }
 
-    return new Response('Hello, World!')
+    return new Response('OK', { status: 200 })
   },
 }
 
-// TODO: キーがなかった場合の考慮がなされていない
 async function deleteContentsCache(env: Env) {
   const list = await env.CACHE_KV_NAMESPACE.list<string>({ prefix: 'contents_' })
   // すべての contents_ から始まるキーを削除する
@@ -71,5 +75,19 @@ async function deleteContentsCache(env: Env) {
 
 async function deleteContentCache(env: Env, contentID: string) {
   const cacheKey = generateContentKey(contentID)
+  const cache = await env.CACHE_KV_NAMESPACE.get(cacheKey)
+  if (!cache) {
+    // キャッシュがなかったのでパス
+    return
+  }
+  await env.CACHE_KV_NAMESPACE.delete(cacheKey)
+}
+
+async function deleteCache(env: Env, cacheKey: string) {
+  const cache = await env.CACHE_KV_NAMESPACE.get(cacheKey)
+  if (!cache) {
+    // キャッシュがなかったのでパス
+    return
+  }
   await env.CACHE_KV_NAMESPACE.delete(cacheKey)
 }
