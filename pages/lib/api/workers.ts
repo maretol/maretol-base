@@ -15,6 +15,20 @@ import { cache } from 'react'
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
 
+const DAY = 60 * 60 * 24
+const HOUR = 60 * 60
+
+const CacheTTL = {
+  ogpData: 3 * DAY, // OGPデータの保持
+  contents: 15 * DAY, // トップページなどのブログコンテンツリスト
+  content: 10 * DAY, // 特定のブログコンテンツ
+  contentsWithTags: 10 * DAY, // タグ指定のブログコンテンツリスト
+  tags: 30 * DAY, // タグリスト
+  info: 30 * DAY, // 特定ページ（静的ページ）の情報。変更が少ないためキャッシュ長め
+  bandeDessinee: 12 * HOUR, // マンガリスト。更新少なめなのでとりあえず12時間。今後更新を増やしたらキャッシュ破棄を実装する
+  bandeDessineeByID: 12 * HOUR, // マンガの詳細情報。更新少なめなのでとりあえず12時間。今後更新を増やしたらキャッシュ破棄を実装する
+}
+
 const getOGPData = cache(getOGPDataOrigin)
 const getCMSContents = cache(getCMSContentsOrigin)
 const getCMSContent = cache(getCMSContentOrigin)
@@ -24,6 +38,7 @@ const getInfo = cache(getInfoOrigin)
 const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
 
+// OGPデータの取得
 async function getOGPDataOrigin(targetURL: string) {
   const { env } = getRequestContext()
 
@@ -52,14 +67,14 @@ async function getOGPDataOrigin(targetURL: string) {
     return data
   }
 
-  // 成功時はcacheに保存する
-  // 有効期限は3日。devのときは60秒
-  const expirationTtl = dev ? 60 : 60 * 60 * 24 * 3
+  // 成功時はcacheに保存する。devのときは60秒（最短）
+  const expirationTtl = dev ? 60 : CacheTTL.ogpData
   await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
+// ブログの更新リストの取得
 async function getCMSContentsOrigin(offset?: number, limit?: number) {
   const { env } = getRequestContext()
 
@@ -86,12 +101,13 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
   const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
 
   // cacheに保存する
-  // 有効期間は30分。長く保持すると、記事の更新が反映されないため
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 * 30 })
+  const expirationTtl = CacheTTL.contents
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
+// 特定のブログコンテンツの取得
 async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   const { env } = getRequestContext()
 
@@ -121,16 +137,13 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   }
 
   // cacheに保存する
-  // 公開日から3日以内の場合は1分、それ以降は1日
-  const now = new Date()
-  const publishedAt = new Date(data.publishedAt)
-  const diff = now.getTime() - publishedAt.getTime()
-  const expirationTtl = diff < 1000 * 60 * 60 * 24 * 3 ? 60 : 60 * 60 * 24
+  const expirationTtl = dev ? 60 : CacheTTL.content
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
+// タグを指定してコンテンツを取得
 async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, limit?: number) {
   const { env } = getRequestContext()
 
@@ -158,12 +171,13 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
   const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
 
   // cacheに保存する
-  // 有効期間は1分。長く保持すると、記事の更新が反映されないため
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+  const expirationTtl = dev ? 60 : CacheTTL.contentsWithTags
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
+// タグの一覧取得
 async function getTagsOrigin() {
   const { env } = getRequestContext()
 
@@ -187,11 +201,13 @@ async function getTagsOrigin() {
 
   // cacheに保存する
   // 有効期間は1時間
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 * 60 })
+  const expirationTtl = dev ? 60 : CacheTTL.tags
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
+// 特定のページの詳細情報取得
 async function getInfoOrigin() {
   const { env } = getRequestContext()
 
@@ -214,12 +230,13 @@ async function getInfoOrigin() {
   const data = (await res.json()) as infoAPIResult[]
 
   // cacheに保存する
-  // 有効期間は1日
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 * 60 * 24 })
+  const expirationTtl = dev ? 60 : CacheTTL.info
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
+// マンガのリスト取得
 async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   const { env } = getRequestContext()
 
@@ -245,12 +262,13 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   const data = (await res.json()) as { bandeDessinees: bandeDessineeResult[]; total: number }
 
   // cacheに保存する
-  // 有効期間は5分
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 * 5 })
+  const expirationTtl = dev ? 60 : CacheTTL.bandeDessinee
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
 }
 
+// 単一のマンガ情報取得
 async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) {
   const { env } = getRequestContext()
 
@@ -280,11 +298,7 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   }
 
   // cacheに保存する
-  // 有効期間は更新日時から1日以内の場合は1分、それ以降は1日
-  const now = new Date()
-  const updatedAt = new Date(data.updatedAt)
-  const diff = now.getTime() - updatedAt.getTime()
-  const expirationTtl = diff < 1000 * 60 * 60 * 24 ? 60 : 60 * 60 * 24
+  const expirationTtl = dev ? 60 : CacheTTL.bandeDessineeByID
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
 
   return data
