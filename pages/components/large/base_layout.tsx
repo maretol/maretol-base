@@ -13,6 +13,8 @@ import { getHeaderImage } from '@/lib/image'
 export default function BaseLayout({ children }: { children: React.ReactNode }) {
   const headerImage = getHeaderImage()
 
+  const year = new Date().getFullYear()
+
   return (
     <div className="flex justify-center pb-10" id="top">
       <div className="max-w-[1500px] w-full sm:mx-6">
@@ -31,7 +33,7 @@ export default function BaseLayout({ children }: { children: React.ReactNode }) 
           <footer className="text-center text-sm text-gray-500">
             <FooterButtons />
             <div>
-              © 2024 Maretol
+              © 2024 - {year} Maretol
               <br />
               DO NOT REPOST WITHOUT PERMISSION
             </div>
