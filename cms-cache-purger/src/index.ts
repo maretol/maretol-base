@@ -66,11 +66,16 @@ export default {
 }
 
 async function deleteContentsCache(env: Env) {
-  const list = await env.CMS_CACHE.list<string>({ prefix: 'contents_' })
+  const list = await env.CMS_CACHE.list({ prefix: 'contents_' })
   // すべての contents_ から始まるキーを削除する
   list.keys.forEach(async (key) => {
     await env.CMS_CACHE.delete(key.name)
+    console.log(`delete cache: ${key.name}`)
   })
+  if (list.list_complete === false) {
+    // キャッシュがまだある場合は再帰的に削除する
+    await deleteContentsCache(env)
+  }
 }
 
 async function deleteContentCache(env: Env, contentID: string) {
