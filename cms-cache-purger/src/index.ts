@@ -68,10 +68,16 @@ export default {
 async function deleteContentsCache(env: Env) {
   const list = await env.CMS_CACHE.list({ prefix: 'contents_' })
   // すべての contents_ から始まるキーを削除する
-  list.keys.forEach(async (key) => {
-    await env.CMS_CACHE.delete(key.name)
-    console.log(`delete cache: ${key.name}`)
+  const deleteKeys = await Promise.all(
+    list.keys.map(async (key) => {
+      await env.CMS_CACHE.delete(key.name)
+      return key.name
+    })
+  )
+  deleteKeys.forEach((key) => {
+    console.log(`Deleted: ${key}`)
   })
+
   if (list.list_complete === false) {
     // キャッシュがまだある場合は再帰的に削除する
     await deleteContentsCache(env)
@@ -80,12 +86,7 @@ async function deleteContentsCache(env: Env) {
 
 async function deleteContentCache(env: Env, contentID: string) {
   const cacheKey = generateContentKey(contentID)
-  const cache = await env.CMS_CACHE.get(cacheKey)
-  if (!cache) {
-    // キャッシュがなかったのでパス
-    return
-  }
-  await env.CMS_CACHE.delete(cacheKey)
+  await deleteCache(env, cacheKey)
 }
 
 async function deleteCache(env: Env, cacheKey: string) {
