@@ -80,12 +80,7 @@ async function deleteContentsCache(env: Env) {
 
 async function deleteContentCache(env: Env, contentID: string) {
   const cacheKey = generateContentKey(contentID)
-  const cache = await env.CMS_CACHE.get(cacheKey)
-  if (!cache) {
-    // キャッシュがなかったのでパス
-    return
-  }
-  await env.CMS_CACHE.delete(cacheKey)
+  await deleteCache(env, cacheKey)
 }
 
 async function deleteCache(env: Env, cacheKey: string) {
