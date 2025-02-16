@@ -31,6 +31,7 @@ export default {
     }
 
     const bodyJSON = JSON.parse(body) as WebhookPayload
+    console.log(bodyJSON)
 
     if (bodyJSON.service !== 'maretol-blog') {
       return new Response('OK', { status: 200 })
@@ -40,15 +41,21 @@ export default {
       if (bodyJSON.type === 'new') {
         // ブログのメインコンテンツに新規作成があった場合
         // contentsのキャッシュを削除する
+        console.log('start deleteContentsCache')
         await deleteContentsCache(env)
       } else if (bodyJSON.type === 'edit') {
         // ブログのメインコンテンツに編集があった場合
         // 対象のIDのコンテンツのキャッシュを削除する
+        console.log('start deleteContentCache')
+        console.log('id: ' + bodyJSON.id)
         await deleteContentCache(env, bodyJSON.id)
       } else if (bodyJSON.type === 'delete') {
         // ブログのメインコンテンツに削除があった場合
         // contentsのキャッシュと対象のIDのコンテンツのキャッシュを削除する
+        console.log('start deleteContentsCache')
         await deleteContentsCache(env)
+        console.log('start deleteContentCache')
+        console.log('id: ' + bodyJSON.id)
         await deleteContentCache(env, bodyJSON.id)
       }
     } else if (bodyJSON.api === 'info') {
