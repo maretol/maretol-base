@@ -47,7 +47,7 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
       </CardHeader>
       <CardContent className="relative">
         <ArticleContent contents={parsedContents} sample articleID={id} />
-        <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white/100 from-20% to-white/0" />
+        <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-36 bg-gradient-to-t from-white/100 from-20% to-white/0" />
       </CardContent>
       <CardFooter>
         <Button className="w-full gap-1" asChild>

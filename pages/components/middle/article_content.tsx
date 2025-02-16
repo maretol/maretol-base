@@ -31,7 +31,7 @@ export default async function ArticleContent({
   tableOfContents?: TableOfContents
 }) {
   const sampleFlag = sample || false
-  const sampleClassName = 'content-sample line-clamp-6 max-h-72'
+  const sampleClassName = 'content-sample line-clamp-6'
   const contentClassName = 'content'
   const className = sampleFlag ? sampleClassName : contentClassName
 
