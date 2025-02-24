@@ -6,5 +6,16 @@ export type WebhookPayload = {
   api: string
   id: string
   type: string
-  contents: any
+  contents: {
+    old: Content | null
+    new: Content
+  }
+}
+
+export type Content = {
+  id: string
+  status: ('PUBLISH' | 'DRAFT' | 'CLOSED')[]
+  draftKey: string | null
+  publishValue: any
+  draftValue: any
 }
