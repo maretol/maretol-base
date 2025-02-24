@@ -1,6 +1,6 @@
 import { type Request as WorkerRequest, type ExecutionContext, type KVNamespace } from '@cloudflare/workers-types'
 import crypto from 'node:crypto'
-import { WebhookPayload } from './cms_webhook_types'
+import { Content, WebhookPayload } from './cms_webhook_types'
 import { generateContentKey, generateInfoKey, generateTagsKey } from 'cms-cache-key-gen'
 
 export interface Env {
@@ -41,14 +41,25 @@ export default {
       if (bodyJSON.type === 'new') {
         // ブログのメインコンテンツに新規作成があった場合
         // contentsのキャッシュを削除する
-        console.log('start deleteContentsCache')
-        await deleteContentsCache(env)
+        if (bodyJSON.contents.new.status.includes('PUBLISH')) {
+          console.log('start deleteContentsCache')
+          await deleteContentsCache(env)
+        } else {
+          console.log('status is not PUBLISH')
+        }
       } else if (bodyJSON.type === 'edit') {
-        // ブログのメインコンテンツに編集があった場合
-        // 対象のIDのコンテンツのキャッシュを削除する
-        console.log('start deleteContentCache')
-        console.log('id: ' + bodyJSON.id)
-        await deleteContentCache(env, bodyJSON.id)
+        if (isDraftToPublish(bodyJSON.contents.old, bodyJSON.contents.new)) {
+          // 下書きから公開に変更された場合
+          // contentsのキャッシュを削除する
+          console.log('start deleteContentsCache')
+          await deleteContentsCache(env)
+        } else {
+          // ブログのメインコンテンツに編集があった場合
+          // 対象のIDのコンテンツのキャッシュを削除する
+          console.log('start deleteContentCache')
+          console.log('id: ' + bodyJSON.id)
+          await deleteContentCache(env, bodyJSON.id)
+        }
       } else if (bodyJSON.type === 'delete') {
         // ブログのメインコンテンツに削除があった場合
         // contentsのキャッシュと対象のIDのコンテンツのキャッシュを削除する
@@ -103,4 +114,11 @@ async function deleteCache(env: Env, cacheKey: string) {
     return
   }
   await env.CMS_CACHE.delete(cacheKey)
+}
+
+function isDraftToPublish(old: Content | null, newContent: Content): boolean {
+  if (!old) {
+    return false
+  }
+  return old.status.includes('DRAFT') && newContent.status.includes('PUBLISH')
 }
