@@ -24,12 +24,12 @@
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.5.2",
     "lucide-react": "^0.476.0",
-    "next": "15.1.7",
+    "next": "15.2.0",
     "react": "^19",
     "react-dom": "^19",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
-    "wrangler": "^3.110.0"
+    "wrangler": "^3.111.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250224.0",
@@ -38,7 +38,7 @@
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
-    "eslint-config-next": "15.1.7",
+    "eslint-config-next": "15.2.0",
     "postcss": "^8",
     "tailwindcss": "^4.0.9",
     "@tailwindcss/postcss": "^4",
