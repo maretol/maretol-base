@@ -22,6 +22,7 @@ export class GetMetadataRewriter {
         if (httpEquiv === 'Content-Type' || httpEquiv === 'content-type') {
           const content = element.getAttribute('content')
           const charset = content
+            ?.replaceAll(' ', '')
             ?.split(';')
             .find((v) => v.includes('charset'))
             ?.split('=')[1]
