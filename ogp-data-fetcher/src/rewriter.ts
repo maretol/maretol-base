@@ -1,11 +1,9 @@
 export default class GetMetadataRewriter {
   private rewriter: HTMLRewriter
-  private nexessaryElementParams: Map<string, Map<string, string>>
   private metaElementParams: Map<string, string>
 
   constructor() {
     this.rewriter = new HTMLRewriter()
-    this.nexessaryElementParams = new Map()
     this.metaElementParams = new Map()
   }
 
@@ -40,19 +38,6 @@ export default class GetMetadataRewriter {
     })
   }
 
-  public setNecessaryElement(selector: string) {
-    this.rewriter.on(selector, {
-      element: (element) => {
-        const params = new Map<string, string>()
-        for (const attr of element.attributes) {
-          // attr は [name, value] の形らしい
-          params.set(attr[0], attr[1])
-        }
-        this.nexessaryElementParams.set(selector, params)
-      },
-    })
-  }
-
   public async execute(html: string) {
     const response = new Response(html, {
       headers: {
@@ -61,10 +46,6 @@ export default class GetMetadataRewriter {
     })
 
     return this.rewriter.transform(response).text()
-  }
-
-  public getNecessaryElementParams(selector: string) {
-    return this.nexessaryElementParams.get(selector)
   }
 
   public getCharset() {
