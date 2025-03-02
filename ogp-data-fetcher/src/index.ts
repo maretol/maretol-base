@@ -12,7 +12,7 @@
  */
 import ogs from 'open-graph-scraper-lite'
 import { OGPResult } from 'api-types'
-import fetchAndGetHTMLText from './fetcher'
+import { fetchAndGetHTMLText } from './fetcher'
 
 export interface Env {
   API_KEY: string
