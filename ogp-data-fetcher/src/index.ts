@@ -12,6 +12,7 @@
  */
 import ogs from 'open-graph-scraper-lite'
 import { OGPResult } from 'api-types'
+import { fetchAndGetHTMLText } from './fetcher'
 
 export interface Env {
   API_KEY: string
@@ -31,12 +32,12 @@ export default {
       return new Response('Bad Request', { status: 400 })
     }
 
-    const result = await fetch(target, { headers: { 'User-Agent': 'bot' } })
+    const text = await fetchAndGetHTMLText(target)
+
     const options = {
-      html: await result.text(),
+      html: text,
       onlyGetOpenGraphInfo: true,
     }
-    console.log('here')
     try {
       const data = await ogs(options)
 
