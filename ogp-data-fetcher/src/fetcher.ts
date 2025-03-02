@@ -10,8 +10,9 @@ export async function fetchAndGetHTMLText(target: string): Promise<string> {
   // http response header の charset でエンコーディングを取得する
   const contentType = result.headers.get('content-type')
   const headerCharset = contentType
+    ?.replaceAll(' ', '')
     ?.split(';')
-    .find((v) => v.includes('charset'))
+    .find((v) => v.split('=')[0] === 'charset')
     ?.split('=')[1]
 
   if (headerCharset) {
