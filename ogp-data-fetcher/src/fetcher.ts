@@ -1,6 +1,6 @@
-import GetMetadataRewriter from './rewriter'
+import { GetMetadataRewriter } from './rewriter'
 
-export default async function fetchAndGetHTMLText(target: string): Promise<string> {
+export async function fetchAndGetHTMLText(target: string): Promise<string> {
   const result = await fetch(target, { headers: { 'User-Agent': 'bot' } })
 
   if (!result.ok) {

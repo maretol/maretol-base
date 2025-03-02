@@ -1,4 +1,4 @@
-export default class GetMetadataRewriter {
+export class GetMetadataRewriter {
   private rewriter: HTMLRewriter
   private metaElementParams: Map<string, string>
 
