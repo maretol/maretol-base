@@ -16,27 +16,36 @@ export class GetMetadataRewriter {
   }
 
   public setCharsetHandler() {
-    this.rewriter.on('meta', {
-      element: (element) => {
-        const httpEquiv = element.getAttribute('http-equiv')
-        if (httpEquiv === 'Content-Type' || httpEquiv === 'content-type') {
-          const content = element.getAttribute('content')
-          const charset = content
-            ?.replaceAll(' ', '')
-            ?.split(';')
-            .find((v) => v.includes('charset'))
-            ?.split('=')[1]
-          if (charset !== undefined) {
-            this.metaElementParams.set('charset', charset)
+    this.rewriter
+      .on('meta', {
+        element: (element) => {
+          const httpEquiv = element.getAttribute('http-equiv')
+          if (httpEquiv === 'Content-Type' || httpEquiv === 'content-type') {
+            const content = element.getAttribute('content')
+            const charset = content
+              ?.replaceAll(' ', '')
+              ?.split(';')
+              .find((v) => v.includes('charset'))
+              ?.split('=')[1]
+            if (charset !== undefined) {
+              this.metaElementParams.set('charset', charset)
+            }
+          } else if (element.getAttribute('charset') !== null) {
+            const charset = element.getAttribute('charset')
+            if (charset) {
+              this.metaElementParams.set('charset', charset)
+            }
           }
-        } else if (element.getAttribute('charset') !== null) {
-          const charset = element.getAttribute('charset')
-          if (charset) {
-            this.metaElementParams.set('charset', charset)
+        },
+      })
+      .on('title', {
+        text: (text) => {
+          const title = text.text
+          if (title !== null && title !== undefined && title !== '') {
+            this.metaElementParams.set('title', text.text)
           }
-        }
-      },
-    })
+        },
+      })
   }
 
   public async execute(html: string) {
@@ -51,5 +60,9 @@ export class GetMetadataRewriter {
 
   public getCharset() {
     return this.metaElementParams.get('charset')?.toLowerCase()
+  }
+
+  public getTitle() {
+    return this.metaElementParams.get('title')
   }
 }
