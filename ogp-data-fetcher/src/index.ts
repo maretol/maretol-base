@@ -32,7 +32,7 @@ export default {
       return new Response('Bad Request', { status: 400 })
     }
 
-    const text = await fetchAndGetHTMLText(target)
+    const { title, text } = await fetchAndGetHTMLText(target)
 
     const options = {
       html: text,
@@ -43,7 +43,7 @@ export default {
 
       const ogp = data.result
       const status = ogp.success
-      const title = ogp.ogTitle || ''
+      const ogTitle = ogp.ogTitle || title
       const description = ogp.ogDescription || ''
       let image = ogp.ogImage?.[0].url || ''
       const ogURL = ogp.ogUrl || ''
@@ -51,14 +51,14 @@ export default {
 
       // image が相対パスで設定されていた場合、ogURLのドメインを付与する
       if (image.startsWith('/')) {
-        const url = new URL(ogURL)
+        const url = new URL(target)
         image = url.origin + image
       }
 
       const responseBody = {
         success: status,
         header_title: title,
-        og_title: title,
+        og_title: ogTitle,
         og_description: description,
         og_image: image,
         og_url: ogURL,
