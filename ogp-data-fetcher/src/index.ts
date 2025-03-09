@@ -45,9 +45,15 @@ export default {
       const status = ogp.success
       const title = ogp.ogTitle || ''
       const description = ogp.ogDescription || ''
-      const image = ogp.ogImage?.[0].url || ''
+      let image = ogp.ogImage?.[0].url || ''
       const ogURL = ogp.ogUrl || ''
       const sitename = ogp.ogSiteName || ''
+
+      // image が相対パスで設定されていた場合、ogURLのドメインを付与する
+      if (image.startsWith('/')) {
+        const url = new URL(ogURL)
+        image = url.origin + image
+      }
 
       const responseBody = {
         success: status,
