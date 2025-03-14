@@ -13,13 +13,13 @@
   },
   "devDependencies": {
     "typescript": "^5.8.2",
-    "@cloudflare/workers-types": "^4.20250303.0",
-    "@cloudflare/vitest-pool-workers": "^0.7.7",
+    "@cloudflare/workers-types": "^4.20250313.0",
+    "@cloudflare/vitest-pool-workers": "^0.8.0",
     "vitest": "3.0.8",
-    "wrangler": "^3.114.0"
+    "wrangler": "^4.0.0"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
-    "microcms-js-sdk": "^3.1.2"
+    "microcms-js-sdk": "^3.2.0"
   }
 }
