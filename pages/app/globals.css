@@ -122,7 +122,7 @@ code {
   img[class='inner-image'] {
     @apply rounded-lg w-[300px] shadow-xl;
   }
-  a {
+  a[class='x-blog-image'] {
     pointer-events: none;
   }
 }
