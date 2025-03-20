@@ -15,7 +15,7 @@ export default function Tags({ tags }: { tags: categoryAPIResult[] }) {
               query: { tag_id: tag.id, tag_name: tag.name },
             }}
           >
-            <Button key={tag.id} variant="secondary" className="p-2">
+            <Button key={tag.id} variant="secondary" className="p-2 h-6">
               {tag.name}
             </Button>
           </Link>

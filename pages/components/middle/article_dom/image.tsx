@@ -46,7 +46,7 @@ export default function ContentImage({
     return <p>{src}</p>
   } else if (tag === 'content_photo') {
     return (
-      <div className="bg-indigo-200 p-2 rounded-xs w-fit">
+      <div className="bg-indigo-200 p-2 rounded-xs w-fit mx-3">
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image">
           <ClientImage src={imageSrc} alt="" width={300} height={400} className="inner-image" />
         </Link>
