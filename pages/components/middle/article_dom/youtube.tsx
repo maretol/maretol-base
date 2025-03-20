@@ -7,7 +7,7 @@ export default function YouTubeArea({ videoURL }: { videoURL: string }) {
     return <p>YouTubeの埋め込みがありましたがURLが不正ですなようです</p>
   }
   return (
-    <div className="py-6">
+    <div className="py-6 mx-3">
       <iframe
         src={`https://www.youtube.com/embed/${videoID}`}
         sandbox={defaultSandbox}

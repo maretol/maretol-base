@@ -41,10 +41,11 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
           </Link>
         </CardTitleH1>
         <CardDescription>{convertJST(updatedAt)}</CardDescription>
-        <CardContent className="pl-0 pt-2 pb-0">
+        <CardContent className="pl-0 pb-0">
           <Tags tags={categories} />
         </CardContent>
       </CardHeader>
+      <hr className="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
       <CardContent className="relative">
         <ArticleContent contents={parsedContents} sample articleID={id} />
         <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-36 bg-gradient-to-t from-white/100 from-20% to-white/0" />
@@ -87,11 +88,12 @@ export async function FullArticle({
           )}
         </CardDescription>
         {type === 'blog' && (
-          <CardContent className="pl-0 pt-2 pb-0">
+          <CardContent className="pl-0 pb-0">
             <Tags tags={categories} />
           </CardContent>
         )}
       </CardHeader>
+      <hr className="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
       <CardContent className="mb-8">
         <ArticleContent contents={parsedContents} articleID={id} tableOfContents={tableOfContents} />
       </CardContent>
