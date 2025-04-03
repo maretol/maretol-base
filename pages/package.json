@@ -14,7 +14,7 @@
     "deploy-prd": "npm run pages:build && wrangler pages deploy"
   },
   "dependencies": {
-    "@cloudflare/next-on-pages": "^1.13.10",
+    "@cloudflare/next-on-pages": "^1.13.12",
     "@radix-ui/react-dialog": "^1.1.6",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.6",
@@ -24,15 +24,15 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.5.2",
-    "lucide-react": "^0.485.0",
+    "lucide-react": "^0.487.0",
     "next": "^15.1.7",
     "react": "^19",
     "react-dom": "^19",
-    "tailwind-merge": "^3.0.2",
+    "tailwind-merge": "^3.1.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250327.0",
+    "@cloudflare/workers-types": "^4.20250403.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/react": "^19",
@@ -43,6 +43,6 @@
     "postcss": "^8",
     "tailwindcss": "^4.0.9",
     "typescript": "^5",
-    "wrangler": "^4.6.0"
+    "wrangler": "^4.7.0"
   }
 }
