@@ -9,17 +9,11 @@ type TwitterAuthInfo = {
 }
 
 async function PostTweet(authInfo: TwitterAuthInfo, tweet: string): Promise<void> {
-  await PostTweet_v1(authInfo, tweet)
-}
-
-async function PostTweet_v1(authInfo: TwitterAuthInfo, tweet: string): Promise<void> {
   const endpoint = 'https://api.x.com/2/tweets'
   const nonce = Math.random().toString(36).substring(2, 26)
   const timestamp = Math.floor(Date.now() / 1000).toString()
 
   const signature = createSignature(nonce, timestamp, authInfo, endpoint)
-
-  const url = new URL(endpoint)
 
   const oauthHeader = [
     `oauth_consumer_key="${authInfo.apiKey}"`,
@@ -42,7 +36,7 @@ async function PostTweet_v1(authInfo: TwitterAuthInfo, tweet: string): Promise<v
   headers.set('Accept', '*/*')
   headers.set('Connection', 'close')
 
-  const response = await fetch(url.toString(), {
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers,
     body,
@@ -55,7 +49,7 @@ async function PostTweet_v1(authInfo: TwitterAuthInfo, tweet: string): Promise<v
     throw new Error(`Twitter API request failed: ${errorText}`)
   }
 
-  console.log(response.text())
+  console.log(await response.text())
   return
 }
 
