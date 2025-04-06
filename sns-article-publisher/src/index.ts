@@ -30,7 +30,12 @@ export default {
     const articleTitle = bodyJSON.article_title
     const postMessage = bodyJSON.post_message
 
-    const postText = `${postMessage}\n\n投稿しました : ${articleTitle}\n${articleURL}`
+    let postText = ''
+    if (postMessage === undefined || postMessage === null || postMessage === '') {
+      postText = `投稿しました : ${articleTitle}\n${articleURL}`
+    } else {
+      postText = `${postMessage}\n\n投稿しました : ${articleTitle}\n${articleURL}`
+    }
 
     // 以下各種SNSへのポスト
     // 1. Twitter

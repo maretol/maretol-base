@@ -1,4 +1,3 @@
-import { btoa } from 'node:buffer'
 import crypto from 'node:crypto'
 
 type TwitterAuthInfo = {
@@ -9,76 +8,8 @@ type TwitterAuthInfo = {
   accessTokenSecret: string
 }
 
-type BearerResponseType = {
-  token_type: string
-  access_token: string
-}
-
-type PostTweetResponseType = {
-  data: {
-    id: string
-    text: string
-  }
-}
-
 async function PostTweet(authInfo: TwitterAuthInfo, tweet: string): Promise<void> {
   await PostTweet_v1(authInfo, tweet)
-}
-
-async function PostTweet_v2(authInfo: TwitterAuthInfo, tweet: string): Promise<void> {
-  const host = 'https://api.x.com'
-  const apiKey = authInfo.apiKey
-  const apiSecret = authInfo.apiSecret
-
-  const bearerBody = 'grant_type=client_credentials'
-
-  const basicCredentials = btoa(`${apiKey}:${apiSecret}`)
-  const bearerHeader = new Headers()
-  bearerHeader.set('Authorization', `Basic ${basicCredentials}`)
-  bearerHeader.set('Content-Type', 'application/x-www-form-urlencoded;charset=UTF-8')
-  bearerHeader.set('Content-length', bearerBody.length.toString())
-
-  console.log(bearerBody)
-
-  const bearerResponse = await fetch(`${host}/oauth2/token`, {
-    method: 'POST',
-    headers: bearerHeader,
-    body: bearerBody,
-  })
-
-  if (!bearerResponse.ok) {
-    console.error(`Error: ${bearerResponse.status} ${bearerResponse.statusText}`)
-    const errorText = await bearerResponse.text()
-    console.error(errorText)
-    throw new Error(`Twitter API request failed: ${errorText}`)
-  }
-
-  const bearerResponseJson = await bearerResponse.json<BearerResponseType>()
-  const tokenTyppe = bearerResponseJson.token_type
-  const accessToken = bearerResponseJson.access_token
-
-  const postEndpoint = `${host}/2/tweets`
-  const postBody = JSON.stringify({ text: tweet })
-  const postHeader = new Headers()
-  postHeader.set('Authorization', `Bearer ${accessToken}`)
-  postHeader.set('Content-Type', 'application/json')
-
-  const postResponse = await fetch(postEndpoint, {
-    method: 'POST',
-    headers: postHeader,
-    body: postBody,
-  })
-  if (!postResponse.ok) {
-    console.error(`Error: ${postResponse.status} ${postResponse.statusText}`)
-    const errorText = await postResponse.text()
-    console.error(errorText)
-    throw new Error(`Twitter API request failed: ${errorText}`)
-  }
-  const postResponseJson = await postResponse.json<PostTweetResponseType>()
-  const postId = postResponseJson.data.id
-  console.log(`Tweet posted successfully with ID: ${postId}`)
-
-  return
 }
 
 async function PostTweet_v1(authInfo: TwitterAuthInfo, tweet: string): Promise<void> {
