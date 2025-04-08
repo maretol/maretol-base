@@ -1,7 +1,6 @@
 import crypto from 'node:crypto'
 
 type TwitterAuthInfo = {
-  bearerToken: string
   apiKey: string
   apiSecret: string
   accessToken: string

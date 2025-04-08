@@ -1,5 +1,5 @@
 import { finalizeEvent, verifyEvent } from 'nostr-tools/pure'
-import { nip19 } from 'nostr-tools'
+import { nip19, SimplePool } from 'nostr-tools'
 
 type NostrAuthInfo = {
   nsec: string
@@ -26,11 +26,22 @@ async function PostNostrKind1(authInfo: NostrAuthInfo, message: string) {
   }
 
   console.log(kind1)
-  // const sockets = postRelays.map((url) => new WebSocket(url))
-  // sockets.forEach((socket) => {
-  //   socket.send('kind:1')
-  //   socket.close()
-  // })
+  const pool = new SimplePool()
+  try {
+    await Promise.all(
+      pool.publish(postRelays, kind1).map(async (p) => {
+        const result = await p
+        if (result !== '' && result !== undefined) {
+          console.error(result)
+        }
+      })
+    )
+  } catch (error) {
+    console.error('Error publishing to relays:', error)
+  } finally {
+    pool.close(postRelays)
+    pool.destroy()
+  }
 }
 
 function getRelays() {

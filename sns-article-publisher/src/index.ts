@@ -1,12 +1,12 @@
 import { type Request as WorkerRequest, type ExecutionContext } from '@cloudflare/workers-types'
-import PostTweet from './twitter'
-import PostBlueSky from './bluesky'
-import PostNostrKind1 from './nostr'
+import PostTweet, { TwitterAuthInfo } from './twitter'
+import PostBlueSky, { BlueSkyAuthInfo } from './bluesky'
+import PostNostrKind1, { NostrAuthInfo } from './nostr'
+import { SNSPubData } from 'api-types'
 
 export interface Env {
   API_KEY: string
 
-  TWI_BEARER_TOKEN: string
   TWI_API_KEY: string
   TWI_API_SECRET: string
   TWI_ACCESS_TOKEN: string
@@ -26,7 +26,7 @@ export default {
     }
 
     const body = await request.text()
-    const bodyJSON = JSON.parse(body)
+    const bodyJSON = JSON.parse(body) as SNSPubData
     console.log(bodyJSON)
 
     const articleURL = bodyJSON.article_url
@@ -43,19 +43,30 @@ export default {
     // 以下各種SNSへのポスト
     // 1. Twitter
     const twiAuth = createTwitterAuthInfo(env)
-    // await PostTweet(twiAuth, postText)
+    try {
+      await PostTweet(twiAuth, postText)
+    } catch (e) {
+      console.error('Error posting to Twitter:', e)
+    }
 
     // 2. BlueSky
     const bskyAuth = createBlueSkyAuthInfo(env)
-    // await PostBlueSky(bskyAuth, postText)
+    try {
+      await PostBlueSky(bskyAuth, postText)
+    } catch (e) {
+      console.error('Error posting to BlueSky:', e)
+    }
 
     // 3. Mastodon
     // 4. Misskey
 
     // 5. nostr
     const nostrAuth = createNostrAuthInfo(env)
-    postText = 'test'
-    await PostNostrKind1(nostrAuth, postText)
+    try {
+      await PostNostrKind1(nostrAuth, postText)
+    } catch (e) {
+      console.error('Error posting to nostr:', e)
+    }
 
     return new Response('OK', { status: 200 })
   },
@@ -63,23 +74,22 @@ export default {
 
 function createTwitterAuthInfo(env: Env) {
   return {
-    bearerToken: env.TWI_BEARER_TOKEN,
     apiKey: env.TWI_API_KEY,
     apiSecret: env.TWI_API_SECRET,
     accessToken: env.TWI_ACCESS_TOKEN,
     accessTokenSecret: env.TWI_ACCESS_TOKEN_SECRET,
-  }
+  } as TwitterAuthInfo
 }
 
 function createBlueSkyAuthInfo(env: Env) {
   return {
     username: env.BSKY_USERNAME,
     password: env.BSKY_PASSWORD,
-  }
+  } as BlueSkyAuthInfo
 }
 
 function createNostrAuthInfo(env: Env) {
   return {
     nsec: env.NOSTR_NSEC,
-  }
+  } as NostrAuthInfo
 }
