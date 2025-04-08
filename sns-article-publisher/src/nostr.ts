@@ -1,12 +1,40 @@
-import crypto from 'node:crypto'
+import { finalizeEvent, verifyEvent } from 'nostr-tools/pure'
+import { nip19 } from 'nostr-tools'
 
 type NostrAuthInfo = {
-  privateKey: string
-  publicKey: string
+  nsec: string
 }
 
 async function PostNostrKind1(authInfo: NostrAuthInfo, message: string) {
-  const postRelays = [
+  const secretKey = parseNsec(authInfo.nsec)
+  const postRelays = getRelays()
+
+  const kind1 = finalizeEvent(
+    {
+      content: message,
+      kind: 1,
+      tags: [],
+      created_at: Math.floor(Date.now() / 1000),
+    },
+    secretKey
+  )
+
+  const isGood = verifyEvent(kind1)
+  if (!isGood) {
+    console.error('Event verification failed')
+    return
+  }
+
+  console.log(kind1)
+  // const sockets = postRelays.map((url) => new WebSocket(url))
+  // sockets.forEach((socket) => {
+  //   socket.send('kind:1')
+  //   socket.close()
+  // })
+}
+
+function getRelays() {
+  return [
     'wss://relay.nostr.band',
     'wss://nos.lol',
     'wss://yabu.me',
@@ -14,27 +42,22 @@ async function PostNostrKind1(authInfo: NostrAuthInfo, message: string) {
     'wss://nrelay-jp.c-stellar.net',
     'wss://nostr.fediverse.jp',
   ]
-
-  const pubKey = authInfo.publicKey
-  const createdAt = Math.floor(Date.now() / 1000)
-  const idBase = [0, pubKey.toLowerCase(), createdAt, 1, [], message]
-
-  const signer = crypto.createHash('sha256')
-  const id = signer.update(JSON.stringify(idBase)).digest('hex')
-
-  const kind1 = {
-    content: message,
-    kind: 1,
-    tags: [],
-    created_at: createdAt,
-    pubkey: authInfo.publicKey,
-    id: id,
-    sig: 'your_signature_here',
-  }
-
-  const sockets = postRelays.map((url) => new WebSocket(url))
-  sockets.forEach((socket) => {
-    socket.send('kind:1')
-    socket.close()
-  })
 }
+
+function parseNsec(nsec: string): Uint8Array {
+  const nip19Result = nip19.decode(nsec)
+  if (!nip19Result) {
+    console.error('Invalid nsec')
+    throw new Error('Invalid nsec')
+  }
+  const { data: secretKey, type } = nip19Result
+  if (type !== 'nsec') {
+    console.error('Invalid ntype')
+    throw new Error('Invalid ntype')
+  }
+  return secretKey
+}
+
+export default PostNostrKind1
+
+export { NostrAuthInfo }

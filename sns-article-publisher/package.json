@@ -19,6 +19,7 @@
     "twitter-api-v2": "^1.22.0"
   },
   "devDependencies": {
-    "@types/oauth": "^0.9.6"
+    "@types/oauth": "^0.9.6",
+    "nostr-tools": "^2.12.0"
   }
 }

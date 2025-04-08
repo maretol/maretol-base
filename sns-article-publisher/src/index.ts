@@ -1,6 +1,7 @@
 import { type Request as WorkerRequest, type ExecutionContext } from '@cloudflare/workers-types'
 import PostTweet from './twitter'
 import PostBlueSky from './bluesky'
+import PostNostrKind1 from './nostr'
 
 export interface Env {
   API_KEY: string
@@ -13,6 +14,8 @@ export interface Env {
 
   BSKY_USERNAME: string
   BSKY_PASSWORD: string
+
+  NOSTR_NSEC: string
 }
 
 export default {
@@ -40,16 +43,19 @@ export default {
     // 以下各種SNSへのポスト
     // 1. Twitter
     const twiAuth = createTwitterAuthInfo(env)
-    await PostTweet(twiAuth, postText)
+    // await PostTweet(twiAuth, postText)
 
     // 2. BlueSky
     const bskyAuth = createBlueSkyAuthInfo(env)
-    await PostBlueSky(bskyAuth, postText)
+    // await PostBlueSky(bskyAuth, postText)
 
     // 3. Mastodon
     // 4. Misskey
 
     // 5. nostr
+    const nostrAuth = createNostrAuthInfo(env)
+    postText = 'test'
+    await PostNostrKind1(nostrAuth, postText)
 
     return new Response('OK', { status: 200 })
   },
@@ -69,5 +75,11 @@ function createBlueSkyAuthInfo(env: Env) {
   return {
     username: env.BSKY_USERNAME,
     password: env.BSKY_PASSWORD,
+  }
+}
+
+function createNostrAuthInfo(env: Env) {
+  return {
+    nsec: env.NOSTR_NSEC,
   }
 }
