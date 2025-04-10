@@ -18,6 +18,14 @@ export interface Env {
   NOSTR_NSEC: string
 }
 
+const TARGET = {
+  twitter: true,
+  bluesky: true,
+  nostr: true,
+  mastodon: false,
+  misskey: false,
+}
+
 export default {
   async fetch(request: WorkerRequest, env: Env, ctx: ExecutionContext): Promise<Response> {
     const apiKey = request.headers.get('x-api-key')
@@ -42,30 +50,36 @@ export default {
 
     // 以下各種SNSへのポスト
     // 1. Twitter
-    const twiAuth = createTwitterAuthInfo(env)
-    try {
-      await PostTweet(twiAuth, postText)
-    } catch (e) {
-      console.error('Error posting to Twitter:', e)
+    if (TARGET['twitter']) {
+      const twiAuth = createTwitterAuthInfo(env)
+      try {
+        await PostTweet(twiAuth, postText)
+      } catch (e) {
+        console.error('Error posting to Twitter:', e)
+      }
     }
 
     // 2. BlueSky
-    const bskyAuth = createBlueSkyAuthInfo(env)
-    try {
-      await PostBlueSky(bskyAuth, postText)
-    } catch (e) {
-      console.error('Error posting to BlueSky:', e)
+    if (TARGET['bluesky']) {
+      const bskyAuth = createBlueSkyAuthInfo(env)
+      try {
+        await PostBlueSky(bskyAuth, postText)
+      } catch (e) {
+        console.error('Error posting to BlueSky:', e)
+      }
     }
 
     // 3. Mastodon
     // 4. Misskey
 
     // 5. nostr
-    const nostrAuth = createNostrAuthInfo(env)
-    try {
-      await PostNostrKind1(nostrAuth, postText)
-    } catch (e) {
-      console.error('Error posting to nostr:', e)
+    if (TARGET['nostr']) {
+      const nostrAuth = createNostrAuthInfo(env)
+      try {
+        await PostNostrKind1(nostrAuth, postText)
+      } catch (e) {
+        console.error('Error posting to nostr:', e)
+      }
     }
 
     return new Response('OK', { status: 200 })

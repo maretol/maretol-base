@@ -1,4 +1,4 @@
-import { AtpAgent } from '@atproto/api'
+import { AtpAgent, RichText } from '@atproto/api'
 
 type BlueSkyAuthInfo = {
   username: string
@@ -10,11 +10,13 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, post: string): Promise<voi
     service: 'https://bsky.social',
   })
 
-  console.log(authInfo)
+  const richText = new RichText({ text: post })
+  await richText.detectFacets(agent)
+
   await agent.login({ identifier: authInfo.username, password: authInfo.password })
   await agent.post({
-    text: post,
-    visibility: 'public',
+    text: richText.text,
+    facets: richText.facets,
   })
 
   console.log(`BlueSky post: ${post}`)
