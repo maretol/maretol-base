@@ -1,0 +1,26 @@
+{
+  "name": "sns-article-publisher",
+  "version": "0.0.0",
+  "private": true,
+  "description": "SNSに記事を投稿する処理",
+  "main": "index.js",
+  "scripts": {
+    "deploy-prd": "wrangler deploy",
+    "deploy-stg": "wrangler deploy -e staging",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@atproto/api": "^0.14.20",
+    "oauth": "^0.10.2",
+    "twitter": "^1.7.1",
+    "twitter-api-v2": "^1.22.0"
+  },
+  "devDependencies": {
+    "@types/oauth": "^0.9.6",
+    "api-types": "^1.0.0",
+    "nostr-tools": "^2.12.0"
+  }
+}

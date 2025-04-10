@@ -21,6 +21,10 @@
 			"path": "cms-cache-purger"
 		},
 		{
+			"name": "worker sns-article-publisher",
+			"path": "sns-article-publisher"
+		},
+		{
 			"name": "package api-types",
 			"path": "packages/api-types"
 		},
