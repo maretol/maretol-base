@@ -9,7 +9,7 @@ kv_namespaces = [
     { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
 ]
 services = [
-    { binding = "SNS_PUBLISHER", id = "sns-article-publisher"}
+    { binding = "SNS_PUBLISHER", service = "sns-article-publisher"}
 ]
 
 [dev]
@@ -23,9 +23,9 @@ routes = [
 kv_namespaces = [
     { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
 ]
-services = {
-    { binding = "SNS_PUBLISHER", id = "sns-article-publisher-stg"}
-}
+services = [
+    { binding = "SNS_PUBLISHER", service = "sns-article-publisher-stg"}
+]
 
 [observability]
 enabled = true
