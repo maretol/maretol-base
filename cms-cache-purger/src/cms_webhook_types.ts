@@ -16,6 +16,12 @@ export type Content = {
   id: string
   status: ('PUBLISH' | 'DRAFT' | 'CLOSED')[]
   draftKey: string | null
-  publishValue: any
-  draftValue: any
+  publishValue: ContentValue
+  draftValue: ContentValue | null
+}
+
+export type ContentValue = {
+  id: string
+  title: string
+  sns_text: string | null
 }

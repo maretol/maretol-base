@@ -1,12 +1,17 @@
 import { type Request as WorkerRequest, type ExecutionContext, type KVNamespace } from '@cloudflare/workers-types'
 import crypto from 'node:crypto'
-import { Content, WebhookPayload } from './cms_webhook_types'
+import { Content, ContentValue, WebhookPayload } from './cms_webhook_types'
 import { generateContentKey, generateInfoKey, generateTagsKey } from 'cms-cache-key-gen'
+import { SNSPubData } from 'api-types'
+import Publisher from 'sns-article-publisher/src/index'
 
 export interface Env {
   CMS_CACHE: KVNamespace
   API_KEY: string
   SECRET: string
+
+  SNS_PUBLISHER_API_KEY: string
+  SNS_PUBLISHER: Service<Publisher>
 }
 
 export default {
@@ -59,6 +64,11 @@ export default {
           console.log('start deleteContentCache')
           console.log('id: ' + bodyJSON.id)
           await deleteContentCache(env, bodyJSON.id)
+
+          // sns-publisherに送信する
+          const publishValue = bodyJSON.contents.new.publishValue
+          const snsPubData = generateSNSPublishData(publishValue)
+          env.SNS_PUBLISHER.publish(snsPubData)
         }
       } else if (bodyJSON.type === 'delete') {
         // ブログのメインコンテンツに削除があった場合
@@ -120,5 +130,22 @@ function isDraftToPublish(old: Content | null, newContent: Content): boolean {
   if (!old) {
     return false
   }
+  if (old.status.includes('PUBLISH')) {
+    // すでに公開済み
+    return false
+  }
+  // 未公開で、下書き状態から公開状態に変更された場合
   return old.status.includes('DRAFT') && newContent.status.includes('PUBLISH')
+}
+
+function generateSNSPublishData(value: ContentValue): SNSPubData {
+  const snsText = value.sns_text
+  const articleURL = `https://www.maretol.xyz/blog/${value.id}`
+  const articleTitle = value.title
+
+  return {
+    article_url: articleURL,
+    article_title: articleTitle,
+    post_message: snsText,
+  }
 }
