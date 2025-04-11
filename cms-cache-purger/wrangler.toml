@@ -8,6 +8,9 @@ routes = [
 kv_namespaces = [
     { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
 ]
+services = [
+    { binding = "SNS_PUBLISHER", service = "sns-article-publisher"}
+]
 
 [dev]
 port = 30223
@@ -19,6 +22,9 @@ routes = [
 ]
 kv_namespaces = [
     { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
+]
+services = [
+    { binding = "SNS_PUBLISHER", service = "sns-article-publisher-stg"}
 ]
 
 [observability]
