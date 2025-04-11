@@ -10,7 +10,7 @@ routes = [
 port = 30254
 
 [env.staging]
-name = "cms-article-publisher-stg"
+name = "sns-article-publisher-stg"
 routes = [
     { "pattern" = "dev-api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
 ]

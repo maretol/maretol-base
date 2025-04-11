@@ -16,5 +16,8 @@
     "start": "wrangler dev",
     "test": "vitest",
     "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "sns-article-publisher": "^0.0.0"
   }
 }
