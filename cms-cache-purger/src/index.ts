@@ -49,6 +49,11 @@ export default {
         if (bodyJSON.contents.new.status.includes('PUBLISH')) {
           console.log('start deleteContentsCache')
           await deleteContentsCache(env)
+
+          // sns-publisherに送信する
+          const publishValue = bodyJSON.contents.new.publishValue
+          const snsPubData = generateSNSPublishData(publishValue)
+          env.SNS_PUBLISHER.publish(snsPubData)
         } else {
           console.log('status is not PUBLISH')
         }
@@ -58,17 +63,17 @@ export default {
           // contentsのキャッシュを削除する
           console.log('start deleteContentsCache')
           await deleteContentsCache(env)
+
+          // sns-publisherに送信する
+          const publishValue = bodyJSON.contents.new.publishValue
+          const snsPubData = generateSNSPublishData(publishValue)
+          env.SNS_PUBLISHER.publish(snsPubData)
         } else {
           // ブログのメインコンテンツに編集があった場合
           // 対象のIDのコンテンツのキャッシュを削除する
           console.log('start deleteContentCache')
           console.log('id: ' + bodyJSON.id)
           await deleteContentCache(env, bodyJSON.id)
-
-          // sns-publisherに送信する
-          const publishValue = bodyJSON.contents.new.publishValue
-          const snsPubData = generateSNSPublishData(publishValue)
-          env.SNS_PUBLISHER.publish(snsPubData)
         }
       } else if (bodyJSON.type === 'delete') {
         // ブログのメインコンテンツに削除があった場合
