@@ -2,7 +2,6 @@ import { getCMSContents } from '@/lib/api/workers'
 import { getHostname } from '@/lib/env'
 
 export const dynamic = 'force-dynamic'
-export const runtime = 'edge'
 
 export async function GET() {
   const rdfTemplate = `<?xml version="1.0" encoding="UTF-8"?>`

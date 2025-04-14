@@ -4,8 +4,6 @@ import { Suspense } from 'react'
 import LoadingMainPage from './loading_article'
 import BaseLayout from '@/components/large/base_layout'
 
-export const runtime = 'edge'
-
 export default async function Mainpage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {

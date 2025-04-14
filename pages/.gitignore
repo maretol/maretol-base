@@ -43,3 +43,6 @@ app/blog/test/**
 
 # cloudflare
 .wrangler
+
+# openNext
+.open-next

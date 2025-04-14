@@ -5,7 +5,7 @@ import ComicsPageArticles from './article'
 import { isPage } from '@/lib/pagenation'
 import { pageLimit } from '@/lib/static'
 
-export const runtime = 'edge'
+'
 
 export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>

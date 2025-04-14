@@ -2,8 +2,6 @@
 
 import { ErrorPageArticle } from '@/components/large/error'
 
-export const runtime = 'edge'
-
 export default function BlogErrorPage() {
   return (
     <div>

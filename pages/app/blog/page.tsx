@@ -4,7 +4,7 @@ import LoadingBlogPage from './loading_article'
 import BlogPageArticles from './article'
 import { isPage } from '@/lib/pagenation'
 
-export const runtime = 'edge'
+'
 
 export default async function Mainpage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>

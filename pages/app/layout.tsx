@@ -7,8 +7,6 @@ import Script from 'next/script'
 import { getHostname } from '@/lib/env'
 import { getOGPImage } from '@/lib/image'
 
-export const runtime = 'edge'
-
 const fontMPlus1 = M_PLUS_1({
   subsets: ['latin'],
   variable: '--font-mplus1',

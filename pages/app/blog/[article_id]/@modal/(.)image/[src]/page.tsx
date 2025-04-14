@@ -2,7 +2,7 @@ import { rewriteImageURL } from '@/lib/image'
 import Modal from './modal'
 import { originImageOption } from '@/lib/static'
 
-export const runtime = 'edge'
+'
 
 // パラレルルート・セマンティクスルート機能で、ブログ内から画像をクリックしたときはこのモーダルが表示される
 export default async function ImageModal(
