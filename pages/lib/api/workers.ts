@@ -1,4 +1,4 @@
-import { getRequestContext } from '@cloudflare/next-on-pages'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
 import { getNodeEnv } from '../env'
 import {
@@ -40,7 +40,7 @@ const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
 
 // OGPデータの取得
 async function getOGPDataOrigin(targetURL: string) {
-  const { env } = getRequestContext()
+  const { env } = getCloudflareContext()
 
   // cacheに有無を確認する
   const cache = await env.OGP_FETCHER_CACHE.get(targetURL)
@@ -76,7 +76,7 @@ async function getOGPDataOrigin(targetURL: string) {
 
 // ブログの更新リストの取得
 async function getCMSContentsOrigin(offset?: number, limit?: number) {
-  const { env } = getRequestContext()
+  const { env } = getCloudflareContext()
 
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
@@ -109,7 +109,7 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
 
 // 特定のブログコンテンツの取得
 async function getCMSContentOrigin(articleID: string, draftKey?: string) {
-  const { env } = getRequestContext()
+  const { env } = getCloudflareContext()
 
   const cacheKey = generateContentKey(articleID)
   const cache = await env.CMS_CACHE.get(cacheKey)
@@ -145,7 +145,7 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
 
 // タグを指定してコンテンツを取得
 async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, limit?: number) {
-  const { env } = getRequestContext()
+  const { env } = getCloudflareContext()
 
   // tagIDsをソートしてキャッシュのキーにしてcacheの有無を確認
   const offsetStr = offset?.toString() || '0'
@@ -179,7 +179,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
 
 // タグの一覧取得
 async function getTagsOrigin() {
-  const { env } = getRequestContext()
+  const { env } = getCloudflareContext()
 
   // cacheに有無を確認する
   const cacheKey = generateTagsKey()
@@ -209,7 +209,7 @@ async function getTagsOrigin() {
 
 // 特定のページの詳細情報取得
 async function getInfoOrigin() {
-  const { env } = getRequestContext()
+  const { env } = getCloudflareContext()
 
   // cacheに有無を確認する
   const cacheKey = generateInfoKey()
@@ -238,7 +238,7 @@ async function getInfoOrigin() {
 
 // マンガのリスト取得
 async function getBandeDessineeOrigin(offset?: number, limit?: number) {
-  const { env } = getRequestContext()
+  const { env } = getCloudflareContext()
 
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
@@ -270,7 +270,7 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
 
 // 単一のマンガ情報取得
 async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) {
-  const { env } = getRequestContext()
+  const { env } = getCloudflareContext()
 
   const cacheKey = generateBandeDessineeContentKey(contentID)
   const cache = await env.CMS_CACHE.get(cacheKey)

@@ -6,8 +6,6 @@ import { pageLimit } from '@/lib/static'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
 
-export const runtime = 'edge'
-
 export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {

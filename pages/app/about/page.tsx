@@ -3,7 +3,7 @@ import { FullArticle } from '@/components/large/article'
 import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 
-export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
 
 export function generateMetadata() {
   return {

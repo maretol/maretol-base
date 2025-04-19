@@ -1,4 +1,4 @@
-import { setupDevPlatform } from '@cloudflare/next-on-pages/next-dev'
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -6,18 +6,18 @@ const nextConfig = {
     domains: ['www.maretol.xyz'],
   },
   webpack: (config, option) => {
-    if (!option.dev) {
-      config.externals.push({
-        'cms-data-fetcher': 'cms-data-fetcher',
-        'ogp-data-fetcher': 'ogp-data-fetcher',
-      })
+    if (!option.dev && process.env.LOCAL !== 'local') {
+      // config.externals.push({
+      //   'cms-data-fetcher': 'cms-data-fetcher',
+      //   'ogp-data-fetcher': 'ogp-data-fetcher',
+      // })
     }
     return config
   },
 }
 
 if (process.env.NODE_ENV === 'development') {
-  await setupDevPlatform()
+  await initOpenNextCloudflareForDev()
 }
 
 export default nextConfig
