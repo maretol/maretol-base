@@ -4,7 +4,7 @@ compatibility_date = "2024-12-30"
 compatibility_flags = [ "nodejs_compat" ]
 
 routes = [
-    { pattern = "new-page.maretol.xyz, custom_domain = true }
+    { pattern = "new-page.maretol.xyz", custom_domain = true }
 ]
 service = [
     { binding = "OGP_FETCHER", service = "ogp-data-fetcher", environment = "production" },
