@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:build": "opennextjs-cloudflare build",
     "build-and-run-dev": "npm run pages:build && npm run run-dev",
     "run-dev_old": "wrangler pages dev -c wrangler.toml -c ../ogp-data-fetcher/wrangler.toml -c ../cms-data-fetcher/wrangler.toml",
     "deploy-stg_old": "npm run pages:build && wrangler pages deploy --branch development",
@@ -18,7 +18,6 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@cloudflare/next-on-pages": "^1.13.12",
     "@opennextjs/cloudflare": "^1.0.0-beta.2",
     "@radix-ui/react-dialog": "^1.1.7",
     "@radix-ui/react-label": "^2.1.3",
