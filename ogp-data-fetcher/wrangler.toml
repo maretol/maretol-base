@@ -11,6 +11,9 @@ routes = [
 [dev]
 port = 45678
 
+[observability]
+enabled = true
+
 [env.staging]
 name = "ogp-data-fetcher-stg"
 routes = [
