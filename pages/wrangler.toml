@@ -4,7 +4,7 @@ compatibility_date = "2024-12-30"
 compatibility_flags = [ "nodejs_compat" ]
 
 routes = [
-    { pattern = "new-page.maretol.xyz", custom_domain = true }
+    { pattern = "www.maretol.xyz", custom_domain = true }
 ]
 services = [
     { binding = "OGP_FETCHER", service = "ogp-data-fetcher", environment = "production" },
@@ -26,16 +26,16 @@ binding = "ASSETS"
 enabled = true
 
 [vars]
-HOST = "https://new-page.maretol.xyz"
+HOST = "https://www.maretol.xyz"
 
 [env.staging.vars]
-HOST = "https://stg-new-page.maretol.xyz"
+HOST = "https://maretol-base-v3-stg.maretol-ruha.workers.dev"
 
 [env.staging]
 name = "maretol-base-v3-stg"
 routes = [
-    { pattern = "stg-new-page.maretol.xyz", custom_domain = true }
 ]
+workers_dev = true
 services = [
     { binding = "OGP_FETCHER", service = "ogp-data-fetcher-stg", environment = "production" },
     { binding = "CMS_FETCHER", service = "cms-data-fetcher-stg", environment = "production" }
