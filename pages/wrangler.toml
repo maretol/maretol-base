@@ -11,7 +11,7 @@ service = [
     { binding = "CMS_FETCHER", service = "cms-data-fetcher", environment = "production" }
 ]
 kv_namespaces = [
-    { binding = "OGP_FETCHER_CACHE" id = "e12d978b90ba4e798961650595d5e9a8"},
+    { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
     { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f"}
 ]
 
@@ -41,6 +41,6 @@ service = [
     { binding = "CMS_FETCHER", service = "cms-data-fetcher-stg", environment = "production" }
 ]
 kv_namespaces = [
-    { binding = "OGP_FETCHER_CACHE" id = "e12d978b90ba4e798961650595d5e9a8"},
+    { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
     { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f"}
 ]
