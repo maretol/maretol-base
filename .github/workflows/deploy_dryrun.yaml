@@ -204,13 +204,13 @@ jobs:
       - name: show status
         run: echo "deploy dryrun done"
       - name: show error
-        if: |
+        if: >-
           ${{
-            needs.build-pages.result == 'failure'
-            || needs.deploy-dry-ogp-data-fetcher.result == 'failure'
-            || needs.deploy-dry-cms-data-fetcher.result == 'failure'
-            || needs.deploy-dry-cms-cache-purger.result == 'failure'
-            || needs.deploy-dry-sns-article-publisher.result == 'failure'
+            needs.build-pages.result == 'failure' ||
+            needs.deploy-dry-ogp-data-fetcher.result == 'failure' ||
+            needs.deploy-dry-cms-data-fetcher.result == 'failure' ||
+            needs.deploy-dry-cms-cache-purger.result == 'failure' ||
+            needs.deploy-dry-sns-article-publisher.result == 'failure'
           }}
         env:
           build_result: ${{ needs.build-pages.result }}
