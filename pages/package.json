@@ -12,8 +12,7 @@
     "run-dev_old": "wrangler pages dev -c wrangler.toml -c ../ogp-data-fetcher/wrangler.toml -c ../cms-data-fetcher/wrangler.toml",
     "deploy-stg_old": "npm run pages:build && wrangler pages deploy --branch development",
     "deploy-prd_old": "npm run pages:build && wrangler pages deploy",
-
-    "run-dev": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "run-dev": "opennextjs-cloudflare build && wrangler dev -c wrangler.toml -c ../ogp-data-fetcher/wrangler.toml -c ../cms-data-fetcher/wrangler.toml",
     "deploy-stg": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
     "deploy-prd": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
@@ -44,8 +43,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "cms-data-fetcher": "^0.0.0",
     "eslint": "^9",
     "eslint-config-next": "^15.2.5",
+    "ogp-data-fetcher": "^0.0.0",
     "postcss": "^8",
     "tailwindcss": "^4.0.9",
     "typescript": "^5",

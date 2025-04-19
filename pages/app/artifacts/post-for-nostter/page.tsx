@@ -2,6 +2,8 @@ import { getHostname } from '@/lib/env'
 import { getInfo } from '@/lib/api/workers'
 import { FullArticle } from '@/components/large/article'
 
+export const dynamic = 'force-dynamic'
+
 export function generateMetadata() {
   return {
     title: 'Post for nostter | Maretol Base',

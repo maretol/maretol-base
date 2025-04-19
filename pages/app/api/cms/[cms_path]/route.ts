@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 
 // cms_path の値によって処理が変わるが、それらはWorker側で吸収しているのでそのまま渡す
 export async function GET(request: Request) {
+  console.log('何か呼ばれてる疑惑あり')
   if (getLocalEnv() === 'local') {
     return await fetchLocal(request)
   }

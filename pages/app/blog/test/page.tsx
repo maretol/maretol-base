@@ -1,7 +1,7 @@
 import { getInfo } from '@/lib/api/workers'
 import { FullArticle } from '@/components/large/article'
 
-export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
 
 export default async function BlogArticleTestPage() {
   const contents = await getInfo()
