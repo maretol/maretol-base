@@ -7,10 +7,10 @@ const nextConfig = {
   },
   webpack: (config, option) => {
     if (!option.dev && process.env.LOCAL !== 'local') {
-      config.externals.push({
-        'cms-data-fetcher': 'cms-data-fetcher',
-        'ogp-data-fetcher': 'ogp-data-fetcher',
-      })
+      // config.externals.push({
+      //   'cms-data-fetcher': 'cms-data-fetcher',
+      //   'ogp-data-fetcher': 'ogp-data-fetcher',
+      // })
     }
     return config
   },
