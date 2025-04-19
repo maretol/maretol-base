@@ -1,0 +1,54 @@
+main = ".open-next/worker.js"
+name = "maretol-base-v3"
+compatibility_date = "2024-12-30"
+compatibility_flags = [ "nodejs_compat" ]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[vars]
+HOST = "https://development.maretol-base-v2.pages.dev"
+
+[env.production.vars]
+HOST = "https://www.maretol.xyz"
+
+# staging(preview)のservice binding
+[[services]]
+binding = "OGP_FETCHER"
+service = "ogp-data-fetcher-stg"
+environment = "production"
+
+[[services]]
+binding = "CMS_FETCHER"
+service = "cms-data-fetcher-stg"
+environment = "production"
+
+[[kv_namespaces]]
+binding = "OGP_FETCHER_CACHE"
+id = "e12d978b90ba4e798961650595d5e9a8"
+
+[[kv_namespaces]]
+binding = "CMS_CACHE"
+id = "d646b5cb3f0944219d81897d4117e20f"
+
+# productionのservice binding
+[[env.production.services]]
+binding = "OGP_FETCHER"
+service = "ogp-data-fetcher"
+environment = "production"
+
+[[env.production.services]]
+binding = "CMS_FETCHER"
+service = "cms-data-fetcher"
+environment = "production"
+
+# OGPのキャッシュはstgとprdで共通のものを使う
+[[env.production.kv_namespaces]]
+binding = "OGP_FETCHER_CACHE"
+id = "e12d978b90ba4e798961650595d5e9a8"
+
+# CMSのキャッシュもstgとprdで共通のものを使う
+[[env.production.kv_namespaces]]
+binding = "CMS_CACHE"
+id = "d646b5cb3f0944219d81897d4117e20f"
