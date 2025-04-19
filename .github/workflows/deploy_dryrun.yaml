@@ -203,3 +203,6 @@ jobs:
     steps:
       - name: show status
         run: echo "deploy dryrun done"
+      - name: show error
+        if: failure()
+        run: exit 1

@@ -224,3 +224,6 @@ jobs:
     steps:
       - name: show status
         run: echo "deployed"
+      - name: show error
+        if: failure()
+        run: exit 1
