@@ -225,5 +225,24 @@ jobs:
       - name: show status
         run: echo "deployed"
       - name: show error
-        if: failure()
-        run: exit 1
+        if: >-
+          ${{
+            needs.deploy-pages.result == 'failure' ||
+            needs.deploy-ogp-data-fetcher.result == 'failure' ||
+            needs.deploy-cms-data-fetcher.result == 'failure' ||
+            needs.deploy-cms-cache-purger.result == 'failure' ||
+            needs.deploy-sns-article-publisher.result == 'failure'
+          }}
+        env:
+          build_result: ${{ needs.deploy-pages.result }}
+          ogp_result: ${{ needs.deploy-ogp-data-fetcher.result }}
+          cms_result: ${{ needs.deploy-cms-data-fetcher.result }}
+          cms_cache_result: ${{ needs.deploy-cms-cache-purger.result }}
+          sns_result: ${{ needs.deploy-sns-article-publisher.result }}
+        run: |
+          echo "build result: $build_result"
+          echo "ogp result: $ogp_result"
+          echo "cms result: $cms_result"
+          echo "cms cache result: $cms_cache_result"
+          echo "sns result: $sns_result"
+          exit 1
