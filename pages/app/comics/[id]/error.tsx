@@ -2,8 +2,6 @@
 
 import { ErrorPageComic } from '@/components/large/error'
 
-export const runtime = 'edge'
-
 export default function ComicErrorPage() {
   return (
     <div>

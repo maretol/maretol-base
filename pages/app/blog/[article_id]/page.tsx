@@ -9,8 +9,6 @@ import BlogPageArticle from './article'
 import { Suspense } from 'react'
 import LoadingBlogPage from './loading_article'
 
-export const runtime = 'edge'
-
 export async function generateMetadata(props: {
   params: Promise<{ article_id: string }>
   searchParams: Promise<{ [key: string]: string | undefined }>

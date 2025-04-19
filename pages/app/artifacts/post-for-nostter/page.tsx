@@ -2,7 +2,7 @@ import { getHostname } from '@/lib/env'
 import { getInfo } from '@/lib/api/workers'
 import { FullArticle } from '@/components/large/article'
 
-export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
 
 export function generateMetadata() {
   return {

@@ -9,8 +9,6 @@ import { metadata } from '@/app/layout'
 import { Metadata } from 'next'
 import { getHostname } from '@/lib/env'
 
-export const runtime = 'edge'
-
 // metadata定義
 export async function generateMetadata(props: {
   params: Promise<{ article_id: string; src: string }>

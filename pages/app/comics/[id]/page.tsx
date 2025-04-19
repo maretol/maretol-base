@@ -10,8 +10,6 @@ import { ogpImageOption } from '@/lib/static'
 import { Metadata } from 'next'
 import { Suspense } from 'react'
 
-export const runtime = 'edge'
-
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
   searchParams: Promise<{ [key: string]: string | undefined }>

@@ -68,7 +68,9 @@ page 自体には 2 種類の dev 起動がある。一つは next dev の起動
 
 wrangler の動作確認で利用する。
 
-どちらも環境変数に対しては @cloudflare/next-on-pages の getRequestContext() が呼び出す env から取り出すことを想定している。この処理によって取り出される env は .dev.vars ファイルと wrangler.toml ファイルを起動時に読んでいる様子なので、 next dev の起動でもこちらの env 設定が利用される
+~~どちらも環境変数に対しては @cloudflare/next-on-pages の getRequestContext() が呼び出す env から取り出すことを想定している。この処理によって取り出される env は .dev.vars ファイルと wrangler.toml ファイルを起動時に読んでいる様子なので、 next dev の起動でもこちらの env 設定が利用される~~
+
+next-on-pages から openNext に移行したので env の呼び出しも @opennextjs/cloudflare の getCloudflareContext になった。処理によって呼び出される env が .dev.vars や wrangler.toml の内容を読んでいるのは同じ（と思う。まだ未確認）
 
 ### packages
 
