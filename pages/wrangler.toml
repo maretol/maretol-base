@@ -6,7 +6,7 @@ compatibility_flags = [ "nodejs_compat" ]
 routes = [
     { pattern = "new-page.maretol.xyz", custom_domain = true }
 ]
-service = [
+services = [
     { binding = "OGP_FETCHER", service = "ogp-data-fetcher", environment = "production" },
     { binding = "CMS_FETCHER", service = "cms-data-fetcher", environment = "production" }
 ]
@@ -36,7 +36,7 @@ name = "maretol-base-v3-stg"
 routes = [
     { pattern = "stg-new-page.maretol.xyz", custom_domain = true }
 ]
-service = [
+services = [
     { binding = "OGP_FETCHER", service = "ogp-data-fetcher-stg", environment = "production" },
     { binding = "CMS_FETCHER", service = "cms-data-fetcher-stg", environment = "production" }
 ]
