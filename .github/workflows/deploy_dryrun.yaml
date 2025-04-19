@@ -212,4 +212,17 @@ jobs:
             || needs.deploy-dry-cms-cache-purger.result == 'failure'
             || needs.deploy-dry-sns-article-publisher.result == 'failure'
           }}
-        run: exit 1
+        env:
+          build_result: ${{ needs.build-pages.result }}
+          ogp_data_fetcher_result: ${{ needs.deploy-dry-ogp-data-fetcher.result }}
+          cms_data_fetcher_result: ${{ needs.deploy-dry-cms-data-fetcher.result }}
+          cms_cache_purger_result: ${{ needs.deploy-dry-cms-cache-purger.result }}
+          sns_article_publisher_result: ${{ needs.deploy-dry-sns-article-publisher.result }}
+        run: |
+          echo "build result: $build_result"
+          echo "ogp data fetcher result: $ogp_data_fetcher_result"
+          echo "cms data fetcher result: $cms_data_fetcher_result"
+          echo "cms cache purger result: $cms_cache_purger_result"
+          echo "sns article publisher result: $sns_article_publisher_result"
+          echo "deploy dryrun failed"
+          exit 1
