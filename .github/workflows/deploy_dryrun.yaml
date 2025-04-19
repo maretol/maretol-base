@@ -204,5 +204,11 @@ jobs:
       - name: show status
         run: echo "deploy dryrun done"
       - name: show error
-        if: failure()
+        if: ${{
+          needs.build-pages.result == 'failure'
+          || needs.deploy-dry-ogp-data-fetcher.result == 'failure'
+          || needs.deploy-dry-cms-data-fetcher.result == 'failure'
+          || needs.deploy-dry-cms-cache-purger.result == 'failure'
+          || needs.deploy-dry-sns-article-publisher.result == 'failure'
+        }}
         run: exit 1

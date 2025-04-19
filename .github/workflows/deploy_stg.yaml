@@ -225,5 +225,11 @@ jobs:
       - name: show status
         run: echo "deployed"
       - name: show error
-        if: failure()
+        if: ${{
+          needs.deploy-pages.result == 'failure' ||
+          needs.deploy-ogp-data-fetcher.result == 'failure' ||
+          needs.deploy-cms-data-fetcher.result == 'failure' ||
+          needs.deploy-cms-cache-purger.result == 'failure' ||
+          needs.deploy-sns-article-publisher.result == 'failure'
+        }}
         run: exit 1
