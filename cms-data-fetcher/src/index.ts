@@ -152,43 +152,47 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     offset: number | string | null,
     limit: number | string | null
   ): Promise<{ bandeDessinees: (bandeDessineeResult & MicroCMSContentId & MicroCMSDate)[]; total: number }> {
-    console.log('fetchBandeDessinees point1')
     const apiKey = this.env.CMS_API_KEY_BD
-    console.log('fetchBandeDessinees point2')
     const offsetNum = parseOffset(offset)
-    console.log('fetchBandeDessinees point3')
     const limitNum = parseLimit(limit)
-    console.log('fetchBandeDessinees point4')
-    const contents = await getBandeDessinees(apiKey, offsetNum, limitNum)
-    console.log('fetchBandeDessinees point5')
-    contents.bandeDessinees.forEach((bd) => {
-      const parsed = parse(bd.description)
-      bd.parsed_description = parsed.contents_array
-      bd.table_of_contents = parsed.table_of_contents
-    })
-    console.log('fetchBandeDessinees point6')
-    return contents
+
+    try {
+      const contents = await getBandeDessinees(apiKey, offsetNum, limitNum)
+      console.log('fetchBandeDessinees point5')
+      contents.bandeDessinees.forEach((bd) => {
+        const parsed = parse(bd.description)
+        bd.parsed_description = parsed.contents_array
+        bd.table_of_contents = parsed.table_of_contents
+      })
+      console.log('fetchBandeDessinees point6')
+      return contents
+    } catch (e) {
+      console.error('Error fetching bandeDessinees:', e)
+      throw new Error('Error fetching bandeDessinees')
+    }
   }
 
   async fetchBandeDessinee(
     contentID: string | null,
     draftKey: string | null | undefined
   ): Promise<bandeDessineeResult & MicroCMSContentId & MicroCMSDate> {
-    console.log('fetchBandeDessinee point1')
     const apiKey = this.env.CMS_API_KEY_BD
-    console.log('fetchBandeDessinee point2')
     if (contentID === null) {
       throw new Error('contentID is empty')
     }
-    console.log('fetchBandeDessinee point3')
-    const content = await getBandeDessinee(apiKey, contentID)
-    console.log('fetchBandeDessinee point4')
-    const parsed = parse(content.description)
-    console.log('fetchBandeDessinee point5')
-    content.parsed_description = parsed.contents_array
-    content.table_of_contents = parsed.table_of_contents
-    console.log('fetchBandeDessinee point6')
-    return content
+    try {
+      const content = await getBandeDessinee(apiKey, contentID)
+      console.log('fetchBandeDessinee point4')
+      const parsed = parse(content.description)
+      console.log('fetchBandeDessinee point5')
+      content.parsed_description = parsed.contents_array
+      content.table_of_contents = parsed.table_of_contents
+      console.log('fetchBandeDessinee point6')
+      return content
+    } catch (e) {
+      console.error('Error fetching bandeDessinee:', e)
+      throw new Error('Error fetching bandeDessinee')
+    }
   }
 }
 
