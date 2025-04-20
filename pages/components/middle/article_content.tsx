@@ -103,7 +103,7 @@ export default async function ArticleContent({
             const subText = c.sub_texts
             return (
               <div key={i} className="py-6">
-                <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+                <ContentImage key={i} tag={tag} src={src} subText={subText ?? null} articleID={articleID} />
               </div>
             )
           } else if (pOption === 'photo') {
@@ -113,7 +113,7 @@ export default async function ArticleContent({
             const subText = c.sub_texts
             return (
               <div key={i} className="py-6">
-                <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+                <ContentImage key={i} tag={tag} src={src} subText={subText ?? null} articleID={articleID} />
               </div>
             )
           } else if (pOption === 'youtube') {
