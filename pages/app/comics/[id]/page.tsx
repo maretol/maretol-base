@@ -73,17 +73,17 @@ export default async function ComicPage(props: {
             titleName={title}
             publishedAt={data.publishedAt}
             updatedAt={data.updatedAt}
-            publishDate={data.publish_date}
-            publishEvent={data.publish_event}
+            publishDate={data.publish_date ?? null}
+            publishEvent={data.publish_event ?? null}
             contentsUrl={data.contents_url}
-            nextId={data.next_id}
+            nextId={data.next_id ?? null}
             seriesId={data.series?.id ?? null}
             seriesName={data.series?.series_name ?? null}
             tagId={data.tag.id}
             tagName={data.tag.tag_name}
-            cover={data.cover}
+            cover={data.cover ?? null}
             firstPage={firstPage}
-            previousId={data.previous_id}
+            previousId={data.previous_id ?? null}
             parsedDescription={data.parsed_description}
             tableOfContents={data.table_of_contents}
           />
