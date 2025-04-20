@@ -76,7 +76,7 @@ async function getOGPDataOrigin(targetURL: string) {
     // 成功時はcacheに保存する。devのときは60秒（最短）
     const expirationTtl = dev ? 60 : CacheTTL.ogpData
     await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl })
-    return res
+    return res as OGPResult
   } catch (e) {
     console.error(e)
     return { success: false } as OGPResult
@@ -112,15 +112,15 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
     if (!data) {
       return { contents: [], total: 0 }
     }
-    return data
+    return data as { contents: contentsAPIResult[]; total: number }
   }
-  const res = env.CMS_RPC.fetchContents(offsetStr, limitStr)
+  const res = await env.CMS_RPC.fetchContents(offsetStr, limitStr)
 
   // cacheに保存する
   const expirationTtl = CacheTTL.contents
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return res
+  return res as { contents: contentsAPIResult[]; total: number }
 }
 
 // 特定のブログコンテンツの取得
@@ -138,18 +138,18 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   if (getLocalEnv() === 'local') {
   }
 
-  const res = env.CMS_RPC.fetchContent(articleID, draftKey || null)
+  const res = await env.CMS_RPC.fetchContent(articleID, draftKey || null)
 
   // draftKeyがある場合はキャッシュを使わないため
   if (draftKey) {
-    return res
+    return res as contentsAPIResult
   }
 
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.content
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return res
+  return res as contentsAPIResult
 }
 
 // タグを指定してコンテンツを取得
@@ -169,13 +169,13 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
   if (getLocalEnv() === 'local') {
   }
 
-  const res = env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr)
+  const res = await env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr)
 
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.contentsWithTags
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return res
+  return res as { contents: contentsAPIResult[]; total: number }
 }
 
 // タグの一覧取得
@@ -193,14 +193,14 @@ async function getTagsOrigin() {
   if (getLocalEnv() === 'local') {
   }
 
-  const res = env.CMS_RPC.fetchTags()
+  const res = await env.CMS_RPC.fetchTags()
 
   // cacheに保存する
   // 有効期間は1時間
   const expirationTtl = dev ? 60 : CacheTTL.tags
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return res
+  return res as categoryAPIResult[]
 }
 
 // 特定のページの詳細情報取得
@@ -218,12 +218,12 @@ async function getInfoOrigin() {
   if (getLocalEnv() === 'local') {
   }
 
-  const res = env.CMS_RPC.fetchInfo()
+  const res = await env.CMS_RPC.fetchInfo()
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.info
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return res
+  return res as infoAPIResult[]
 }
 
 // マンガのリスト取得
@@ -242,12 +242,12 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   if (getLocalEnv() === 'local') {
   }
 
-  const res = env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr)
+  const res = await env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr)
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.bandeDessinee
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return res
+  return res as { bandeDessinees: bandeDessineeResult[]; total: number }
 }
 
 // 単一のマンガ情報取得
@@ -265,18 +265,18 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   if (getLocalEnv() === 'local') {
   }
 
-  const res = env.CMS_RPC.fetchBandeDessinee(contentID, draftKey || null)
+  const res = await env.CMS_RPC.fetchBandeDessinee(contentID, draftKey || null)
 
   // draftKeyがある場合はキャッシュを使わない
   if (draftKey) {
-    return res
+    return res as bandeDessineeResult
   }
 
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.bandeDessineeByID
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return res
+  return res as bandeDessineeResult
 }
 
 export {
