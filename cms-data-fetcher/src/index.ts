@@ -151,13 +151,11 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
 
     try {
       const contents = await getBandeDessinees(apiKey, offsetNum, limitNum)
-      console.log('fetchBandeDessinees point5')
       contents.bandeDessinees.forEach((bd) => {
         const parsed = parse(bd.description)
         bd.parsed_description = parsed.contents_array
         bd.table_of_contents = parsed.table_of_contents
       })
-      console.log('fetchBandeDessinees point6')
       return contents
     } catch (e) {
       console.error('Error fetching bandeDessinees:', e)
@@ -172,12 +170,9 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
     try {
       const content = await getBandeDessinee(apiKey, contentID, draftKey || undefined)
-      console.log('fetchBandeDessinee point4')
       const parsed = parse(content.description)
-      console.log('fetchBandeDessinee point5')
       content.parsed_description = parsed.contents_array
       content.table_of_contents = parsed.table_of_contents
-      console.log('fetchBandeDessinee point6')
       return content
     } catch (e) {
       console.error('Error fetching bandeDessinee:', e)

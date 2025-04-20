@@ -7,11 +7,11 @@ type ParsedContent = {
   tag_name: string
   class: string
   attributes: { [name: string]: string }
-  inner_html: string | null
+  inner_html?: string
   raw_text: string
   text: string
-  sub_texts: { [key: string]: string } | null
-  p_option: string | null
+  sub_texts?: { [key: string]: string }
+  p_option?: string
 }
 
 type TableOfContents = {
@@ -30,7 +30,7 @@ type contentsAPIResult = {
   content: string
   parsed_content: ParsedContent[]
   table_of_contents: TableOfContents
-  ogp_image: string | undefined | null
+  ogp_image?: string
   categories: categoryAPIResult[]
 }
 
@@ -50,7 +50,7 @@ type infoAPIResult = {
   publishedAt: string
   revisedAt: string
   page_pathname: string
-  title: string | undefined
+  title?: string
   main_text: string
   parsed_content: ParsedContent[]
   table_of_contents: TableOfContents
@@ -62,16 +62,16 @@ type bandeDessineeResult = {
   updatedAt: string
   publishedAt: string
   title_name: string
-  publish_date: string | null
-  publish_event: string | null
+  publish_date?: string
+  publish_event?: string
   contents_url: string
   description: string
-  next_id: string | null
-  previous_id: string | null
-  series: bandeDessineeSerires | null
+  next_id?: string
+  previous_id?: string
+  series?: bandeDessineeSerires
   tag: bandeDessineeTag
-  cover: string | null
-  back_cover: string | null
+  cover?: string
+  back_cover?: string
   format: string[]
   filename: string
   first_page: number
