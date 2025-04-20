@@ -174,14 +174,14 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
 
   async fetchBandeDessinee(
     contentID: string | null,
-    draftKey: string | null | undefined
+    draftKey: string | null
   ): Promise<bandeDessineeResult & MicroCMSContentId & MicroCMSDate> {
     const apiKey = this.env.CMS_API_KEY_BD
     if (contentID === null) {
       throw new Error('contentID is empty')
     }
     try {
-      const content = await getBandeDessinee(apiKey, contentID)
+      const content = await getBandeDessinee(apiKey, contentID, draftKey || undefined)
       console.log('fetchBandeDessinee point4')
       const parsed = parse(content.description)
       console.log('fetchBandeDessinee point5')
