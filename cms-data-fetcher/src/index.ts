@@ -70,7 +70,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
         return Response.json(contents)
       } else {
         // マンガの指定がある場合そのマンガを取得
-        const content = await this.fetchBandeDessinee(contentID)
+        const content = await this.fetchBandeDessinee(contentID, draftKey)
         return Response.json(content)
       }
     } else {
@@ -79,18 +79,18 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchContentsByTag(
-    tagIDsStr: string | null,
+    tagIDs: string | string[] | null,
     offset: number | string | null,
     limit: number | string | null
   ): Promise<{ contents: (contentsAPIResult & MicroCMSContentId & MicroCMSDate)[]; total: number }> {
     const apiKey = this.env.CMS_API_KEY
-    if (tagIDsStr === null) {
+    if (tagIDs === null) {
       return { contents: [], total: 0 }
     }
-    const tagIDs = tagIDsStr.split('+')
+    const tagIDsArray = typeof tagIDs === 'string' ? tagIDs.split('+') : tagIDs
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
-    const contents = await getContentsByTag(apiKey, tagIDs, offsetNum, limitNum)
+    const contents = await getContentsByTag(apiKey, tagIDsArray, offsetNum, limitNum)
     contents.contents.forEach((c) => {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
@@ -164,7 +164,10 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     return contents
   }
 
-  async fetchBandeDessinee(contentID: string | null): Promise<bandeDessineeResult & MicroCMSContentId & MicroCMSDate> {
+  async fetchBandeDessinee(
+    contentID: string | null,
+    draftKey: string | null | undefined
+  ): Promise<bandeDessineeResult & MicroCMSContentId & MicroCMSDate> {
     const apiKey = this.env.CMS_API_KEY_BD
     if (contentID === null) {
       throw new Error('contentID is empty')
