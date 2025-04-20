@@ -242,14 +242,10 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   if (getLocalEnv() === 'local') {
   }
 
-  console.log('getBandeDessineeOrigin point1')
   const res = await env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr)
-  console.log('getBandeDessineeOrigin point2')
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.bandeDessinee
-  console.log('getBandeDessineeOrigin point3')
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
-  console.log('getBandeDessineeOrigin point4')
 
   return res as { bandeDessinees: bandeDessineeResult[]; total: number }
 }
@@ -269,9 +265,7 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   if (getLocalEnv() === 'local') {
   }
 
-  console.log('getBandeDessineeByIDOrigin point1')
   const res = await env.CMS_RPC.fetchBandeDessinee(contentID, draftKey || null)
-  console.log('getBandeDessineeByIDOrigin point2')
 
   // draftKeyがある場合はキャッシュを使わない
   if (draftKey) {
@@ -280,9 +274,7 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
 
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.bandeDessineeByID
-  console.log('getBandeDessineeByIDOrigin point3')
   await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
-  console.log('getBandeDessineeByIDOrigin point4')
 
   return res as bandeDessineeResult
 }
