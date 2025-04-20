@@ -152,6 +152,10 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     offset: number | string | null,
     limit: number | string | null
   ): Promise<{ bandeDessinees: (bandeDessineeResult & MicroCMSContentId & MicroCMSDate)[]; total: number }> {
+    return {
+      bandeDessinees: [],
+      total: 0,
+    }
     const apiKey = this.env.CMS_API_KEY_BD
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
