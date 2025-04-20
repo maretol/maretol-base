@@ -161,11 +161,13 @@ export async function getBandeDessinees(apiKey: string, offset: number, limit: n
     throw new Error('API_KEY is undefined')
   }
 
+  console.log('method point1')
   const client = createClient({
     serviceDomain: 'maretol-comic',
     apiKey: apiKey,
   })
 
+  console.log('method point2')
   const response = await client
     .getList<bandeDessineeResult>({
       endpoint: 'bande-dessinee',
@@ -178,10 +180,12 @@ export async function getBandeDessinees(apiKey: string, offset: number, limit: n
       console.log(err)
     })
 
+  console.log('method point3')
   if (response === undefined) {
     throw new Error('api access error')
   }
 
+  console.log('method point4')
   return { bandeDessinees: response.contents, total: response.totalCount }
 }
 
