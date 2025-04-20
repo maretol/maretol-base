@@ -11,7 +11,6 @@ import {
   generateTagsKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
-import CMSDataFetcher from 'cms-data-fetcher/src'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
@@ -126,7 +125,7 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
 
 // 特定のブログコンテンツの取得
 async function getCMSContentOrigin(articleID: string, draftKey?: string) {
-  const { env, ctx } = getCloudflareContext()
+  const { env } = getCloudflareContext()
 
   const cacheKey = generateContentKey(articleID)
   const cache = await env.CMS_CACHE.get(cacheKey)
@@ -137,9 +136,6 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   }
 
   if (getLocalEnv() === 'local') {
-    const cmsdf = new CMSDataFetcher(ctx, env)
-    const res = cmsdf.fetchContent(articleID, draftKey || null)
-    return res
   }
 
   const res = env.CMS_RPC.fetchContent(articleID, draftKey || null)
@@ -158,7 +154,7 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
 
 // タグを指定してコンテンツを取得
 async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, limit?: number) {
-  const { env, ctx } = getCloudflareContext()
+  const { env } = getCloudflareContext()
 
   // tagIDsをソートしてキャッシュのキーにしてcacheの有無を確認
   const offsetStr = offset?.toString() || '0'
@@ -171,9 +167,6 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
   }
 
   if (getLocalEnv() === 'local') {
-    const cmsdf = new CMSDataFetcher(ctx, env)
-    const res = cmsdf.fetchContentsByTag(tagIDs, offsetStr, limitStr)
-    return res
   }
 
   const res = env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr)
@@ -187,7 +180,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
 
 // タグの一覧取得
 async function getTagsOrigin() {
-  const { env, ctx } = getCloudflareContext()
+  const { env } = getCloudflareContext()
 
   // cacheに有無を確認する
   const cacheKey = generateTagsKey()
@@ -198,9 +191,6 @@ async function getTagsOrigin() {
   }
 
   if (getLocalEnv() === 'local') {
-    const cmsdf = new CMSDataFetcher(ctx, env)
-    const res = cmsdf.fetchTags()
-    return res
   }
 
   const res = env.CMS_RPC.fetchTags()
@@ -215,7 +205,7 @@ async function getTagsOrigin() {
 
 // 特定のページの詳細情報取得
 async function getInfoOrigin() {
-  const { env, ctx } = getCloudflareContext()
+  const { env } = getCloudflareContext()
 
   // cacheに有無を確認する
   const cacheKey = generateInfoKey()
@@ -226,9 +216,6 @@ async function getInfoOrigin() {
   }
 
   if (getLocalEnv() === 'local') {
-    const cmsdf = new CMSDataFetcher(ctx, env)
-    const res = cmsdf.fetchInfo()
-    return res
   }
 
   const res = env.CMS_RPC.fetchInfo()
@@ -241,7 +228,7 @@ async function getInfoOrigin() {
 
 // マンガのリスト取得
 async function getBandeDessineeOrigin(offset?: number, limit?: number) {
-  const { env, ctx } = getCloudflareContext()
+  const { env } = getCloudflareContext()
 
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
@@ -253,9 +240,6 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   }
 
   if (getLocalEnv() === 'local') {
-    const cmsdf = new CMSDataFetcher(ctx, env)
-    const res = cmsdf.fetchBandeDessinees(offsetStr, limitStr)
-    return res
   }
 
   const res = env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr)
@@ -268,7 +252,7 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
 
 // 単一のマンガ情報取得
 async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) {
-  const { env, ctx } = getCloudflareContext()
+  const { env } = getCloudflareContext()
 
   const cacheKey = generateBandeDessineeContentKey(contentID)
   const cache = await env.CMS_CACHE.get(cacheKey)
@@ -279,9 +263,6 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   }
 
   if (getLocalEnv() === 'local') {
-    const cmsdf = new CMSDataFetcher(ctx, env)
-    const res = cmsdf.fetchBandeDessinee(contentID, draftKey || null)
-    return res
   }
 
   const res = env.CMS_RPC.fetchBandeDessinee(contentID, draftKey || null)
