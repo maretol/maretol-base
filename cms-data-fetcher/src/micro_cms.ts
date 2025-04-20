@@ -27,9 +27,10 @@ export async function getContents(apiKey: string, offset: number, limit: number)
   if (response === undefined) {
     throw new Error('api access error')
   }
+  const contents = response.contents as contentsAPIResult[]
   const total = response.totalCount
 
-  return { contents: response.contents, total: total }
+  return { contents, total }
 }
 
 // IDを指定して単独の記事コンテンツを取得するAPIアクセス
@@ -58,7 +59,7 @@ export async function getContent(apiKey: string, articleID: string, draftKey?: s
   if (response === undefined) {
     throw new Error('api access error')
   }
-  return response.contents[0]
+  return response.contents[0] as contentsAPIResult
 }
 
 // タグ一覧を取得するAPIアクセス
@@ -86,7 +87,7 @@ export async function getTags(apiKey: string) {
   if (response === undefined) {
     throw new Error('api access error')
   }
-  return response.contents
+  return response.contents as categoryAPIResult[]
 }
 
 // タグ指定で記事コンテンツを取得するAPIアクセス
@@ -125,7 +126,11 @@ export async function getContentsByTag(apiKey: string, tagIDs: string[], offset:
   if (response === undefined) {
     throw new Error('api access error')
   }
-  return { contents: response.contents, total: response.totalCount }
+
+  const contents = response.contents as contentsAPIResult[]
+  const total = response.totalCount
+
+  return { contents, total }
 }
 
 export async function getInfo(apiKey: string) {
@@ -153,7 +158,7 @@ export async function getInfo(apiKey: string) {
     throw new Error('api access error')
   }
 
-  return response.contents
+  return response.contents as infoAPIResult[]
 }
 
 export async function getBandeDessinees(apiKey: string, offset: number, limit: number) {
@@ -188,7 +193,11 @@ export async function getBandeDessinees(apiKey: string, offset: number, limit: n
   }
 
   console.log('method point4')
-  return { bandeDessinees: response.contents, total: response.totalCount }
+
+  const bandeDessinees = response.contents as bandeDessineeResult[]
+  const total = response.totalCount
+
+  return { bandeDessinees, total }
 }
 
 export async function getBandeDessinee(apiKey: string, contentID: string, draftKey?: string) {
@@ -217,5 +226,5 @@ export async function getBandeDessinee(apiKey: string, contentID: string, draftK
     throw new Error('api access error')
   }
 
-  return response.contents[0]
+  return response.contents[0] as bandeDessineeResult
 }
