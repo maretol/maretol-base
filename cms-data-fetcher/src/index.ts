@@ -98,7 +98,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       c.parsed_content = parsed.contents_array
       c.table_of_contents = parsed.table_of_contents
     })
-    return contents
+    return JSON.parse(JSON.stringify(contents))
   }
 
   async fetchContents(offset?: string, limit?: string): Promise<{ contents: contentsAPIResult[]; total: number }> {
@@ -111,7 +111,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       c.parsed_content = parsed.contents_array
       c.table_of_contents = parsed.table_of_contents
     })
-    return contents
+    return JSON.parse(JSON.stringify(contents))
   }
 
   async fetchContent(articleID: string, draftKey?: string): Promise<contentsAPIResult> {
@@ -121,13 +121,13 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const parsed = parse(content.content)
     content.parsed_content = parsed.contents_array
     content.table_of_contents = parsed.table_of_contents
-    return content
+    return JSON.parse(JSON.stringify(content))
   }
 
   async fetchTags(): Promise<categoryAPIResult[]> {
     const apiKey = this.env.CMS_API_KEY
     const tags = await getTags(apiKey)
-    return tags
+    return JSON.parse(JSON.stringify(tags))
   }
 
   async fetchInfo(): Promise<infoAPIResult[]> {
@@ -138,7 +138,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       i.parsed_content = parsed.contents_array
       i.table_of_contents = parsed.table_of_contents
     })
-    return info
+    return JSON.parse(JSON.stringify(info))
   }
 
   async fetchBandeDessinees(
@@ -156,7 +156,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
         bd.parsed_description = parsed.contents_array
         bd.table_of_contents = parsed.table_of_contents
       })
-      return contents
+      return JSON.parse(JSON.stringify(contents))
     } catch (e) {
       console.error('Error fetching bandeDessinees:', e)
       throw new Error('Error fetching bandeDessinees')
@@ -173,7 +173,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       const parsed = parse(content.description)
       content.parsed_description = parsed.contents_array
       content.table_of_contents = parsed.table_of_contents
-      return content
+      return JSON.parse(JSON.stringify(content))
     } catch (e) {
       console.error('Error fetching bandeDessinee:', e)
       throw new Error('Error fetching bandeDessinee')
