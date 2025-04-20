@@ -242,12 +242,17 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   if (getLocalEnv() === 'local') {
   }
 
-  const res = await env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr)
-  // cacheに保存する
-  const expirationTtl = dev ? 60 : CacheTTL.bandeDessinee
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
+  try {
+    const res = await env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr)
+    // cacheに保存する
+    const expirationTtl = dev ? 60 : CacheTTL.bandeDessinee
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return res as { bandeDessinees: bandeDessineeResult[]; total: number }
+    return res as { bandeDessinees: bandeDessineeResult[]; total: number }
+  } catch (e) {
+    console.error('Error fetching bandeDessinees:', e)
+    throw new Error('Error fetching bandeDessinees')
+  }
 }
 
 // 単一のマンガ情報取得
@@ -265,18 +270,23 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   if (getLocalEnv() === 'local') {
   }
 
-  const res = await env.CMS_RPC.fetchBandeDessinee(contentID, draftKey || null)
+  try {
+    const res = await env.CMS_RPC.fetchBandeDessinee(contentID, draftKey || null)
 
-  // draftKeyがある場合はキャッシュを使わない
-  if (draftKey) {
+    // draftKeyがある場合はキャッシュを使わない
+    if (draftKey) {
+      return res as bandeDessineeResult
+    }
+
+    // cacheに保存する
+    const expirationTtl = dev ? 60 : CacheTTL.bandeDessineeByID
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
+
     return res as bandeDessineeResult
+  } catch (e) {
+    console.error('Error fetching bandeDessinee:', e)
+    throw new Error('Error fetching bandeDessinee')
   }
-
-  // cacheに保存する
-  const expirationTtl = dev ? 60 : CacheTTL.bandeDessineeByID
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
-
-  return res as bandeDessineeResult
 }
 
 export {
