@@ -51,9 +51,11 @@ export default {
           await deleteContentsCache(env)
 
           // sns-publisherに送信する
+          console.log('publish sns')
           const publishValue = bodyJSON.contents.new.publishValue
           const snsPubData = generateSNSPublishData(publishValue)
-          env.SNS_PUBLISHER.publish(snsPubData)
+          await env.SNS_PUBLISHER.publish(snsPubData)
+          console.log('publish sns done')
         } else {
           console.log('status is not PUBLISH')
         }
@@ -65,9 +67,11 @@ export default {
           await deleteContentsCache(env)
 
           // sns-publisherに送信する
+          console.log('publish sns')
           const publishValue = bodyJSON.contents.new.publishValue
           const snsPubData = generateSNSPublishData(publishValue)
-          env.SNS_PUBLISHER.publish(snsPubData)
+          await env.SNS_PUBLISHER.publish(snsPubData)
+          console.log('publish sns done')
         } else {
           // ブログのメインコンテンツに編集があった場合
           // 対象のIDのコンテンツのキャッシュを削除する
