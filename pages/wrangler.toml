@@ -8,7 +8,9 @@ routes = [
 ]
 services = [
     { binding = "OGP_FETCHER", service = "ogp-data-fetcher", environment = "production" },
-    { binding = "CMS_FETCHER", service = "cms-data-fetcher", environment = "production" }
+    { binding = "CMS_FETCHER", service = "cms-data-fetcher", environment = "production" },
+    { binding = "OGP_RPC", service = "ogp-data-fetcher", environment = "production" },
+    { binding = "CMS_RPC", service = "cms-data-fetcher", environment = "production" },
 ]
 kv_namespaces = [
     { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
