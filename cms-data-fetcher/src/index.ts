@@ -36,12 +36,12 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const searchParams = url.searchParams
     const pathname = url.pathname
 
-    const offset = searchParams.get('offset')
-    const limit = searchParams.get('limit')
-    const tagIDsStr = searchParams.get('tag_id')
+    const offset = searchParams.get('offset') || undefined
+    const limit = searchParams.get('limit') || undefined
+    const tagIDsStr = searchParams.get('tag_id')?.split('+') || []
     const articleID = searchParams.get('article_id')
     const contentID = searchParams.get('content_id')
-    const draftKey = searchParams.get('draftKey')
+    const draftKey = searchParams.get('draftKey') || undefined
 
     if (pathname.includes('/cms/get_contents_with_tag')) {
       // タグで絞り込んで記事一覧を取得
@@ -53,6 +53,9 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       return Response.json(contents)
     } else if (pathname.includes('/cms/get_content')) {
       // 単独の記事を取得
+      if (articleID === null) {
+        return new Response('articleID is empty', { status: 400 })
+      }
       const content = await this.fetchContent(articleID, draftKey)
       return Response.json(content)
     } else if (pathname.includes('/cms/get_tags')) {
@@ -79,18 +82,17 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchContentsByTag(
-    tagIDs: string | string[] | null,
-    offset: number | string | null,
-    limit: number | string | null
-  ): Promise<{ contents: (contentsAPIResult & MicroCMSContentId & MicroCMSDate)[]; total: number }> {
+    tagIDs: string[],
+    offset?: string,
+    limit?: string
+  ): Promise<{ contents: contentsAPIResult[]; total: number }> {
     const apiKey = this.env.CMS_API_KEY
     if (tagIDs === null) {
       return { contents: [], total: 0 }
     }
-    const tagIDsArray = typeof tagIDs === 'string' ? tagIDs.split('+') : tagIDs
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
-    const contents = await getContentsByTag(apiKey, tagIDsArray, offsetNum, limitNum)
+    const contents = await getContentsByTag(apiKey, tagIDs, offsetNum, limitNum)
     contents.contents.forEach((c) => {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
@@ -99,10 +101,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     return contents
   }
 
-  async fetchContents(
-    offset: number | string | null,
-    limit: number | string | null
-  ): Promise<{ contents: (contentsAPIResult & MicroCMSContentId & MicroCMSDate)[]; total: number }> {
+  async fetchContents(offset?: string, limit?: string): Promise<{ contents: contentsAPIResult[]; total: number }> {
     const apiKey = this.env.CMS_API_KEY
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
@@ -115,14 +114,8 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     return contents
   }
 
-  async fetchContent(
-    articleID: string | null,
-    draftKey: string | null
-  ): Promise<contentsAPIResult & MicroCMSContentId & MicroCMSDate> {
+  async fetchContent(articleID: string, draftKey?: string): Promise<contentsAPIResult> {
     const apiKey = this.env.CMS_API_KEY
-    if (articleID === null) {
-      throw new Error('articleID is null')
-    }
     const parsedDraftKey = draftKey === null ? undefined : draftKey
     const content = await getContent(apiKey, articleID, parsedDraftKey)
     const parsed = parse(content.content)
@@ -131,13 +124,13 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     return content
   }
 
-  async fetchTags(): Promise<(categoryAPIResult & MicroCMSContentId & MicroCMSDate)[]> {
+  async fetchTags(): Promise<categoryAPIResult[]> {
     const apiKey = this.env.CMS_API_KEY
     const tags = await getTags(apiKey)
     return tags
   }
 
-  async fetchInfo(): Promise<(infoAPIResult & MicroCMSContentId & MicroCMSDate)[]> {
+  async fetchInfo(): Promise<infoAPIResult[]> {
     const apiKey = this.env.CMS_API_KEY
     const info = await getInfo(apiKey)
     info.forEach((i) => {
@@ -149,9 +142,9 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchBandeDessinees(
-    offset: number | string | null,
-    limit: number | string | null
-  ): Promise<{ bandeDessinees: (bandeDessineeResult & MicroCMSContentId & MicroCMSDate)[]; total: number }> {
+    offset?: string,
+    limit?: string
+  ): Promise<{ bandeDessinees: bandeDessineeResult[]; total: number }> {
     const apiKey = this.env.CMS_API_KEY_BD
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
@@ -172,10 +165,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
   }
 
-  async fetchBandeDessinee(
-    contentID: string | null,
-    draftKey: string | null
-  ): Promise<bandeDessineeResult & MicroCMSContentId & MicroCMSDate> {
+  async fetchBandeDessinee(contentID: string, draftKey?: string): Promise<bandeDessineeResult> {
     const apiKey = this.env.CMS_API_KEY_BD
     if (contentID === null) {
       throw new Error('contentID is empty')
@@ -196,12 +186,9 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 }
 
-function parseOffset(offset: number | string | null): number {
-  if (offset === null) {
+function parseOffset(offset: string | undefined): number {
+  if (offset === undefined) {
     return 0
-  }
-  if (typeof offset === 'number') {
-    return offset
   }
   const parsedOffset = parseInt(offset)
   if (isNaN(parsedOffset)) {
@@ -210,12 +197,9 @@ function parseOffset(offset: number | string | null): number {
   return parsedOffset
 }
 
-function parseLimit(limit: number | string | null): number {
-  if (limit === null) {
+function parseLimit(limit: string | undefined): number {
+  if (limit === undefined) {
     return 10
-  }
-  if (typeof limit === 'number') {
-    return limit
   }
   const parsedLimit = parseInt(limit)
   if (isNaN(parsedLimit)) {
