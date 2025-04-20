@@ -180,6 +180,8 @@ export async function getBandeDessinees(apiKey: string, offset: number, limit: n
       console.log(err)
     })
 
+  console.log(response)
+
   console.log('method point3')
   if (response === undefined) {
     throw new Error('api access error')
