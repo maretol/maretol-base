@@ -1,6 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
-import { getNodeEnv } from '../env'
+import { getLocalEnv, getNodeEnv } from '../env'
 import {
   generateBandeDessineeContentKey,
   generateBandeDessineeKey,
@@ -11,6 +11,7 @@ import {
   generateTagsKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
+import CMSDataFetcher from 'cms-data-fetcher/src'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
@@ -49,29 +50,38 @@ async function getOGPDataOrigin(targetURL: string) {
     return data
   }
 
-  const host = env.HOST
-  const url = new URL(host + '/api/ogp')
-  url.searchParams.set('target', targetURL)
+  if (getLocalEnv() === 'local') {
+    const host = env.HOST
+    const url = new URL(host + '/api/ogp')
+    url.searchParams.set('target', targetURL)
 
-  const ogpAPIKey = env.OGP_FETCHER_API_KEY
+    const ogpAPIKey = env.OGP_FETCHER_API_KEY
 
-  const request = new Request(url, { headers: { 'x-api-key': ogpAPIKey }, method: 'GET' })
+    const request = new Request(url, { headers: { 'x-api-key': ogpAPIKey }, method: 'GET' })
 
-  const res = await fetch(request, { cache: 'no-store' })
-  if (!res.ok) {
-    return { success: false } as OGPResult
-  }
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return { success: false } as OGPResult
+    }
 
-  const data = (await res.json()) as OGPResult
-  if (!data.success) {
+    const data = (await res.json()) as OGPResult
+    if (!data.success) {
+      return data
+    }
+
     return data
   }
 
-  // 成功時はcacheに保存する。devのときは60秒（最短）
-  const expirationTtl = dev ? 60 : CacheTTL.ogpData
-  await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl })
-
-  return data
+  try {
+    const res = await env.OGP_RPC.fetchOGPData(targetURL)
+    // 成功時はcacheに保存する。devのときは60秒（最短）
+    const expirationTtl = dev ? 60 : CacheTTL.ogpData
+    await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl })
+    return res
+  } catch (e) {
+    console.error(e)
+    return { success: false } as OGPResult
+  }
 }
 
 // ブログの更新リストの取得
@@ -88,28 +98,35 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
     return data
   }
 
-  const host = env.HOST
-  const url = new URL(host + '/api/cms/get_contents')
-  url.searchParams.set('offset', offsetStr)
-  url.searchParams.set('limit', limitStr)
-
-  const cmsAPIKey = env.CMS_FETCHER_API_KEY
-
-  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
-
-  const res = await fetch(request, { cache: 'no-store' })
-  const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
+  if (getLocalEnv() === 'local') {
+    const host = env.HOST
+    const url = new URL(host + '/api/cms/get_contents')
+    url.searchParams.set('offset', offsetStr)
+    url.searchParams.set('limit', limitStr)
+    const cmsAPIKey = env.CMS_API_KEY
+    const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return { contents: [], total: 0 }
+    }
+    const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
+    if (!data) {
+      return { contents: [], total: 0 }
+    }
+    return data
+  }
+  const res = env.CMS_RPC.fetchContents(offsetStr, limitStr)
 
   // cacheに保存する
   const expirationTtl = CacheTTL.contents
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return data
+  return res
 }
 
 // 特定のブログコンテンツの取得
 async function getCMSContentOrigin(articleID: string, draftKey?: string) {
-  const { env } = getCloudflareContext()
+  const { env, ctx } = getCloudflareContext()
 
   const cacheKey = generateContentKey(articleID)
   const cache = await env.CMS_CACHE.get(cacheKey)
@@ -119,33 +136,29 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
     return data
   }
 
-  const host = env.HOST
-  const url = new URL(host + '/api/cms/get_content')
-  url.searchParams.set('article_id', articleID)
-  if (draftKey) url.searchParams.set('draftKey', draftKey)
+  if (getLocalEnv() === 'local') {
+    const cmsdf = new CMSDataFetcher(ctx, env)
+    const res = cmsdf.fetchContent(articleID, draftKey || null)
+    return res
+  }
 
-  const cmsAPIKey = env.CMS_FETCHER_API_KEY
-
-  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
-
-  const res = await fetch(request, { cache: 'no-store' })
-  const data = (await res.json()) as contentsAPIResult
+  const res = env.CMS_RPC.fetchContent(articleID, draftKey || null)
 
   // draftKeyがある場合はキャッシュを使わないため
   if (draftKey) {
-    return data
+    return res
   }
 
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.content
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return data
+  return res
 }
 
 // タグを指定してコンテンツを取得
 async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, limit?: number) {
-  const { env } = getCloudflareContext()
+  const { env, ctx } = getCloudflareContext()
 
   // tagIDsをソートしてキャッシュのキーにしてcacheの有無を確認
   const offsetStr = offset?.toString() || '0'
@@ -157,29 +170,24 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
     return data
   }
 
-  const host = env.HOST
-  const url = new URL(host + '/api/cms/get_contents_with_tag')
-  url.searchParams.set('tag_id', tagIDs.join('+'))
-  url.searchParams.set('offset', offsetStr)
-  url.searchParams.set('limit', limitStr)
+  if (getLocalEnv() === 'local') {
+    const cmsdf = new CMSDataFetcher(ctx, env)
+    const res = cmsdf.fetchContentsByTag(tagIDs, offsetStr, limitStr)
+    return res
+  }
 
-  const cmsAPIKey = env.CMS_FETCHER_API_KEY
-
-  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
-
-  const res = await fetch(request, { cache: 'no-store' })
-  const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
+  const res = env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr)
 
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.contentsWithTags
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return data
+  return res
 }
 
 // タグの一覧取得
 async function getTagsOrigin() {
-  const { env } = getCloudflareContext()
+  const { env, ctx } = getCloudflareContext()
 
   // cacheに有無を確認する
   const cacheKey = generateTagsKey()
@@ -189,27 +197,25 @@ async function getTagsOrigin() {
     return data
   }
 
-  const host = env.HOST
-  const url = new URL(host + '/api/cms/get_tags')
+  if (getLocalEnv() === 'local') {
+    const cmsdf = new CMSDataFetcher(ctx, env)
+    const res = cmsdf.fetchTags()
+    return res
+  }
 
-  const cmsAPIKey = env.CMS_FETCHER_API_KEY
-
-  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
-
-  const res = await fetch(request, { cache: 'no-store' })
-  const data = (await res.json()) as categoryAPIResult[]
+  const res = env.CMS_RPC.fetchTags()
 
   // cacheに保存する
   // 有効期間は1時間
   const expirationTtl = dev ? 60 : CacheTTL.tags
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return data
+  return res
 }
 
 // 特定のページの詳細情報取得
 async function getInfoOrigin() {
-  const { env } = getCloudflareContext()
+  const { env, ctx } = getCloudflareContext()
 
   // cacheに有無を確認する
   const cacheKey = generateInfoKey()
@@ -219,26 +225,23 @@ async function getInfoOrigin() {
     return data
   }
 
-  const host = env.HOST
-  const url = new URL(host + '/api/cms/get_info')
+  if (getLocalEnv() === 'local') {
+    const cmsdf = new CMSDataFetcher(ctx, env)
+    const res = cmsdf.fetchInfo()
+    return res
+  }
 
-  const cmsAPIKey = env.CMS_FETCHER_API_KEY
-
-  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
-
-  const res = await fetch(request, { cache: 'no-store' })
-  const data = (await res.json()) as infoAPIResult[]
-
+  const res = env.CMS_RPC.fetchInfo()
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.info
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return data
+  return res
 }
 
 // マンガのリスト取得
 async function getBandeDessineeOrigin(offset?: number, limit?: number) {
-  const { env } = getCloudflareContext()
+  const { env, ctx } = getCloudflareContext()
 
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
@@ -249,28 +252,23 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
     return data
   }
 
-  const host = env.HOST
-  const url = new URL(host + '/api/cms/bande_dessinee')
-  if (offset) url.searchParams.set('offset', offset?.toString() || '0')
-  if (limit) url.searchParams.set('limit', limit?.toString() || '10')
+  if (getLocalEnv() === 'local') {
+    const cmsdf = new CMSDataFetcher(ctx, env)
+    const res = cmsdf.fetchBandeDessinees(offsetStr, limitStr)
+    return res
+  }
 
-  const cmsAPIKey = env.CMS_FETCHER_API_KEY
-
-  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
-
-  const res = await fetch(request, { cache: 'no-store' })
-  const data = (await res.json()) as { bandeDessinees: bandeDessineeResult[]; total: number }
-
+  const res = env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr)
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.bandeDessinee
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return data
+  return res
 }
 
 // 単一のマンガ情報取得
 async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) {
-  const { env } = getCloudflareContext()
+  const { env, ctx } = getCloudflareContext()
 
   const cacheKey = generateBandeDessineeContentKey(contentID)
   const cache = await env.CMS_CACHE.get(cacheKey)
@@ -280,28 +278,24 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
     return data
   }
 
-  const host = env.HOST
-  const url = new URL(host + '/api/cms/bande_dessinee')
-  url.searchParams.set('content_id', contentID)
-  url.searchParams.set('draftKey', draftKey || 'undefined')
+  if (getLocalEnv() === 'local') {
+    const cmsdf = new CMSDataFetcher(ctx, env)
+    const res = cmsdf.fetchBandeDessinee(contentID, draftKey || null)
+    return res
+  }
 
-  const cmsAPIKey = env.CMS_FETCHER_API_KEY
-
-  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
-
-  const res = await fetch(request, { cache: 'no-store' })
-  const data = (await res.json()) as bandeDessineeResult
+  const res = env.CMS_RPC.fetchBandeDessinee(contentID, draftKey || null)
 
   // draftKeyがある場合はキャッシュを使わない
   if (draftKey) {
-    return data
+    return res
   }
 
   // cacheに保存する
   const expirationTtl = dev ? 60 : CacheTTL.bandeDessineeByID
-  await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl })
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-  return data
+  return res
 }
 
 export {
