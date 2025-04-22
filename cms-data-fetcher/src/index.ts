@@ -13,7 +13,6 @@ import {
   getTags,
 } from './micro_cms'
 import { parse } from './parse'
-import { MicroCMSContentId, MicroCMSDate } from 'microcms-js-sdk'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 
 export interface Env {

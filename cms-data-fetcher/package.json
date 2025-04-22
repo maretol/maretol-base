@@ -7,6 +7,7 @@
     "deploy-prd": "wrangler deploy",
     "deploy-stg": "wrangler deploy -e staging",
     "dev": "wrangler dev",
+    "dev-bg": "wrangler dev > wrangler_dev.log",
     "start": "wrangler dev",
     "test": "vitest",
     "cf-typegen": "wrangler types"
