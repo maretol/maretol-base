@@ -12,7 +12,6 @@ interface CloudflareEnv {
 
 // 以下はローカル時に使う部分（特に支障はないのでそのまま読ませる）
 interface CloudflareEnv {
-  API_KEY: string
-  CMS_API_KEY: string
-  CMS_API_KEY_BD: string
+  CMS_DEV: string
+  OGP_DEV: string
 }

@@ -7,16 +7,17 @@
     "deploy-prd": "wrangler deploy",
     "deploy-stg": "wrangler deploy -e staging",
     "dev": "wrangler dev",
+    "dev-bg": "wrangler dev > wrangler_dev.log",
     "start": "wrangler dev",
     "test": "vitest",
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.8.18",
-    "@cloudflare/workers-types": "^4.20250419.0",
+    "@cloudflare/workers-types": "^4.20250422.0",
     "html-rewriter-wasm": "^0.4.1",
     "typescript": "^5.8.3",
-    "vitest": "3.1.1",
+    "vitest": "3.1.2",
     "wrangler": "^4.12.0"
   },
   "dependencies": {

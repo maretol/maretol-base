@@ -4,3 +4,5 @@ dist
 .secrets
 
 .dev.vars
+
+**.log
