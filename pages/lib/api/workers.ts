@@ -11,6 +11,7 @@ import {
   generateTagsKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
+import { env } from 'process'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
@@ -50,8 +51,9 @@ async function getOGPDataOrigin(targetURL: string) {
   }
 
   if (getLocalEnv() === 'local') {
-    const host = env.HOST
-    const url = new URL(host + '/api/ogp')
+    const host = env.OGP_DEV
+    console.log('host', host)
+    const url = new URL(host)
     url.searchParams.set('target', targetURL)
 
     const ogpAPIKey = env.OGP_FETCHER_API_KEY
@@ -67,6 +69,8 @@ async function getOGPDataOrigin(targetURL: string) {
     if (!data.success) {
       return data
     }
+
+    await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl: 60 })
 
     return data
   }
@@ -98,12 +102,10 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
   }
 
   if (getLocalEnv() === 'local') {
-    const host = env.HOST
-    const url = new URL(host + '/api/cms/get_contents')
-    url.searchParams.set('offset', offsetStr)
-    url.searchParams.set('limit', limitStr)
-    const cmsAPIKey = env.CMS_API_KEY
-    const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
+    const request = cmsFetcher('/api/cms/get_contents', {
+      offset: offsetStr,
+      limit: limitStr,
+    })
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
       return { contents: [], total: 0 }
@@ -112,6 +114,9 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
     if (!data) {
       return { contents: [], total: 0 }
     }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
     return data as { contents: contentsAPIResult[]; total: number }
   }
   const res = await env.CMS_RPC.fetchContents(offsetStr, limitStr)
@@ -136,6 +141,21 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   }
 
   if (getLocalEnv() === 'local') {
+    const query: Record<string, string> =
+      draftKey !== undefined ? { article_id: articleID, draftKey } : { article_id: articleID }
+    const request = cmsFetcher('/api/cms/get_content', query)
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return {} as contentsAPIResult
+    }
+    const data = (await res.json()) as contentsAPIResult
+    if (!data) {
+      return {} as contentsAPIResult
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as contentsAPIResult
   }
 
   const res = await env.CMS_RPC.fetchContent(articleID, draftKey || null)
@@ -167,6 +187,23 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
   }
 
   if (getLocalEnv() === 'local') {
+    const request = cmsFetcher('/api/cms/get_contents_with_tags', {
+      tag_id: tagIDs.join('+'),
+      offset: offsetStr,
+      limit: limitStr,
+    })
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return { contents: [], total: 0 }
+    }
+    const data = (await res.json()) as { contents: contentsAPIResult[]; total: number }
+    if (!data) {
+      return { contents: [], total: 0 }
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as { contents: contentsAPIResult[]; total: number }
   }
 
   const res = await env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr)
@@ -191,6 +228,19 @@ async function getTagsOrigin() {
   }
 
   if (getLocalEnv() === 'local') {
+    const request = cmsFetcher('/api/cms/get_tags')
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return []
+    }
+    const data = (await res.json()) as categoryAPIResult[]
+    if (!data) {
+      return []
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as categoryAPIResult[]
   }
 
   const res = await env.CMS_RPC.fetchTags()
@@ -216,6 +266,19 @@ async function getInfoOrigin() {
   }
 
   if (getLocalEnv() === 'local') {
+    const request = cmsFetcher('/api/cms/get_info')
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return []
+    }
+    const data = (await res.json()) as infoAPIResult[]
+    if (!data) {
+      return []
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as infoAPIResult[]
   }
 
   const res = await env.CMS_RPC.fetchInfo()
@@ -240,6 +303,22 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   }
 
   if (getLocalEnv() === 'local') {
+    const request = cmsFetcher('/api/cms/bande_dessinees', {
+      offset: offsetStr,
+      limit: limitStr,
+    })
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return { bandeDessinees: [], total: 0 }
+    }
+    const data = (await res.json()) as { bandeDessinees: bandeDessineeResult[]; total: number }
+    if (!data) {
+      return { bandeDessinees: [], total: 0 }
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as { bandeDessinees: bandeDessineeResult[]; total: number }
   }
 
   try {
@@ -268,6 +347,21 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   }
 
   if (getLocalEnv() === 'local') {
+    const query: Record<string, string> =
+      draftKey !== undefined ? { content_id: contentID, draftKey } : { content_id: contentID }
+    const request = cmsFetcher('/api/cms/bande_dessinee', query)
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return {} as bandeDessineeResult
+    }
+    const data = (await res.json()) as bandeDessineeResult
+    if (!data) {
+      return {} as bandeDessineeResult
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as bandeDessineeResult
   }
 
   try {
@@ -287,6 +381,20 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
     console.error('Error fetching bandeDessinee:', e)
     throw new Error('Error fetching bandeDessinee')
   }
+}
+
+function cmsFetcher(path: string, query?: Record<string, string>) {
+  const { env } = getCloudflareContext()
+  const host = env.CMS_DEV
+  const url = new URL(host + path)
+  if (query) {
+    Object.entries(query).forEach(([key, value]) => {
+      url.searchParams.set(key, value)
+    })
+  }
+  const cmsAPIKey = env.CMS_FETCHER_API_KEY
+  const request = new Request(url, { headers: { 'x-api-key': cmsAPIKey }, method: 'GET' })
+  return request
 }
 
 export {
