@@ -10,7 +10,6 @@ export interface Env {
   API_KEY: string
   SECRET: string
 
-  SNS_PUBLISHER_API_KEY: string
   SNS_PUBLISHER: Service<Publisher>
 }
 
@@ -54,7 +53,7 @@ export default {
           console.log('publish sns')
           const publishValue = bodyJSON.contents.new.publishValue
           const snsPubData = generateSNSPublishData(publishValue)
-          await env.SNS_PUBLISHER.publish(snsPubData)
+          ctx.waitUntil(env.SNS_PUBLISHER.publish(snsPubData))
           console.log('publish sns done')
         } else {
           console.log('status is not PUBLISH')
@@ -70,7 +69,7 @@ export default {
           console.log('publish sns')
           const publishValue = bodyJSON.contents.new.publishValue
           const snsPubData = generateSNSPublishData(publishValue)
-          await env.SNS_PUBLISHER.publish(snsPubData)
+          ctx.waitUntil(env.SNS_PUBLISHER.publish(snsPubData))
           console.log('publish sns done')
         } else {
           // ブログのメインコンテンツに編集があった場合
