@@ -3,7 +3,7 @@ import { FullArticle } from '@/components/large/article'
 import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 
-export const runtime = 'edge'
+export const dynamic = 'force-dynamic'
 
 export function generateMetadata() {
   return {
@@ -35,8 +35,8 @@ export default async function About() {
         publishedAt={aboutPageContents.publishedAt}
         updatedAt={aboutPageContents.updatedAt}
         categories={[]}
-        rawContent={''}
         parsedContents={aboutPageContents.parsed_content}
+        tableOfContents={aboutPageContents.table_of_contents}
         type="info"
         shareURL={url}
       />

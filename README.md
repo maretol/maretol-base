@@ -44,7 +44,13 @@ OGP Fetcher や CMS Fetcher はシンプルに `npm run dev:ogp` や `npm run de
 
 ローカルでの動作確認時は、x-api-key ヘッダーを指定する必要があるので両方それを行うこと
 
+OGP Fetcher は取得データを Cloudflare KV にキャッシュするようになっている。キャッシュ期間は 3 日（72 時間）
+
+ローカル起動時はローカルに .wrangler でキャッシュされるので削除時はそのファイルを消す
+
 ### pages
+
+ローカル起動時は Workers と next-dev の起動を行ってくれるスクリプトである dev.sh があるためそれを起動すればローカルで一通りの確認ができる
 
 ~~前提として pages はバックエンドの処理として workers の処理を必要としている。~~
 
@@ -52,7 +58,7 @@ OGP Fetcher や CMS Fetcher はシンプルに `npm run dev:ogp` や `npm run de
 
 2 つの worker はローカル起動時はパッケージとして読み込むことで処理できるようになった（ただしそのかわり、env に CMS の API キーが必要になったのでローカルの `dev.vars` にはそれを書き足した。
 
-ビルド時はパッケージサイズの都合、含まれるとオーバーする可能性が高いので `next.config.mjs` の webpack 設定の external にそれぞれの worker のパッケージを取り除くように記載している
+~~ビルド時はパッケージサイズの都合、含まれるとオーバーする可能性が高いので `next.config.mjs` の webpack 設定の external にそれぞれの worker のパッケージを取り除くように記載している~~ ローカル開発環境を再構築し、バックグランドで 2 つの workers を wrangler dev で起動させるようにしたのでこのあたりは不要になった。あとそもそも opennext.js のビルド時に上手く行かないっぽい
 
 ローカル開発時は単純に next-dev:page/dev:page のどっちかを起動させれば問題ない
 
@@ -64,7 +70,9 @@ page 自体には 2 種類の dev 起動がある。一つは next dev の起動
 
 wrangler の動作確認で利用する。
 
-どちらも環境変数に対しては @cloudflare/next-on-pages の getRequestContext() が呼び出す env から取り出すことを想定している。この処理によって取り出される env は .dev.vars ファイルと wrangler.toml ファイルを起動時に読んでいる様子なので、 next dev の起動でもこちらの env 設定が利用される
+~~どちらも環境変数に対しては @cloudflare/next-on-pages の getRequestContext() が呼び出す env から取り出すことを想定している。この処理によって取り出される env は .dev.vars ファイルと wrangler.toml ファイルを起動時に読んでいる様子なので、 next dev の起動でもこちらの env 設定が利用される~~
+
+next-on-pages から openNext に移行したので env の呼び出しも @opennextjs/cloudflare の getCloudflareContext になった。処理によって呼び出される env が .dev.vars や wrangler.toml の内容を読んでいるのは同じ（と思う。まだ未確認）
 
 ### packages
 

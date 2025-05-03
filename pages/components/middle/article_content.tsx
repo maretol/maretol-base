@@ -8,23 +8,30 @@ import LinkCard from './article_dom/linkcard'
 import { cn } from '@/lib/utils'
 import Br from './article_dom/br'
 import Blockquote from './article_dom/blockquote'
-import { ParsedContent } from 'api-types'
+import { ParsedContent, TableOfContents } from 'api-types'
 import { Suspense } from 'react'
 import LoadingLinkcard from './loading_dom/loading_linkcard'
 import BlogCard from './article_dom/blogcard'
 import LoadingBlogCard from './loading_dom/loading_blogcard'
+import Table from './article_dom/table_of_contents'
+import ArtifactCard from './article_dom/artifactcard'
+import AmazonArea from './article_dom/amazon'
+import ComicPageCard from './article_dom/comiccard'
+import LoadingComicCard from './loading_dom/loading_comiccard'
 
 export default async function ArticleContent({
   contents,
   articleID,
   sample,
+  tableOfContents,
 }: {
   contents: ParsedContent[]
   articleID: string
   sample?: boolean
+  tableOfContents?: TableOfContents
 }) {
   const sampleFlag = sample || false
-  const sampleClassName = 'content-sample line-clamp-6 max-h-72'
+  const sampleClassName = 'content-sample line-clamp-6'
   const contentClassName = 'content'
   const className = sampleFlag ? sampleClassName : contentClassName
 
@@ -43,7 +50,7 @@ export default async function ArticleContent({
         // h1 ~ h5
         // 正規表現でヒットさせる
         if (tagName.match(/h[1-5]/)) {
-          return <Hn key={i} tag={tagName} text={text} />
+          return <Hn key={i} tag={tagName} text={text} attrs={attrs} />
         }
 
         // hr
@@ -96,7 +103,7 @@ export default async function ArticleContent({
             const subText = c.sub_texts
             return (
               <div key={i} className="py-6">
-                <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+                <ContentImage key={i} tag={tag} src={src} subText={subText ?? null} articleID={articleID} />
               </div>
             )
           } else if (pOption === 'photo') {
@@ -106,21 +113,18 @@ export default async function ArticleContent({
             const subText = c.sub_texts
             return (
               <div key={i} className="py-6">
-                <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
+                <ContentImage key={i} tag={tag} src={src} subText={subText ?? null} articleID={articleID} />
               </div>
             )
-          } else if (pOption === 'comic') {
-            // 漫画系の場合、漫画ビューアを混ぜたコンポーネントを表示
-            const tag = 'content_comic'
-            const src = text
-            const subText = c.sub_texts
-            return <ContentImage key={i} tag={tag} src={src} subText={subText} articleID={articleID} />
           } else if (pOption === 'youtube') {
             // YouTubeの埋め込み
             return <YouTubeArea key={i} videoURL={text} />
           } else if (pOption === 'twitter') {
             // Twitterの埋め込み
             return <TwitterArea key={i} twitterURL={text} />
+          } else if (pOption === 'amazon') {
+            // Amazonのリンク
+            return <AmazonArea key={i} amazonURL={text} />
           } else if (pOption === 'url') {
             // URLのみの場合、リンクカードに対応させる
             return (
@@ -139,9 +143,33 @@ export default async function ArticleContent({
                 </Suspense>
               </div>
             )
+          } else if (pOption === 'artifact') {
+            return (
+              <div key={i} className="py-6">
+                <Suspense fallback={<LoadingBlogCard />}>
+                  <ArtifactCard link={text} />
+                </Suspense>
+              </div>
+            )
+          } else if (pOption === 'comic') {
+            // 漫画ページへのリンク
+            return (
+              <div key={i} className="py-6">
+                <Suspense fallback={<LoadingComicCard />}>
+                  <ComicPageCard link={text} />
+                </Suspense>
+              </div>
+            )
           } else if (pOption === 'empty') {
             // 空行の場合。改行をいれる
             return <Br key={i} />
+          } else if (pOption === 'table_of_contents') {
+            if (tableOfContents) {
+              return <Table key={i} toc={tableOfContents} />
+            } else {
+              // 目次情報がない場合は何も表示しない
+              return
+            }
           }
           // どれにも該当しない場合。ほぼないはずだが、新規の p_option が追加された場合必要になる
           return <P key={i} innerHTML={innerHTML || text} attrs={attrs} />

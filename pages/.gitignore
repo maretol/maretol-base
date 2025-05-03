@@ -40,3 +40,9 @@ next-env.d.ts
 public/image/**
 
 app/blog/test/**
+
+# cloudflare
+.wrangler
+
+# openNext
+.open-next

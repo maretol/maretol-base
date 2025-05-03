@@ -9,16 +9,12 @@ import BlogPageArticle from './article'
 import { Suspense } from 'react'
 import LoadingBlogPage from './loading_article'
 
-export const runtime = 'edge'
-
-export async function generateMetadata(
-  props: {
-    params: Promise<{ article_id: string }>
-    searchParams: Promise<{ [key: string]: string | undefined }>
-  }
-) {
-  const searchParams = await props.searchParams;
-  const params = await props.params;
+export async function generateMetadata(props: {
+  params: Promise<{ article_id: string }>
+  searchParams: Promise<{ [key: string]: string | undefined }>
+}) {
+  const searchParams = await props.searchParams
+  const params = await props.params
   const articleID = params.article_id
   const draftKey = searchParams['draftKey']
 
@@ -50,14 +46,12 @@ export async function generateMetadata(
   } as Metadata
 }
 
-export default async function BlogArticlePage(
-  props: {
-    params: Promise<{ article_id: string }>
-    searchParams: Promise<{ [key: string]: string | undefined }>
-  }
-) {
-  const searchParams = await props.searchParams;
-  const params = await props.params;
+export default async function BlogArticlePage(props: {
+  params: Promise<{ article_id: string }>
+  searchParams: Promise<{ [key: string]: string | undefined }>
+}) {
+  const searchParams = await props.searchParams
+  const params = await props.params
   const articleID = params.article_id
   const draftKey = searchParams['draftKey']
 

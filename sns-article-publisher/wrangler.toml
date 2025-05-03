@@ -1,0 +1,19 @@
+name = "sns-article-publisher"
+main = "src/index.ts"
+compatibility_date = "2024-11-11"
+compatibility_flags = ["nodejs_compat"]
+routes = [
+    { pattern = "api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
+]
+
+[dev]
+port = 30254
+
+[env.staging]
+name = "sns-article-publisher-stg"
+routes = [
+    { "pattern" = "dev-api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
+]
+
+[observability]
+enabled = true

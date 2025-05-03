@@ -9,14 +9,13 @@ import ArticleContent from '../middle/article_content'
 import { rewriteImageURL } from '@/lib/image'
 import { originImageOption } from '@/lib/static'
 import ClientImage from '../small/client_image'
-import { categoryAPIResult, ParsedContent } from 'api-types'
+import { categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
 
 type ArticleProps = {
   id: string
   title: string
   updatedAt: string
   categories: categoryAPIResult[]
-  rawContent: string
   parsedContents: ParsedContent[]
 }
 
@@ -24,6 +23,7 @@ type FullAtricleProps = ArticleProps & {
   publishedAt: string
   type: 'blog' | 'info'
   shareURL: string
+  tableOfContents: TableOfContents
 }
 
 type ImageArticleProps = ArticleProps & {
@@ -41,13 +41,14 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
           </Link>
         </CardTitleH1>
         <CardDescription>{convertJST(updatedAt)}</CardDescription>
-        <CardContent className="pl-0 pt-2 pb-0">
+        <CardContent className="pl-0 pb-0">
           <Tags tags={categories} />
         </CardContent>
       </CardHeader>
+      <hr className="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
       <CardContent className="relative">
         <ArticleContent contents={parsedContents} sample articleID={id} />
-        <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-24 bg-gradient-to-t to-opacity-100 from-opacity-0" />
+        <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-36 bg-gradient-to-t from-white/100 from-20% to-white/0" />
       </CardContent>
       <CardFooter>
         <Button className="w-full gap-1" asChild>
@@ -68,6 +69,7 @@ export async function FullArticle({
   updatedAt,
   categories,
   parsedContents,
+  tableOfContents,
   type,
   shareURL,
 }: FullAtricleProps) {
@@ -86,13 +88,14 @@ export async function FullArticle({
           )}
         </CardDescription>
         {type === 'blog' && (
-          <CardContent className="pl-0 pt-2 pb-0">
+          <CardContent className="pl-0 pb-0">
             <Tags tags={categories} />
           </CardContent>
         )}
       </CardHeader>
-      <CardContent className="my-8">
-        <ArticleContent contents={parsedContents} articleID={id} />
+      <hr className="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
+      <CardContent className="mb-8">
+        <ArticleContent contents={parsedContents} articleID={id} tableOfContents={tableOfContents} />
       </CardContent>
       <CardFooter>
         <div className="w-full">

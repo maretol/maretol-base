@@ -17,8 +17,20 @@
 			"path": "ogp-data-fetcher"
 		},
 		{
+			"name": "worker cms-cache-purger",
+			"path": "cms-cache-purger"
+		},
+		{
+			"name": "worker sns-article-publisher",
+			"path": "sns-article-publisher"
+		},
+		{
 			"name": "package api-types",
 			"path": "packages/api-types"
+		},
+		{
+			"name": "package cms-cache-key-gen",
+			"path": "packages/cms-cache-key-gen"
 		}
 	],
 	"settings": {

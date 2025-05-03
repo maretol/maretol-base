@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: 20.16.0
+  WRANGLER_VERSION: 3.99.0
 
 jobs:
   changes:
@@ -18,6 +19,8 @@ jobs:
       pages: ${{ steps.filter.outputs.pages }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
       cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
+      cms-cache-purger: ${{ steps.filter.outputs.cms-cache-purger }}
+      sns-article-publisher: ${{ steps.filter.outputs.sns-article-publisher }}
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
       - uses: actions/checkout@v4
@@ -28,10 +31,20 @@ jobs:
           filters: |
             pages:
               - "pages/**"
+              - "packages/api-types/**"
+              - "packages/cms-cache-key-gen/**"
             ogp-data-fetcher:
               - "ogp-data-fetcher/**"
+              - "packages/api-types/src/ogp_types.ts"
             cms-data-fetcher:
               - "cms-data-fetcher/**"
+              - "packages/api-types/src/cms_types.ts"
+            cms-cache-purger:
+              - "cms-cache-purger/**"
+              - "packages/cms-cache-key-gen/**"
+            sns-article-publisher:
+              - "sns-article-publisher/**"
+              - "packages/api-types/src/sns_pub.ts"
             workflow:
               - ".github/workflows/**"
 
@@ -77,6 +90,7 @@ jobs:
         id: deploy-dry
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: ./ogp-data-fetcher
@@ -105,6 +119,7 @@ jobs:
         id: deploy
         uses: cloudflare/wrangler-action@v3
         with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: ./cms-data-fetcher
@@ -113,3 +128,101 @@ jobs:
         env:
           CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: echo $CMD_OUTPUT
+
+  deploy-dry-cms-cache-purger:
+    needs: changes
+    if: ${{ needs.changes.outputs.cms-cache-purger == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    defaults:
+      run:
+        working-directory: ./cms-cache-purger
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: deploy dry run by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./cms-cache-purger
+          command: deploy -e staging --config wrangler.toml --dry-run
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
+
+  deploy-dry-sns-article-publisher:
+    needs: changes
+    if: ${{ needs.changes.outputs.sns-article-publisher == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    defaults:
+      run:
+        working-directory: ./sns-article-publisher
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: deploy dry run by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./sns-article-publisher
+          command: deploy -e staging --config wrangler.toml --dry-run
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
+
+  status:
+    needs:
+      [
+        build-pages,
+        deploy-dry-ogp-data-fetcher,
+        deploy-dry-cms-data-fetcher,
+        deploy-dry-cms-cache-purger,
+        deploy-dry-sns-article-publisher,
+      ]
+    if: always()
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    steps:
+      - name: show status
+        run: echo "deploy dryrun done"
+      - name: show error
+        if: >-
+          ${{
+            needs.build-pages.result == 'failure' ||
+            needs.deploy-dry-ogp-data-fetcher.result == 'failure' ||
+            needs.deploy-dry-cms-data-fetcher.result == 'failure' ||
+            needs.deploy-dry-cms-cache-purger.result == 'failure' ||
+            needs.deploy-dry-sns-article-publisher.result == 'failure'
+          }}
+        env:
+          build_result: ${{ needs.build-pages.result }}
+          ogp_data_fetcher_result: ${{ needs.deploy-dry-ogp-data-fetcher.result }}
+          cms_data_fetcher_result: ${{ needs.deploy-dry-cms-data-fetcher.result }}
+          cms_cache_purger_result: ${{ needs.deploy-dry-cms-cache-purger.result }}
+          sns_article_publisher_result: ${{ needs.deploy-dry-sns-article-publisher.result }}
+        run: |
+          echo "build result: $build_result"
+          echo "ogp data fetcher result: $ogp_data_fetcher_result"
+          echo "cms data fetcher result: $cms_data_fetcher_result"
+          echo "cms cache purger result: $cms_cache_purger_result"
+          echo "sns article publisher result: $sns_article_publisher_result"
+          echo "deploy dryrun failed"
+          exit 1

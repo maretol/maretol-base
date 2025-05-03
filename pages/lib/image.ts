@@ -16,3 +16,7 @@ export function getHeaderImage() {
 export function getOGPImage() {
   return rewriteImageURL(originImageOption, 'https://r2.maretol.xyz/assets/maretol_base_ogp.png')
 }
+
+export function getNoImage() {
+  return rewriteImageURL(originImageOption, 'https://r2.maretol.xyz/assets/no_image.png')
+}

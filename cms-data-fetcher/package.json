@@ -7,19 +7,20 @@
     "deploy-prd": "wrangler deploy",
     "deploy-stg": "wrangler deploy -e staging",
     "dev": "wrangler dev",
+    "dev-bg": "wrangler dev > wrangler_dev.log",
     "start": "wrangler dev",
     "test": "vitest",
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "@cloudflare/workers-types": "^4.20241011.0",
-    "@cloudflare/vitest-pool-workers": "^0.5.26",
-    "vitest": "2.1.4",
-    "wrangler": "^3.86.0"
+    "@cloudflare/vitest-pool-workers": "^0.8.24",
+    "@cloudflare/workers-types": "^4.20250430.0",
+    "typescript": "^5.8.3",
+    "vitest": "3.1.2",
+    "wrangler": "^4.14.1"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
-    "microcms-js-sdk": "^3.1.2"
+    "microcms-js-sdk": "^3.2.0"
   }
 }

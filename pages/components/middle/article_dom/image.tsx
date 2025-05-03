@@ -24,7 +24,7 @@ export default function ContentImage({
     return (
       // ここに画像のモーダルを実装する
       <div className="w-fit">
-        <Link href={`/blog/${articleID}/image/${base64src}`} passHref>
+        <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image">
           <ClientImage src={imageSrc} alt="" width={300} height={400} className="inner-image" />
         </Link>
         <div className="mt-3 space-y-1">
@@ -46,8 +46,8 @@ export default function ContentImage({
     return <p>{src}</p>
   } else if (tag === 'content_photo') {
     return (
-      <div className="bg-indigo-200 p-2 rounded-sm w-fit">
-        <Link href={`/blog/${articleID}/image/${base64src}`} passHref>
+      <div className="bg-indigo-200 p-2 rounded-xs w-fit mx-3">
+        <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image">
           <ClientImage src={imageSrc} alt="" width={300} height={400} className="inner-image" />
         </Link>
         <div className="mt-3 space-y-1">

@@ -1,7 +1,8 @@
-import { rewriteImageURL } from '@/lib/image'
+import { getNoImage, rewriteImageURL } from '@/lib/image'
 import { originImageOption } from '@/lib/static'
 import ClientImage from '@/components/small/client_image'
 import { getOGPData } from '@/lib/api/workers'
+import Link from 'next/link'
 
 export default async function LinkCard({ link }: { link: string }) {
   const headerTitle = 'No Page Title'
@@ -11,26 +12,40 @@ export default async function LinkCard({ link }: { link: string }) {
   let ogpUrl = ''
   let ogpSite = ''
 
-  const linkResult = await getOGPData(link)
+  let title = ''
+  let image = ''
+  let site = ''
 
-  if (linkResult.success) {
-    ogpTitle = linkResult.og_title
-    ogpDescription = linkResult.og_description
-    ogpImage = linkResult.og_image !== '' ? linkResult.og_image : getNoImage()
-    ogpUrl = linkResult.og_url
-    ogpSite = linkResult.og_site_name
-  } else {
-    ogpTitle = 'Error'
-    ogpDescription = 'エラーが発生しました。データを表示できません。'
+  try {
+    const linkResult = await getOGPData(link)
+
+    if (linkResult.success) {
+      ogpTitle = linkResult.og_title
+      ogpDescription = linkResult.og_description
+      ogpImage = linkResult.og_image !== '' ? linkResult.og_image : getNoImage()
+      ogpUrl = linkResult.og_url !== '' ? linkResult.og_url : link
+      ogpSite = linkResult.og_site_name
+    } else {
+      ogpTitle = 'Missing data fetching'
+      ogpDescription = 'リンク先の情報取得でエラーが発生しました。リンクは機能しています'
+      ogpUrl = link
+    }
+
+    title = ogpTitle !== '' ? ogpTitle : headerTitle
+    site = ogpSite !== '' ? ogpSite : title
+    image = ogpImage
+  } catch (e) {
+    console.error(e)
+
+    title = 'Title was not readable.'
+    site = title
+    image = getNoImage()
+    ogpDescription = 'リンク先の情報取得でエラーが発生しました。リンクは機能しています'
   }
 
-  const title = ogpTitle !== '' ? ogpTitle : headerTitle
-  const site = ogpSite !== '' ? ogpSite : title
-  const image = ogpImage
-
   return (
-    <div className="max-w-xl h-100 no-underline border-2 border-gray-300 rounded-md">
-      <a href={ogpUrl} target="_blank" className="no-underline hover:underline">
+    <div className="max-w-xl no-underline border-2 border-gray-300 rounded-md mx-3">
+      <Link href={link} target="_blank" className="no-underline hover:underline">
         <div className="flex flex-row h-24">
           <div className="row-span-3 w-36 h-24">
             <ClientImage src={image} alt={ogpTitle} width={200} height={200} className="object-contain w-36 h-24" />
@@ -42,13 +57,9 @@ export default async function LinkCard({ link }: { link: string }) {
         </div>
         <div className="p-1 bg-gray-300 rounded-b-md">
           <p className="no-underline text-sm line-clamp-1">{site}</p>
-          <p className="no-underline text-sm line-clamp-1">{link}</p>
+          <p className="no-underline text-sm line-clamp-1">{ogpUrl}</p>
         </div>
-      </a>
+      </Link>
     </div>
   )
-}
-
-function getNoImage() {
-  return rewriteImageURL(originImageOption, 'https://r2.maretol.xyz/assets/no_image.png')
 }

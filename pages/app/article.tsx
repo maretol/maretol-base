@@ -21,7 +21,6 @@ export default async function MainPageArticles({
           title={content.title}
           updatedAt={content.updatedAt}
           categories={content.categories}
-          rawContent={''}
           parsedContents={content.parsed_content}
         />
       ))}

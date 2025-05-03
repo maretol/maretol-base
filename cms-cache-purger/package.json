@@ -1,0 +1,23 @@
+{
+  "name": "cms-cache-purger",
+  "version": "1.0.0",
+  "description": "CMSのWebhookを受け取り影響のあるキャッシュを破棄する処理",
+  "main": "index.js",
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250430.0",
+    "@types/node": "^22.15.3",
+    "cms-cache-key-gen": "^1.0.0",
+    "wrangler": "^4.14.1"
+  },
+  "scripts": {
+    "deploy-prd": "wrangler deploy",
+    "deploy-stg": "wrangler deploy -e staging",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "test": "vitest",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "sns-article-publisher": "^0.0.0"
+  }
+}
