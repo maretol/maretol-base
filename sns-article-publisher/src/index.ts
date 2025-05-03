@@ -19,9 +19,9 @@ export interface Env {
 }
 
 const TARGET = {
-  twitter: false,
-  bluesky: false,
-  nostr: false,
+  twitter: true,
+  bluesky: true,
+  nostr: true,
   mastodon: false,
   misskey: false,
 }
@@ -55,7 +55,8 @@ export default class Publisher extends WorkerEntrypoint<Env> {
     const articleTitle = pubData.article_title
     const postMessage = pubData.post_message
 
-    return await publish(env, articleURL, articleTitle, postMessage)
+    this.ctx.waitUntil(publish(env, articleURL, articleTitle, postMessage))
+    return
   }
 }
 
@@ -70,22 +71,28 @@ async function publish(env: Env, articleURL: string, articleTitle: string, postM
   // 以下各種SNSへのポスト
   // 1. Twitter
   if (TARGET['twitter']) {
+    console.log('post to Twitter')
     const twiAuth = createTwitterAuthInfo(env)
     try {
       await PostTweet(twiAuth, postText)
     } catch (e) {
       console.error('Error posting to Twitter:', e)
     }
+  } else {
+    console.log('skip Twitter')
   }
 
   // 2. BlueSky
   if (TARGET['bluesky']) {
+    console.log('post to BlueSky')
     const bskyAuth = createBlueSkyAuthInfo(env)
     try {
       await PostBlueSky(bskyAuth, postText)
     } catch (e) {
       console.error('Error posting to BlueSky:', e)
     }
+  } else {
+    console.log('skip BlueSky')
   }
 
   // 3. Mastodon
@@ -93,12 +100,15 @@ async function publish(env: Env, articleURL: string, articleTitle: string, postM
 
   // 5. nostr
   if (TARGET['nostr']) {
+    console.log('post to nostr')
     const nostrAuth = createNostrAuthInfo(env)
     try {
       await PostNostrKind1(nostrAuth, postText)
     } catch (e) {
       console.error('Error posting to nostr:', e)
     }
+  } else {
+    console.log('skip nostr')
   }
 }
 
