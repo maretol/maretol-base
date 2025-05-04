@@ -16,6 +16,9 @@ on:
 env:
   NODE_VERSION: 20.16.0
 
+permissions:
+  contents: read
+
 jobs:
   changes:
     runs-on: ubuntu-latest
