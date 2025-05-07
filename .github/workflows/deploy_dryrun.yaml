@@ -68,11 +68,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
-        working-directory: ./pages
+        working-directory: ./
         run: npm ci
       - name: build
-        working-directory: ./pages
-        run: npm run pages:build
+        working-directory: ./
+        run: npm run build:page
 
   deploy-dry-ogp-data-fetcher:
     needs: changes
