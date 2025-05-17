@@ -87,9 +87,9 @@ export default class Publisher extends WorkerEntrypoint<Env> {
 async function publish(env: Env, articleURL: string, articleTitle: string, postMessage: string | null) {
   let postText = ''
   if (postMessage === undefined || postMessage === null || postMessage === '') {
-    postText = `投稿しました : ${articleTitle}\n${articleURL} | Maretol Base`
+    postText = `投稿しました : ${articleTitle} | Maretol Base\n${articleURL}`
   } else {
-    postText = `${postMessage}\n\n投稿しました : ${articleTitle}\n${articleURL} | Maretol Base`
+    postText = `${postMessage}\n\n投稿しました : ${articleTitle} | Maretol Base\n${articleURL}`
   }
   console.log('postText: ' + postText)
 
