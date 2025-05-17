@@ -1,16 +1,12 @@
 import { type Request as WorkerRequest, type ExecutionContext, type KVNamespace } from '@cloudflare/workers-types'
 import crypto from 'node:crypto'
-import { Content, ContentValue, WebhookPayload } from './cms_webhook_types'
+import { Content, WebhookPayload } from 'api-types'
 import { generateContentKey, generateInfoKey, generateTagsKey } from 'cms-cache-key-gen'
-import { SNSPubData } from 'api-types'
-import Publisher from 'sns-article-publisher/src/index'
 
 export interface Env {
   CMS_CACHE: KVNamespace
   API_KEY: string
   SECRET: string
-
-  SNS_PUBLISHER: Service<Publisher>
 }
 
 export default {
@@ -48,13 +44,6 @@ export default {
         if (bodyJSON.contents.new.status.includes('PUBLISH')) {
           console.log('start deleteContentsCache')
           await deleteContentsCache(env)
-
-          // sns-publisherに送信する
-          console.log('publish sns')
-          const publishValue = bodyJSON.contents.new.publishValue
-          const snsPubData = generateSNSPublishData(publishValue)
-          ctx.waitUntil(env.SNS_PUBLISHER.publish(snsPubData))
-          console.log('publish sns done')
         } else {
           console.log('status is not PUBLISH')
         }
@@ -64,13 +53,6 @@ export default {
           // contentsのキャッシュを削除する
           console.log('start deleteContentsCache')
           await deleteContentsCache(env)
-
-          // sns-publisherに送信する
-          console.log('publish sns')
-          const publishValue = bodyJSON.contents.new.publishValue
-          const snsPubData = generateSNSPublishData(publishValue)
-          ctx.waitUntil(env.SNS_PUBLISHER.publish(snsPubData))
-          console.log('publish sns done')
         } else {
           // ブログのメインコンテンツに編集があった場合
           // 対象のIDのコンテンツのキャッシュを削除する
@@ -144,16 +126,4 @@ function isDraftToPublish(old: Content | null, newContent: Content): boolean {
   }
   // 未公開で、下書き状態から公開状態に変更された場合
   return old.status.includes('DRAFT') && newContent.status.includes('PUBLISH')
-}
-
-function generateSNSPublishData(value: ContentValue): SNSPubData {
-  const snsText = value.sns_text
-  const articleURL = `https://www.maretol.xyz/blog/${value.id}`
-  const articleTitle = value.title
-
-  return {
-    article_url: articleURL,
-    article_title: articleTitle,
-    post_message: snsText,
-  }
 }
