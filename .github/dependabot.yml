@@ -6,7 +6,7 @@ updates:
       - 'cms-data-fetcher/'
       - 'ogp-data-fetcher/'
       - 'cms-cache-purger/'
-      - '/'
+      - 'sns-article-publisher/'
     schedule:
       interval: 'daily'
     groups:
