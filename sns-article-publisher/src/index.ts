@@ -1,8 +1,9 @@
 import PostTweet, { TwitterAuthInfo } from './twitter'
 import PostBlueSky, { BlueSkyAuthInfo } from './bluesky'
 import PostNostrKind1, { NostrAuthInfo } from './nostr'
-import { SNSPubData } from 'api-types'
+import { Content, SNSPubData, WebhookPayload } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
+import crypto from 'node:crypto'
 
 export interface Env {
   API_KEY: string
@@ -16,6 +17,9 @@ export interface Env {
   BSKY_PASSWORD: string
 
   NOSTR_NSEC: string
+
+  SNS_PUB_CMS_KEY: SecretsStoreSecret
+  SNS_PUB_CMS_SECRET: SecretsStoreSecret
 }
 
 const TARGET = {
@@ -30,43 +34,64 @@ export default class Publisher extends WorkerEntrypoint<Env> {
   async fetch(request: Request): Promise<Response> {
     const env = this.env
 
-    const apiKey = request.headers.get('x-api-key')
-    if (apiKey !== env.API_KEY) {
+    // APIキーの判定
+    const apiKey = request.headers.get('x-mcms-api-key') // 正確には X-MCMS-API-Key
+    const key = await env.SNS_PUB_CMS_KEY.get()
+    if (apiKey !== key) {
       return new Response('internal server error', { status: 500 })
     }
+    console.log('api key check is ok')
+
+    // signatureがない場合弾く
+    const signature = request.headers.get('x-microcms-signature')
+    if (!signature) {
+      return new Response('Bad Request', { status: 400 })
+    }
+    console.log('signature header check is ok')
 
     const body = await request.text()
-    const bodyJSON = JSON.parse(body) as SNSPubData
+    const secret = await env.SNS_PUB_CMS_SECRET.get()
+
+    // signatureの検証
+    const expectedSignature = crypto.createHmac('sha256', secret).update(body).digest('hex')
+    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
+      return new Response('Bad Request', { status: 400 })
+    }
+    console.log('signature check is ok')
+
+    const bodyJSON = JSON.parse(body) as WebhookPayload
     console.log(bodyJSON)
 
-    const articleURL = bodyJSON.article_url
-    const articleTitle = bodyJSON.article_title
-    const postMessage = bodyJSON.post_message
+    if (!publishNecessary(bodyJSON)) {
+      console.log('publishNecessary is false. end')
+      return new Response('OK', { status: 200 })
+    }
+    console.log('publishNecessary is true. start publish')
 
-    await publish(env, articleURL, articleTitle, postMessage)
+    const newContent = bodyJSON.contents.new.publishValue
+
+    const articleURL = `https://www.maretol.xyz/blog/${newContent.id}`
+    const articleTitle = newContent.title
+    const postMessage = newContent.sns_text
+
+    console.log('articleURL: ' + articleURL)
+    console.log('articleTitle: ' + articleTitle)
+    console.log('postMessage: ' + postMessage)
+    console.log('publish wait until')
+    this.ctx.waitUntil(publish(env, articleURL, articleTitle, postMessage))
 
     return new Response('OK', { status: 200 })
-  }
-
-  async publish(pubData: SNSPubData): Promise<void> {
-    const env = this.env
-
-    const articleURL = pubData.article_url
-    const articleTitle = pubData.article_title
-    const postMessage = pubData.post_message
-
-    this.ctx.waitUntil(publish(env, articleURL, articleTitle, postMessage))
-    return
   }
 }
 
 async function publish(env: Env, articleURL: string, articleTitle: string, postMessage: string | null) {
   let postText = ''
   if (postMessage === undefined || postMessage === null || postMessage === '') {
-    postText = `投稿しました : ${articleTitle}\n${articleURL}`
+    postText = `投稿しました : ${articleTitle}\n${articleURL} | Maretol Base`
   } else {
-    postText = `${postMessage}\n\n投稿しました : ${articleTitle}\n${articleURL}`
+    postText = `${postMessage}\n\n投稿しました : ${articleTitle}\n${articleURL} | Maretol Base`
   }
+  console.log('postText: ' + postText)
 
   // 以下各種SNSへのポスト
   // 1. Twitter
@@ -132,4 +157,29 @@ function createNostrAuthInfo(env: Env) {
   return {
     nsec: env.NOSTR_NSEC,
   } as NostrAuthInfo
+}
+
+function publishNecessary(bodyJSON: WebhookPayload): boolean {
+  if (bodyJSON.service !== 'maretol-blog') {
+    return false
+  }
+  if (bodyJSON.api !== 'contents') {
+    return false
+  }
+  return (
+    bodyJSON.type === 'new' ||
+    (bodyJSON.type === 'edit' && isDraftToPublish(bodyJSON.contents.old, bodyJSON.contents.new))
+  )
+}
+
+function isDraftToPublish(old: Content | null, newContent: Content): boolean {
+  if (!old) {
+    return false
+  }
+  if (old.status.includes('PUBLISH')) {
+    // すでに公開済み
+    return false
+  }
+  // 未公開で、下書き状態から公開状態に変更された場合
+  return old.status.includes('DRAFT') && newContent.status.includes('PUBLISH')
 }

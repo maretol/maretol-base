@@ -6,6 +6,11 @@ routes = [
     { pattern = "api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
 ]
 
+secrets_store_secrets = [
+    { binding = "SNS_PUB_CMS_KEY", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "SNS-PUB-CMS-KEY"},
+    { binding = "SNS_PUB_CMS_SECRET", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "SNS-PUB-CMS-SECRET"},
+]
+
 [dev]
 port = 30254
 
