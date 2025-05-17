@@ -28,7 +28,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
-    "lucide-react": "^0.510.0",
+    "lucide-react": "^0.511.0",
     "next": "^15.3.2",
     "react": "^19",
     "react-dom": "^19",
@@ -36,7 +36,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250515.0",
+    "@cloudflare/workers-types": "^4.20250517.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^22",
     "@types/react": "^19",
