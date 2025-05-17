@@ -9,8 +9,6 @@ export interface Env {
   CMS_CACHE: KVNamespace
   API_KEY: string
   SECRET: string
-
-  SNS_PUBLISHER: Service<Publisher>
 }
 
 export default {
@@ -48,13 +46,6 @@ export default {
         if (bodyJSON.contents.new.status.includes('PUBLISH')) {
           console.log('start deleteContentsCache')
           await deleteContentsCache(env)
-
-          // sns-publisherに送信する
-          console.log('publish sns')
-          const publishValue = bodyJSON.contents.new.publishValue
-          const snsPubData = generateSNSPublishData(publishValue)
-          ctx.waitUntil(env.SNS_PUBLISHER.publish(snsPubData))
-          console.log('publish sns done')
         } else {
           console.log('status is not PUBLISH')
         }
@@ -64,13 +55,6 @@ export default {
           // contentsのキャッシュを削除する
           console.log('start deleteContentsCache')
           await deleteContentsCache(env)
-
-          // sns-publisherに送信する
-          console.log('publish sns')
-          const publishValue = bodyJSON.contents.new.publishValue
-          const snsPubData = generateSNSPublishData(publishValue)
-          ctx.waitUntil(env.SNS_PUBLISHER.publish(snsPubData))
-          console.log('publish sns done')
         } else {
           // ブログのメインコンテンツに編集があった場合
           // 対象のIDのコンテンツのキャッシュを削除する
