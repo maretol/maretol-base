@@ -1,7 +1,7 @@
 import PostTweet, { TwitterAuthInfo } from './twitter'
 import PostBlueSky, { BlueSkyAuthInfo } from './bluesky'
 import PostNostrKind1, { NostrAuthInfo } from './nostr'
-import { Content, SNSPubData, WebhookPayload } from 'api-types'
+import { Content, WebhookPayload } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import crypto from 'node:crypto'
 
@@ -18,8 +18,8 @@ export interface Env {
 
   NOSTR_NSEC: string
 
-  SNS_PUB_CMS_KEY: SecretsStoreSecret
-  SNS_PUB_CMS_SECRET: SecretsStoreSecret
+  SNS_PUB_CMS_KEY: string
+  SNS_PUB_CMS_SECRET: string
 }
 
 const TARGET = {
@@ -36,7 +36,7 @@ export default class Publisher extends WorkerEntrypoint<Env> {
 
     // APIキーの判定
     const apiKey = request.headers.get('x-mcms-api-key') // 正確には X-MCMS-API-Key
-    const key = await env.SNS_PUB_CMS_KEY.get()
+    const key = env.SNS_PUB_CMS_KEY
     if (apiKey !== key) {
       return new Response('internal server error', { status: 500 })
     }
@@ -50,7 +50,7 @@ export default class Publisher extends WorkerEntrypoint<Env> {
     console.log('signature header check is ok')
 
     const body = await request.text()
-    const secret = await env.SNS_PUB_CMS_SECRET.get()
+    const secret = env.SNS_PUB_CMS_SECRET
 
     // signatureの検証
     const expectedSignature = crypto.createHmac('sha256', secret).update(body).digest('hex')
