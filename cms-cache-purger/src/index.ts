@@ -1,9 +1,7 @@
 import { type Request as WorkerRequest, type ExecutionContext, type KVNamespace } from '@cloudflare/workers-types'
 import crypto from 'node:crypto'
-import { Content, ContentValue, WebhookPayload } from './cms_webhook_types'
+import { Content, WebhookPayload } from 'api-types'
 import { generateContentKey, generateInfoKey, generateTagsKey } from 'cms-cache-key-gen'
-import { SNSPubData } from 'api-types'
-import Publisher from 'sns-article-publisher/src/index'
 
 export interface Env {
   CMS_CACHE: KVNamespace
@@ -128,16 +126,4 @@ function isDraftToPublish(old: Content | null, newContent: Content): boolean {
   }
   // 未公開で、下書き状態から公開状態に変更された場合
   return old.status.includes('DRAFT') && newContent.status.includes('PUBLISH')
-}
-
-function generateSNSPublishData(value: ContentValue): SNSPubData {
-  const snsText = value.sns_text
-  const articleURL = `https://www.maretol.xyz/blog/${value.id}`
-  const articleTitle = value.title
-
-  return {
-    article_url: articleURL,
-    article_title: articleTitle,
-    post_message: snsText,
-  }
 }
