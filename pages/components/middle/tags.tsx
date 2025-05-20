@@ -8,17 +8,17 @@ export default function Tags({ tags }: { tags: categoryAPIResult[] }) {
       Tag :
       {tags.map((tag) => {
         return (
-          <Link
-            key={tag.id}
-            href={{
-              pathname: '/tag',
-              query: { tag_id: tag.id, tag_name: tag.name },
-            }}
-          >
-            <Button key={tag.id} variant="secondary" className="p-2 h-6">
+          <Button key={tag.id} variant="secondary" className="p-2 h-6" asChild>
+            <Link
+              key={tag.id}
+              href={{
+                pathname: '/tag',
+                query: { tag_id: tag.id, tag_name: tag.name },
+              }}
+            >
               {tag.name}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         )
       })}
     </div>

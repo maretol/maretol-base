@@ -102,6 +102,7 @@ export async function FullArticle({
           <div className="flex gap-1 items-center">
             <p>Share : </p>
             <ShareButton variant="twitter" url={shareURL} title={title} />
+            <ShareButton variant="bluesky" url={shareURL} title={title} />
             <ShareButton variant="facebook" url={shareURL} title={title} />
             <ShareButton variant="copy_and_paste" url={shareURL} title={title} />
           </div>
@@ -157,6 +158,7 @@ export function ImageArticle({ id, title, categories, imageSrc, shareURL }: Imag
           <div className="flex gap-1 items-center">
             <p>Share : </p>
             <ShareButton variant="twitter" url={shareURL} title={title} />
+            <ShareButton variant="bluesky" url={shareURL} title={title} />
             <ShareButton variant="facebook" url={shareURL} title={title} />
             <ShareButton variant="copy_and_paste" url={shareURL} title={title} />
           </div>

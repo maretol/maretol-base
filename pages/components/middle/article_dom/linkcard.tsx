@@ -44,18 +44,18 @@ export default async function LinkCard({ link }: { link: string }) {
   }
 
   return (
-    <div className="max-w-xl no-underline border-2 border-gray-300 rounded-md mx-3">
+    <div className="max-w-2xl no-underline border-2 border-gray-300 rounded-[9px] mx-3">
       <Link href={link} target="_blank" className="no-underline hover:underline">
         <div className="flex flex-row h-24">
           <div className="row-span-3 w-36 h-24">
             <ClientImage src={image} alt={ogpTitle} width={200} height={200} className="object-contain w-36 h-24" />
           </div>
-          <div className="col-span-2 w-96 flex-auto ml-2">
+          <div className="col-span-2 w-96 flex-auto ml-2 mr-1">
             <p className="text-lg line-clamp-1 font-semibold pt-1">{title}</p>
             <p className="text-sm line-clamp-3">{ogpDescription}</p>
           </div>
         </div>
-        <div className="p-1 bg-gray-300 rounded-b-md">
+        <div className="p-1 bg-gray-300 rounded-b-[6px]">
           <p className="no-underline text-sm line-clamp-1">{site}</p>
           <p className="no-underline text-sm line-clamp-1">{ogpUrl}</p>
         </div>
