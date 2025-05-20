@@ -2,8 +2,9 @@ import { rewriteImageURL } from '@/lib/image'
 import { imageOption } from '@/lib/static'
 import ClientImage from '../../small/client_image'
 import Link from 'next/link'
+import fetchBlurredImage from '@/lib/api/image'
 
-export default function ContentImage({
+export default async function ContentImage({
   tag,
   src,
   subText,
@@ -20,12 +21,14 @@ export default function ContentImage({
   const caption = subText?.caption
   const title = subText?.title
 
+  const blurData = await fetchBlurredImage(src)
+
   if (tag === 'content_image') {
     return (
       // ここに画像のモーダルを実装する
       <div className="w-fit">
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image">
-          <ClientImage src={imageSrc} alt="" width={300} height={400} className="inner-image" />
+          <ClientImage src={imageSrc} alt="" width={300} height={400} blurData={blurData} className="inner-image" />
         </Link>
         <div className="mt-3 space-y-1">
           {title && (
@@ -48,7 +51,7 @@ export default function ContentImage({
     return (
       <div className="bg-indigo-200 p-2 rounded-xs w-fit mx-3">
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image">
-          <ClientImage src={imageSrc} alt="" width={300} height={400} className="inner-image" />
+          <ClientImage src={imageSrc} alt="" width={300} height={400} blurData={blurData} className="inner-image" />
         </Link>
         <div className="mt-3 space-y-1">
           {caption && (

@@ -56,7 +56,7 @@ export default async function ArticleContent({
         // hr
         if (tagName === 'hr') {
           return (
-            <div key={i} className="py-8">
+            <div key={i} className="py-6">
               <hr className="border-gray-500" />
             </div>
           )
@@ -128,7 +128,7 @@ export default async function ArticleContent({
           } else if (pOption === 'url') {
             // URLのみの場合、リンクカードに対応させる
             return (
-              <div key={i} className="py-6">
+              <div key={i} className="py-3">
                 <Suspense fallback={<LoadingLinkcard link={text} />}>
                   <LinkCard link={text} />
                 </Suspense>
