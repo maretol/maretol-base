@@ -9,17 +9,45 @@ export default function ClientImage({
   alt,
   width,
   height,
+  blurData,
   className,
 }: {
   src: string
   alt: string
   width: number
   height: number
+  blurData?: string
   className?: string
 }) {
   const imageLoader = ({ src }: { src: string }) => {
     return `${src}`
   }
 
-  return <Image loader={imageLoader} src={src} unoptimized={true} alt={alt} width={width} height={height} className={className} />
+  if (blurData !== undefined && blurData !== '') {
+    return (
+      <Image
+        loader={imageLoader}
+        src={src}
+        unoptimized={true}
+        alt={alt}
+        width={width}
+        height={height}
+        className={className}
+        placeholder={'blur'}
+        blurDataURL={blurData}
+      />
+    )
+  }
+
+  return (
+    <Image
+      loader={imageLoader}
+      src={src}
+      unoptimized={true}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+    />
+  )
 }
