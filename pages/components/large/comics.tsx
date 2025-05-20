@@ -128,6 +128,7 @@ export function ComicDetailPage(props: ComicArticleProps) {
           <h1 className="text-2xl font-bold pl-2 pb-1 content-h2">{props.titleName}</h1>
           <div className="flex items-center justify-end gap-2">
             <ShareButton variant="twitter" url={url} title={props.titleName} />
+            <ShareButton variant="bluesky" url={url} title={props.titleName} />
             <ShareButton variant="copy_and_paste" url={url} title={props.titleName} />
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
