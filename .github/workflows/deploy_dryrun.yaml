@@ -51,7 +51,7 @@ jobs:
             workflow:
               - ".github/workflows/**"
 
-  build-pages:
+  build-and-deploy-dry-pages:
     needs: changes
     if: ${{ needs.changes.outputs.pages == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
