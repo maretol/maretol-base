@@ -205,7 +205,7 @@ jobs:
   status:
     needs:
       [
-        build-pages,
+        build-and-deploy-dry-pages,
         deploy-dry-ogp-data-fetcher,
         deploy-dry-cms-data-fetcher,
         deploy-dry-cms-cache-purger,
@@ -221,20 +221,20 @@ jobs:
       - name: show error
         if: >-
           ${{
-            needs.build-pages.result == 'failure' ||
+            needs.build-and-deploy-dry-pages.result == 'failure' ||
             needs.deploy-dry-ogp-data-fetcher.result == 'failure' ||
             needs.deploy-dry-cms-data-fetcher.result == 'failure' ||
             needs.deploy-dry-cms-cache-purger.result == 'failure' ||
             needs.deploy-dry-sns-article-publisher.result == 'failure'
           }}
         env:
-          build_result: ${{ needs.build-pages.result }}
+          pages_result: ${{ needs.build-and-deploy-dry-pages.result }}
           ogp_data_fetcher_result: ${{ needs.deploy-dry-ogp-data-fetcher.result }}
           cms_data_fetcher_result: ${{ needs.deploy-dry-cms-data-fetcher.result }}
           cms_cache_purger_result: ${{ needs.deploy-dry-cms-cache-purger.result }}
           sns_article_publisher_result: ${{ needs.deploy-dry-sns-article-publisher.result }}
         run: |
-          echo "build result: $build_result"
+          echo "pages result: $pages_result"
           echo "ogp data fetcher result: $ogp_data_fetcher_result"
           echo "cms data fetcher result: $cms_data_fetcher_result"
           echo "cms cache purger result: $cms_cache_purger_result"
