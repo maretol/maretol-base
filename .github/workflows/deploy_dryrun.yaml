@@ -51,7 +51,6 @@ jobs:
             workflow:
               - ".github/workflows/**"
 
-  # pages には dry-run がないのでビルドだけ行う
   build-pages:
     needs: changes
     if: ${{ needs.changes.outputs.pages == 'true' || needs.changes.outputs.workflow == 'true' }}
@@ -73,6 +72,19 @@ jobs:
       - name: build
         working-directory: ./
         run: npm run build:page
+      - name: deploy dry run by wrangler
+        id: deploy-dry
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./pages
+          command: deploy -e staging --config wrangler.toml --dry-run
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy-dry.outputs.command-output }}
+        run: echo $CMD_OUTPUT
 
   deploy-dry-ogp-data-fetcher:
     needs: changes
