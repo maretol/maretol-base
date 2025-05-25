@@ -29,8 +29,5 @@
     "packages/*",
     "cms-cache-purger",
     "sns-article-publisher"
-  ],
-  "dependencies": {
-    "@opennextjs/cloudflare": "^1.0.0-beta.4"
-  }
+  ]
 }
