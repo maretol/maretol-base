@@ -51,8 +51,7 @@ jobs:
             workflow:
               - ".github/workflows/**"
 
-  # pages には dry-run がないのでビルドだけ行う
-  build-pages:
+  build-and-deploy-dry-pages:
     needs: changes
     if: ${{ needs.changes.outputs.pages == 'true' || needs.changes.outputs.workflow == 'true' }}
     runs-on: ubuntu-latest
@@ -73,6 +72,19 @@ jobs:
       - name: build
         working-directory: ./
         run: npm run build:page
+      - name: deploy dry run by wrangler
+        id: deploy-dry
+        uses: cloudflare/wrangler-action@v3
+        with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./pages
+          command: deploy -e staging --config wrangler.toml --dry-run
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy-dry.outputs.command-output }}
+        run: echo $CMD_OUTPUT
 
   deploy-dry-ogp-data-fetcher:
     needs: changes
@@ -193,7 +205,7 @@ jobs:
   status:
     needs:
       [
-        build-pages,
+        build-and-deploy-dry-pages,
         deploy-dry-ogp-data-fetcher,
         deploy-dry-cms-data-fetcher,
         deploy-dry-cms-cache-purger,
@@ -209,20 +221,20 @@ jobs:
       - name: show error
         if: >-
           ${{
-            needs.build-pages.result == 'failure' ||
+            needs.build-and-deploy-dry-pages.result == 'failure' ||
             needs.deploy-dry-ogp-data-fetcher.result == 'failure' ||
             needs.deploy-dry-cms-data-fetcher.result == 'failure' ||
             needs.deploy-dry-cms-cache-purger.result == 'failure' ||
             needs.deploy-dry-sns-article-publisher.result == 'failure'
           }}
         env:
-          build_result: ${{ needs.build-pages.result }}
+          pages_result: ${{ needs.build-and-deploy-dry-pages.result }}
           ogp_data_fetcher_result: ${{ needs.deploy-dry-ogp-data-fetcher.result }}
           cms_data_fetcher_result: ${{ needs.deploy-dry-cms-data-fetcher.result }}
           cms_cache_purger_result: ${{ needs.deploy-dry-cms-cache-purger.result }}
           sns_article_publisher_result: ${{ needs.deploy-dry-sns-article-publisher.result }}
         run: |
-          echo "build result: $build_result"
+          echo "pages result: $pages_result"
           echo "ogp data fetcher result: $ogp_data_fetcher_result"
           echo "cms data fetcher result: $cms_data_fetcher_result"
           echo "cms cache purger result: $cms_cache_purger_result"
