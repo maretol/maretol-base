@@ -24,7 +24,10 @@ export async function generateMetadata(props: {
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
   const ogpImage = content.ogp_image
   const sumnail = rewriteImageURL(ogpImageOption, src)
-  const description = content.content.replaceAll(/<("[^"]*"|'[^']*'|[^'">])*>/g, '').slice(0, 100)
+  const description = content.parsed_content
+    .slice(0, 5)
+    .map((c) => c.text)
+    .join(' ')
   const twitterCard = ogpImage === null || ogpImage === undefined ? 'summary' : 'summary_large_image'
 
   return {
