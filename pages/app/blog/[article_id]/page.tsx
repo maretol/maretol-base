@@ -22,7 +22,10 @@ export async function generateMetadata(props: {
   const ogpImage = content.ogp_image
   const sumnail =
     ogpImage === null || ogpImage === undefined ? getOGPImage() : rewriteImageURL(ogpImageOption, ogpImage)
-  const description = content.content.replaceAll(/<("[^"]*"|'[^']*'|[^'">])*>/g, '').slice(0, 100)
+  const description = content.parsed_content
+    .slice(0, 5)
+    .map((c) => c.text)
+    .join(' ')
   const twitterCard = ogpImage === null || ogpImage === undefined ? 'summary' : 'summary_large_image'
 
   return {

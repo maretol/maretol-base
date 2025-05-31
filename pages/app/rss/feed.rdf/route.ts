@@ -12,7 +12,12 @@ export async function GET() {
   const { contents: articles } = await getCMSContents(offset, limit)
 
   const items = articles.map((article) => {
-    return convertToRssItem(article.title, article.id, article.publishedAt, article.content)
+    const content = article.parsed_content
+    const contentSentence = content
+      .slice(0, 10)
+      .map((c) => c.text)
+      .join(' ')
+    return convertToRssItem(article.title, article.id, article.publishedAt, contentSentence)
   })
 
   const lastBuildDate = new Date(articles[0].publishedAt)
@@ -40,13 +45,12 @@ export async function GET() {
 
 function convertToRssItem(title: string, id: string, publishedAt: string, content: string) {
   const host = getHostname()
-  const removeDomContent = content.replace(/<("[^"]*"|'[^']*'|[^'">])*>/g, '').substring(0, 150)
 
   return `
       <item>
         <title>${title}</title>
         <link>${host}/blog/${id}</link>
-        <description><![CDATA[${removeDomContent}]]></description>
+        <description><![CDATA[${content}]]></description>
         <pubDate>${new Date(publishedAt).toISOString()}</pubDate>
       </item>`
 }
