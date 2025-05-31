@@ -18,7 +18,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.0.4",
+    "@opennextjs/cloudflare": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-popover": "^1.1.14",
@@ -29,14 +29,14 @@
     "clsx": "^2.1.1",
     "embla-carousel-react": "^8.6.0",
     "lucide-react": "^0.511.0",
-    "next": "^15.3.2",
+    "next": "^15.3.3",
     "react": "^19",
     "react-dom": "^19",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250523.0",
+    "@cloudflare/workers-types": "^4.20250529.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
@@ -47,10 +47,10 @@
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
     "eslint": "^9",
-    "eslint-config-next": "^15.3.2",
+    "eslint-config-next": "^15.3.3",
     "postcss": "^8",
     "tailwindcss": "^4.0.9",
     "typescript": "^5",
-    "wrangler": "^4.16.1"
+    "wrangler": "^4.18.0"
   }
 }
