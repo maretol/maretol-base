@@ -24,4 +24,5 @@ export type ContentValue = {
   id: string
   title: string
   sns_text: string | null
+  ogp_image?: string
 }
