@@ -9,7 +9,7 @@ type BlueSkyOGPInfo = {
   title: string
   description: string
   url: string
-  image?: string
+  image: string | null
 }
 
 async function PostBlueSky(authInfo: BlueSkyAuthInfo, post: string, ogp: BlueSkyOGPInfo): Promise<void> {
@@ -51,7 +51,7 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, post: string, ogp: BlueSky
   console.log(`BlueSky post: ${post}`)
 }
 
-function getOgpImageSrc(ogpImage?: string): string {
+function getOgpImageSrc(ogpImage: string | null): string {
   const cdnBypass = 'https://www.maretol.xyz/cdn-cgi/image/w=1200,h=630format=webp,q=70/'
   if (ogpImage) {
     // image が設定されている場合それをBypassの画像にして返却
