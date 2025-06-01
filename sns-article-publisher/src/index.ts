@@ -78,6 +78,7 @@ export default class Publisher extends WorkerEntrypoint<Env> {
     console.log('articleURL: ' + articleURL)
     console.log('articleTitle: ' + articleTitle)
     console.log('postMessage: ' + postMessage)
+    console.log('ogpImage: ' + ogpImage)
     console.log('publish wait until')
     this.ctx.waitUntil(publish(env, articleURL, articleTitle, postMessage, ogpImage))
 
@@ -90,7 +91,7 @@ async function publish(
   articleURL: string,
   articleTitle: string,
   postMessage: string | null,
-  ogpImage?: string
+  ogpImage: string | null
 ) {
   let postText = ''
   if (postMessage === undefined || postMessage === null || postMessage === '') {
