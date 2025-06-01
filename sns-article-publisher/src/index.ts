@@ -73,18 +73,25 @@ export default class Publisher extends WorkerEntrypoint<Env> {
     const articleURL = `https://www.maretol.xyz/blog/${newContent.id}`
     const articleTitle = newContent.title
     const postMessage = newContent.sns_text
+    const ogpImage = newContent.ogp_image
 
     console.log('articleURL: ' + articleURL)
     console.log('articleTitle: ' + articleTitle)
     console.log('postMessage: ' + postMessage)
     console.log('publish wait until')
-    this.ctx.waitUntil(publish(env, articleURL, articleTitle, postMessage))
+    this.ctx.waitUntil(publish(env, articleURL, articleTitle, postMessage, ogpImage))
 
     return new Response('OK', { status: 200 })
   }
 }
 
-async function publish(env: Env, articleURL: string, articleTitle: string, postMessage: string | null) {
+async function publish(
+  env: Env,
+  articleURL: string,
+  articleTitle: string,
+  postMessage: string | null,
+  ogpImage?: string
+) {
   let postText = ''
   if (postMessage === undefined || postMessage === null || postMessage === '') {
     postText = `投稿しました : ${articleTitle} | Maretol Base\n${articleURL}`
@@ -111,8 +118,14 @@ async function publish(env: Env, articleURL: string, articleTitle: string, postM
   if (TARGET['bluesky']) {
     console.log('post to BlueSky')
     const bskyAuth = createBlueSkyAuthInfo(env)
+    const ogpInfo = {
+      title: articleTitle,
+      description: postMessage || '',
+      url: articleURL,
+      image: ogpImage,
+    }
     try {
-      await PostBlueSky(bskyAuth, postText)
+      await PostBlueSky(bskyAuth, postText, ogpInfo)
     } catch (e) {
       console.error('Error posting to BlueSky:', e)
     }
