@@ -52,7 +52,7 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, post: string, ogp: BlueSky
 }
 
 function getOgpImageSrc(ogpImage: string | null): string {
-  const cdnBypass = 'https://www.maretol.xyz/cdn-cgi/image/w=1200,h=630format=webp,q=70/'
+  const cdnBypass = 'https://www.maretol.xyz/cdn-cgi/image/w=1200,h=630,format=webp,q=70/'
   if (ogpImage) {
     // image が設定されている場合それをBypassの画像にして返却
     const src = ogpImage
