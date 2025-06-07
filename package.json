@@ -18,7 +18,8 @@
     "deploy-stg:page": "npm run --workspace=pages deploy-stg",
     "build:page": "npm run --workspace=pages pages:build",
     "lint:page": "npm run --workspace=pages lint",
-    "test:cms": "npm run --workspace=cms-data-fetcher test"
+    "test:cms": "npm run --workspace=cms-data-fetcher test",
+    "test:sns": "npm run --workspace=sns-article-publisher test"
   },
   "author": "maretol",
   "private": true,
