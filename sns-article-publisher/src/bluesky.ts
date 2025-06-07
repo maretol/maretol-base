@@ -25,9 +25,9 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, post: string, ogp: BlueSky
   let blob = null
   try {
     const ogpImageSrc = getOgpImageSrc(ogp.image)
-    const imageBuffer = await fetchImageBuffer(ogpImageSrc)
+    const { contentType, imageBuffer } = await fetchImageBuffer(ogpImageSrc)
 
-    const uploadedImage = await agent.uploadBlob(imageBuffer, { encoding: 'image/webp' })
+    const uploadedImage = await agent.uploadBlob(imageBuffer, { encoding: contentType || 'image/webp' })
     blob = uploadedImage.data.blob
   } catch (error) {
     console.error('Error fetching or uploading OGP image:', error)
@@ -63,12 +63,13 @@ function getOgpImageSrc(ogpImage: string | null): string {
   return cdnBypass + src
 }
 
-async function fetchImageBuffer(src: string): Promise<Uint8Array> {
+async function fetchImageBuffer(src: string): Promise<{ contentType: string | null; imageBuffer: Uint8Array }> {
   const res = await fetch(src)
+  const contentType = res.headers.get('Content-Type')
   const imageBlob = await res.blob()
-  const blogArrayBuffer = await imageBlob.bytes()
+  const imageBuffer = await imageBlob.bytes()
 
-  return blogArrayBuffer
+  return { contentType, imageBuffer }
 }
 
 export default PostBlueSky
