@@ -23,9 +23,9 @@ export interface Env {
 }
 
 const TARGET = {
-  twitter: !true, // TODO: 後で変える
+  twitter: true,
   bluesky: true,
-  nostr: !true, // TODO: 後で変える
+  nostr: true,
   mastodon: false,
   misskey: false,
 }
