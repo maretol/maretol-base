@@ -22,7 +22,14 @@ export default function BaseLayout({ children }: { children: React.ReactNode }) 
           <div className="mb-2 pt-2">
             <Button variant={'link'} className="p-0" asChild>
               <Link href="/">
-                <ClientImage src={headerImage} width={500} height={200} alt="Maretol Base" />
+                <ClientImage
+                  src={headerImage}
+                  width={500}
+                  height={100}
+                  className="w-[500px] object-contain"
+                  alt="Maretol Base"
+                  style={{ height: 'auto', width: '500px' }}
+                />
               </Link>
             </Button>
           </div>

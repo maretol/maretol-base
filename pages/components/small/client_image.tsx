@@ -11,13 +11,17 @@ export default function ClientImage({
   height,
   blurData,
   className,
+  priority = false,
+  style,
 }: {
   src: string
   alt: string
-  width: number
-  height: number
+  width?: number
+  height?: number
   blurData?: string
   className?: string
+  priority?: boolean
+  style?: React.CSSProperties | undefined
 }) {
   const imageLoader = ({ src }: { src: string }) => {
     return `${src}`
@@ -35,6 +39,8 @@ export default function ClientImage({
         className={className}
         placeholder={'blur'}
         blurDataURL={blurData}
+        priority={priority}
+        style={style}
       />
     )
   }
@@ -48,6 +54,8 @@ export default function ClientImage({
       width={width}
       height={height}
       className={className}
+      priority={priority}
+      style={style}
     />
   )
 }

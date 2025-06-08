@@ -9,15 +9,15 @@ type BlueSkyOGPInfo = {
   title: string
   description: string
   url: string
-  image: string | null
+  image: string | null | undefined
 }
 
-async function PostBlueSky(authInfo: BlueSkyAuthInfo, post: string, ogp: BlueSkyOGPInfo): Promise<void> {
+async function PostBlueSky(authInfo: BlueSkyAuthInfo, postText: string, ogp: BlueSkyOGPInfo): Promise<void> {
   const agent = new AtpAgent({
     service: 'https://bsky.social',
   })
 
-  const richText = new RichText({ text: post })
+  const richText = new RichText({ text: postText })
   await richText.detectFacets(agent)
 
   await agent.login({ identifier: authInfo.username, password: authInfo.password })
@@ -34,7 +34,7 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, post: string, ogp: BlueSky
     blob = null
   }
 
-  await agent.post({
+  const post = {
     text: richText.text,
     facets: richText.facets,
     embed: {
@@ -46,14 +46,16 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, post: string, ogp: BlueSky
         thumb: blob || undefined,
       },
     },
-  })
+  }
 
-  console.log(`BlueSky post: ${post}`)
+  await agent.post(post)
+
+  console.log(`BlueSky post: ` + post)
 }
 
-function getOgpImageSrc(ogpImage: string | null): string {
+function getOgpImageSrc(ogpImage: string | null | undefined): string {
   const cdnBypass = 'https://www.maretol.xyz/cdn-cgi/image/w=1200,h=630,format=webp,q=70/'
-  if (ogpImage) {
+  if (ogpImage === null || ogpImage === undefined || ogpImage === '') {
     // image が設定されている場合それをBypassの画像にして返却
     const src = ogpImage
     return cdnBypass + src
@@ -69,6 +71,8 @@ async function fetchImageBuffer(src: string): Promise<{ contentType: string | nu
   const imageBlob = await res.blob()
   const imageBuffer = await imageBlob.bytes()
 
+  console.log('contentType: ' + contentType)
+  console.log('imageBuffer: ' + imageBuffer.length + ' bytes')
   return { contentType, imageBuffer }
 }
 
