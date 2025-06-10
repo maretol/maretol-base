@@ -1,7 +1,7 @@
 name = "sns-article-publisher"
 main = "src/index.ts"
 compatibility_date = "2024-11-11"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 routes = [
     { pattern = "api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
 ]
