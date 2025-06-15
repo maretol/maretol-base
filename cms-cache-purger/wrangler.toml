@@ -1,6 +1,6 @@
 name = "cms-cache-purger"
 main = "src/index.ts"
-compatibility_date = "2024-11-11"
+compatibility_date = "2025-05-05"
 compatibility_flags = ["nodejs_compat"]
 routes = [
     { pattern = "api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }

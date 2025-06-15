@@ -50,7 +50,8 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, postText: string, ogp: Blu
 
   await agent.post(post)
 
-  console.log(`BlueSky post: ` + post)
+  console.log(`BlueSky post: `)
+  console.log(post)
 }
 
 function getOgpImageSrc(ogpImage: string | null | undefined): string {
@@ -66,13 +67,18 @@ function getOgpImageSrc(ogpImage: string | null | undefined): string {
 }
 
 async function fetchImageBuffer(src: string): Promise<{ contentType: string | null; imageBuffer: Uint8Array }> {
+  console.log('Fetching image from: ' + src)
   const res = await fetch(src)
+  if (!res.ok) {
+    console.error('Failed to fetch image: ', src)
+    throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`)
+  }
   const contentType = res.headers.get('Content-Type')
   const imageBlob = await res.blob()
   const imageBuffer = await imageBlob.bytes()
 
   console.log('contentType: ' + contentType)
-  console.log('imageBuffer: ' + imageBuffer.length + ' bytes')
+  console.log('imageBuffer: ' + imageBuffer.byteLength + ' bytes')
   return { contentType, imageBuffer }
 }
 
