@@ -4,15 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths:
-      - 'pages/**'
-      - 'ogp-data-fetcher/**'
-      - 'cms-data-fetcher/**'
-      - 'cms-cache-purger/**'
-      - 'sns-article-publisher/**'
-      - 'packages/**'
-      - '.github/workflows/deploy_stg.yaml'
-      - '.github/dependabot.yml'
   workflow_call:
 
 env:
