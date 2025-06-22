@@ -57,12 +57,12 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, postText: string, ogp: Blu
 function getOgpImageSrc(ogpImage: string | null | undefined): string {
   const cdnBypass = 'https://www.maretol.xyz/cdn-cgi/image/w=1200,h=630,format=webp,q=70/'
   if (ogpImage === null || ogpImage === undefined || ogpImage === '') {
-    // image が設定されている場合それをBypassの画像にして返却
-    const src = ogpImage
+    // image が設定されていない場合はデフォルトの画像を返却
+    const src = 'https://r2.maretol.xyz/assets/maretol_base_ogp.png'
     return cdnBypass + src
   }
-  // image が設定されていない場合はデフォルトの画像を返却
-  const src = 'https://r2.maretol.xyz/assets/maretol_base_ogp.png'
+  // image が設定されている場合それをBypassの画像にして返却
+  const src = ogpImage
   return cdnBypass + src
 }
 
