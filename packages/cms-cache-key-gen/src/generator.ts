@@ -19,6 +19,10 @@ export function generateInfoKey() {
   return 'info'
 }
 
+export function generateStaticDataKey() {
+  return 'static'
+}
+
 export function generateBandeDessineeKey(offset: string, limit: string) {
   return `bande_dessinee_${offset}_${limit}`
 }

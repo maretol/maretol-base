@@ -1,5 +1,12 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult, OGPResult } from 'api-types'
+import {
+  bandeDessineeResult,
+  categoryAPIResult,
+  contentsAPIResult,
+  staticAPIResult,
+  infoAPIResult,
+  OGPResult,
+} from 'api-types'
 import { getLocalEnv, getNodeEnv } from '../env'
 import {
   generateBandeDessineeContentKey,
@@ -7,6 +14,7 @@ import {
   generateContentKey,
   generateContentsKey,
   generateContentsWithTagsKey,
+  generateStaticDataKey,
   generateInfoKey,
   generateTagsKey,
 } from 'cms-cache-key-gen'
@@ -26,6 +34,7 @@ const CacheTTL = {
   contentsWithTags: 10 * DAY, // タグ指定のブログコンテンツリスト
   tags: 30 * DAY, // タグリスト
   info: 30 * DAY, // 特定ページ（静的ページ）の情報。変更が少ないためキャッシュ長め
+  static: 30 * DAY, // サイドバーのデフォルト情報。変更が少ないためキャッシュ長め
   bandeDessinee: 12 * HOUR, // マンガリスト。更新少なめなのでとりあえず12時間。今後更新を増やしたらキャッシュ破棄を実装する
   bandeDessineeByID: 12 * HOUR, // マンガの詳細情報。更新少なめなのでとりあえず12時間。今後更新を増やしたらキャッシュ破棄を実装する
 }
@@ -36,6 +45,7 @@ const getCMSContent = cache(getCMSContentOrigin)
 const getCMSContentsWithTags = cache(getCMSContentsWithTagsOrigin)
 const getTags = cache(getTagsOrigin)
 const getInfo = cache(getInfoOrigin)
+const getStatic = cache(getStaticOrigin)
 const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
 
@@ -289,6 +299,41 @@ async function getInfoOrigin() {
   return res as infoAPIResult[]
 }
 
+async function getStaticOrigin() {
+  const { env } = getCloudflareContext()
+
+  // cacheに有無を確認する
+  const cacheKey = generateStaticDataKey()
+  const cache = await env.CMS_CACHE.get(cacheKey)
+  if (cache) {
+    const data = JSON.parse(cache) as staticAPIResult
+    return data
+  }
+
+  if (getLocalEnv() === 'local') {
+    const request = cmsFetcher('/api/cms/get_static')
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return {} as staticAPIResult
+    }
+    const data = (await res.json()) as staticAPIResult
+    if (!data) {
+      return {} as staticAPIResult
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as staticAPIResult
+  }
+
+  const res = await env.CMS_RPC.fetchStatic()
+  // cacheに保存する
+  const expirationTtl = dev ? 60 : CacheTTL.static
+  await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
+
+  return res as staticAPIResult
+}
+
 // マンガのリスト取得
 async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   const { env } = getCloudflareContext()
@@ -404,6 +449,7 @@ export {
   getCMSContentsWithTags,
   getTags,
   getInfo,
+  getStatic,
   getBandeDessinee,
   getBandeDessineeByID,
 }

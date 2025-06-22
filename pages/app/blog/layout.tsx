@@ -1,5 +1,5 @@
-import BaseLayout from '@/components/large/base_layout'
+import BlogLayout from '@/components/large/blog_layout'
 
-export default function BlogLayout({ children }: { children: React.ReactNode }) {
-  return <BaseLayout>{children}</BaseLayout>
+export default function BlogPageLayout({ children }: { children: React.ReactNode }) {
+  return <BlogLayout>{children}</BlogLayout>
 }
