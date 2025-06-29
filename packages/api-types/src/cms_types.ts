@@ -61,6 +61,7 @@ type staticAPIResult = {
   updatedAt: string
   publishedAt: string
   revisedAt: string
+  sidebar_about: string
   sidebar_profile: string
 }
 

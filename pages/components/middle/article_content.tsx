@@ -170,6 +170,14 @@ export default async function ArticleContent({
               // 目次情報がない場合は何も表示しない
               return
             }
+          } else if (pOption === 'block_start') {
+            // ブロックの開始
+            // これ以降の要素を入れ子にいれる
+            // これを回すためにフラグを用意する必要がある
+            // 効率的な書き方を調べておく（すべての要素で return につながるところを書き直す必要があるので
+          } else if (pOption === 'block_end') {
+            // ブロックの終了
+            // ここで入れ子に入れた要素をブロックの中に入れて以降の要素を入れ子から外す
           }
           // どれにも該当しない場合。ほぼないはずだが、新規の p_option が追加された場合必要になる
           return <P key={i} innerHTML={innerHTML || text} attrs={attrs} />
