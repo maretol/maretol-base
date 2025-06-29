@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
-import { Info, MessageCircle, RssIcon, Tags } from 'lucide-react'
+import { Info, MessageCircle, NotebookText, RssIcon } from 'lucide-react'
 
 export default function HeaderButtons() {
   const iconClassName = 'w-4 h-4'
@@ -8,9 +8,9 @@ export default function HeaderButtons() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-1">
       <Button variant="outline" className={buttonClassName} asChild>
-        <Link href="/tag">
-          <Tags className={iconClassName} />
-          Tags
+        <Link href="/blog">
+          <NotebookText className={iconClassName} />
+          Blog
         </Link>
       </Button>
       <Button variant="outline" className={buttonClassName} asChild>
