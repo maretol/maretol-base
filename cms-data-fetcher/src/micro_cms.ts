@@ -78,6 +78,7 @@ export async function getTags(apiKey: string) {
   const response = await client
     .getList<categoryAPIResult>({
       endpoint: 'categories',
+      queries: { limit: 100 },
     })
     .then((res) => {
       return res
