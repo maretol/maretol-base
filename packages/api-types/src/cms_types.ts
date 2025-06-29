@@ -56,6 +56,15 @@ type infoAPIResult = {
   table_of_contents: TableOfContents
 }
 
+type staticAPIResult = {
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  revisedAt: string
+  sidebar_about: string
+  sidebar_profile: string
+}
+
 type bandeDessineeResult = {
   id: string
   createdAt: string
@@ -98,5 +107,6 @@ export type {
   contentsAPIResult,
   categoryAPIResult,
   infoAPIResult,
+  staticAPIResult,
   bandeDessineeResult,
 }

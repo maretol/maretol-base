@@ -1,5 +1,5 @@
 import { createClient, MicroCMSContentId, MicroCMSDate } from 'microcms-js-sdk'
-import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult } from 'api-types'
+import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, staticAPIResult, infoAPIResult } from 'api-types'
 
 // offset, limit の指定のみで記事コンテンツを取得するAPIアクセス
 export async function getContents(apiKey: string, offset: number, limit: number) {
@@ -78,6 +78,7 @@ export async function getTags(apiKey: string) {
   const response = await client
     .getList<categoryAPIResult>({
       endpoint: 'categories',
+      queries: { limit: 100 },
     })
     .then((res) => {
       return res
@@ -169,6 +170,34 @@ export async function getInfo(apiKey: string) {
   return response.contents.map((i) => {
     return parseInfoResult(i)
   })
+}
+
+export async function getStatic(apiKey: string) {
+  if (apiKey === undefined) {
+    throw new Error('API_KEY is undefined')
+  }
+
+  const client = createClient({
+    serviceDomain: 'maretol-blog',
+    apiKey: apiKey,
+  })
+
+  const response = await client
+    .get<staticAPIResult>({
+      endpoint: 'static',
+    })
+    .then((res) => {
+      return res
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
+  if (response === undefined) {
+    throw new Error('api access error')
+  }
+
+  return response as staticAPIResult
 }
 
 export async function getBandeDessinees(apiKey: string, offset: number, limit: number) {

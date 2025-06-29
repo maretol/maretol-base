@@ -2,13 +2,14 @@
  * CMSのHTMLにある程度従ったテキストを投げ込むとそれらをJSONでパースして返す処理
  */
 
-import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, infoAPIResult } from 'api-types'
+import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, staticAPIResult, infoAPIResult } from 'api-types'
 import {
   getBandeDessinee,
   getBandeDessinees,
   getContent,
   getContents,
   getContentsByTag,
+  getStatic,
   getInfo,
   getTags,
 } from './micro_cms'
@@ -65,6 +66,9 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       // 固定ページ・一部の特殊なページを取得
       const info = await this.fetchInfo()
       return Response.json(info)
+    } else if (pathname.includes('/cms/get_static')) {
+      const staticData = await this.fetchStatic()
+      return Response.json(staticData)
     } else if (pathname.includes('/cms/bande_dessinee')) {
       if (contentID === '' || contentID === null) {
         // マンガの指定がない場合offsetとlimitで一覧を取得
@@ -138,6 +142,17 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       i.table_of_contents = parsed.table_of_contents
     })
     return JSON.parse(JSON.stringify(info))
+  }
+
+  async fetchStatic(): Promise<staticAPIResult> {
+    const apiKey = this.env.CMS_API_KEY
+    try {
+      const staticData = await getStatic(apiKey)
+      return JSON.parse(JSON.stringify(staticData))
+    } catch (e) {
+      console.error('Error fetching default data:', e)
+      throw new Error('Error fetching default data')
+    }
   }
 
   async fetchBandeDessinees(

@@ -15,6 +15,10 @@ updates:
         patterns:
           - '*'
     target-branch: 'development'
+    allow:
+      - dependency-type: 'all'
+    ignore:
+      - dependency-name: 'sns-article-publisher'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
