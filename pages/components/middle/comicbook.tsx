@@ -197,27 +197,21 @@ export default function ComicBook(props: ComicBookProps) {
     setCurrentPage(api.selectedScrollSnap())
   }, [])
 
-  const changeContollerVisible = useCallback(
-    (controller_visible: boolean) => {
-      setPageOption((props) => {
-        const newProps = { ...props, controller_visible }
-        localStorage.setItem('page_option', JSON.stringify(newProps))
-        return newProps
-      })
-    },
-    [pageOption]
-  )
+  const changeContollerVisible = useCallback((controller_visible: boolean) => {
+    setPageOption((props) => {
+      const newProps = { ...props, controller_visible }
+      localStorage.setItem('page_option', JSON.stringify(newProps))
+      return newProps
+    })
+  }, [])
 
-  const changeModeStatic = useCallback(
-    (mode_static: boolean) => {
-      setPageOption((props) => {
-        const newProps = { ...props, mode_static }
-        localStorage.setItem('page_option', JSON.stringify(newProps))
-        return newProps
-      })
-    },
-    [pageOption]
-  )
+  const changeModeStatic = useCallback((mode_static: boolean) => {
+    setPageOption((props) => {
+      const newProps = { ...props, mode_static }
+      localStorage.setItem('page_option', JSON.stringify(newProps))
+      return newProps
+    })
+  }, [])
 
   const changeContollerDisabled = useCallback(
     (controller_disabled: boolean) => {
