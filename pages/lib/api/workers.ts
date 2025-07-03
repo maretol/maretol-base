@@ -19,7 +19,6 @@ import {
   generateTagsKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
-import { env } from 'process'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'

@@ -65,11 +65,13 @@ export default function ComicBook(props: ComicBookProps) {
 
   const headerImage = getHeaderImage()
   const [currentPage, setCurrentPage] = useState(0)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [scrollSnaps, setScrollSnaps] = useState<number[]>()
   const [mode, setMode] = useState<'single' | 'double'>('single')
   const [pageOption, setPageOption] = useState<pageOption>(initPageOption)
   const [api, setApi] = useState<CarouselApi>()
   const [zoneFlag, setZoneFlag] = useState<'next' | 'prev' | 'none'>('none')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [width, height] = useWindowSize()
   const comicDivRef = useRef<HTMLDivElement>(null)
 
@@ -188,53 +190,38 @@ export default function ComicBook(props: ComicBookProps) {
     setZoneFlag('none')
   }
 
-  const onInit = useCallback(
-    (api: CarouselApi) => {
-      setScrollSnaps(api?.scrollSnapList())
-    },
-    [api]
-  )
+  const onInit = useCallback((api: CarouselApi) => {
+    setScrollSnaps(api?.scrollSnapList())
+  }, [])
 
-  const onSelected = useCallback(
-    (api: CarouselApi) => {
-      if (!api) return
-      setCurrentPage(api.selectedScrollSnap())
-    },
-    [api]
-  )
+  const onSelected = useCallback((api: CarouselApi) => {
+    if (!api) return
+    setCurrentPage(api.selectedScrollSnap())
+  }, [])
 
-  const changeContollerVisible = useCallback(
-    (controller_visible: boolean) => {
-      setPageOption((props) => {
-        const newProps = { ...props, controller_visible }
-        localStorage.setItem('page_option', JSON.stringify(newProps))
-        return newProps
-      })
-    },
-    [pageOption]
-  )
+  const changeContollerVisible = useCallback((controller_visible: boolean) => {
+    setPageOption((props) => {
+      const newProps = { ...props, controller_visible }
+      localStorage.setItem('page_option', JSON.stringify(newProps))
+      return newProps
+    })
+  }, [])
 
-  const changeModeStatic = useCallback(
-    (mode_static: boolean) => {
-      setPageOption((props) => {
-        const newProps = { ...props, mode_static }
-        localStorage.setItem('page_option', JSON.stringify(newProps))
-        return newProps
-      })
-    },
-    [pageOption]
-  )
+  const changeModeStatic = useCallback((mode_static: boolean) => {
+    setPageOption((props) => {
+      const newProps = { ...props, mode_static }
+      localStorage.setItem('page_option', JSON.stringify(newProps))
+      return newProps
+    })
+  }, [])
 
-  const changeContollerDisabled = useCallback(
-    (controller_disabled: boolean) => {
-      setPageOption((props) => {
-        const newProps = { ...props, controller_disabled }
-        localStorage.setItem('page_option', JSON.stringify(newProps))
-        return newProps
-      })
-    },
-    [pageOption]
-  )
+  const changeContollerDisabled = useCallback((controller_disabled: boolean) => {
+    setPageOption((props) => {
+      const newProps = { ...props, controller_disabled }
+      localStorage.setItem('page_option', JSON.stringify(newProps))
+      return newProps
+    })
+  }, [])
 
   useEffect(() => {
     const opt = localStorage.getItem('page_option')
@@ -259,7 +246,7 @@ export default function ComicBook(props: ComicBookProps) {
       if (mode === 'double' || pageOption.mode_static) return
       setMode('double')
     }
-  }, [width, pageOption.mode_static])
+  }, [mode, width, pageOption.mode_static])
 
   return (
     <div className="h-[95svh] w-full bg-gray-700" onKeyDown={keyEvent} tabIndex={0}>
