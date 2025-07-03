@@ -65,12 +65,14 @@ export default function ComicBook(props: ComicBookProps) {
 
   const headerImage = getHeaderImage()
   const [currentPage, setCurrentPage] = useState(0)
-  const [_scrollSnaps, setScrollSnaps] = useState<number[]>()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [scrollSnaps, setScrollSnaps] = useState<number[]>()
   const [mode, setMode] = useState<'single' | 'double'>('single')
   const [pageOption, setPageOption] = useState<pageOption>(initPageOption)
   const [api, setApi] = useState<CarouselApi>()
   const [zoneFlag, setZoneFlag] = useState<'next' | 'prev' | 'none'>('none')
-  const [width, _height] = useWindowSize()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [width, height] = useWindowSize()
   const comicDivRef = useRef<HTMLDivElement>(null)
 
   const singlePageList = useMemo(() => {
@@ -213,16 +215,13 @@ export default function ComicBook(props: ComicBookProps) {
     })
   }, [])
 
-  const changeContollerDisabled = useCallback(
-    (controller_disabled: boolean) => {
-      setPageOption((props) => {
-        const newProps = { ...props, controller_disabled }
-        localStorage.setItem('page_option', JSON.stringify(newProps))
-        return newProps
-      })
-    },
-    [pageOption]
-  )
+  const changeContollerDisabled = useCallback((controller_disabled: boolean) => {
+    setPageOption((props) => {
+      const newProps = { ...props, controller_disabled }
+      localStorage.setItem('page_option', JSON.stringify(newProps))
+      return newProps
+    })
+  }, [])
 
   useEffect(() => {
     const opt = localStorage.getItem('page_option')
@@ -247,7 +246,7 @@ export default function ComicBook(props: ComicBookProps) {
       if (mode === 'double' || pageOption.mode_static) return
       setMode('double')
     }
-  }, [width, pageOption.mode_static])
+  }, [mode, width, pageOption.mode_static])
 
   return (
     <div className="h-[95svh] w-full bg-gray-700" onKeyDown={keyEvent} tabIndex={0}>
