@@ -1,4 +1,3 @@
-import { LoadingArticle } from '@/components/large/loading_article'
 import { LoadingComics } from '@/components/large/loading_comics'
 
 export default function LoadingComicsPage() {
