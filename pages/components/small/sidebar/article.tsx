@@ -35,7 +35,7 @@ export default async function ArticlesSidebar({ articles }: { articles: contents
   )
 }
 
-function ArticleLink({ id, title, publishedAt, image }: articles) {
+function ArticleLink({ id, title, publishedAt }: articles) {
   return (
     <div className="mb-4">
       <Link href={`/blog/${id}`} className="hover:underline">
