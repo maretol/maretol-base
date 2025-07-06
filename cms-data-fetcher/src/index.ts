@@ -89,6 +89,16 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
         const content = await this.fetchBandeDessinee(contentID, draftKey)
         return Response.json(content)
       }
+    } else if (pathname.includes('/cms/atelier')) {
+      if (contentID === '' || contentID === null) {
+        // イラストIDの指定がない場合offsetとlimitで一覧を取得
+        const ateliers = await this.fetchAteliers(offset, limit)
+        return Response.json(ateliers)
+      } else {
+        // イラストIDの指定がある場合そのアトリエを取得
+        const atelier = await this.fetchAtelier(contentID, draftKey)
+        return Response.json(atelier)
+      }
     } else {
       return new Response('ok', { status: 200 })
     }
@@ -212,6 +222,9 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     try {
       const atelier = await getAteliers(apiKey, offsetNum, limitNum)
       atelier.ateliers.forEach((a) => {
+        if (a.description === null) {
+          a.description = ''
+        }
         const parsed = parse(a.description)
         a.parsed_description = parsed.contents_array
         a.table_of_contents = parsed.table_of_contents
