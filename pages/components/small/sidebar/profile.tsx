@@ -33,7 +33,7 @@ export default async function Profile({ rawText }: { rawText: string }) {
       const blueskyID = removeHeader.replace('@', '')
       return (
         <p key={i}>
-          BlueSky:{' '}
+          Bluesky:{' '}
           <Link href={`https://bsky.app/profile/${blueskyID}`} target="_blank" className="hover:underline">
             {removeHeader}
           </Link>

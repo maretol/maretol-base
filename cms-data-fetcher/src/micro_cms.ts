@@ -1,5 +1,12 @@
 import { createClient, MicroCMSContentId, MicroCMSDate } from 'microcms-js-sdk'
-import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, staticAPIResult, infoAPIResult } from 'api-types'
+import {
+  bandeDessineeResult,
+  categoryAPIResult,
+  contentsAPIResult,
+  staticAPIResult,
+  infoAPIResult,
+  atelierResult,
+} from 'api-types'
 
 // offset, limit の指定のみで記事コンテンツを取得するAPIアクセス
 export async function getContents(apiKey: string, offset: number, limit: number) {
@@ -263,6 +270,70 @@ export async function getBandeDessinee(apiKey: string, contentID: string, draftK
   return parseBandeDessineeResult(response.contents[0])
 }
 
+export async function getAteliers(apiKey: string, offset: number, limit: number) {
+  if (apiKey === undefined) {
+    throw new Error('API_KEY is undefined')
+  }
+
+  const client = createClient({
+    serviceDomain: 'maretol-illust',
+    apiKey: apiKey,
+  })
+
+  const response = await client
+    .getList<atelierResult>({
+      endpoint: 'atelier',
+      queries: { offset: offset, limit: limit },
+    })
+    .then((res) => {
+      return res
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
+  if (response === undefined) {
+    throw new Error('api access error')
+  }
+
+  const result = response.contents.map((a) => {
+    return parseAtelierResult(a)
+  })
+
+  const total = response.totalCount
+
+  return { ateliers: result, total }
+}
+
+export async function getAtelier(apiKey: string, contentID: string, draftKey?: string) {
+  if (apiKey === undefined) {
+    throw new Error('API_KEY is undefined')
+  }
+
+  const client = createClient({
+    serviceDomain: 'maretol-illust',
+    apiKey: apiKey,
+  })
+
+  const response = await client
+    .getList<atelierResult>({
+      endpoint: 'atelier',
+      queries: { ids: contentID, draftKey: draftKey },
+    })
+    .then((res) => {
+      return res
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
+  if (response === undefined) {
+    throw new Error('api access error')
+  }
+
+  return parseAtelierResult(response.contents[0])
+}
+
 function parseInfoResult(result: infoAPIResult & MicroCMSContentId & MicroCMSDate): infoAPIResult {
   result = result as infoAPIResult
   return {
@@ -307,6 +378,7 @@ function parseCategoryAPIResult(result: categoryAPIResult & MicroCMSContentId & 
     name: result.name,
   }
 }
+
 function parseBandeDessineeResult(result: bandeDessineeResult & MicroCMSContentId & MicroCMSDate): bandeDessineeResult {
   result = result as bandeDessineeResult
   return {
@@ -332,5 +404,22 @@ function parseBandeDessineeResult(result: bandeDessineeResult & MicroCMSContentI
     first_left_right: result.first_left_right,
     parsed_description: result.parsed_description,
     table_of_contents: result.table_of_contents,
+  }
+}
+
+function parseAtelierResult(result: atelierResult & MicroCMSContentId & MicroCMSDate): atelierResult {
+  result = result as atelierResult
+  return {
+    id: result.id,
+    title: result.title,
+    src: result.src,
+    parsed_description: result.parsed_description,
+    description: result.description,
+    tag_or_category: result.tag_or_category,
+    table_of_contents: result.table_of_contents,
+    createdAt: result.createdAt,
+    updatedAt: result.updatedAt,
+    publishedAt: result.publishedAt,
+    revisedAt: result.revisedAt,
   }
 }

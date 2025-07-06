@@ -2,7 +2,14 @@
  * CMSのHTMLにある程度従ったテキストを投げ込むとそれらをJSONでパースして返す処理
  */
 
-import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, staticAPIResult, infoAPIResult } from 'api-types'
+import {
+  bandeDessineeResult,
+  categoryAPIResult,
+  contentsAPIResult,
+  staticAPIResult,
+  infoAPIResult,
+  atelierResult,
+} from 'api-types'
 import {
   getBandeDessinee,
   getBandeDessinees,
@@ -12,6 +19,8 @@ import {
   getStatic,
   getInfo,
   getTags,
+  getAtelier,
+  getAteliers,
 } from './micro_cms'
 import { parse } from './parse'
 import { WorkerEntrypoint } from 'cloudflare:workers'
@@ -20,6 +29,7 @@ export interface Env {
   API_KEY: string
   CMS_API_KEY: string
   CMS_API_KEY_BD: string
+  CMS_API_KEY_AT: string
 }
 
 export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
@@ -78,6 +88,16 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
         // マンガの指定がある場合そのマンガを取得
         const content = await this.fetchBandeDessinee(contentID, draftKey)
         return Response.json(content)
+      }
+    } else if (pathname.includes('/cms/atelier')) {
+      if (contentID === '' || contentID === null) {
+        // イラストIDの指定がない場合offsetとlimitで一覧を取得
+        const ateliers = await this.fetchAteliers(offset, limit)
+        return Response.json(ateliers)
+      } else {
+        // イラストIDの指定がある場合そのアトリエを取得
+        const atelier = await this.fetchAtelier(contentID, draftKey)
+        return Response.json(atelier)
       }
     } else {
       return new Response('ok', { status: 200 })
@@ -191,6 +211,46 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     } catch (e) {
       console.error('Error fetching bandeDessinee:', e)
       throw new Error('Error fetching bandeDessinee')
+    }
+  }
+
+  async fetchAteliers(offset?: string, limit?: string): Promise<{ ateliers: atelierResult[]; total: number }> {
+    const apiKey = this.env.CMS_API_KEY_AT
+    const offsetNum = parseOffset(offset)
+    const limitNum = parseLimit(limit)
+
+    try {
+      const atelier = await getAteliers(apiKey, offsetNum, limitNum)
+      atelier.ateliers.forEach((a) => {
+        if (a.description === null) {
+          a.description = ''
+        }
+        const parsed = parse(a.description)
+        a.parsed_description = parsed.contents_array
+        a.table_of_contents = parsed.table_of_contents
+      })
+      return JSON.parse(JSON.stringify(atelier))
+    } catch (e) {
+      console.error('Error fetching atelier:', e)
+      throw new Error('Error fetching atelier')
+    }
+  }
+
+  async fetchAtelier(contentID: string, draftKey?: string): Promise<atelierResult> {
+    const apiKey = this.env.CMS_API_KEY_AT
+    if (contentID === null) {
+      throw new Error('contentID is empty')
+    }
+
+    try {
+      const atelier = await getAtelier(apiKey, contentID, draftKey || undefined)
+      const parsed = parse(atelier.description)
+      atelier.parsed_description = parsed.contents_array
+      atelier.table_of_contents = parsed.table_of_contents
+      return JSON.parse(JSON.stringify(atelier))
+    } catch (e) {
+      console.error('Error fetching atelier:', e)
+      throw new Error('Error fetching atelier')
     }
   }
 }

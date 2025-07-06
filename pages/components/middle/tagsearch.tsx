@@ -12,7 +12,7 @@ export default function TagSelector({
   tagNames: string[]
 }) {
   return (
-    <div className="flex flex-row items-center ml-1 gap-x-1">
+    <div className="flex flex-wrap gap-2">
       {tags.map((t, i) => {
         const appendTagIDs = [...tagIDs, t.id]
         const appendTagNames = [...tagNames, t.name]

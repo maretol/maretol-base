@@ -100,6 +100,30 @@ type bandeDessineeTag = {
   tag_name: string
 }
 
+type atelierResult = {
+  id: string
+  title: string
+  src: string
+  description: string
+  parsed_description: ParsedContent[]
+  tag_or_category: atelierTagAndCategory[]
+  table_of_contents: TableOfContents
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  revisedAt: string
+}
+
+type atelierTagAndCategory = {
+  id: string
+  tag: string
+  type: string[] // キャラクター、（二次創作元の）作品などが一つ指定される。配列だが最初の要素だけ見れば良い
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  revisedAt: string
+}
+
 export type {
   RequestJSONType,
   ParsedContent,
@@ -109,4 +133,6 @@ export type {
   infoAPIResult,
   staticAPIResult,
   bandeDessineeResult,
+  atelierResult,
+  atelierTagAndCategory,
 }
