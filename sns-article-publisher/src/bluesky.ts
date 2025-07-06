@@ -41,7 +41,6 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, postText: string, ogp: Blu
       $type: 'app.bsky.embed.external',
       external: {
         title: ogp.title,
-        description: ogp.description,
         uri: ogp.url,
         thumb: blob || undefined,
       },

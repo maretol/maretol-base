@@ -53,9 +53,9 @@ export default async function TagPage(props: {
   return (
     <div>
       <div>
-        <div className="flex flex-row justify-left items-center mb-4">
-          <div>
-            <h2>Select tags : </h2>
+        <div className="mb-4">
+          <div className="mb-2">
+            <h2 className="font-bold">Selected Tags : </h2>
           </div>
           <TagSelector tags={tags} tagIDs={tagIDs} tagNames={tagNames} />
         </div>

@@ -1,4 +1,3 @@
-import { getLocalEnv } from '@/lib/env'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { OGPResult } from 'api-types'
 import { NextRequest } from 'next/server'

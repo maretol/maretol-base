@@ -1,5 +1,4 @@
-import { getNoImage, rewriteImageURL } from '@/lib/image'
-import { originImageOption } from '@/lib/static'
+import { getNoImage } from '@/lib/image'
 import ClientImage from '@/components/small/client_image'
 import { getOGPData } from '@/lib/api/workers'
 import Link from 'next/link'

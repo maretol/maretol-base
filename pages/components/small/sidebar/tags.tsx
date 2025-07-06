@@ -19,9 +19,12 @@ export default function TagSidebar({ tags }: { tags: categoryAPIResult[] }) {
     id: tag.id,
   }))
 
-  const selectCallback = useCallback((value: string) => {
-    router.push(`/tag?tag_id=${value}`)
-  }, [])
+  const selectCallback = useCallback(
+    (value: string) => {
+      router.push(`/tag?tag_id=${value}`)
+    },
+    [router]
+  )
 
   return (
     <SidebarContentFrame title="Tags">
