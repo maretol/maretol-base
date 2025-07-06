@@ -30,3 +30,11 @@ export function generateBandeDessineeKey(offset: string, limit: string) {
 export function generateBandeDessineeContentKey(contentID: string) {
   return `bande_dessinee_content_${contentID}`
 }
+
+export function generateAtelierKey(offset: string, limit: string) {
+  return `atelier_${offset}_${limit}`
+}
+
+export function generateAtelierContentKey(contentID: string) {
+  return `atelier_content_${contentID}`
+}
