@@ -1,9 +1,10 @@
 import { WebhookPayload } from 'api-types'
-import { deleteContentCache, deleteContentsCache, deleteCache } from './kv'
+import { deleteCacheByPrefix, deleteCache } from './kv'
 import { Env } from './index'
-import { generateInfoKey, generateStaticDataKey, generateTagsKey } from 'cms-cache-key-gen'
+import { generateContentKey, generateInfoKey, generateStaticDataKey, generateTagsKey } from 'cms-cache-key-gen'
 
 export default class Blog {
+  private prefix = 'contents_'
   constructor(private env: Env, private ctx: ExecutionContext) {}
 
   public async purgeCache(bodyJSON: WebhookPayload): Promise<Response> {
@@ -36,7 +37,7 @@ export default class Blog {
     // contentsのキャッシュを削除する
     if (bodyJSON.contents.new.status.includes('PUBLISH')) {
       console.log('start deleteContentsCache')
-      await deleteContentsCache(this.env)
+      await deleteCacheByPrefix(this.env, this.prefix)
     } else {
       console.log('status is not PUBLISH')
     }
@@ -47,13 +48,14 @@ export default class Blog {
       // 下書きから公開に変更された場合
       // contentsのキャッシュを削除する
       console.log('start deleteContentsCache')
-      await deleteContentsCache(this.env)
+      await deleteCacheByPrefix(this.env, this.prefix)
     } else {
       // ブログのメインコンテンツに編集があった場合
       // 対象のIDのコンテンツのキャッシュを削除する
       console.log('start deleteContentCache')
       console.log('id: ' + bodyJSON.id)
-      await deleteContentCache(this.env, bodyJSON.id)
+      const cacheKey = generateContentKey(bodyJSON.id)
+      await deleteCache(this.env, cacheKey)
     }
   }
 
@@ -61,10 +63,11 @@ export default class Blog {
     // ブログのメインコンテンツに削除があった場合
     // contentsのキャッシュと対象のIDのコンテンツのキャッシュを削除する
     console.log('start deleteContentsCache')
-    await deleteContentsCache(this.env)
+    await deleteCacheByPrefix(this.env, this.prefix)
     console.log('start deleteContentCache')
     console.log('id: ' + bodyJSON.id)
-    await deleteContentCache(this.env, bodyJSON.id)
+    const cacheKey = generateContentKey(bodyJSON.id)
+    await deleteCache(this.env, cacheKey)
   }
 
   private isDraftToPublish(oldContent: any, newContent: any): boolean {

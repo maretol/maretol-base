@@ -1,8 +1,8 @@
 import { generateContentKey } from 'cms-cache-key-gen'
 import { Env } from './index'
 
-async function deleteContentsCache(env: Env) {
-  const list = await env.CMS_CACHE.list({ prefix: 'contents_' })
+async function deleteCacheByPrefix(env: Env, prefix: string) {
+  const list = await env.CMS_CACHE.list({ prefix: prefix })
   // すべての contents_ から始まるキーを削除する
   const deleteKeys = await Promise.all(
     list.keys.map(async (key) => {
@@ -16,13 +16,8 @@ async function deleteContentsCache(env: Env) {
 
   if (list.list_complete === false) {
     // キャッシュがまだある場合は再帰的に削除する
-    await deleteContentsCache(env)
+    await deleteCacheByPrefix(env, prefix)
   }
-}
-
-async function deleteContentCache(env: Env, contentID: string) {
-  const cacheKey = generateContentKey(contentID)
-  await deleteCache(env, cacheKey)
 }
 
 async function deleteCache(env: Env, cacheKey: string) {
@@ -34,4 +29,4 @@ async function deleteCache(env: Env, cacheKey: string) {
   await env.CMS_CACHE.delete(cacheKey)
 }
 
-export { deleteContentsCache, deleteContentCache, deleteCache }
+export { deleteCacheByPrefix, deleteCache }

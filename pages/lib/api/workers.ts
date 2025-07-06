@@ -17,6 +17,8 @@ import {
   generateStaticDataKey,
   generateInfoKey,
   generateTagsKey,
+  generateAtelierKey,
+  generateAtelierContentKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
 
@@ -34,8 +36,10 @@ const CacheTTL = {
   tags: 30 * DAY, // タグリスト
   info: 30 * DAY, // 特定ページ（静的ページ）の情報。変更が少ないためキャッシュ長め
   static: 30 * DAY, // サイドバーのデフォルト情報。変更が少ないためキャッシュ長め
-  bandeDessinee: 12 * HOUR, // マンガリスト。更新少なめなのでとりあえず12時間。今後更新を増やしたらキャッシュ破棄を実装する
-  bandeDessineeByID: 12 * HOUR, // マンガの詳細情報。更新少なめなのでとりあえず12時間。今後更新を増やしたらキャッシュ破棄を実装する
+  bandeDessinee: 30 * DAY, // マンガリスト。変更が少ないためキャッシュ長め
+  bandeDessineeByID: 30 * DAY, // マンガの詳細情報。更新少なめなのでキャッシュ長め
+  atelier: 30 * DAY, // イラストリスト
+  atelierByID: 30 * DAY, // イラストの詳細情報
 }
 
 const getOGPData = cache(getOGPDataOrigin)
@@ -47,6 +51,8 @@ const getInfo = cache(getInfoOrigin)
 const getStatic = cache(getStaticOrigin)
 const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
+const getAtelier = cache(getAtelierOrigin)
+const getAtelierByID = cache(getAtelierByIDOrigin)
 
 // OGPデータの取得
 async function getOGPDataOrigin(targetURL: string) {
@@ -427,6 +433,99 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   }
 }
 
+async function getAtelierOrigin(offset?: number, limit?: number) {
+  const { env } = getCloudflareContext()
+  const offsetStr = offset?.toString() || '0'
+  const limitStr = limit?.toString() || '10'
+
+  const cacheKey = generateAtelierKey(offsetStr, limitStr)
+  const cache = await env.CMS_CACHE.get(cacheKey)
+  if (cache) {
+    const data = JSON.parse(cache) as { atelier: bandeDessineeResult[]; total: number }
+    return data
+  }
+
+  if (getLocalEnv() === 'local') {
+    const request = cmsFetcher('/api/cms/atelier', {
+      offset: offsetStr,
+      limit: limitStr,
+    })
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return { atelier: [], total: 0 }
+    }
+    const data = (await res.json()) as { atelier: bandeDessineeResult[]; total: number }
+    if (!data) {
+      return { atelier: [], total: 0 }
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as { atelier: bandeDessineeResult[]; total: number }
+  }
+
+  try {
+    const res = await env.CMS_RPC.fetchAtelier(offsetStr, limitStr)
+
+    // cacheに保存する
+    const expirationTtl = dev ? 60 : CacheTTL.atelier
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
+
+    return res as { atelier: bandeDessineeResult[]; total: number }
+  } catch (e) {
+    console.error('Error fetching atelier:', e)
+    throw new Error('Error fetching atelier')
+  }
+}
+
+async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
+  const { env } = getCloudflareContext()
+
+  const cacheKey = generateAtelierContentKey(contentID)
+  const cache = await env.CMS_CACHE.get(cacheKey)
+  if (cache && !draftKey) {
+    // draftKeyがある場合はキャッシュを使わない
+    const data = JSON.parse(cache) as bandeDessineeResult
+    return data
+  }
+
+  if (getLocalEnv() === 'local') {
+    const query: Record<string, string> =
+      draftKey !== undefined ? { content_id: contentID, draftKey } : { content_id: contentID }
+    const request = cmsFetcher('/api/cms/atelier', query)
+    const res = await fetch(request, { cache: 'no-store' })
+    if (!res.ok) {
+      return {} as bandeDessineeResult
+    }
+    const data = (await res.json()) as bandeDessineeResult
+    if (!data) {
+      return {} as bandeDessineeResult
+    }
+
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
+
+    return data as bandeDessineeResult
+  }
+
+  try {
+    const res = await env.CMS_RPC.fetchAtelierContent(contentID, draftKey || null)
+
+    // draftKeyがある場合はキャッシュを使わない
+    if (draftKey) {
+      return res as bandeDessineeResult
+    }
+
+    // cacheに保存する
+    const expirationTtl = dev ? 60 : CacheTTL.atelierByID
+    await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
+
+    return res as bandeDessineeResult
+  } catch (e) {
+    console.error('Error fetching atelier by ID:', e)
+    throw new Error('Error fetching atelier by ID')
+  }
+}
+
 function cmsFetcher(path: string, query?: Record<string, string>) {
   const { env } = getCloudflareContext()
   const host = env.CMS_DEV
@@ -451,4 +550,6 @@ export {
   getStatic,
   getBandeDessinee,
   getBandeDessineeByID,
+  getAtelier,
+  getAtelierByID,
 }
