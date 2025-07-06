@@ -9,16 +9,19 @@ import ClientImage from '../small/client_image'
 import HeaderButtons from '../small/header'
 import FooterButtons from '../small/footer'
 import { getHeaderImage } from '@/lib/image'
-import { getCMSContents, getStatic, getTags } from '@/lib/api/workers'
+import { getBandeDessinee, getCMSContents, getStatic, getTags } from '@/lib/api/workers'
 import BlogSidebar from '../middle/blog_sidebar'
 
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
+  // experimental が抜けたら use cache あたりを使ってコンポーネントをキャッシュさせたほうがいいかもしれない
+  // 現状では /blog/* の layout で呼ばれる部分とそれ以外の layout で呼ばれる部分で別々にコンポーネントが生成されてる
   const headerImage = getHeaderImage()
 
   const year = new Date().getFullYear()
 
   const staticData = getStatic()
   const articlesData = getCMSContents(0, 5)
+  const bandeDessineeData = getBandeDessinee(0, 5)
   const tagData = getTags()
 
   return (
@@ -44,7 +47,12 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
         <div className="md:flex md:flex-row">
           <div className="basis-4/5">{children}</div>
           <div className="basis-1/5 ml-4 not-md:hidden">
-            <BlogSidebar staticData={staticData} articlesData={articlesData} tagData={tagData} />
+            <BlogSidebar
+              staticData={staticData}
+              articlesData={articlesData}
+              bandeDessineeData={bandeDessineeData}
+              tagData={tagData}
+            />
           </div>
         </div>
         <div className="my-10">
