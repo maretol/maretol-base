@@ -26,7 +26,7 @@ import { cache } from 'react'
 const dev = getNodeEnv() === 'development'
 
 const DAY = 60 * 60 * 24
-const HOUR = 60 * 60
+// const HOUR = 60 * 60
 
 const CacheTTL = {
   ogpData: 3 * DAY, // OGPデータの保持
