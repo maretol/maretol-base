@@ -18,7 +18,7 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.4.0",
+    "@opennextjs/cloudflare": "^1.5.1",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-popover": "^1.1.14",
@@ -37,7 +37,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250709.0",
+    "@cloudflare/workers-types": "^4.20250711.0",
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-brands-svg-icons": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
@@ -52,6 +52,6 @@
     "postcss": "^8",
     "tailwindcss": "^4.0.9",
     "typescript": "^5",
-    "wrangler": "^4.24.0"
+    "wrangler": "^4.24.3"
   }
 }
