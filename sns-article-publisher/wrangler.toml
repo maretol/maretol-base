@@ -6,6 +6,9 @@ routes = [
     { pattern = "api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
 ]
 
+[images]
+binding = "IMAGES"
+
 [dev]
 port = 30254
 
