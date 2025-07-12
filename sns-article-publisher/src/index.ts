@@ -97,9 +97,9 @@ async function publish(
 ) {
   let postText = ''
   if (postMessage === undefined || postMessage === null || postMessage === '') {
-    postText = `投稿しました : ${articleTitle} | Maretol Base\n${articleURL}`
+    postText = `投稿しました：${articleTitle} | Maretol Base\n${articleURL}`
   } else {
-    postText = `${postMessage}\n\n投稿しました : ${articleTitle} | Maretol Base\n${articleURL}`
+    postText = `${postMessage}\n\n投稿しました：${articleTitle} | Maretol Base\n${articleURL}`
   }
   console.log('postText: ' + postText)
 
