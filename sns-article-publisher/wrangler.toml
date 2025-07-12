@@ -18,5 +18,8 @@ routes = [
     { "pattern" = "dev-api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
 ]
 
+[env.staging.images]
+binding = "IMAGES"
+
 [observability]
 enabled = true
