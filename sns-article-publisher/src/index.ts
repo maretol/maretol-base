@@ -20,6 +20,8 @@ export interface Env {
 
   SNS_PUB_CMS_KEY: string
   SNS_PUB_CMS_SECRET: string
+
+  IMAGES: ImagesBinding
 }
 
 const TARGET = {
@@ -126,7 +128,7 @@ async function publish(
       image: ogpImage,
     }
     try {
-      await PostBlueSky(bskyAuth, postText, ogpInfo)
+      await PostBlueSky(env, bskyAuth, postText, ogpInfo)
     } catch (e) {
       console.error('Error posting to BlueSky:', e)
     }
