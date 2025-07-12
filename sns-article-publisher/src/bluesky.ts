@@ -46,6 +46,7 @@ async function PostBlueSky(env: Env, authInfo: BlueSkyAuthInfo, postText: string
       external: {
         title: ogp.title,
         uri: ogp.url,
+        description: 'Maretol Baseの記事を投稿しました',
         thumb: blob || undefined,
       },
     },
