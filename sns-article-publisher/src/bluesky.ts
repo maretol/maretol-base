@@ -1,4 +1,5 @@
 import { AtpAgent, RichText } from '@atproto/api'
+import { Env } from '.'
 
 type BlueSkyAuthInfo = {
   username: string
@@ -12,7 +13,9 @@ type BlueSkyOGPInfo = {
   image: string | null | undefined
 }
 
-async function PostBlueSky(authInfo: BlueSkyAuthInfo, postText: string, ogp: BlueSkyOGPInfo): Promise<void> {
+const defaultOGPSrc = 'https://r2.maretol.xyz/assets/maretol_base_ogp.png'
+
+async function PostBlueSky(env: Env, authInfo: BlueSkyAuthInfo, postText: string, ogp: BlueSkyOGPInfo): Promise<void> {
   const agent = new AtpAgent({
     service: 'https://bsky.social',
   })
@@ -24,10 +27,11 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, postText: string, ogp: Blu
 
   let blob = null
   try {
-    const ogpImageSrc = getOgpImageSrc(ogp.image)
-    const { contentType, imageBuffer } = await fetchImageBuffer(ogpImageSrc)
+    const ogpImageSrc = ogp.image || defaultOGPSrc
+    const imageStream = await fetchImageBuffer(ogpImageSrc)
+    const imageBuffer = await translateImage(env, imageStream)
 
-    const uploadedImage = await agent.uploadBlob(imageBuffer, { encoding: contentType || 'image/webp' })
+    const uploadedImage = await agent.uploadBlob(imageBuffer, { encoding: 'image/webp' })
     blob = uploadedImage.data.blob
   } catch (error) {
     console.error('Error fetching or uploading OGP image:', error)
@@ -53,32 +57,38 @@ async function PostBlueSky(authInfo: BlueSkyAuthInfo, postText: string, ogp: Blu
   console.log(post)
 }
 
-function getOgpImageSrc(ogpImage: string | null | undefined): string {
-  const cdnBypass = 'https://www.maretol.xyz/cdn-cgi/image/w=1200,h=630,format=webp,q=70/'
-  if (ogpImage === null || ogpImage === undefined || ogpImage === '') {
-    // image が設定されていない場合はデフォルトの画像を返却
-    const src = 'https://r2.maretol.xyz/assets/maretol_base_ogp.png'
-    return cdnBypass + src
-  }
-  // image が設定されている場合それをBypassの画像にして返却
-  const src = ogpImage
-  return cdnBypass + src
-}
-
-async function fetchImageBuffer(src: string): Promise<{ contentType: string | null; imageBuffer: Uint8Array }> {
+async function fetchImageBuffer(src: string): Promise<ReadableStream> {
   console.log('Fetching image from: ' + src)
   const res = await fetch(src)
   if (!res.ok) {
     console.error('Failed to fetch image: ', src)
     throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`)
   }
-  const contentType = res.headers.get('Content-Type')
   const imageBlob = await res.blob()
-  const imageBuffer = await imageBlob.bytes()
+  const imageStream = imageBlob.stream()
 
-  console.log('contentType: ' + contentType)
-  console.log('imageBuffer: ' + imageBuffer.byteLength + ' bytes')
-  return { contentType, imageBuffer }
+  return imageStream
+}
+
+async function translateImage(env: Env, imageStream: ReadableStream): Promise<Uint8Array> {
+  const response = (
+    await env.IMAGES.input(imageStream)
+      .transform({
+        width: 1200,
+        height: 630,
+      })
+      .output({
+        format: 'image/webp',
+        quality: 70,
+      })
+  ).response()
+  if (!response.ok) {
+    console.error('Failed to transform image:', response.status, response.statusText)
+    throw new Error(`Failed to transform image: ${response.status} ${response.statusText}`)
+  }
+  const blob = await response.blob()
+  const arrayBuffer = await blob.bytes()
+  return arrayBuffer
 }
 
 export default PostBlueSky
