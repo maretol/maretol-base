@@ -52,6 +52,6 @@
     "postcss": "^8",
     "tailwindcss": "^4.0.9",
     "typescript": "^5",
-    "wrangler": "^4.24.3"
+    "wrangler": "^4.25.0"
   }
 }
