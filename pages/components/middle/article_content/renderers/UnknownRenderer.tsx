@@ -10,7 +10,7 @@ export class UnknownRenderer implements ContentRenderer {
   render(content: ParsedContent, context: RenderContext): JSX.Element {
     return (
       <div key={context.index}>
-        <p>known tag error : {content.tag_name}</p>
+        <p>unknown tag error : {content.tag_name}</p>
         <div dangerouslySetInnerHTML={{ __html: content.inner_html || '' }} />
       </div>
     )
