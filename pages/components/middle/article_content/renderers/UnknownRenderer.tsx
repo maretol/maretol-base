@@ -3,6 +3,7 @@ import { ContentRenderer, RenderContext } from '../types'
 import { JSX } from 'react'
 
 export class UnknownRenderer implements ContentRenderer {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   canRender(content: ParsedContent): boolean {
     return true
   }
