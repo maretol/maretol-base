@@ -24,7 +24,7 @@ export default async function TwitterArea({ twitterURL }: { twitterURL: string }
 const fetchTweet = cache(fetchTweetOrigin)
 
 async function fetchTweetOrigin(tweetURL: string) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
   const tweetKey = 'tweet_' + tweetURL
   const cache = await env.OGP_FETCHER_CACHE.get(tweetKey)
   if (cache) {
