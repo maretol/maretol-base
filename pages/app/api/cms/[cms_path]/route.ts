@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 // cms_path の値によって処理が変わるが、それらはWorker側で吸収しているのでそのまま渡す
 export async function GET(request: Request) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   const clone = request.clone() as Request
   const response = await env.CMS_RPC.fetch(clone)

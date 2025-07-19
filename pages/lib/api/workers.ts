@@ -56,7 +56,7 @@ const getAtelierByID = cache(getAtelierByIDOrigin)
 
 // OGPデータの取得
 async function getOGPDataOrigin(targetURL: string) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   // cacheに有無を確認する
   const cache = await env.OGP_FETCHER_CACHE.get(targetURL)
@@ -104,7 +104,7 @@ async function getOGPDataOrigin(targetURL: string) {
 
 // ブログの更新リストの取得
 async function getCMSContentsOrigin(offset?: number, limit?: number) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
@@ -117,7 +117,7 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
   }
 
   if (getLocalEnv() === 'local') {
-    const request = cmsFetcher('/api/cms/get_contents', {
+    const request = await cmsFetcher('/api/cms/get_contents', {
       offset: offsetStr,
       limit: limitStr,
     })
@@ -145,7 +145,7 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
 
 // 特定のブログコンテンツの取得
 async function getCMSContentOrigin(articleID: string, draftKey?: string) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   const cacheKey = generateContentKey(articleID)
   const cache = await env.CMS_CACHE.get(cacheKey)
@@ -158,7 +158,7 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
   if (getLocalEnv() === 'local') {
     const query: Record<string, string> =
       draftKey !== undefined ? { article_id: articleID, draftKey } : { article_id: articleID }
-    const request = cmsFetcher('/api/cms/get_content', query)
+    const request = await cmsFetcher('/api/cms/get_content', query)
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
       return {} as contentsAPIResult
@@ -189,7 +189,7 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
 
 // タグを指定してコンテンツを取得
 async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, limit?: number) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   // tagIDsをソートしてキャッシュのキーにしてcacheの有無を確認
   const offsetStr = offset?.toString() || '0'
@@ -202,7 +202,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
   }
 
   if (getLocalEnv() === 'local') {
-    const request = cmsFetcher('/api/cms/get_contents_with_tags', {
+    const request = await cmsFetcher('/api/cms/get_contents_with_tags', {
       tag_id: tagIDs.join('+'),
       offset: offsetStr,
       limit: limitStr,
@@ -232,7 +232,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
 
 // タグの一覧取得
 async function getTagsOrigin() {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   // cacheに有無を確認する
   const cacheKey = generateTagsKey()
@@ -243,7 +243,7 @@ async function getTagsOrigin() {
   }
 
   if (getLocalEnv() === 'local') {
-    const request = cmsFetcher('/api/cms/get_tags')
+    const request = await cmsFetcher('/api/cms/get_tags')
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
       return []
@@ -270,7 +270,7 @@ async function getTagsOrigin() {
 
 // 特定のページの詳細情報取得
 async function getInfoOrigin() {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   // cacheに有無を確認する
   const cacheKey = generateInfoKey()
@@ -281,7 +281,7 @@ async function getInfoOrigin() {
   }
 
   if (getLocalEnv() === 'local') {
-    const request = cmsFetcher('/api/cms/get_info')
+    const request = await cmsFetcher('/api/cms/get_info')
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
       return []
@@ -305,7 +305,7 @@ async function getInfoOrigin() {
 }
 
 async function getStaticOrigin() {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   // cacheに有無を確認する
   const cacheKey = generateStaticDataKey()
@@ -316,7 +316,7 @@ async function getStaticOrigin() {
   }
 
   if (getLocalEnv() === 'local') {
-    const request = cmsFetcher('/api/cms/get_static')
+    const request = await cmsFetcher('/api/cms/get_static')
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
       return {} as staticAPIResult
@@ -341,7 +341,7 @@ async function getStaticOrigin() {
 
 // マンガのリスト取得
 async function getBandeDessineeOrigin(offset?: number, limit?: number) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
@@ -353,7 +353,7 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
   }
 
   if (getLocalEnv() === 'local') {
-    const request = cmsFetcher('/api/cms/bande_dessinees', {
+    const request = await cmsFetcher('/api/cms/bande_dessinees', {
       offset: offsetStr,
       limit: limitStr,
     })
@@ -386,7 +386,7 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number) {
 
 // 単一のマンガ情報取得
 async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   const cacheKey = generateBandeDessineeContentKey(contentID)
   const cache = await env.CMS_CACHE.get(cacheKey)
@@ -399,7 +399,7 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   if (getLocalEnv() === 'local') {
     const query: Record<string, string> =
       draftKey !== undefined ? { content_id: contentID, draftKey } : { content_id: contentID }
-    const request = cmsFetcher('/api/cms/bande_dessinee', query)
+    const request = await cmsFetcher('/api/cms/bande_dessinee', query)
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
       return {} as bandeDessineeResult
@@ -434,7 +434,7 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
 }
 
 async function getAtelierOrigin(offset?: number, limit?: number) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
 
@@ -446,7 +446,7 @@ async function getAtelierOrigin(offset?: number, limit?: number) {
   }
 
   if (getLocalEnv() === 'local') {
-    const request = cmsFetcher('/api/cms/atelier', {
+    const request = await cmsFetcher('/api/cms/atelier', {
       offset: offsetStr,
       limit: limitStr,
     })
@@ -479,7 +479,7 @@ async function getAtelierOrigin(offset?: number, limit?: number) {
 }
 
 async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   const cacheKey = generateAtelierContentKey(contentID)
   const cache = await env.CMS_CACHE.get(cacheKey)
@@ -492,7 +492,7 @@ async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
   if (getLocalEnv() === 'local') {
     const query: Record<string, string> =
       draftKey !== undefined ? { content_id: contentID, draftKey } : { content_id: contentID }
-    const request = cmsFetcher('/api/cms/atelier', query)
+    const request = await cmsFetcher('/api/cms/atelier', query)
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
       return {} as bandeDessineeResult
@@ -526,8 +526,8 @@ async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
   }
 }
 
-function cmsFetcher(path: string, query?: Record<string, string>) {
-  const { env } = getCloudflareContext()
+async function cmsFetcher(path: string, query?: Record<string, string>) {
+  const { env } = await getCloudflareContext({ async: true })
   const host = env.CMS_DEV
   const url = new URL(host + path)
   if (query) {

@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
-  const { env } = getCloudflareContext()
+  const { env } = await getCloudflareContext({ async: true })
 
   const response = await env.OGP_RPC.fetch(request)
 
