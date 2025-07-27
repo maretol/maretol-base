@@ -4,6 +4,7 @@ import { getCMSContent } from '@/lib/api/workers'
 import { rewriteImageURL } from '@/lib/image'
 import { ogpImageOption } from '@/lib/static'
 import { convertJST } from '@/lib/time'
+import { NotebookText } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function BlogCard({ link }: { link: string }) {
@@ -17,7 +18,7 @@ export default async function BlogCard({ link }: { link: string }) {
   const articleSumnail = linkArticle.ogp_image
 
   return (
-    <div className="flex max-w-xl">
+    <div className="flex max-w-2xl">
       <Button variant={'outline'} className="no-underline bg-gray-300 h-full w-full" asChild>
         <Link href={linkPath}>
           <div className="w-full flex flex-row space-x-2">
@@ -29,6 +30,11 @@ export default async function BlogCard({ link }: { link: string }) {
                 height={300}
                 className="max-w-36 h-auto"
               />
+            )}
+            {!articleSumnail && (
+              <div className="max-w-36 h-auto flex items-center justify-center">
+                <NotebookText className="w-6 h-6" />
+              </div>
             )}
             <div className="w-full flex flex-col self-end">
               <p className="text-md text-wrap line-clamp-2">{articleTitle}</p>
