@@ -3,6 +3,7 @@ import { imageOption } from '@/lib/static'
 import ClientImage from '../../small/client_image'
 import Link from 'next/link'
 import fetchBlurredImage from '@/lib/api/image'
+import { cn } from '@/lib/utils'
 
 export default async function ContentImage({
   tag,
@@ -49,7 +50,7 @@ export default async function ContentImage({
     return <p>{src}</p>
   } else if (tag === 'content_photo') {
     return (
-      <div className="bg-indigo-200 p-2 rounded-xs w-fit mx-3">
+      <div className={cn('bg-indigo-200 p-2 rounded-xs w-fit mx-3')}>
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image">
           <ClientImage src={imageSrc} alt="" width={300} height={400} blurData={blurData} className="inner-image" />
         </Link>

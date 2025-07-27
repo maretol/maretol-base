@@ -17,7 +17,7 @@ jobs:
   changes:
     runs-on: ubuntu-latest
     environment:
-      name: prd
+      name: stg
     outputs:
       pages: ${{ steps.filter.outputs.pages }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
