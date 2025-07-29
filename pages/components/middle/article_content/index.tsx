@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils'
 import { ArticleContentProps } from './types'
-import { ContentFactory } from './ContentFactory'
+import renderContent from './renderContent'
 
 // sampleの場合はコンテンツは6つまでの表示
 const MAX_SAMPLE_CONTENT_COUNT = 5
@@ -10,8 +10,6 @@ export default async function ArticleContent({ contents, articleID, sample, tabl
   const sampleClassName = 'content-sample line-clamp-6'
   const contentClassName = 'content'
   const className = sampleFlag ? sampleClassName : contentClassName
-
-  const factory = new ContentFactory()
 
   return (
     <div className={cn(className)}>
@@ -27,7 +25,7 @@ export default async function ArticleContent({ contents, articleID, sample, tabl
           tableOfContents,
         }
 
-        return factory.render(content, context)
+        return renderContent(content, context)
       })}
     </div>
   )
