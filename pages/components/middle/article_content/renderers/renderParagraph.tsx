@@ -1,0 +1,138 @@
+import { ParsedContent } from 'api-types'
+import { RenderContext, POptionType } from '../types'
+import { JSX, Suspense } from 'react'
+import P from '../../article_dom/p'
+import ContentImage from '../../article_dom/image'
+import YouTubeArea from '../../article_dom/youtube'
+import TwitterArea from '../../article_dom/twitter'
+import AmazonArea from '../../article_dom/amazon'
+import LinkCard from '../../article_dom/linkcard'
+import BlogCard from '../../article_dom/blogcard'
+import ArtifactCard from '../../article_dom/artifactcard'
+import ComicPageCard from '../../article_dom/comiccard'
+import Br from '../../article_dom/br'
+import Table from '../../article_dom/table_of_contents'
+import LoadingLinkcard from '../../loading_dom/loading_linkcard'
+import LoadingBlogCard from '../../loading_dom/loading_blogcard'
+import LoadingComicCard from '../../loading_dom/loading_comiccard'
+
+export function renderParagraph(content: ParsedContent, context: RenderContext): JSX.Element | null {
+  const pOption = content.p_option as POptionType | null
+
+  if (pOption === null || pOption === 'normal') {
+    return renderNormalParagraph(content, context)
+  }
+
+  const renderers: Record<POptionType, () => JSX.Element | null> = {
+    normal: () => renderNormalParagraph(content, context),
+    image: () => renderImage(content, context),
+    photo: () => renderPhoto(content, context),
+    youtube: () => renderYouTube(content, context),
+    twitter: () => renderTwitter(content, context),
+    amazon: () => renderAmazon(content, context),
+    url: () => renderURL(content, context),
+    blog: () => renderBlog(content, context),
+    artifact: () => renderArtifact(content, context),
+    comic: () => renderComic(content, context),
+    empty: () => renderEmpty(content, context),
+    table_of_contents: () => renderTableOfContents(content, context),
+    block_start: () => null, // TODO: Implement block handling
+    block_end: () => null, // TODO: Implement block handling
+  }
+
+  const renderer = renderers[pOption]
+  return renderer ? renderer() : renderNormalParagraph(content, context)
+}
+
+function renderNormalParagraph(content: ParsedContent, context: RenderContext): JSX.Element {
+  return <P key={context.index} innerHTML={content.inner_html || content.text} attrs={content.attributes} />
+}
+
+function renderImage(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-6">
+      <ContentImage
+        tag="content_image"
+        src={content.text}
+        subText={content.sub_texts ?? null}
+        articleID={context.articleID}
+      />
+    </div>
+  )
+}
+
+function renderPhoto(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-6">
+      <ContentImage
+        tag="content_photo"
+        src={content.text}
+        subText={content.sub_texts ?? null}
+        articleID={context.articleID}
+      />
+    </div>
+  )
+}
+
+function renderYouTube(content: ParsedContent, context: RenderContext): JSX.Element {
+  return <YouTubeArea key={context.index} videoURL={content.text} />
+}
+
+function renderTwitter(content: ParsedContent, context: RenderContext): JSX.Element {
+  return <TwitterArea key={context.index} twitterURL={content.text} />
+}
+
+function renderAmazon(content: ParsedContent, context: RenderContext): JSX.Element {
+  return <AmazonArea key={context.index} amazonURL={content.text} />
+}
+
+function renderURL(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-3">
+      <Suspense fallback={<LoadingLinkcard link={content.text} />}>
+        <LinkCard link={content.text} />
+      </Suspense>
+    </div>
+  )
+}
+
+function renderBlog(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-6">
+      <Suspense fallback={<LoadingBlogCard />}>
+        <BlogCard link={content.text} />
+      </Suspense>
+    </div>
+  )
+}
+
+function renderArtifact(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-6">
+      <Suspense fallback={<LoadingBlogCard />}>
+        <ArtifactCard link={content.text} />
+      </Suspense>
+    </div>
+  )
+}
+
+function renderComic(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-6">
+      <Suspense fallback={<LoadingComicCard />}>
+        <ComicPageCard link={content.text} />
+      </Suspense>
+    </div>
+  )
+}
+
+function renderEmpty(content: ParsedContent, context: RenderContext): JSX.Element {
+  return <Br key={context.index} />
+}
+
+function renderTableOfContents(content: ParsedContent, context: RenderContext): JSX.Element | null {
+  if (context.tableOfContents) {
+    return <Table key={context.index} toc={context.tableOfContents} />
+  }
+  return null
+}
