@@ -15,7 +15,7 @@ export default function ShareCopyAndPasteButton({ url, title }: { url: string; t
     }, 1000)
   }
   return (
-    <Button variant="secondary" className="p-3" onClick={onClick}>
+    <Button variant="secondary" className="p-3 cursor-pointer" onClick={onClick}>
       {!clicked && <Copy size={24} />}
       {clicked && <CheckIcon size={24} />}
     </Button>

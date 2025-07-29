@@ -99,8 +99,7 @@ export async function FullArticle({
       </CardContent>
       <CardFooter>
         <div className="w-full">
-          <div className="flex gap-1 items-center">
-            <p>Share : </p>
+          <div className="flex gap-1 items-center justify-end">
             <ShareButton variant="twitter" url={shareURL} title={title} />
             <ShareButton variant="bluesky" url={shareURL} title={title} />
             <ShareButton variant="facebook" url={shareURL} title={title} />
@@ -155,8 +154,7 @@ export function ImageArticle({ id, title, categories, imageSrc, shareURL }: Imag
       </CardContent>
       <CardFooter>
         <div className="w-full">
-          <div className="flex gap-1 items-center">
-            <p>Share : </p>
+          <div className="flex gap-1 items-center justify-end">
             <ShareButton variant="twitter" url={shareURL} title={title} />
             <ShareButton variant="bluesky" url={shareURL} title={title} />
             <ShareButton variant="facebook" url={shareURL} title={title} />

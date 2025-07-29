@@ -1,83 +1,168 @@
 # maretol-base
 
-[個人サイト](https://www.maretol.xyz)のコード
+個人サイト [maretol.xyz](https://www.maretol.xyz) のソースコード
 
-もとは別プロジェクトだったが、ファイル整理が必要だった＋いくつか Edge Workers を追加したのでそれらをまとめたモノレポにするため作り直した
+## 概要
 
-## deploy
+このプロジェクトは、Cloudflare Workers と Pages を活用した個人サイトのモノレポジトリです。複数の Edge Workers と Next.js ベースのフロントエンドを統合的に管理しています。
 
-基本は Github Actions に全部任せる
-
-設定は wrangler.toml に記述してそれに全任する
-
-### staging
-
-development ブランチが自動で staging 環境としてデプロイされる
-
-Workers は `[worker-name]-stg` という名称で、Pages は標準の Pages のプレビュー機能でデプロイされる
-
-それぞれの連携は wrangler.toml に定義されている
-
-## secrets
-
-シークレットは wrangler コマンドで登録する
-
-登録後はコンソール画面からは見えない（暗号化されている）
-
-登録方法は
+## アーキテクチャ
 
 ```
-$ wrangler secret put <KEY> --env ENV
+maretol-base/
+├── pages/                  # Next.js フロントエンド (Cloudflare Pages)
+├── cms-data-fetcher/       # CMS データ取得 Worker
+├── ogp-data-fetcher/       # OGP データ取得 Worker
+├── cms-cache-purger/       # CMS キャッシュ削除 Worker
+├── sns-article-publisher/  # SNS 自動投稿 Worker
+└── packages/               # 共有パッケージ（型定義など）
 ```
 
-Secrets 自体は外には出さないので、ローカルに .secrets で保管している
+## 技術スタック
 
-また、pages の方ではコンソールからしか登録できないようなのでそっちでやる
+- **フロントエンド**: Next.js (App Router) + TypeScript + Tailwind CSS
+- **インフラ**: Cloudflare Workers & Pages
+- **パッケージ管理**: npm workspaces
+- **CMS**: microCMS
+- **デプロイ**: GitHub Actions
 
-## development
+## セットアップ
 
-### workers
+### 前提条件
 
-OGP Fetcher や CMS Fetcher はシンプルに `npm run dev:ogp` や `npm run dev:cms` で起動させる
+- Node.js 22 以上
+- npm 10 以上
+- Wrangler CLI
 
-ポートはそれぞれ違うのでそれぞれの wrangler.toml ファイルを参照
+### インストール
 
-ローカルでの動作確認時は、x-api-key ヘッダーを指定する必要があるので両方それを行うこと
+```bash
+git clone https://github.com/maretol/maretol-base.git
+cd maretol-base
+npm install
+```
 
-OGP Fetcher は取得データを Cloudflare KV にキャッシュするようになっている。キャッシュ期間は 3 日（72 時間）
+### 環境変数
 
-ローカル起動時はローカルに .wrangler でキャッシュされるので削除時はそのファイルを消す
+各ワークスペースの `.dev.vars` ファイルに環境変数を設定してください：
 
-### pages
+```bash
+# pages/.dev.vars
+CMS_API_KEY=your_microcms_api_key
 
-ローカル起動時は Workers と next-dev の起動を行ってくれるスクリプトである dev.sh があるためそれを起動すればローカルで一通りの確認ができる
+# その他必要な環境変数
+```
 
-~~前提として pages はバックエンドの処理として workers の処理を必要としている。~~
+## 開発
 
-~~将来的には local 起動時だけパッケージとして読み込めるようにしたいところだが、とりあえず現状は上記の workers の dev 起動をしておく必要がある~~
+### 全サービスの起動
 
-2 つの worker はローカル起動時はパッケージとして読み込むことで処理できるようになった（ただしそのかわり、env に CMS の API キーが必要になったのでローカルの `dev.vars` にはそれを書き足した。
+```bash
+npm run dev
+```
 
-~~ビルド時はパッケージサイズの都合、含まれるとオーバーする可能性が高いので `next.config.mjs` の webpack 設定の external にそれぞれの worker のパッケージを取り除くように記載している~~ ローカル開発環境を再構築し、バックグランドで 2 つの workers を wrangler dev で起動させるようにしたのでこのあたりは不要になった。あとそもそも opennext.js のビルド時に上手く行かないっぽい
+`dev.sh` スクリプトが全ての Workers と Next.js を起動します。
 
-ローカル開発時は単純に next-dev:page/dev:page のどっちかを起動させれば問題ない
+### 個別サービスの起動
 
-page 自体には 2 種類の dev 起動がある。一つは next dev の起動で、これが `npm run next-dev:page` に当てられている
+```bash
+# Next.js フロントエンド
+npm run next-dev:page    # Next.js dev server
+npm run dev:page         # Wrangler dev (本番環境に近い動作確認)
 
-シンプルな動作確認はこちらを利用する
+# Workers
+npm run dev:cms         # CMS データ取得 Worker
+npm run dev:ogp         # OGP データ取得 Worker
+npm run dev:sns         # SNS 投稿 Worker
+npm run dev:cms-webhook # キャッシュ削除 Worker
+```
 
-もう一つが `npm run dev:page` に当てられている方で、これはビルド後に wrangler の local 起動を行うもの
+### ポート番号
 
-wrangler の動作確認で利用する。
+各サービスは以下のポートで起動します：
 
-~~どちらも環境変数に対しては @cloudflare/next-on-pages の getRequestContext() が呼び出す env から取り出すことを想定している。この処理によって取り出される env は .dev.vars ファイルと wrangler.toml ファイルを起動時に読んでいる様子なので、 next dev の起動でもこちらの env 設定が利用される~~
+- Pages: 3000 (Next.js) / 8788 (Wrangler)
+- CMS Fetcher: 8787
+- OGP Fetcher: 8789
+- その他: 各 `wrangler.toml` を参照
 
-next-on-pages から openNext に移行したので env の呼び出しも @opennextjs/cloudflare の getCloudflareContext になった。処理によって呼び出される env が .dev.vars や wrangler.toml の内容を読んでいるのは同じ（と思う。まだ未確認）
+## Workers の詳細
 
-### packages
+### CMS Data Fetcher
 
-API 関係の型定義ファイルを別パッケージに切り出して双方から参照している
+microCMS からコンテンツを取得する Worker。API キーによる認証が必要。
 
-ただ API のレスポンスに完全に一致した型を用意できてないのでどっかしらで修正したい
+### OGP Data Fetcher
 
-また、上記の通り pages のテスト用に ogp データ取得と cms データ取得処理をパッケージとして読み込めるようにしている
+外部サイトの OGP 情報を取得し、Cloudflare KV に 72 時間キャッシュする Worker。
+
+### CMS Cache Purger
+
+CMS の更新時に呼び出される Webhook を受け取り、関連するキャッシュを削除する Worker。
+
+### SNS Article Publisher
+
+新規記事公開時に各種 SNS（Twitter/X、Bluesky、Nostr）に自動投稿する Worker。
+
+## デプロイ
+
+### GitHub Actions による自動デプロイ
+
+- **本番環境**: `main` ブランチへのマージで自動デプロイ
+- **ステージング環境**: `development` ブランチへのプッシュで自動デプロイ
+  - Workers: `[worker-name]-stg` としてデプロイ
+  - Pages: プレビュー URL が生成される
+
+### 手動デプロイ
+
+```bash
+# 本番環境
+npm run deploy:page
+npm run deploy:cms
+npm run deploy:ogp
+npm run deploy:cms-webhook
+npm run deploy:sns
+
+# ステージング環境
+npm run deploy-stg:page
+```
+
+## シークレット管理
+
+### Workers のシークレット
+
+```bash
+wrangler secret put <KEY> --env <ENV>
+```
+
+- `ENV` は `production` または `staging`
+- ローカルでは `.secrets` ファイルで管理（Git 管理外）
+
+### Pages のシークレット
+
+Cloudflare ダッシュボードから設定してください。
+
+## テスト
+
+```bash
+npm run test:cms
+npm run test:sns
+```
+
+## リント
+
+```bash
+npm run lint:page
+```
+
+## ライセンス
+
+MIT License - 詳細は [LICENSE](LICENSE) を参照してください。
+
+## 作者
+
+maretol
+
+## 関連リンク
+
+- [個人サイト](https://www.maretol.xyz)

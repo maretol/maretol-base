@@ -120,7 +120,7 @@ code {
 
 .content-sample {
   img[class='inner-image'] {
-    @apply rounded-lg w-[300px] shadow-xl;
+    @apply rounded-lg shadow-xl w-auto;
   }
   a[class='x-blog-image'] {
     pointer-events: none;
