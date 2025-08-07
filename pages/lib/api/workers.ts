@@ -6,6 +6,7 @@ import {
   staticAPIResult,
   infoAPIResult,
   OGPResult,
+  atelierResult,
 } from 'api-types'
 import { getLocalEnv, getNodeEnv } from '../env'
 import {
@@ -51,7 +52,7 @@ const getInfo = cache(getInfoOrigin)
 const getStatic = cache(getStaticOrigin)
 const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
-const getAtelier = cache(getAtelierOrigin)
+const getAtelier = cache(getAteliersOrigin)
 const getAtelierByID = cache(getAtelierByIDOrigin)
 
 // OGPデータの取得
@@ -433,7 +434,7 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   }
 }
 
-async function getAtelierOrigin(offset?: number, limit?: number) {
+async function getAteliersOrigin(offset?: number, limit?: number) {
   const { env } = await getCloudflareContext({ async: true })
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
@@ -441,7 +442,7 @@ async function getAtelierOrigin(offset?: number, limit?: number) {
   const cacheKey = generateAtelierKey(offsetStr, limitStr)
   const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache) {
-    const data = JSON.parse(cache) as { atelier: bandeDessineeResult[]; total: number }
+    const data = JSON.parse(cache) as { ateliers: atelierResult[]; total: number }
     return data
   }
 
@@ -452,26 +453,26 @@ async function getAtelierOrigin(offset?: number, limit?: number) {
     })
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
-      return { atelier: [], total: 0 }
+      return { ateliers: [], total: 0 } as { ateliers: atelierResult[]; total: number }
     }
-    const data = (await res.json()) as { atelier: bandeDessineeResult[]; total: number }
+    const data = (await res.json()) as { ateliers: atelierResult[]; total: number }
     if (!data) {
-      return { atelier: [], total: 0 }
+      return {} as { ateliers: atelierResult[]; total: number }
     }
 
     await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
 
-    return data as { atelier: bandeDessineeResult[]; total: number }
+    return data as { ateliers: atelierResult[]; total: number }
   }
 
   try {
-    const res = await env.CMS_RPC.fetchAtelier(offsetStr, limitStr)
+    const res = await env.CMS_RPC.fetchAteliers(offsetStr, limitStr)
 
     // cacheに保存する
     const expirationTtl = dev ? 60 : CacheTTL.atelier
     await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-    return res as { atelier: bandeDessineeResult[]; total: number }
+    return res as { ateliers: atelierResult[]; total: number }
   } catch (e) {
     console.error('Error fetching atelier:', e)
     throw new Error('Error fetching atelier')
@@ -495,31 +496,31 @@ async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
     const request = await cmsFetcher('/api/cms/atelier', query)
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
-      return {} as bandeDessineeResult
+      return {} as atelierResult
     }
-    const data = (await res.json()) as bandeDessineeResult
+    const data = (await res.json()) as atelierResult
     if (!data) {
-      return {} as bandeDessineeResult
+      return {} as atelierResult
     }
 
     await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
 
-    return data as bandeDessineeResult
+    return data as atelierResult
   }
 
   try {
-    const res = await env.CMS_RPC.fetchAtelierContent(contentID, draftKey || null)
+    const res = await env.CMS_RPC.fetchAtelier(contentID, draftKey || null)
 
     // draftKeyがある場合はキャッシュを使わない
     if (draftKey) {
-      return res as bandeDessineeResult
+      return res as atelierResult
     }
 
     // cacheに保存する
     const expirationTtl = dev ? 60 : CacheTTL.atelierByID
     await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-    return res as bandeDessineeResult
+    return res as atelierResult
   } catch (e) {
     console.error('Error fetching atelier by ID:', e)
     throw new Error('Error fetching atelier by ID')

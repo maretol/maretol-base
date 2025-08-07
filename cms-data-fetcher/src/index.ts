@@ -137,7 +137,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     return JSON.parse(JSON.stringify(contents))
   }
 
-  async fetchContent(articleID: string, draftKey?: string): Promise<contentsAPIResult> {
+  async fetchContent(articleID: string, draftKey?: string | null): Promise<contentsAPIResult> {
     const apiKey = this.env.CMS_API_KEY
     const parsedDraftKey = draftKey === null ? undefined : draftKey
     const content = await getContent(apiKey, articleID, parsedDraftKey)
@@ -197,7 +197,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
   }
 
-  async fetchBandeDessinee(contentID: string, draftKey?: string): Promise<bandeDessineeResult> {
+  async fetchBandeDessinee(contentID: string, draftKey?: string | null): Promise<bandeDessineeResult> {
     const apiKey = this.env.CMS_API_KEY_BD
     if (contentID === null) {
       throw new Error('contentID is empty')
@@ -236,7 +236,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
   }
 
-  async fetchAtelier(contentID: string, draftKey?: string): Promise<atelierResult> {
+  async fetchAtelier(contentID: string, draftKey?: string | null): Promise<atelierResult> {
     const apiKey = this.env.CMS_API_KEY_AT
     if (contentID === null) {
       throw new Error('contentID is empty')
