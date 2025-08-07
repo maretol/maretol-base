@@ -1,8 +1,12 @@
+/// <reference path="../cms-data-fetcher/types.d.ts" />
+/// <reference path="../ogp-data-fetcher/types.d.ts" />
+
 interface CloudflareEnv {
   CMS_FETCHER: Fetcher
   OGP_FETCHER: Fetcher
   OGP_FETCHER_CACHE: KVNamespace
   CMS_CACHE: KVNamespace
+  IMAGE_CACHE: KVNamespace
   CMS_FETCHER_API_KEY: string
   OGP_FETCHER_API_KEY: string
   HOST: string
