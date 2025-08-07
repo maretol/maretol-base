@@ -6,6 +6,7 @@ import {
   staticAPIResult,
   infoAPIResult,
   OGPResult,
+  atelierResult,
 } from 'api-types'
 import { getLocalEnv, getNodeEnv } from '../env'
 import {
@@ -441,7 +442,7 @@ async function getAtelierOrigin(offset?: number, limit?: number) {
   const cacheKey = generateAtelierKey(offsetStr, limitStr)
   const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache) {
-    const data = JSON.parse(cache) as { atelier: bandeDessineeResult[]; total: number }
+    const data = JSON.parse(cache) as { atelier: atelierResult[]; total: number }
     return data
   }
 
@@ -454,14 +455,14 @@ async function getAtelierOrigin(offset?: number, limit?: number) {
     if (!res.ok) {
       return { atelier: [], total: 0 }
     }
-    const data = (await res.json()) as { atelier: bandeDessineeResult[]; total: number }
+    const data = (await res.json()) as { atelier: atelierResult[]; total: number }
     if (!data) {
       return { atelier: [], total: 0 }
     }
 
     await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
 
-    return data as { atelier: bandeDessineeResult[]; total: number }
+    return data as { atelier: atelierResult[]; total: number }
   }
 
   try {
@@ -471,7 +472,7 @@ async function getAtelierOrigin(offset?: number, limit?: number) {
     const expirationTtl = dev ? 60 : CacheTTL.atelier
     await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-    return res as { atelier: bandeDessineeResult[]; total: number }
+    return res as { atelier: atelierResult[]; total: number }
   } catch (e) {
     console.error('Error fetching atelier:', e)
     throw new Error('Error fetching atelier')
@@ -485,7 +486,7 @@ async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
   const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache && !draftKey) {
     // draftKeyがある場合はキャッシュを使わない
-    const data = JSON.parse(cache) as bandeDessineeResult
+    const data = JSON.parse(cache) as atelierResult
     return data
   }
 
@@ -495,16 +496,16 @@ async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
     const request = await cmsFetcher('/api/cms/atelier', query)
     const res = await fetch(request, { cache: 'no-store' })
     if (!res.ok) {
-      return {} as bandeDessineeResult
+      return {} as atelierResult
     }
-    const data = (await res.json()) as bandeDessineeResult
+    const data = (await res.json()) as atelierResult
     if (!data) {
-      return {} as bandeDessineeResult
+      return {} as atelierResult
     }
 
     await env.CMS_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: 60 })
 
-    return data as bandeDessineeResult
+    return data as atelierResult
   }
 
   try {
@@ -512,14 +513,14 @@ async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
 
     // draftKeyがある場合はキャッシュを使わない
     if (draftKey) {
-      return res as bandeDessineeResult
+      return res as atelierResult
     }
 
     // cacheに保存する
     const expirationTtl = dev ? 60 : CacheTTL.atelierByID
     await env.CMS_CACHE.put(cacheKey, JSON.stringify(res), { expirationTtl })
 
-    return res as bandeDessineeResult
+    return res as atelierResult
   } catch (e) {
     console.error('Error fetching atelier by ID:', e)
     throw new Error('Error fetching atelier by ID')
