@@ -15,6 +15,7 @@ services = [
 kv_namespaces = [
     { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
     { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f"}
+    { binding = "IMAGE_CACHE", id = "7dcf481f5bba4e4690f8480b02666015"}
 ]
 
 [dev]
