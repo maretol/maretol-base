@@ -416,6 +416,7 @@ function parseAtelierResult(result: atelierResult & MicroCMSContentId & MicroCMS
     parsed_description: result.parsed_description,
     description: result.description,
     tag_or_category: result.tag_or_category,
+    object_position: result.object_position,
     table_of_contents: result.table_of_contents,
     createdAt: result.createdAt,
     updatedAt: result.updatedAt,
