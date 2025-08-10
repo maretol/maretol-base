@@ -9,7 +9,7 @@ import ClientImage from '../small/client_image'
 import HeaderButtons from '../small/header'
 import FooterButtons from '../small/footer'
 import { getHeaderImage } from '@/lib/image'
-import { getAtelier, getBandeDessinee, getCMSContents, getStatic, getTags } from '@/lib/api/workers'
+import { getAteliers, getBandeDessinee, getCMSContents, getStatic, getTags } from '@/lib/api/workers'
 import BlogSidebar from '../middle/blog_sidebar'
 
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
@@ -22,7 +22,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
   const staticData = getStatic()
   const articlesData = getCMSContents(0, 5)
   const bandeDessineeData = getBandeDessinee(0, 5)
-  const atelierData = getAtelier(0, 5)
+  const atelierData = getAteliers(0, 5)
   const tagData = getTags()
 
   return (

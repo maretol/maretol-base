@@ -52,7 +52,7 @@ const getInfo = cache(getInfoOrigin)
 const getStatic = cache(getStaticOrigin)
 const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
-const getAtelier = cache(getAteliersOrigin)
+const getAteliers = cache(getAteliersOrigin)
 const getAtelierByID = cache(getAtelierByIDOrigin)
 
 // OGPデータの取得
@@ -551,6 +551,6 @@ export {
   getStatic,
   getBandeDessinee,
   getBandeDessineeByID,
-  getAtelier,
+  getAteliers,
   getAtelierByID,
 }

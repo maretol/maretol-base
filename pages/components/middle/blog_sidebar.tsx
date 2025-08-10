@@ -17,7 +17,7 @@ export default function BlogSidebar({
   staticData: Promise<staticAPIResult>
   articlesData: Promise<{ contents: contentsAPIResult[] }>
   bandeDessineeData: Promise<{ bandeDessinees: bandeDessineeResult[] }>
-  atelierData: Promise<{ atelier: atelierResult[] }>
+  atelierData: Promise<{ ateliers: atelierResult[] }>
   tagData: Promise<categoryAPIResult[]>
 }) {
   const staticDataResult = use(staticData)
@@ -31,7 +31,7 @@ export default function BlogSidebar({
   const bandeDessinees = bandeDessineeDataResult.bandeDessinees
 
   const atelierDataResult = use(atelierData)
-  const atelier = atelierDataResult.atelier
+  const atelier = atelierDataResult.ateliers
 
   const tags = use(tagData)
 
