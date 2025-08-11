@@ -4,10 +4,9 @@ import IllustSamples from './illust_samples'
 import { Suspense } from 'react'
 import { getAteliers } from '@/lib/api/workers'
 import { metadata } from '../layout'
-import { rewriteImageURL } from '@/lib/image'
+import { getOGPImageURL } from '@/lib/image'
 import { getHostname } from '@/lib/env'
 import { Metadata } from 'next'
-import { ogpImageOption } from '@/lib/static'
 import LoadingIllustPage from './loading_illust'
 
 export const dynamic = 'force-dynamic'
@@ -24,7 +23,7 @@ export async function generateMetadata({
   const ateliers = await getAteliers(offset, limit)
   const firstAtelier = ateliers.ateliers[0]
 
-  const thumbnail = rewriteImageURL(ogpImageOption, firstAtelier.src)
+  const thumbnail = getOGPImageURL(firstAtelier.src)
 
   return {
     ...metadata,

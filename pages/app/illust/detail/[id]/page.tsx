@@ -2,8 +2,7 @@ import { getAtelierByID } from '@/lib/api/workers'
 import { convertJST } from '@/lib/time'
 import { Metadata } from 'next'
 import { OuterIllustArticle } from '@/components/large/illust_article'
-import { rewriteImageURL } from '@/lib/image'
-import { ogpImageOption } from '@/lib/static'
+import { getOGPImageURL } from '@/lib/image'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -31,7 +30,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     openGraph: {
       title: title,
       description: title,
-      images: [rewriteImageURL(ogpImageOption, atelier.src)],
+      images: [getOGPImageURL(atelier.src)],
       type: 'article',
       publishedTime: atelier.publishedAt,
       modifiedTime: atelier.updatedAt,
@@ -40,7 +39,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
       card: 'summary_large_image',
       title: title,
       description: title,
-      images: [rewriteImageURL(ogpImageOption, atelier.src)],
+      images: [getOGPImageURL(atelier.src)],
     },
   }
 }
