@@ -4,10 +4,10 @@ import { getOGPImage } from '@/lib/image'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Maretol Base | Blog',
+  title: 'Blog | Maretol Base',
   description: 'Maretolのホームページ | ブログ',
   twitter: {
-    title: 'Maretol Base | Blog',
+    title: 'Blog | Maretol Base',
     description: 'Maretolのホームページ | ブログ',
     card: 'summary',
     creator: '@maretol',
@@ -15,11 +15,11 @@ export const metadata: Metadata = {
     images: [getOGPImage()],
   },
   openGraph: {
-    title: 'Maretol Base | Blog',
+    title: 'Blog | Maretol Base',
     description: 'Maretolのホームページ | ブログ',
     type: 'website',
     url: getHostname() + '/blog',
-    siteName: 'Maretol Base | Blog',
+    siteName: 'Blog | Maretol Base',
     images: [getOGPImage()],
   },
 }
