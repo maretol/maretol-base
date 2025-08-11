@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils'
 
 export function ErrorPageArticle({ title }: { title: string }) {
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-gray-100">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>現在時刻{convertJST(getCurrentTime())}</CardDescription>
@@ -71,7 +71,7 @@ export function ErrorPageComic({ title }: { title: string }) {
       </div>
       <div className="flex justify-center w-full">
         <div className="w-full max-w-[1500px]">
-          <Card className="w-full">
+          <Card className="w-full bg-gray-100">
             <CardContent className="py-2">
               <div className="mt-5 space-y-2">
                 <h1 className="text-2xl font-bold pl-2 pb-1 content-h2">{title}</h1>

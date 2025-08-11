@@ -4,7 +4,7 @@ import { Skeleton } from '../ui/skeleton'
 
 export function LoadingComics() {
   return (
-    <Card className="w-full p-4">
+    <Card className="w-full p-4 bg-gray-100">
       <CardContent className="space-y-4">
         <div className="flex flex-row gap-4">
           <Skeleton className="h-[400px] w-80" />
