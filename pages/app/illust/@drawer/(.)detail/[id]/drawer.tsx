@@ -12,7 +12,6 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
-import { getHostname } from '@/lib/env'
 import { ExternalLinkIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'

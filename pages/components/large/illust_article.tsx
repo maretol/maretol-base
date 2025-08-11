@@ -47,7 +47,12 @@ export async function IllustSampleArticle({
           <IllustTags tagOrCategory={tags} />
         </div>
         <Button asChild className="w-full" variant="default">
-          <Link href={`/illust/detail/${id}`} className="flex items-center gap-2 font-bold" scroll={false}>
+          <Link
+            href={`/illust/detail/${id}`}
+            className="flex items-center gap-2 font-bold"
+            scroll={false}
+            prefetch={true}
+          >
             <ZoomIn className="w-4 h-4" />
             Detail
           </Link>
