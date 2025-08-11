@@ -55,7 +55,7 @@ export async function ComicOverview(props: ComicArticleProps) {
   const tag = props.tagName || '-'
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-gray-100">
       <CardHeader className="py-2"></CardHeader>
       <div className="flex sm:flex-row flex-col mb-4">
         <CardContent className="sm:max-w-96 sm:min-w-48 w-auto h-auto pb-0 pt-2 pr-0">
@@ -122,7 +122,7 @@ export function ComicDetailPage(props: ComicArticleProps) {
   const tagName = props.tagName || '-'
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-gray-100">
       <CardContent className="py-2">
         <div className="mt-5 space-y-2">
           <h1 className="text-2xl font-bold pl-2 pb-1 content-h2">{props.titleName}</h1>

@@ -108,6 +108,7 @@ type atelierResult = {
   parsed_description: ParsedContent[]
   tag_or_category: atelierTagAndCategory[]
   table_of_contents: TableOfContents
+  object_position: string // "left" | "right" | "top" | "bottom" | "center"
   createdAt: string
   updatedAt: string
   publishedAt: string

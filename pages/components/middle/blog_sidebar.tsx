@@ -1,4 +1,4 @@
-import { bandeDessineeResult, categoryAPIResult, contentsAPIResult, staticAPIResult } from 'api-types'
+import { atelierResult, bandeDessineeResult, categoryAPIResult, contentsAPIResult, staticAPIResult } from 'api-types'
 import Profile from '../small/sidebar/profile'
 import { use } from 'react'
 import AboutSidebar from '../small/sidebar/about'
@@ -11,11 +11,13 @@ export default function BlogSidebar({
   staticData,
   articlesData,
   bandeDessineeData,
+  atelierData,
   tagData,
 }: {
   staticData: Promise<staticAPIResult>
   articlesData: Promise<{ contents: contentsAPIResult[] }>
   bandeDessineeData: Promise<{ bandeDessinees: bandeDessineeResult[] }>
+  atelierData: Promise<{ ateliers: atelierResult[] }>
   tagData: Promise<categoryAPIResult[]>
 }) {
   const staticDataResult = use(staticData)
@@ -28,6 +30,9 @@ export default function BlogSidebar({
   const bandeDessineeDataResult = use(bandeDessineeData)
   const bandeDessinees = bandeDessineeDataResult.bandeDessinees
 
+  const atelierDataResult = use(atelierData)
+  const atelier = atelierDataResult.ateliers
+
   const tags = use(tagData)
 
   return (
@@ -35,7 +40,7 @@ export default function BlogSidebar({
       <AboutSidebar rawText={about} />
       <Profile rawText={profile} />
       <ComicSidebar bandeDessinees={bandeDessinees} />
-      <IllustSidebar />
+      <IllustSidebar atelier={atelier} />
       <ArticlesSidebar articles={articles} />
       <TagSidebar tags={tags} />
     </div>

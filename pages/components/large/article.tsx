@@ -33,7 +33,7 @@ type ImageArticleProps = ArticleProps & {
 
 export async function Article({ id, title, updatedAt, parsedContents, categories }: ArticleProps) {
   return (
-    <Card key={id}>
+    <Card key={id} className="bg-gray-100">
       <CardHeader>
         <CardTitleH1>
           <Link href={`blog/${id}`} className="hover:underline">
@@ -74,7 +74,7 @@ export async function FullArticle({
   shareURL,
 }: FullAtricleProps) {
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-gray-100">
       <CardHeader>
         <CardTitleH1>{title}</CardTitleH1>
         <CardDescription>
@@ -123,7 +123,7 @@ export function ImageArticle({ id, title, categories, imageSrc, shareURL }: Imag
   const rewrittenImageSrc = rewriteImageURL(originImageOption, imageSrc)
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-gray-100">
       <CardHeader>
         <CardTitleH1>
           <div className="text-base">Image</div>

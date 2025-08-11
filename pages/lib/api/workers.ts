@@ -52,7 +52,7 @@ const getInfo = cache(getInfoOrigin)
 const getStatic = cache(getStaticOrigin)
 const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
-const getAtelier = cache(getAteliersOrigin)
+const getAteliers = cache(getAteliersOrigin)
 const getAtelierByID = cache(getAtelierByIDOrigin)
 
 // OGPデータの取得
@@ -486,7 +486,7 @@ async function getAtelierByIDOrigin(contentID: string, draftKey?: string) {
   const cache = await env.CMS_CACHE.get(cacheKey)
   if (cache && !draftKey) {
     // draftKeyがある場合はキャッシュを使わない
-    const data = JSON.parse(cache) as bandeDessineeResult
+    const data = JSON.parse(cache) as atelierResult
     return data
   }
 
@@ -551,6 +551,6 @@ export {
   getStatic,
   getBandeDessinee,
   getBandeDessineeByID,
-  getAtelier,
+  getAteliers,
   getAtelierByID,
 }

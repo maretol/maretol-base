@@ -3,7 +3,7 @@ import { Skeleton } from '../ui/skeleton'
 
 export function LoadingArticle() {
   return (
-    <Card>
+    <Card className="bg-gray-100">
       <CardHeader>
         <Skeleton className="w-1/4 h-9" />
         <Skeleton className="w-1/12 h-4" />
@@ -20,7 +20,7 @@ export function LoadingArticle() {
 
 export function LoadingFullArticle() {
   return (
-    <Card>
+    <Card className="bg-gray-100">
       <CardHeader>
         <Skeleton className="w-1/4 h-9" />
         <Skeleton className="w-1/12 h-4" />
