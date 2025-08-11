@@ -1,6 +1,6 @@
 'use client'
 
-import { Drawer, DrawerContent, DrawerClose, DrawerTitle } from '@/components/ui/drawer'
+import { Drawer, DrawerContent, DrawerClose, DrawerTitle, DrawerDescription } from '@/components/ui/drawer'
 import { Button } from '@/components/ui/button'
 import { XIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -21,7 +21,7 @@ export default function DrawerLayout({ children }: { children: React.ReactNode }
 
   return (
     <Drawer direction="right" open={open} onOpenChange={setOpen} onAnimationEnd={onClose}>
-      <DrawerTitle className="hidden">Illustration Details</DrawerTitle>
+      <DrawerTitle className="hidden">Illustration Title</DrawerTitle>
       <DrawerContent className="w-full bg-gray-100">
         <div className="overflow-auto">
           <div className="absolute right-0 top-0 z-10">
@@ -33,6 +33,7 @@ export default function DrawerLayout({ children }: { children: React.ReactNode }
           </div>
           {children}
         </div>
+        <DrawerDescription className="hidden">Illustration Description</DrawerDescription>
       </DrawerContent>
     </Drawer>
   )

@@ -30,14 +30,16 @@ export async function IllustSampleArticle({
 
   return (
     <div className={cn('w-full lg:h-[45svh] max-h-3/4 rounded-2xl bg-gray-100', 'flex lg:flex-row', 'flex-col')}>
-      <ClientImage2
-        src={imageSrc}
-        alt={title}
-        width={1080}
-        height={1080}
-        quality={90}
-        className={cn('lg:w-3/4 w-full lg:h-full h-[45svh] rounded-2xl', positionCn)}
-      />
+      <Link href={`/illust/detail/${id}`} className={'lg:w-3/4 w-full lg:h-full h-[45svh]'} scroll={false}>
+        <ClientImage2
+          src={imageSrc}
+          alt={title}
+          width={1080}
+          height={1080}
+          quality={90}
+          className={cn('w-full h-full rounded-2xl', positionCn)}
+        />
+      </Link>
       <div className="p-4 h-full lg:w-1/4 flex flex-col lg:justify-between w-full gap-4">
         <div className="flex flex-col gap-2 mt-4">
           <div className="border-b-4 border-blue-900 pb-1">
