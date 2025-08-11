@@ -8,8 +8,7 @@ import { rewriteImageURL } from '@/lib/image'
 import { getHostname } from '@/lib/env'
 import { Metadata } from 'next'
 import { ogpImageOption } from '@/lib/static'
-import { LoadingIllustSample } from '@/components/large/loading_illust_sample'
-import LoadingIllustPage from './loading_iillust'
+import LoadingIllustPage from './loading_illust'
 
 export const dynamic = 'force-dynamic'
 
