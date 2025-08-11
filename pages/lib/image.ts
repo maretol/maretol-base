@@ -1,4 +1,4 @@
-import { originImageOption } from './static'
+import { ogpImageOption } from './static'
 
 const url = 'https://www.maretol.xyz/cdn-cgi/image/#{option}/#{origin}'
 
@@ -10,8 +10,12 @@ export function getHeaderImageURL(): string {
   return 'https://r2.maretol.xyz/assets/maretol_base_header.png'
 }
 
-export function getOGPImage() {
-  return rewriteImageURL(originImageOption, 'https://r2.maretol.xyz/assets/maretol_base_ogp.png')
+export function getOGPImageURL(imageSrc: string): string {
+  return url.replace('#{option}', ogpImageOption).replace('#{origin}', imageSrc)
+}
+
+export function getDefaultOGPImageURL(): string {
+  return 'https://r2.maretol.xyz/assets/maretol_base_ogp.png'
 }
 
 export function getNoImageURL() {

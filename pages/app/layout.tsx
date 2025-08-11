@@ -5,7 +5,7 @@ import './globals.css'
 import { cn } from '@/lib/utils'
 import Script from 'next/script'
 import { getHostname } from '@/lib/env'
-import { getOGPImage } from '@/lib/image'
+import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 
 const fontMPlus1 = M_PLUS_1({
   subsets: ['latin'],
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: 'summary',
     creator: '@maretol',
     site: '@maretol',
-    images: [getOGPImage()],
+    images: [getOGPImageURL(getDefaultOGPImageURL())],
   },
   openGraph: {
     title: 'Maretol Base',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     type: 'website',
     url: getHostname(),
     siteName: 'Maretol Base',
-    images: [getOGPImage()],
+    images: [getOGPImageURL(getDefaultOGPImageURL())],
   },
 }
 
