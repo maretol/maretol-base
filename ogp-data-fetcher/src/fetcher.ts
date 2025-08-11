@@ -39,16 +39,19 @@ export async function fetchAndGetHTMLText(target: string): Promise<{ title: stri
     htmlRewriter.setCharsetHandler()
     await htmlRewriter.execute(text)
     const metaCharset = htmlRewriter.getCharset()
-    const title = htmlRewriter.getTitle() || 'no title'
 
     // 特に指定がないまたは UTF-8 指定の場合
     // text がそのまま UTF-8 のときのHTML要素なのでそのままで良い
     if (metaCharset === undefined || metaCharset === 'utf-8') {
+      const title = htmlRewriter.getTitle() || 'No Page Title'
       return { title, text }
     } else {
       // metaタグの charset の指定に従ってデコードして返す
+      // titleはデコードし直したものを再度取得する
       const decoder = new TextDecoder(metaCharset)
       const decodedText = decoder.decode(buffer)
+      await htmlRewriter.execute(decodedText)
+      const title = htmlRewriter.getTitle() || 'No Page Title'
       return { title, text: decodedText }
     }
   }
