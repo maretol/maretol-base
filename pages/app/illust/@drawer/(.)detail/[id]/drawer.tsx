@@ -12,6 +12,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
+import { getHostname } from '@/lib/env'
 import { ExternalLinkIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -19,13 +20,15 @@ import { useCallback, useEffect, useState } from 'react'
 
 type DrawerProps = {
   imageSrc: string
+  shareURL: string
   title: string
   publishedAt: string
   children?: React.ReactNode
 }
 
-export default function DrawerPage({ imageSrc, title, publishedAt, children }: DrawerProps) {
+export default function DrawerPage({ imageSrc, shareURL, title, publishedAt, children }: DrawerProps) {
   const router = useRouter()
+  const shareTitle = `Illustration: ${title}`
   const [open, setOpen] = useState(false)
   const onClose = useCallback(
     (open: boolean) => {
@@ -85,9 +88,9 @@ export default function DrawerPage({ imageSrc, title, publishedAt, children }: D
               </Link>
             </Button>
             <div className="flex items-center gap-2 ">
-              <ShareButton variant="twitter" url={''} title={title} />
-              <ShareButton variant="bluesky" url={''} title={title} />
-              <ShareButton variant="copy_and_paste" url={''} title={title} />
+              <ShareButton variant="twitter" url={shareURL} title={shareTitle} />
+              <ShareButton variant="bluesky" url={shareURL} title={shareTitle} />
+              <ShareButton variant="copy_and_paste" url={shareURL} title={shareTitle} />
             </div>
           </div>
           <div className="mx-4">
