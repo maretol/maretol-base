@@ -2,8 +2,7 @@ import { metadata } from '@/app/layout'
 import { getCMSContent } from '@/lib/api/workers'
 import { contentsAPIResult } from 'api-types'
 import { getHostname } from '@/lib/env'
-import { getOGPImage, rewriteImageURL } from '@/lib/image'
-import { ogpImageOption } from '@/lib/static'
+import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { Metadata } from 'next'
 import BlogPageArticle from './article'
 import { Suspense } from 'react'
@@ -20,8 +19,8 @@ export async function generateMetadata(props: {
 
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
   const ogpImage = content.ogp_image
-  const thumbnail =
-    ogpImage === null || ogpImage === undefined ? getOGPImage() : rewriteImageURL(ogpImageOption, ogpImage)
+  const ogpSrc = ogpImage === null || ogpImage === undefined ? getDefaultOGPImageURL() : ogpImage
+  const ogpURL = getOGPImageURL(ogpSrc)
   const description = content.parsed_content
     .slice(0, 5)
     .map((c) => c.text)
@@ -37,14 +36,14 @@ export async function generateMetadata(props: {
       card: twitterCard,
       title: content.title + ' | Maretol Base',
       description: description,
-      images: [thumbnail],
+      images: [ogpURL],
     },
     openGraph: {
       ...metadata.openGraph,
       title: content.title + ' | Maretol Base',
       description: description,
       url: `${getHostname()}/blog/${articleID}`,
-      images: [thumbnail],
+      images: [ogpURL],
     },
   } as Metadata
 }

@@ -1,15 +1,13 @@
 import { ParsedContent, TableOfContents } from 'api-types'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitleH1 } from '../ui/card'
 import { convertJST, convertJSTDate } from '@/lib/time'
-import ClientImage from '../small/client_image'
-import { rewriteImageURL } from '@/lib/image'
-import { imageOption } from '@/lib/static'
 import ArticleContent from '../middle/article_content'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import { ArrowLeftSquareIcon, ArrowRightSquareIcon, ArrowUpSquareIcon, BookImageIcon, HomeIcon } from 'lucide-react'
 import ShareButton from '../small/share'
 import { getHostname } from '@/lib/env'
+import ClientImage2 from '../small/client_image2'
 
 type ComicArticleProps = {
   id: string
@@ -38,8 +36,7 @@ export async function ComicOverview(props: ComicArticleProps) {
 
   // 表紙、または1ページ目の画像URL
   const imageFile = props.cover || props.firstPage
-  const imageOriginURL = contentsBaseURL + '/' + imageFile
-  const imageURL = rewriteImageURL(imageOption, imageOriginURL)
+  const imageURL = contentsBaseURL + '/' + imageFile
   // 説明文
   const description = props.parsedDescription
   // マンガのタイトル
@@ -60,7 +57,13 @@ export async function ComicOverview(props: ComicArticleProps) {
       <div className="flex sm:flex-row flex-col mb-4">
         <CardContent className="sm:max-w-96 sm:min-w-48 w-auto h-auto pb-0 pt-2 pr-0">
           <div className="shadow-md">
-            <ClientImage src={imageURL} alt={title} width={400} height={800} className="w-auto h-auto" />
+            <ClientImage2
+              src={imageURL}
+              alt={title}
+              width={400}
+              height={600}
+              className="w-fill h-auto object-contain"
+            />
           </div>
         </CardContent>
         <div className="w-full">

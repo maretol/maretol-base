@@ -1,8 +1,7 @@
-import ClientImage from '@/components/small/client_image'
+import ClientImage2 from '@/components/small/client_image2'
 import { Button } from '@/components/ui/button'
 import { getBandeDessineeByID } from '@/lib/api/workers'
-import { getNoImage, rewriteImageURL } from '@/lib/image'
-import { ogpImageOption } from '@/lib/static'
+import { getNoImageURL } from '@/lib/image'
 import { convertJST } from '@/lib/time'
 import Link from 'next/link'
 
@@ -30,12 +29,13 @@ export default async function ComicPageCard({ link }: { link: string }) {
         <Button variant={'outline'} className="no-underline bg-gray-300 h-full w-full" asChild>
           <Link href={linkPath}>
             <div className="w-full flex flex-row space-x-4">
-              <ClientImage
-                src={rewriteImageURL(ogpImageOption, coverURL)}
+              <ClientImage2
+                src={coverURL}
                 alt=""
-                width={300}
-                height={300}
-                className="max-w-36 h-auto"
+                width={200}
+                height={200}
+                format="auto"
+                className="max-w-36 h-auto object-contain"
               />
               <div className="w-full flex flex-col space-y-3">
                 <div>
@@ -62,14 +62,14 @@ export default async function ComicPageCard({ link }: { link: string }) {
     )
   } catch (e) {
     console.log(e)
-    const noImage = getNoImage()
+    const noImage = getNoImageURL()
     const title = 'エラー：見つかりませんでした'
     const publishedAt = '0000/00/00 00:00:00 JST'
     return (
       <div className="flex max-w-xl">
         <Button variant={'outline'} className="no-underline bg-gray-300 h-full w-full">
           <div className="w-full flex flex-row space-x-4">
-            <ClientImage src={noImage} alt="" width={300} height={300} className="max-w-36 h-auto" />
+            <ClientImage2 src={noImage} alt="" width={300} height={300} className="max-w-36 h-auto" />
             <div className="w-full space-y-3 text-left">
               <div>
                 <p className="text-xl text-wrap line-clamp-2">{title}</p>

@@ -1,8 +1,6 @@
-import ClientImage from '@/components/small/client_image'
+import ClientImage2 from '@/components/small/client_image2'
 import { Button } from '@/components/ui/button'
 import { getCMSContent } from '@/lib/api/workers'
-import { rewriteImageURL } from '@/lib/image'
-import { ogpImageOption } from '@/lib/static'
 import { convertJST } from '@/lib/time'
 import { NotebookText } from 'lucide-react'
 import Link from 'next/link'
@@ -23,12 +21,12 @@ export default async function BlogCard({ link }: { link: string }) {
         <Link href={linkPath}>
           <div className="w-full flex flex-row space-x-2">
             {articleSumnail && (
-              <ClientImage
-                src={rewriteImageURL(ogpImageOption, articleSumnail)}
+              <ClientImage2
+                src={articleSumnail}
                 alt=""
                 width={300}
                 height={300}
-                className="max-w-36 h-auto"
+                className="w-full max-w-36 h-auto object-contain"
               />
             )}
             {!articleSumnail && (

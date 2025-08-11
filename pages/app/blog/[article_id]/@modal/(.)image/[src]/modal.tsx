@@ -1,32 +1,46 @@
 'use client'
 
-import ClientImage from '@/components/small/client_image'
+import ClientImage2 from '@/components/small/client_image2'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useRouter } from 'next/navigation'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 
 export default function Modal({ imageSrc }: { imageSrc: string }) {
   const router = useRouter()
-  const onClose = useCallback(
+  const [open, setOpen] = useState(true)
+  const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
         router.back()
       }
+      setOpen(open)
     },
     [router]
   )
+
+  const handleClose = useCallback(() => {
+    router.back()
+  }, [router])
+
   return (
-    <Dialog defaultOpen onOpenChange={onClose}>
-      <DialogContent className="max-w-[96dvw] max-h-[96dvh] h-auto w-auto m-0 py-10 px-0 bg-blue-100/90 border-0">
-        <DialogTitle></DialogTitle>
-        <DialogDescription></DialogDescription>
-        <div className="p-2 w-max h-max">
-          <ClientImage
+    <Dialog open={open} onOpenChange={handleOpenChange} modal>
+      <DialogContent className="h-full w-full m-0 p-0 border-0 bg-transparent">
+        <DialogTitle className="sr-only">画像</DialogTitle>
+        <DialogDescription className="sr-only">画像を表示しています</DialogDescription>
+        <div
+          className="relative w-full h-full flex items-center justify-center p-2"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              handleClose()
+            }
+          }}
+        >
+          <ClientImage2
             src={imageSrc}
             alt=""
-            width={100}
-            height={100}
-            className="h-fit w-auto max-h-[95dvh] shadow-lg overflow-contain"
+            width={3000}
+            height={3000}
+            className="!object-contain !w-auto !h-auto !max-w-full !max-h-full"
           />
         </div>
       </DialogContent>
