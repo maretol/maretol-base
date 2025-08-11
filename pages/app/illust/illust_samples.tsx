@@ -1,4 +1,5 @@
 import { IllustSampleArticle } from '@/components/large/illust_article'
+import Pagenation from '@/components/middle/pagenation'
 import { getAteliers } from '@/lib/api/workers'
 
 export default async function IllustSamples({
@@ -25,6 +26,9 @@ export default async function IllustSamples({
           />
         </div>
       ))}
+      <div className="flex justify-center">
+        <Pagenation path="/illust" currentPage={pageNumber} totalPage={Math.ceil(total / limit)} />
+      </div>
     </div>
   )
 }

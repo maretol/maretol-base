@@ -1,16 +1,18 @@
 'use client'
 
 import ClientImage2 from '@/components/small/client_image2'
+import ShareButton from '@/components/small/share'
 import { Button } from '@/components/ui/button'
 import {
   Drawer,
   DrawerClose,
   DrawerContent,
   DrawerDescription,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
-import { ParsedContent } from 'api-types'
+import { ExternalLinkIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -18,10 +20,11 @@ import { useCallback, useEffect, useState } from 'react'
 type DrawerProps = {
   imageSrc: string
   title: string
-  description: ParsedContent[]
+  publishedAt: string
+  children?: React.ReactNode
 }
 
-export default function DrawerPage({ imageSrc, title }: DrawerProps) {
+export default function DrawerPage({ imageSrc, title, publishedAt, children }: DrawerProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const onClose = useCallback(
@@ -39,13 +42,25 @@ export default function DrawerPage({ imageSrc, title }: DrawerProps) {
   // ページ遷移後にDrawerを開く
   // defaultOpenではアニメーションが実行されないため
   useEffect(() => {
+    const originTitle = document.title
+    document.title = `Illustration: ${title} | Maretol Base`
     onOpen()
-  }, [onOpen])
+    return () => {
+      document.title = originTitle
+    }
+  }, [onOpen, title])
 
   return (
     <Drawer direction="right" open={open} onOpenChange={setOpen} onAnimationEnd={onClose}>
       <DrawerContent className="w-full bg-gray-100">
         <div className="overflow-auto">
+          <div className="absolute right-0 top-0">
+            <DrawerClose asChild className="cursor-pointer">
+              <Button variant="ghost" className="p-2 w-12 h-12">
+                <XIcon className={'stroke-2'} />
+              </Button>
+            </DrawerClose>
+          </div>
           <div className="w-full h-auto">
             <div className="w-full h-auto">
               <ClientImage2
@@ -65,17 +80,32 @@ export default function DrawerPage({ imageSrc, title }: DrawerProps) {
                 target={'_blank'}
                 className="flex items-center gap-2"
               >
-                Open the image in new tab
+                <ExternalLinkIcon />
+                Open in new tab
               </Link>
             </Button>
-            <DrawerClose asChild className="cursor-pointer">
-              <Button>Close</Button>
-            </DrawerClose>
+            <div className="flex items-center gap-2 ">
+              <ShareButton variant="twitter" url={''} title={title} />
+              <ShareButton variant="bluesky" url={''} title={title} />
+              <ShareButton variant="copy_and_paste" url={''} title={title} />
+            </div>
           </div>
-          <DrawerHeader>
-            <DrawerTitle className="font-bold text-3xl">{title}</DrawerTitle>
-          </DrawerHeader>
-          <DrawerDescription className="p-4">This is a drawer page for illustration details.</DrawerDescription>
+          <div className="mx-4">
+            <DrawerHeader className="pb-2">
+              <DrawerTitle className="font-bold text-3xl">{title}</DrawerTitle>
+            </DrawerHeader>
+            <DrawerDescription className="px-4 py-0 text-right">Published at : {publishedAt}</DrawerDescription>
+            <div>{children}</div>
+          </div>
+          <DrawerFooter className="w-full flex flex-col items-center justify-center gap-2 mx-auto mt-4">
+            <DrawerClose asChild>
+              <Button variant="secondary" className="w-1/2 cursor-pointer flex justify-center gap-2 font-bold">
+                <XIcon className="w-4 h-4" />
+                Close
+              </Button>
+            </DrawerClose>
+            <p>Drawn by Maretol. © {publishedAt.substring(0, 4)} Maretol</p>
+          </DrawerFooter>
         </div>
       </DrawerContent>
     </Drawer>

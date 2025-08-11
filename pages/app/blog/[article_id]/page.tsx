@@ -20,7 +20,7 @@ export async function generateMetadata(props: {
 
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
   const ogpImage = content.ogp_image
-  const sumnail =
+  const thumbnail =
     ogpImage === null || ogpImage === undefined ? getOGPImage() : rewriteImageURL(ogpImageOption, ogpImage)
   const description = content.parsed_content
     .slice(0, 5)
@@ -37,14 +37,14 @@ export async function generateMetadata(props: {
       card: twitterCard,
       title: content.title + ' | Maretol Base',
       description: description,
-      images: [sumnail],
+      images: [thumbnail],
     },
     openGraph: {
       ...metadata.openGraph,
       title: content.title + ' | Maretol Base',
       description: description,
       url: `${getHostname()}/blog/${articleID}`,
-      images: [sumnail],
+      images: [thumbnail],
     },
   } as Metadata
 }

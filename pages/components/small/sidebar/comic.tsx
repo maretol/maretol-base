@@ -6,6 +6,7 @@ import ClientImage from '../client_image'
 import { rewriteImageURL } from '@/lib/image'
 import { sidebarImageOption } from '@/lib/static'
 import { Button } from '@/components/ui/button'
+import ClientImage2 from '../client_image2'
 
 type comic = {
   id: string
@@ -41,7 +42,7 @@ export default async function ComicSidebar({ bandeDessinees }: { bandeDessinees:
         ))}
         <Button variant="secondary" className="w-full mt-2" asChild>
           <Link href="/comics" className="text-gray-500">
-            <p className="font-bold">See all comics</p>
+            <p className="font-bold">See latest comics</p>
           </Link>
         </Button>
       </div>
@@ -53,13 +54,14 @@ function ComicLink({ id, title, publishedAt, coverImage }: comic) {
   const option = sidebarImageOption
   const cdnCoverImage = rewriteImageURL(option, coverImage)
   return (
-    <div className="mb-4 ">
+    <div className="mb-4">
       <Link href={`/comics/${id}`} className="hover:underline relative">
         <div className="bg-gray-200 p-4">
-          <ClientImage
-            src={cdnCoverImage}
+          <ClientImage2
+            src={coverImage}
             width={100}
-            height={150}
+            height={200}
+            quality={75}
             className="w-full h-auto object-contain"
             alt={title}
           />

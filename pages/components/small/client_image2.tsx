@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import Image from 'next/image'
 
 // client imageの改良版
-// layoutとobjectFitの対応
+// loaderを使って変換するようになってる
 
 export default function ClientImage2({
   src,

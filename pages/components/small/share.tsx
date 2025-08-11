@@ -36,17 +36,23 @@ function ShareTwitterButton({ url, title }: { url: string; title: string }) {
   return (
     <Button variant="secondary" className="p-3" asChild>
       <Link href={href} target="_blank" rel="noopener noreferrer">
-        <FontAwesomeIcon icon={faTwitter} className={'h-6'} />
+        <FontAwesomeIcon icon={faTwitter} className={'h-6'} fontSize={24} />
       </Link>
     </Button>
   )
 }
 
-function ShareXButton({ url }: { url: string }) {
+function ShareXButton({ url, title }: { url: string; title: string }) {
+  const xURL = 'https://x.com/intent/tweet'
+  const queries = new URLSearchParams({
+    url: url,
+    text: titleFormat.replace('${title}', title),
+  })
+  const href = `${xURL}?${queries.toString()}`
   return (
     <Button variant="secondary" className="p-3" asChild>
-      <Link href={url} target="_blank" rel="noopener noreferrer">
-        <FontAwesomeIcon icon={faXTwitter} className={'h-6'} />
+      <Link href={href} target="_blank" rel="noopener noreferrer">
+        <FontAwesomeIcon icon={faXTwitter} className={'h-6'} fontSize={24} />
       </Link>
     </Button>
   )
@@ -71,7 +77,7 @@ function ShareBlurSkyButton({ url, title }: { url: string; title: string }) {
   return (
     <Button variant="secondary" className="p-3" asChild>
       <Link href={href} target="_blank" rel="noopener noreferrer">
-        <FontAwesomeIcon icon={faBluesky} className={'h-6'} />
+        <FontAwesomeIcon icon={faBluesky} className={'h-6'} fontSize={24} />
       </Link>
     </Button>
   )
