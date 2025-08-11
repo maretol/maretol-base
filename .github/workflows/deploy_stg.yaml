@@ -26,7 +26,7 @@ jobs:
       cms-cache-purger: ${{ steps.filter.outputs.cms-cache-purger }}
       sns-article-publisher: ${{ steps.filter.outputs.sns-article-publisher }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: path filter
         id: filter
         uses: dorny/paths-filter@v3
@@ -61,7 +61,7 @@ jobs:
       run:
         working-directory: ./pages
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -96,7 +96,7 @@ jobs:
       run:
         working-directory: ./ogp-data-fetcher
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -127,7 +127,7 @@ jobs:
       run:
         working-directory: ./cms-data-fetcher
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -158,7 +158,7 @@ jobs:
       run:
         working-directory: ./cms-cache-purger
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup node
         uses: actions/setup-node@v4
         with:
@@ -189,7 +189,7 @@ jobs:
       run:
         working-directory: ./sns-article-publisher
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: setup node
         uses: actions/setup-node@v4
         with:
