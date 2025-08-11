@@ -9,7 +9,7 @@ type TwitterAuthInfo = {
 
 async function PostTweet(authInfo: TwitterAuthInfo, tweet: string): Promise<void> {
   const endpoint = 'https://api.x.com/2/tweets'
-  const nonce = Math.random().toString(36).substring(2, 26)
+  const nonce = crypto.randomBytes(16).toString('base64url')
   const timestamp = Math.floor(Date.now() / 1000).toString()
 
   const signature = createSignature(nonce, timestamp, authInfo, endpoint)
