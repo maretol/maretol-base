@@ -2,8 +2,7 @@ import { metadata } from '@/app/layout'
 import { getCMSContent } from '@/lib/api/workers'
 import { contentsAPIResult } from 'api-types'
 import { getHostname } from '@/lib/env'
-import { getOGPImage, rewriteImageURL } from '@/lib/image'
-import { ogpImageOption } from '@/lib/static'
+import { getOGPImage, getArticleOGPImage } from '@/lib/image'
 import { Metadata } from 'next'
 import BlogPageArticle from './article'
 import { Suspense } from 'react'
@@ -21,7 +20,7 @@ export async function generateMetadata(props: {
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
   const ogpImage = content.ogp_image
   const thumbnail =
-    ogpImage === null || ogpImage === undefined ? getOGPImage() : rewriteImageURL(ogpImageOption, ogpImage)
+    ogpImage === null || ogpImage === undefined ? getOGPImage() : getArticleOGPImage(ogpImage)
   const description = content.parsed_content
     .slice(0, 5)
     .map((c) => c.text)

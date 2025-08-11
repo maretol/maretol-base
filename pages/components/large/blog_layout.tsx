@@ -5,17 +5,17 @@
 
 import Link from 'next/link'
 import { Button } from '../ui/button'
-import ClientImage from '../small/client_image'
 import HeaderButtons from '../small/header'
 import FooterButtons from '../small/footer'
-import { getHeaderImage } from '@/lib/image'
+import { getHeaderImageURL } from '@/lib/image'
 import { getAteliers, getBandeDessinee, getCMSContents, getStatic, getTags } from '@/lib/api/workers'
 import BlogSidebar from '../middle/blog_sidebar'
+import ClientImage2 from '../small/client_image2'
 
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
   // experimental が抜けたら use cache あたりを使ってコンポーネントをキャッシュさせたほうがいいかもしれない
   // 現状では /blog/* の layout で呼ばれる部分とそれ以外の layout で呼ばれる部分で別々にコンポーネントが生成されてる
-  const headerImage = getHeaderImage()
+  const headerImage = getHeaderImageURL()
 
   const year = new Date().getFullYear()
 
@@ -32,13 +32,12 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
           <div className="mb-2 pt-2">
             <Button variant={'link'} className="p-0" asChild>
               <Link href="/">
-                <ClientImage
+                <ClientImage2
                   src={headerImage}
-                  width={500}
+                  width={400}
                   height={100}
                   className="w-[500px] object-contain"
                   alt="Maretol Base"
-                  style={{ height: 'auto', width: '500px' }}
                 />
               </Link>
             </Button>
