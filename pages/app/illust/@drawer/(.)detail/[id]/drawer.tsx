@@ -19,7 +19,7 @@ type DrawerProps = {
 export default function DrawerPage({ imageSrc, shareURL, title, publishedAt, children }: DrawerProps) {
   const shareTitle = `Illustration: ${title}`
 
-  // titleの変更
+  // ページタイトルをtitleに合わせて変更
   useEffect(() => {
     document.title = `Illustration: ${title} | Maretol Base`
   }, [title])

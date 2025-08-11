@@ -21,7 +21,7 @@ export default function DrawerLayout({ children }: { children: React.ReactNode }
 
   return (
     <Drawer direction="right" open={open} onOpenChange={setOpen} onAnimationEnd={onClose}>
-      <DrawerTitle className="hidden"></DrawerTitle>
+      <DrawerTitle className="hidden">Illustration Details</DrawerTitle>
       <DrawerContent className="w-full bg-gray-100">
         <div className="overflow-auto">
           <div className="absolute right-0 top-0 z-10">
