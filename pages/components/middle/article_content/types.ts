@@ -16,6 +16,7 @@ export type POptionType =
   | 'amazon'
   | 'url'
   | 'blog'
+  | 'illust_detail'
   | 'artifact'
   | 'comic'
   | 'empty'
