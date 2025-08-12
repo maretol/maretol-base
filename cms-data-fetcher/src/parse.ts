@@ -56,6 +56,8 @@ function getPOption(text: string) {
     return 'image'
   } else if (isPhoto(textURL.hostname, text)) {
     return 'photo'
+  } else if (isMySite(textURL.hostname, textURL.pathname)) {
+    return 'my_site'
   } else if (isComicPage(textURL.hostname, textURL.pathname)) {
     return 'comic'
   } else if (isIllustDetail(textURL.hostname, textURL.pathname)) {
@@ -75,6 +77,19 @@ function getPOption(text: string) {
   } else {
     // URLとしてパースできたが、http/https以外のプロトコルの場合は通常のテキストとして扱う
     return 'normal'
+  }
+}
+
+// トップページ、/blog, /illust, /comics, /about, /cotact などの特定のパスに完全に一致する場合
+function isMySite(hostname: string, pathname: string) {
+  const mySiteDomain = ['maretol.xyz', 'www.maretol.xyz']
+  if (!mySiteDomain.includes(hostname)) {
+    return false
+  }
+  pathname = pathname.endsWith('/') ? pathname : pathname + '/'
+  const mySitePaths = ['/', '/blog/', '/illust/', '/comics/', '/about/', '/contact/']
+  if (mySitePaths.includes(pathname)) {
+    return true
   }
 }
 

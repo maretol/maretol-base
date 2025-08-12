@@ -12,6 +12,7 @@ export type POptionType =
   | 'normal'
   | 'image'
   | 'photo'
+  | 'my_site'
   | 'youtube'
   | 'twitter'
   | 'amazon'

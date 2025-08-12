@@ -24,7 +24,7 @@ export default async function ContentImage({
   if (tag === 'content_image') {
     return (
       // ここに画像のモーダルを実装する
-      <div className="w-fit">
+      <div className="w-fit mx-3">
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
