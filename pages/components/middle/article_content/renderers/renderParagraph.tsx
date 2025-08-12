@@ -112,7 +112,7 @@ function renderIllust(content: ParsedContent, context: RenderContext): JSX.Eleme
   return (
     <div key={context.index} className="py-6">
       <Suspense fallback={<LoadingLinkcard link={content.text} />}>
-        <IllustCard link={content.text} articleID={context.articleID} />
+        <IllustCard link={content.text} articleID={context.articleID} draftKey={context.draftKey} />
       </Suspense>
     </div>
   )

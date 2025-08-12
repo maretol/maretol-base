@@ -22,6 +22,7 @@ type FullAtricleProps = ArticleProps & {
   type: 'blog' | 'info'
   shareURL: string
   tableOfContents: TableOfContents
+  draftKey?: string
 }
 
 type ImageArticleProps = ArticleProps & {
@@ -69,6 +70,7 @@ export async function FullArticle({
   parsedContents,
   tableOfContents,
   type,
+  draftKey,
   shareURL,
 }: FullAtricleProps) {
   return (
@@ -93,7 +95,12 @@ export async function FullArticle({
       </CardHeader>
       <hr className="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
       <CardContent className="mb-8">
-        <ArticleContent contents={parsedContents} articleID={id} tableOfContents={tableOfContents} />
+        <ArticleContent
+          contents={parsedContents}
+          articleID={id}
+          tableOfContents={tableOfContents}
+          draftKey={draftKey}
+        />
       </CardContent>
       <CardFooter>
         <div className="w-full">
