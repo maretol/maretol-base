@@ -16,6 +16,7 @@ import LoadingLinkcard from '../../loading_dom/loading_linkcard'
 import LoadingBlogCard from '../../loading_dom/loading_blogcard'
 import LoadingComicCard from '../../loading_dom/loading_comiccard'
 import IllustCard from '../../article_dom/illustcard'
+import MySiteCard from '../../article_dom/mysitecard'
 
 export function renderParagraph(content: ParsedContent, context: RenderContext): JSX.Element | null {
   const pOption = content.p_option as POptionType | null
@@ -28,6 +29,7 @@ export function renderParagraph(content: ParsedContent, context: RenderContext):
     normal: () => renderNormalParagraph(content, context),
     image: () => renderImage(content, context),
     photo: () => renderPhoto(content, context),
+    my_site: () => renderSiteLink(content, context),
     youtube: () => renderYouTube(content, context),
     twitter: () => renderTwitter(content, context),
     amazon: () => renderAmazon(content, context),
@@ -72,6 +74,14 @@ function renderPhoto(content: ParsedContent, context: RenderContext): JSX.Elemen
         subText={content.sub_texts ?? null}
         articleID={context.articleID}
       />
+    </div>
+  )
+}
+
+function renderSiteLink(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-3">
+      <MySiteCard key={context.index} text={content.text} />
     </div>
   )
 }
