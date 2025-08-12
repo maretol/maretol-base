@@ -43,7 +43,9 @@ export default async function IllustCard({
             </div>
             <div className="w-full">
               <Button className="w-full h-8" asChild>
-                <Link href={drawerLink}>View illust</Link>
+                <Link href={drawerLink} scroll={false}>
+                  View illust
+                </Link>
               </Button>
             </div>
           </div>

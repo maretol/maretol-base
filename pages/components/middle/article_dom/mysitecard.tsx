@@ -76,7 +76,7 @@ export default async function MySiteCard({ text }: { text: string }) {
   const detail = details[path]
 
   return (
-    <div className="w-2xl">
+    <div className="max-w-2xl">
       <div className="flex flex-row items-center gap-2 p-4 bg-gray-300 rounded-lg">
         <div className="w-full">
           <div className="flex items-center gap-2 w-full">

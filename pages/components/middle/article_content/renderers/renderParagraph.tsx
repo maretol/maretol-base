@@ -17,6 +17,7 @@ import LoadingBlogCard from '../../loading_dom/loading_blogcard'
 import LoadingComicCard from '../../loading_dom/loading_comiccard'
 import IllustCard from '../../article_dom/illustcard'
 import MySiteCard from '../../article_dom/mysitecard'
+import LoadingIllustCard from '../../loading_dom/loading_illustcard'
 
 export function renderParagraph(content: ParsedContent, context: RenderContext): JSX.Element | null {
   const pOption = content.p_option as POptionType | null
@@ -121,7 +122,7 @@ function renderBlog(content: ParsedContent, context: RenderContext): JSX.Element
 function renderIllust(content: ParsedContent, context: RenderContext): JSX.Element {
   return (
     <div key={context.index} className="py-6">
-      <Suspense fallback={<LoadingLinkcard link={content.text} />}>
+      <Suspense fallback={<LoadingIllustCard />}>
         <IllustCard link={content.text} articleID={context.articleID} draftKey={context.draftKey} />
       </Suspense>
     </div>
