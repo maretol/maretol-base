@@ -5,7 +5,13 @@ import renderContent from './renderContent'
 // sampleの場合はコンテンツは6つまでの表示
 const MAX_SAMPLE_CONTENT_COUNT = 5
 
-export default async function ArticleContent({ contents, articleID, sample, tableOfContents }: ArticleContentProps) {
+export default async function ArticleContent({
+  contents,
+  articleID,
+  sample,
+  draftKey,
+  tableOfContents,
+}: ArticleContentProps) {
   const sampleFlag = sample || false
   const sampleClassName = 'content-sample line-clamp-6'
   const contentClassName = 'content'
@@ -21,6 +27,7 @@ export default async function ArticleContent({ contents, articleID, sample, tabl
         const context = {
           articleID,
           index,
+          draftKey,
           sample: sampleFlag,
           tableOfContents,
         }
