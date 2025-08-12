@@ -15,6 +15,9 @@ import Table from '../../article_dom/table_of_contents'
 import LoadingLinkcard from '../../loading_dom/loading_linkcard'
 import LoadingBlogCard from '../../loading_dom/loading_blogcard'
 import LoadingComicCard from '../../loading_dom/loading_comiccard'
+import IllustCard from '../../article_dom/illustcard'
+import MySiteCard from '../../article_dom/mysitecard'
+import LoadingIllustCard from '../../loading_dom/loading_illustcard'
 
 export function renderParagraph(content: ParsedContent, context: RenderContext): JSX.Element | null {
   const pOption = content.p_option as POptionType | null
@@ -27,6 +30,7 @@ export function renderParagraph(content: ParsedContent, context: RenderContext):
     normal: () => renderNormalParagraph(content, context),
     image: () => renderImage(content, context),
     photo: () => renderPhoto(content, context),
+    my_site: () => renderSiteLink(content, context),
     youtube: () => renderYouTube(content, context),
     twitter: () => renderTwitter(content, context),
     amazon: () => renderAmazon(content, context),
@@ -34,6 +38,7 @@ export function renderParagraph(content: ParsedContent, context: RenderContext):
     blog: () => renderBlog(content, context),
     artifact: () => renderArtifact(content, context),
     comic: () => renderComic(content, context),
+    illust_detail: () => renderIllust(content, context),
     empty: () => renderEmpty(content, context),
     table_of_contents: () => renderTableOfContents(content, context),
     block_start: () => null, // TODO: Implement block handling
@@ -74,6 +79,14 @@ function renderPhoto(content: ParsedContent, context: RenderContext): JSX.Elemen
   )
 }
 
+function renderSiteLink(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-3">
+      <MySiteCard key={context.index} text={content.text} />
+    </div>
+  )
+}
+
 function renderYouTube(content: ParsedContent, context: RenderContext): JSX.Element {
   return <YouTubeArea key={context.index} videoURL={content.text} />
 }
@@ -101,6 +114,16 @@ function renderBlog(content: ParsedContent, context: RenderContext): JSX.Element
     <div key={context.index} className="py-6">
       <Suspense fallback={<LoadingBlogCard />}>
         <BlogCard link={content.text} />
+      </Suspense>
+    </div>
+  )
+}
+
+function renderIllust(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-6">
+      <Suspense fallback={<LoadingIllustCard />}>
+        <IllustCard link={content.text} articleID={context.articleID} draftKey={context.draftKey} />
       </Suspense>
     </div>
   )

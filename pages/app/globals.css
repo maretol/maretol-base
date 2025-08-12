@@ -119,16 +119,9 @@ code {
 }
 
 .content-sample {
-  img[class='inner-image'] {
-    @apply rounded-lg shadow-xl w-auto;
-  }
   a[class='x-blog-image'] {
     pointer-events: none;
   }
-}
-
-.content img[class='inner-image'] {
-  @apply rounded-lg max-w-[500px] shadow-xl w-full h-auto;
 }
 
 .content-sample,

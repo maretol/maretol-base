@@ -56,8 +56,12 @@ function getPOption(text: string) {
     return 'image'
   } else if (isPhoto(textURL.hostname, text)) {
     return 'photo'
+  } else if (isMySite(textURL.hostname, textURL.pathname)) {
+    return 'my_site'
   } else if (isComicPage(textURL.hostname, textURL.pathname)) {
     return 'comic'
+  } else if (isIllustDetail(textURL.hostname, textURL.pathname)) {
+    return 'illust_detail'
   } else if (isYouTube(textURL.hostname)) {
     return 'youtube'
   } else if (isTwitter(textURL.hostname)) {
@@ -73,6 +77,19 @@ function getPOption(text: string) {
   } else {
     // URLとしてパースできたが、http/https以外のプロトコルの場合は通常のテキストとして扱う
     return 'normal'
+  }
+}
+
+// トップページ、/blog, /illust, /comics, /about, /cotact などの特定のパスに完全に一致する場合
+function isMySite(hostname: string, pathname: string) {
+  const mySiteDomain = ['maretol.xyz', 'www.maretol.xyz']
+  if (!mySiteDomain.includes(hostname)) {
+    return false
+  }
+  pathname = pathname.endsWith('/') ? pathname : pathname + '/'
+  const mySitePaths = ['/', '/blog/', '/illust/', '/comics/', '/about/', '/contact/']
+  if (mySitePaths.includes(pathname)) {
+    return true
   }
 }
 
@@ -123,6 +140,10 @@ function isBlog(hostname: string, pathname: string) {
 // artifactのリンクの場合
 function isArtifact(hostname: string, pathname: string) {
   return ['maretol.xyz', 'www.maretol.xyz'].includes(hostname) && pathname.indexOf('/artifacts/') === 0
+}
+
+function isIllustDetail(hostname: string, pathname: string) {
+  return ['maretol.xyz', 'www.maretol.xyz'].includes(hostname) && pathname.indexOf('/illust/detail') === 0
 }
 
 function isURL(url: URL) {

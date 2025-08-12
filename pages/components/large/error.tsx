@@ -12,9 +12,9 @@ import Link from 'next/link'
 import { Button } from '../ui/button'
 import { convertJST, getCurrentTime } from '@/lib/time'
 import FooterButtons from '../small/footer'
-import ClientImage from '../small/client_image'
-import { getHeaderImage } from '@/lib/image'
+import { getHeaderImageURL } from '@/lib/image'
 import { cn } from '@/lib/utils'
+import ClientImage2 from '../small/client_image2'
 
 export function ErrorPageArticle({ title }: { title: string }) {
   return (
@@ -48,7 +48,7 @@ export function ErrorPageArticle({ title }: { title: string }) {
 }
 
 export function ErrorPageComic({ title }: { title: string }) {
-  const headerImage = getHeaderImage()
+  const headerImage = getHeaderImageURL()
 
   return (
     <div>
@@ -62,7 +62,13 @@ export function ErrorPageComic({ title }: { title: string }) {
           <div className="pt-10 bg-gray-300 w-full max-w-[1500px]">
             <Button variant={'link'} className="p-0" asChild>
               <Link href="/">
-                <ClientImage src={headerImage} width={500} height={200} alt="Maretol Base" />
+                <ClientImage2
+                  src={headerImage}
+                  width={400}
+                  height={100}
+                  alt="Maretol Base"
+                  className="w-full h-auto object-contain"
+                />
               </Link>
             </Button>
           </div>

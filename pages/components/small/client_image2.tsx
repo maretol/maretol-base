@@ -3,9 +3,6 @@
 import { cn } from '@/lib/utils'
 import Image from 'next/image'
 
-// client imageの改良版
-// loaderを使って変換するようになってる
-
 export default function ClientImage2({
   src,
   alt,

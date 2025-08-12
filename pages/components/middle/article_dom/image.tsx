@@ -1,9 +1,7 @@
-import { rewriteImageURL } from '@/lib/image'
-import { imageOption } from '@/lib/static'
-import ClientImage from '../../small/client_image'
 import Link from 'next/link'
 import fetchBlurredImage from '@/lib/api/image'
 import { cn } from '@/lib/utils'
+import ClientImage2 from '@/components/small/client_image2'
 
 export default async function ContentImage({
   tag,
@@ -16,7 +14,6 @@ export default async function ContentImage({
   subText: { [key: string]: string } | null
   articleID: string
 }) {
-  const imageSrc = rewriteImageURL(imageOption, src)
   // originのsrcをbase64に変換する
   const base64src = Buffer.from(src).toString('base64')
   const caption = subText?.caption
@@ -27,9 +24,16 @@ export default async function ContentImage({
   if (tag === 'content_image') {
     return (
       // ここに画像のモーダルを実装する
-      <div className="w-fit">
-        <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image">
-          <ClientImage src={imageSrc} alt="" width={300} height={400} blurData={blurData} className="inner-image" />
+      <div className="w-fit mx-3">
+        <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
+          <ClientImage2
+            src={src}
+            alt=""
+            width={300}
+            height={400}
+            blurData={blurData}
+            className="w-full h-auto object-contain shadow-xl inner-image rounded-2xl"
+          />
         </Link>
         <div className="mt-3 space-y-1">
           {title && (
@@ -50,9 +54,16 @@ export default async function ContentImage({
     return <p>{src}</p>
   } else if (tag === 'content_photo') {
     return (
-      <div className={cn('bg-indigo-200 p-2 rounded-xs w-fit mx-3')}>
-        <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image">
-          <ClientImage src={imageSrc} alt="" width={300} height={400} blurData={blurData} className="inner-image" />
+      <div className={cn('bg-indigo-200 p-2 rounded-xs w-full max-w-2/5 mx-3')}>
+        <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
+          <ClientImage2
+            src={src}
+            alt=""
+            width={400}
+            height={400}
+            blurData={blurData}
+            className="w-full h-auto shadow-xl object-contain inner-image rounded-2xl"
+          />
         </Link>
         <div className="mt-3 space-y-1">
           {caption && (

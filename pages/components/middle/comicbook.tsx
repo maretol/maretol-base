@@ -3,8 +3,7 @@
 import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from 'lucide-react'
 import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '../ui/button'
-import { getHeaderImage } from '@/lib/image'
-import ClientImage from '../small/client_image'
+import { getHeaderImageURL } from '@/lib/image'
 import ComicImage from '../small/comic_image'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -15,6 +14,7 @@ import { Switch } from '../ui/switch'
 import { Label } from '../ui/label'
 import { Slider } from '../ui/slider'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import ClientImage2 from '../small/client_image2'
 
 type ComicBookProps = {
   cmsResult: Promise<bandeDessineeResult>
@@ -63,7 +63,7 @@ export default function ComicBook(props: ComicBookProps) {
   // マンガの画像srcはComicImageコンポーネントでCDN経由のURLに変換している
   const originPageSrc = pageArray.map((i) => getPageImageSrc(baseUrl, filename, i, format))
 
-  const headerImage = getHeaderImage()
+  const headerImage = getHeaderImageURL()
   const [currentPage, setCurrentPage] = useState(0)
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [scrollSnaps, setScrollSnaps] = useState<number[]>()
@@ -259,7 +259,13 @@ export default function ComicBook(props: ComicBookProps) {
         <div className="pt-10 bg-gray-300 w-full max-w-[1500px]">
           <Button variant={'link'} className="p-0" asChild>
             <Link href="/">
-              <ClientImage src={headerImage} width={500} height={200} alt="Maretol Base" />
+              <ClientImage2
+                src={headerImage}
+                width={400}
+                height={100}
+                alt="Maretol Base"
+                className="w-full h-auto object-contain"
+              />
             </Link>
           </Button>
         </div>
