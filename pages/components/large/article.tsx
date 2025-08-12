@@ -6,10 +6,8 @@ import { Button } from '../ui/button'
 import ShareButton from '../small/share'
 import { ArrowBigLeft, BookIcon, HomeIcon } from 'lucide-react'
 import ArticleContent from '../middle/article_content'
-import { rewriteImageURL } from '@/lib/image'
-import { originImageOption } from '@/lib/static'
-import ClientImage from '../small/client_image'
 import { categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
+import ClientImage2 from '../small/client_image2'
 
 type ArticleProps = {
   id: string
@@ -24,6 +22,7 @@ type FullAtricleProps = ArticleProps & {
   type: 'blog' | 'info'
   shareURL: string
   tableOfContents: TableOfContents
+  draftKey?: string
 }
 
 type ImageArticleProps = ArticleProps & {
@@ -71,6 +70,7 @@ export async function FullArticle({
   parsedContents,
   tableOfContents,
   type,
+  draftKey,
   shareURL,
 }: FullAtricleProps) {
   return (
@@ -95,7 +95,12 @@ export async function FullArticle({
       </CardHeader>
       <hr className="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
       <CardContent className="mb-8">
-        <ArticleContent contents={parsedContents} articleID={id} tableOfContents={tableOfContents} />
+        <ArticleContent
+          contents={parsedContents}
+          articleID={id}
+          tableOfContents={tableOfContents}
+          draftKey={draftKey}
+        />
       </CardContent>
       <CardFooter>
         <div className="w-full">
@@ -120,8 +125,6 @@ export async function FullArticle({
 }
 
 export function ImageArticle({ id, title, categories, imageSrc, shareURL }: ImageArticleProps) {
-  const rewrittenImageSrc = rewriteImageURL(originImageOption, imageSrc)
-
   return (
     <Card className="w-full bg-gray-100">
       <CardHeader>
@@ -134,13 +137,14 @@ export function ImageArticle({ id, title, categories, imageSrc, shareURL }: Imag
         </CardContent>
       </CardHeader>
       <CardContent className="my-8">
-        <div className="flex justify-center">
-          <ClientImage
-            src={rewrittenImageSrc}
+        <div className="flex justify-center shadow-lg">
+          <ClientImage2
+            src={imageSrc}
             alt={title}
-            width={800}
-            height={800}
-            className="w-full h-full shadow-lg"
+            width={500}
+            height={500}
+            format={'auto'}
+            className="w-full h-auto object-contain"
           />
         </div>
         <div className="my-8 flex justify-center">

@@ -5,8 +5,7 @@ import ComicBook from '@/components/middle/comicbook'
 import FooterButtons from '@/components/small/footer'
 import { getBandeDessineeByID } from '@/lib/api/workers'
 import { getHostname } from '@/lib/env'
-import { rewriteImageURL } from '@/lib/image'
-import { ogpImageOption } from '@/lib/static'
+import { getOGPImageURL } from '@/lib/image'
 import { Metadata } from 'next'
 import { Suspense } from 'react'
 
@@ -27,7 +26,7 @@ export async function generateMetadata(props: {
   // TODO: 1ページ目のファイル指定はもっときれいにする
   const ogpImageFile = data.cover || data.filename + '_00' + data.first_page + data.format[0]
   const coverImageURL = contentsBaseUrl + '/' + ogpImageFile
-  const ogpImage = rewriteImageURL(ogpImageOption, coverImageURL)
+  const ogpImage = getOGPImageURL(coverImageURL)
 
   return {
     ...metadata,

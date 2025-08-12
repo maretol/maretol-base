@@ -1,6 +1,6 @@
 import BlogLayout from '@/components/large/blog_layout'
 import { getHostname } from '@/lib/env'
-import { getOGPImage } from '@/lib/image'
+import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     card: 'summary',
     creator: '@maretol',
     site: '@maretol',
-    images: [getOGPImage()],
+    images: [getOGPImageURL(getDefaultOGPImageURL())],
   },
   openGraph: {
     title: 'Blog | Maretol Base',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     type: 'website',
     url: getHostname() + '/blog',
     siteName: 'Blog | Maretol Base',
-    images: [getOGPImage()],
+    images: [getOGPImageURL(getDefaultOGPImageURL())],
   },
 }
 

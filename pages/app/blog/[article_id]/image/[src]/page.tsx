@@ -2,8 +2,7 @@
 
 import { getCMSContent } from '@/lib/api/workers'
 import { contentsAPIResult } from 'api-types'
-import { rewriteImageURL } from '@/lib/image'
-import { ogpImageOption } from '@/lib/static'
+import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { ImageArticle } from '@/components/large/article'
 import { metadata } from '@/app/layout'
 import { Metadata } from 'next'
@@ -23,7 +22,7 @@ export async function generateMetadata(props: {
 
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
   const ogpImage = content.ogp_image
-  const sumnail = rewriteImageURL(ogpImageOption, src)
+  const ogpURL = getOGPImageURL(ogpImage || getDefaultOGPImageURL())
   const description = content.parsed_content
     .slice(0, 5)
     .map((c) => c.text)
@@ -39,14 +38,14 @@ export async function generateMetadata(props: {
       card: twitterCard,
       title: `IMAGE: ${content.title} | Maretol Base`,
       description: description,
-      images: [sumnail],
+      images: [ogpURL],
     },
     openGraph: {
       ...metadata.openGraph,
       title: `IMAGE: ${content.title} | Maretol Base`,
       description: description,
       url: `${getHostname()}/blog/${articleID}`,
-      images: [sumnail],
+      images: [ogpURL],
     },
   } as Metadata
 }

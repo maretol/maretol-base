@@ -15,6 +15,7 @@ import Table from '../../article_dom/table_of_contents'
 import LoadingLinkcard from '../../loading_dom/loading_linkcard'
 import LoadingBlogCard from '../../loading_dom/loading_blogcard'
 import LoadingComicCard from '../../loading_dom/loading_comiccard'
+import IllustCard from '../../article_dom/illustcard'
 
 export function renderParagraph(content: ParsedContent, context: RenderContext): JSX.Element | null {
   const pOption = content.p_option as POptionType | null
@@ -34,6 +35,7 @@ export function renderParagraph(content: ParsedContent, context: RenderContext):
     blog: () => renderBlog(content, context),
     artifact: () => renderArtifact(content, context),
     comic: () => renderComic(content, context),
+    illust_detail: () => renderIllust(content, context),
     empty: () => renderEmpty(content, context),
     table_of_contents: () => renderTableOfContents(content, context),
     block_start: () => null, // TODO: Implement block handling
@@ -101,6 +103,16 @@ function renderBlog(content: ParsedContent, context: RenderContext): JSX.Element
     <div key={context.index} className="py-6">
       <Suspense fallback={<LoadingBlogCard />}>
         <BlogCard link={content.text} />
+      </Suspense>
+    </div>
+  )
+}
+
+function renderIllust(content: ParsedContent, context: RenderContext): JSX.Element {
+  return (
+    <div key={context.index} className="py-6">
+      <Suspense fallback={<LoadingLinkcard link={content.text} />}>
+        <IllustCard link={content.text} articleID={context.articleID} draftKey={context.draftKey} />
       </Suspense>
     </div>
   )

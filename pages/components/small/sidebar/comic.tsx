@@ -2,9 +2,6 @@ import { bandeDessineeResult } from 'api-types'
 import SidebarContentFrame from '../sidebar_content'
 import Link from 'next/link'
 import { convertJST } from '@/lib/time'
-import ClientImage from '../client_image'
-import { rewriteImageURL } from '@/lib/image'
-import { sidebarImageOption } from '@/lib/static'
 import { Button } from '@/components/ui/button'
 import ClientImage2 from '../client_image2'
 
@@ -51,8 +48,6 @@ export default async function ComicSidebar({ bandeDessinees }: { bandeDessinees:
 }
 
 function ComicLink({ id, title, publishedAt, coverImage }: comic) {
-  const option = sidebarImageOption
-  const cdnCoverImage = rewriteImageURL(option, coverImage)
   return (
     <div className="mb-4">
       <Link href={`/comics/${id}`} className="hover:underline relative">

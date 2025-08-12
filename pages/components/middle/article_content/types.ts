@@ -3,6 +3,7 @@ import { ParsedContent, TableOfContents } from 'api-types'
 export interface RenderContext {
   articleID: string
   index: number
+  draftKey?: string
   sample?: boolean
   tableOfContents?: TableOfContents
 }
@@ -16,6 +17,7 @@ export type POptionType =
   | 'amazon'
   | 'url'
   | 'blog'
+  | 'illust_detail'
   | 'artifact'
   | 'comic'
   | 'empty'
@@ -27,5 +29,6 @@ export interface ArticleContentProps {
   contents: ParsedContent[]
   articleID: string
   sample?: boolean
+  draftKey?: string
   tableOfContents?: TableOfContents
 }

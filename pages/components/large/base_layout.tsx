@@ -5,13 +5,13 @@
 
 import Link from 'next/link'
 import { Button } from '../ui/button'
-import ClientImage from '../small/client_image'
 import HeaderButtons from '../small/header'
 import FooterButtons from '../small/footer'
-import { getHeaderImage } from '@/lib/image'
+import { getHeaderImageURL } from '@/lib/image'
+import ClientImage2 from '../small/client_image2'
 
 export default function BaseLayout({ children }: { children: React.ReactNode }) {
-  const headerImage = getHeaderImage()
+  const headerImage = getHeaderImageURL()
 
   const year = new Date().getFullYear()
 
@@ -22,13 +22,12 @@ export default function BaseLayout({ children }: { children: React.ReactNode }) 
           <div className="mb-2 pt-2">
             <Button variant={'link'} className="p-0" asChild>
               <Link href="/">
-                <ClientImage
+                <ClientImage2
                   src={headerImage}
-                  width={500}
+                  width={400}
                   height={100}
                   className="w-[500px] object-contain"
                   alt="Maretol Base"
-                  style={{ height: 'auto', width: '500px' }}
                 />
               </Link>
             </Button>

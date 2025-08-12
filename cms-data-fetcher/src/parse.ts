@@ -58,6 +58,8 @@ function getPOption(text: string) {
     return 'photo'
   } else if (isComicPage(textURL.hostname, textURL.pathname)) {
     return 'comic'
+  } else if (isIllustDetail(textURL.hostname, textURL.pathname)) {
+    return 'illust_detail'
   } else if (isYouTube(textURL.hostname)) {
     return 'youtube'
   } else if (isTwitter(textURL.hostname)) {
@@ -123,6 +125,10 @@ function isBlog(hostname: string, pathname: string) {
 // artifactのリンクの場合
 function isArtifact(hostname: string, pathname: string) {
   return ['maretol.xyz', 'www.maretol.xyz'].includes(hostname) && pathname.indexOf('/artifacts/') === 0
+}
+
+function isIllustDetail(hostname: string, pathname: string) {
+  return ['maretol.xyz', 'www.maretol.xyz'].includes(hostname) && pathname.indexOf('/illust/detail') === 0
 }
 
 function isURL(url: URL) {

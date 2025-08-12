@@ -22,6 +22,7 @@ export default async function BlogPageArticle({
         categories={content.categories}
         parsedContents={content.parsed_content}
         tableOfContents={content.table_of_contents}
+        draftKey={draftKey}
         type="blog"
         shareURL={url}
       />

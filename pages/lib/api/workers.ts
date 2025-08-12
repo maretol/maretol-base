@@ -68,7 +68,6 @@ async function getOGPDataOrigin(targetURL: string) {
 
   if (getLocalEnv() === 'local') {
     const host = env.OGP_DEV
-    console.log('host', host)
     const url = new URL(host)
     url.searchParams.set('target', targetURL)
 
