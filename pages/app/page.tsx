@@ -1,34 +1,16 @@
-import { pageLimit } from '@/lib/static'
-import MainPageArticles from './article'
 import { Suspense } from 'react'
-import LoadingMainPage from './loading_article'
 import BaseLayout from '@/components/large/base_layout'
+import { LoadingTopPage } from '../components/large/loading_toppage'
+import TopPage from './toppage'
 
-export default async function Mainpage(props: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}) {
-  const searchParams = await props.searchParams
-  const page = searchParams['p']
-  const pageNumber = isPage(page) ? Number(page) : 1
-  const offset = (pageNumber - 1) * pageLimit
-  const limit = pageLimit
+export const dynamic = 'force-dynamic'
 
+export default async function Mainpage() {
   return (
     <BaseLayout>
-      <Suspense fallback={<LoadingMainPage />}>
-        <MainPageArticles pageNumber={pageNumber} offset={offset} limit={limit} />
+      <Suspense fallback={<LoadingTopPage />}>
+        <TopPage />
       </Suspense>
     </BaseLayout>
   )
-}
-
-function isPage(page: string | string[] | undefined): boolean {
-  if (page === undefined) {
-    return false
-  }
-  if (typeof page === 'string') {
-    // page が数字であれば true
-    return !isNaN(Number(page))
-  }
-  return false
 }

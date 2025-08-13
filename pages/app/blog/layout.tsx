@@ -24,6 +24,11 @@ export const metadata: Metadata = {
   },
 }
 
-export default function BlogPageLayout({ children }: { children: React.ReactNode }) {
-  return <BlogLayout>{children}</BlogLayout>
+export default function BlogPageLayout({ children, drawer }: { children: React.ReactNode; drawer: React.ReactNode }) {
+  return (
+    <div>
+      <BlogLayout>{children}</BlogLayout>
+      {drawer}
+    </div>
+  )
 }
