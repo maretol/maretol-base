@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children, drawer }: { children: React.ReactNode; drawer: React.ReactNode }) {
   return (
     <html lang="ja" prefix="og: http://ogp.me/ns#">
       <Script
@@ -47,6 +47,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       />
       <body className={cn('min-h-screen antialiased bg-gray-300', fontMPlus1.className, fontMPlus1.variable)}>
         {children}
+        <div>{drawer}</div>
       </body>
     </html>
   )
