@@ -34,7 +34,6 @@ export default async function TopPage() {
                   objectPosition={atelier.object_position}
                   tags={atelier.tag_or_category}
                   publishedAt={atelier.publishedAt}
-                  className=""
                 />
               </TopPageContentsChild>
             ))}
