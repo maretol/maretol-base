@@ -94,7 +94,6 @@ export function LoadingTopPage() {
         </div>
 
         <div className="space-y-6">
-          {' '}
           <div>
             <TopPageTitle>
               <ListIcon className="w-6 h-6" />
