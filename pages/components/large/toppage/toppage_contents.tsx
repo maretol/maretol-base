@@ -19,12 +19,14 @@ export default function TopPageContentsViewer({
 
   const scrollRight = useCallback((ref: RefObject<HTMLDivElement | null>) => {
     if (!ref || !ref.current) return
+    // スクロールはscroll-snapがあるためある程度動けば良い
     const scroll = ref.current.clientWidth * 0.5
     ref.current?.scrollBy({ left: scroll, behavior: 'smooth' })
   }, [])
 
   const scrollLeft = useCallback((ref: RefObject<HTMLDivElement | null>) => {
     if (!ref || !ref.current) return
+    // スクロールはscroll-snapがあるためある程度動けば良い
     const scroll = ref.current.clientWidth * 0.5 * -1
     ref.current?.scrollBy({ left: scroll, behavior: 'smooth' })
   }, [])
