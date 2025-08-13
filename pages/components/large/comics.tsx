@@ -54,18 +54,10 @@ export async function ComicOverview(props: ComicArticleProps) {
   return (
     <Card className="w-full bg-gray-100">
       <CardHeader className="py-2"></CardHeader>
-      <div className="flex sm:flex-row flex-col mb-4">
-        <CardContent className="sm:max-w-96 sm:min-w-48 w-auto h-auto pb-0 pt-2 pr-0">
-          <div className="shadow-md">
-            <ClientImage2
-              src={imageURL}
-              alt={title}
-              width={400}
-              height={600}
-              className="w-fill h-auto object-contain"
-            />
-          </div>
-        </CardContent>
+      <div className="flex sm:flex-row flex-col mb-2 gap-x-0 gap-y-2">
+        <div className="px-6 pt-2 pb-0 sm:pr-0 flex justify-center">
+          <ClientImage2 src={imageURL} alt={title} width={400} height={600} className="w-96 h-auto object-contain" />
+        </div>
         <div className="w-full">
           <CardHeader className="pt-2">
             <CardTitleH1>
@@ -81,7 +73,7 @@ export async function ComicOverview(props: ComicArticleProps) {
               </>
             </CardDescription>
           </CardHeader>
-          <CardContent className="my-1 space-y-6">
+          <CardContent className="my-1 space-y-6 pb-2">
             <div className="w-full space-y-3 font-semibold">
               <h2 className="text-xl font-bold pl-2 pb-1 content-h2">作品情報</h2>
               <div>

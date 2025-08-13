@@ -16,6 +16,7 @@ type IllustArticleProps = {
   objectPosition: string
   tags: atelierTagAndCategory[]
   publishedAt: string
+  className?: string
 }
 
 export async function IllustSampleArticle({
@@ -25,11 +26,12 @@ export async function IllustSampleArticle({
   objectPosition,
   tags,
   publishedAt,
+  className = '',
 }: IllustArticleProps) {
   const positionCn = `object-${objectPosition}`
 
   return (
-    <div className={cn('w-full lg:h-[45svh] max-h-3/4 rounded-2xl bg-gray-100', 'flex lg:flex-row', 'flex-col')}>
+    <div className={cn('w-full lg:h-[45svh] max-h-3/4 rounded-lg bg-gray-100', 'flex lg:flex-row flex-col', className)}>
       <Link href={`/illust/detail/${id}`} className={'lg:w-3/4 w-full lg:h-full h-[45svh]'} scroll={false}>
         <ClientImage2
           src={imageSrc}
@@ -37,7 +39,7 @@ export async function IllustSampleArticle({
           width={1080}
           height={1080}
           quality={90}
-          className={cn('w-full h-full rounded-2xl', positionCn)}
+          className={cn('w-full h-full rounded-lg', positionCn)}
         />
       </Link>
       <div className="p-4 h-full lg:w-1/4 flex flex-col lg:justify-between w-full gap-4">
