@@ -6,28 +6,26 @@ import { PlaceholderImageBase64 } from './placeholder'
 export default function ComicImage({
   src,
   alt,
-  priority,
   loading,
   className,
 }: {
   src: string
   alt: string
-  priority?: boolean
   loading?: 'lazy' | 'eager'
   className?: string
 }) {
-  const imageLoader = ({ src }: { src: string }) => {
-    const url = 'https://www.maretol.xyz/cdn-cgi/image/#{option}/#{origin}'
-    return url.replace('#{option}', 'format=auto').replace('#{origin}', src)
+  const imageLoader = ({ src, width, quality }: { src: string; width?: number; quality?: number }) => {
+    const option = `w=${width},q=${quality},f=webp`
+    return `https://www.maretol.xyz/cdn-cgi/image/${option}/${src}`
   }
 
   return (
     <Image
       loader={imageLoader}
       src={src}
-      width={500}
-      height={1000}
-      priority={priority}
+      width={3000}
+      height={3000}
+      quality={100}
       loading={loading}
       alt={alt}
       className={className}

@@ -44,14 +44,14 @@ const CacheTTL = {
 }
 
 // ジェネリックAPI関数の設定型
-interface CacheConfig<TResult> {
+interface CacheConfig {
   cacheKey: string
   cacheTTL: number
   cacheStore: KVNamespace
   skipCache?: boolean
 }
 
-interface APIConfig<TResult> extends CacheConfig<TResult> {
+interface APIConfig<TResult> extends CacheConfig {
   fetcher: () => Promise<TResult>
   defaultResult: TResult
 }

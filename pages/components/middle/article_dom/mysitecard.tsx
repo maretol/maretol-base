@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { BookOpenIcon, Home, HomeIcon, ImageIcon, InfoIcon, MailIcon, NotebookTextIcon } from 'lucide-react'
+import { BookOpenIcon, HomeIcon, ImageIcon, InfoIcon, MailIcon, NotebookTextIcon } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 

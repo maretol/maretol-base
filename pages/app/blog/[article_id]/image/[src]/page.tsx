@@ -17,8 +17,6 @@ export async function generateMetadata(props: {
   const params = await props.params
   const articleID = params.article_id
   const draftKey = searchParams['draftKey']
-  const imageSrcBase64 = decodeURIComponent(params.src)
-  const src = Buffer.from(imageSrcBase64, 'base64').toString('utf-8')
 
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
   const ogpImage = content.ogp_image
