@@ -2,19 +2,20 @@
 
 import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from 'lucide-react'
 import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Swiper, SwiperSlide, SwiperClass } from 'swiper/react'
 import { Button } from '../ui/button'
 import { getHeaderImageURL } from '@/lib/image'
 import ComicImage from '../small/comic_image'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { bandeDessineeResult } from 'api-types'
-import { Carousel, CarouselApi, CarouselContent, CarouselItem } from '../ui/carousel'
 import useWindowSize from '@/lib/hook/use_window_size'
 import { Switch } from '../ui/switch'
 import { Label } from '../ui/label'
 import { Slider } from '../ui/slider'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import ClientImage2 from '../small/client_image2'
+import 'swiper/css'
 
 type ComicBookProps = {
   cmsResult: Promise<bandeDessineeResult>
@@ -45,6 +46,8 @@ const initPageOption: pageOption = {
 // シングルモードとダブルモード（見開き）の切り替えの幅のしきい値
 // 指定未満の場合シングルモードになる
 const modeThreshold = 980
+// スクロールスピード
+const scrollSpeed = 100
 
 export default function ComicBook(props: ComicBookProps) {
   const { cmsResult } = props
@@ -65,14 +68,11 @@ export default function ComicBook(props: ComicBookProps) {
 
   const headerImage = getHeaderImageURL()
   const [currentPage, setCurrentPage] = useState(0)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [scrollSnaps, setScrollSnaps] = useState<number[]>()
   const [mode, setMode] = useState<'single' | 'double'>('single')
   const [pageOption, setPageOption] = useState<pageOption>(initPageOption)
-  const [api, setApi] = useState<CarouselApi>()
+  const [swiperInstance, setSwiperInstance] = useState<SwiperClass | null>(null)
   const [zoneFlag, setZoneFlag] = useState<'next' | 'prev' | 'none'>('none')
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [width, height] = useWindowSize()
+  const [width] = useWindowSize()
   const comicDivRef = useRef<HTMLDivElement>(null)
 
   const singlePageList = useMemo(() => {
@@ -142,14 +142,17 @@ export default function ComicBook(props: ComicBookProps) {
   }, [startPageLeftRight, coverPageSrc, backCoverPageSrc, originPageSrc])
 
   const leftClick = useCallback(() => {
-    api?.scrollNext()
-  }, [api])
+    if (!swiperInstance) return
+    swiperInstance.slideNext(scrollSpeed)
+  }, [swiperInstance])
 
   const rightClick = useCallback(() => {
-    api?.scrollPrev()
-  }, [api])
+    if (!swiperInstance) return
+    swiperInstance.slidePrev(scrollSpeed)
+  }, [swiperInstance])
 
   const keyEvent = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    console.log('keyEvent', e.code)
     const key = e.code
 
     if (key === 'ArrowLeft') {
@@ -190,15 +193,6 @@ export default function ComicBook(props: ComicBookProps) {
     setZoneFlag('none')
   }
 
-  const onInit = useCallback((api: CarouselApi) => {
-    setScrollSnaps(api?.scrollSnapList())
-  }, [])
-
-  const onSelected = useCallback((api: CarouselApi) => {
-    if (!api) return
-    setCurrentPage(api.selectedScrollSnap())
-  }, [])
-
   const changeContollerVisible = useCallback((controller_visible: boolean) => {
     setPageOption((props) => {
       const newProps = { ...props, controller_visible }
@@ -231,14 +225,6 @@ export default function ComicBook(props: ComicBookProps) {
   }, [])
 
   useEffect(() => {
-    if (!api) return
-
-    onInit(api)
-    onSelected(api)
-    api.on('reInit', onInit).on('reInit', onSelected).on('select', onSelected)
-  }, [api, onInit, onSelected])
-
-  useEffect(() => {
     if (width < modeThreshold) {
       if (mode === 'single' || pageOption.mode_static) return
       setMode('single')
@@ -261,7 +247,7 @@ export default function ComicBook(props: ComicBookProps) {
             <Link href="/">
               <ClientImage2
                 src={headerImage}
-                width={400}
+                width={300}
                 height={100}
                 alt="Maretol Base"
                 className="w-full h-auto object-contain"
@@ -277,67 +263,76 @@ export default function ComicBook(props: ComicBookProps) {
         onMouseMove={mouseMoveEvent}
         onMouseLeave={mouseLeaveEvent}
       >
-        <Carousel opts={{ direction: 'rtl', duration: 17 }} dir="rtl" setApi={setApi} className="h-full w-full">
-          <CarouselContent className="h-full w-full -pl-4">
-            {mode === 'single' &&
-              singlePageList.map((page, i) => (
-                <CarouselItem key={i} className="h-full w-max flex justify-center items-center pl-0">
-                  <div className="h-full w-max flex items-center">
-                    <ComicImage src={page.src} alt="" className="object-contain w-auto h-full" />
-                  </div>
-                </CarouselItem>
-              ))}
-            {mode === 'double' &&
-              doublePageList.map((page, i) => {
-                switch (page.position) {
-                  case 'center':
-                    if (typeof page.src !== 'string') return <div key={i}></div>
-                    return (
-                      <CarouselItem key={i} className="h-full w-full flex justify-center items-center">
+        <Swiper
+          dir={'rtl'}
+          speed={scrollSpeed}
+          onSwiper={setSwiperInstance}
+          onKeyDown={keyEvent}
+          onActiveIndexChange={(swiper) => {
+            setCurrentPage(swiper.activeIndex)
+          }}
+          className="h-full w-full"
+        >
+          {mode === 'single' &&
+            singlePageList.map((page, i) => (
+              <SwiperSlide key={i}>
+                <div className="flex justify-center items-center h-full w-full">
+                  <ComicImage src={page.src} alt="" className="object-contain w-auto h-full" />
+                </div>
+              </SwiperSlide>
+            ))}
+          {mode === 'double' &&
+            doublePageList.map((page, i) => {
+              switch (page.position) {
+                case 'center':
+                  if (typeof page.src !== 'string') return <div key={i}></div>
+                  return (
+                    <SwiperSlide key={i}>
+                      <div className="flex justify-center items-center h-full w-full">
                         <ComicImage src={page.src} alt="" className="object-contain h-full w-auto" />
-                      </CarouselItem>
-                    )
-                  case 'pair':
-                    if (typeof page.src === 'string') return <div key={i}></div>
-                    return (
-                      <CarouselItem key={i} className="h-full w-full">
-                        <div className="h-full w-full flex items-center">
-                          <div className="w-1/2 h-full flex justify-end items-center">
-                            <ComicImage src={page.src.left} alt="" className="w-auto h-full max-h-fit max-w-full" />
-                          </div>
-                          <div className="w-1/2 h-full flex justify-start items-center">
-                            <ComicImage src={page.src.right} alt="" className="w-auto h-full max-h-fit max-w-full" />
-                          </div>
+                      </div>
+                    </SwiperSlide>
+                  )
+                case 'pair':
+                  if (typeof page.src === 'string') return <div key={i}></div>
+                  return (
+                    <SwiperSlide key={i} className="h-full w-full">
+                      <div className="h-full w-full flex items-center">
+                        <div className="w-1/2 h-full flex justify-end items-center">
+                          <ComicImage src={page.src.left} alt="" className="w-auto h-full max-h-fit max-w-full" />
                         </div>
-                      </CarouselItem>
-                    )
-                  case 'left':
-                    if (typeof page.src !== 'string') return <div key={i}></div>
-                    return (
-                      <CarouselItem key={i} className="h-full w-full">
-                        <div className="h-full w-full flex items-center">
-                          <div className="w-1/2 h-full" />
-                          <div className="w-1/2 h-full flex justify-start items-center">
-                            <ComicImage src={page.src} alt="" className="w-auto h-full max-h-fit max-w-full" />
-                          </div>
+                        <div className="w-1/2 h-full flex justify-start items-center">
+                          <ComicImage src={page.src.right} alt="" className="w-auto h-full max-h-fit max-w-full" />
                         </div>
-                      </CarouselItem>
-                    )
-                  case 'right':
-                    if (typeof page.src !== 'string') return <div key={i}></div>
-                    return (
-                      <CarouselItem key={i} className="h-full w-full">
-                        <div className="h-full w-full flex items-center">
-                          <div className="w-1/2 h-full flex justify-end items-center">
-                            <ComicImage src={page.src} alt="" className="w-auto h-full max-h-fit max-w-full" />
-                          </div>
-                          <div className="w-1/2 h-full" />
+                      </div>
+                    </SwiperSlide>
+                  )
+                case 'left':
+                  if (typeof page.src !== 'string') return <div key={i}></div>
+                  return (
+                    <SwiperSlide key={i} className="h-full w-full">
+                      <div className="h-full w-full flex items-center">
+                        <div className="w-1/2 h-full" />
+                        <div className="w-1/2 h-full flex justify-start items-center">
+                          <ComicImage src={page.src} alt="" className="w-auto h-full max-h-fit max-w-full" />
                         </div>
-                      </CarouselItem>
-                    )
-                }
-              })}
-          </CarouselContent>
+                      </div>
+                    </SwiperSlide>
+                  )
+                case 'right':
+                  if (typeof page.src !== 'string') return <div key={i}></div>
+                  return (
+                    <SwiperSlide key={i} className="h-full w-full">
+                      <div className="h-full w-full flex items-center">
+                        <div className="w-1/2 h-full flex justify-end items-center">
+                          <ComicImage src={page.src} alt="" className="w-auto h-full max-h-fit max-w-full" />
+                        </div>
+                        <div className="w-1/2 h-full" />
+                      </div>
+                    </SwiperSlide>
+                  )
+              }
+            })}
           <div className={cn(pageOption.controller_disabled && 'hidden')} onKeyDown={keyEvent} tabIndex={0}>
             <ChevronLeftIcon
               className={cn(
@@ -356,7 +351,7 @@ export default function ComicBook(props: ComicBookProps) {
               )}
             />
           </div>
-        </Carousel>
+        </Swiper>
       </div>
       <div className="relative bg-gray-700 h-[4%] w-full text-white text-center flex justify-center items-center">
         <div className="flex justify-center items-center w-[90%]">
@@ -371,7 +366,7 @@ export default function ComicBook(props: ComicBookProps) {
                 onValueChange={(value: number[]) => {
                   const [v] = value
                   setCurrentPage(v)
-                  api?.scrollTo(v)
+                  swiperInstance?.slideTo(v)
                 }}
               />
               <p>
@@ -390,7 +385,7 @@ export default function ComicBook(props: ComicBookProps) {
                 onValueChange={(value: number[]) => {
                   const [v] = value
                   setCurrentPage(v)
-                  api?.scrollTo(v)
+                  swiperInstance?.slideTo(v)
                 }}
               />
               <p>
