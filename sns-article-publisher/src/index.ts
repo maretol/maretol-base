@@ -4,6 +4,7 @@ import PostNostrKind1, { NostrAuthInfo } from './nostr'
 import { Content, WebhookPayload } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import crypto from 'node:crypto'
+import NoteMisskey, { MisskeyAuthInfo } from './misskey'
 
 export interface Env {
   API_KEY: string
@@ -21,6 +22,8 @@ export interface Env {
   SNS_PUB_CMS_KEY: string
   SNS_PUB_CMS_SECRET: string
 
+  MISSKEY_API_TOKEN: string
+
   IMAGES: ImagesBinding
 }
 
@@ -29,7 +32,7 @@ const TARGET = {
   bluesky: true,
   nostr: true,
   mastodon: false,
-  misskey: false,
+  misskey: true,
 }
 
 export default class Publisher extends WorkerEntrypoint<Env> {
@@ -138,6 +141,17 @@ async function publish(
 
   // 3. Mastodon
   // 4. Misskey
+  if (TARGET['misskey']) {
+    console.log('post to Misskey')
+    const misskeyAuth = createMisskeyAuthInfo(env)
+    try {
+      await NoteMisskey(misskeyAuth, postText)
+    } catch (e) {
+      console.error('Error posting to Misskey:', e)
+    }
+  } else {
+    console.log('skip Misskey')
+  }
 
   // 5. nostr
   if (TARGET['nostr']) {
@@ -173,6 +187,12 @@ function createNostrAuthInfo(env: Env) {
   return {
     nsec: env.NOSTR_NSEC,
   } as NostrAuthInfo
+}
+
+function createMisskeyAuthInfo(env: Env) {
+  return {
+    apiToken: env.MISSKEY_API_TOKEN,
+  } as MisskeyAuthInfo
 }
 
 function publishNecessary(bodyJSON: WebhookPayload): boolean {
