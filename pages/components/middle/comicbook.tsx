@@ -3,6 +3,7 @@
 import { ChevronLeftIcon, ChevronRightIcon, SettingsIcon } from 'lucide-react'
 import React, { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Swiper, SwiperSlide, SwiperClass } from 'swiper/react'
+import { Keyboard } from 'swiper/modules'
 import { Button } from '../ui/button'
 import { getHeaderImageURL } from '@/lib/image'
 import ComicImage from '../small/comic_image'
@@ -47,7 +48,7 @@ const initPageOption: pageOption = {
 // 指定未満の場合シングルモードになる
 const modeThreshold = 980
 // スクロールスピード
-const scrollSpeed = 100
+const scrollSpeed = 150
 
 export default function ComicBook(props: ComicBookProps) {
   const { cmsResult } = props
@@ -151,18 +152,6 @@ export default function ComicBook(props: ComicBookProps) {
     swiperInstance.slidePrev(scrollSpeed)
   }, [swiperInstance])
 
-  const keyEvent = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    console.log('keyEvent', e.code)
-    const key = e.code
-
-    if (key === 'ArrowLeft') {
-      leftClick()
-    }
-    if (key === 'ArrowRight') {
-      rightClick()
-    }
-  }
-
   const mouseMoveEvent = (e: React.MouseEvent<HTMLDivElement>) => {
     const comicWidth = comicDivRef.current?.clientWidth
     if (!comicWidth) return
@@ -235,7 +224,7 @@ export default function ComicBook(props: ComicBookProps) {
   }, [mode, width, pageOption.mode_static])
 
   return (
-    <div className="h-[95svh] w-full bg-gray-700" onKeyDown={keyEvent} tabIndex={0}>
+    <div className="h-[95svh] w-full bg-gray-700" tabIndex={0}>
       <div
         className={cn(
           'absolute z-50 top-0 left-0 w-full flex justify-center items-center bg-gray-300',
@@ -264,13 +253,14 @@ export default function ComicBook(props: ComicBookProps) {
         onMouseLeave={mouseLeaveEvent}
       >
         <Swiper
+          modules={[Keyboard]}
           dir={'rtl'}
           speed={scrollSpeed}
           onSwiper={setSwiperInstance}
-          onKeyDown={keyEvent}
           onActiveIndexChange={(swiper) => {
             setCurrentPage(swiper.activeIndex)
           }}
+          keyboard={{ enabled: true }}
           className="h-full w-full"
         >
           {mode === 'single' &&
@@ -333,7 +323,7 @@ export default function ComicBook(props: ComicBookProps) {
                   )
               }
             })}
-          <div className={cn(pageOption.controller_disabled && 'hidden')} onKeyDown={keyEvent} tabIndex={0}>
+          <div className={cn(pageOption.controller_disabled && 'hidden')} tabIndex={0}>
             <ChevronLeftIcon
               className={cn(
                 'text-white h-20 w-20',
