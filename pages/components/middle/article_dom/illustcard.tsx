@@ -17,7 +17,7 @@ export default async function IllustCard({
   const linkPath = linkURL.pathname
   const illustID = linkPath.split('/')[3]
   const atelierData = await getAtelierByID(illustID)
-  const drawerLink = `/blog/${articleID}/illust/${illustID}` + (draftKey ? `?draftKey=${draftKey}` : '')
+  const drawerLink = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${draftKey}` : '')
 
   const title = atelierData.title
   const publishedAt = atelierData.publishedAt
