@@ -9,7 +9,6 @@ export default function BlogArticlePage(props: {
     <div>
       {props.children}
       {props.modal}
-      {props.drawer}
     </div>
   )
 }
