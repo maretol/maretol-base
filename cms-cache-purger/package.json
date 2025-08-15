@@ -7,7 +7,7 @@
     "@cloudflare/workers-types": "^4.20250813.0",
     "@types/node": "^24.2.1",
     "cms-cache-key-gen": "^1.0.0",
-    "wrangler": "^4.29.1"
+    "wrangler": "^4.30.0"
   },
   "scripts": {
     "deploy-prd": "wrangler deploy",
