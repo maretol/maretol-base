@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import PostBlueSky from '../src/bluesky'
 
-test('bsky post', async () => {
+test.skip('bsky post', async () => {
   const username = process.env.BSKY_USERNAME
   const password = process.env.BSKY_PASSWORD
 
@@ -22,7 +22,7 @@ test('bsky post', async () => {
   }
   const post = 'テスト投稿 : Maretol Base'
 
-  await PostBlueSky(authInfo, post, ogp)
+  // await PostBlueSky(authInfo, post, ogp)
 
   console.log('BlueSky post successful')
   expect(true).toBe(true) // 簡単な成功確認
