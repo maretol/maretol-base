@@ -14,8 +14,8 @@ export default function ComicImage({
   loading?: 'lazy' | 'eager'
   className?: string
 }) {
-  const imageLoader = ({ src, width, quority }: { src: string; width?: number; quority?: number }) => {
-    const option = `w=${width},q=${quority},f=webp`
+  const imageLoader = ({ src, width, quality }: { src: string; width?: number; quality?: number }) => {
+    const option = `w=${width},q=${quality},f=webp`
     return `https://www.maretol.xyz/cdn-cgi/image/${option}/${src}`
   }
 
