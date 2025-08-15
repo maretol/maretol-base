@@ -262,6 +262,7 @@ export default function ComicBook(props: ComicBookProps) {
           }}
           keyboard={{ enabled: true }}
           className="h-full w-full"
+          lazyPreloadPrevNext={4}
         >
           {mode === 'single' &&
             singlePageList.map((page, i) => (
