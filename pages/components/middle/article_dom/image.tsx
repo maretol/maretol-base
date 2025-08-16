@@ -14,8 +14,8 @@ export default async function ContentImage({
   subText: { [key: string]: string } | null
   articleID: string
 }) {
-  // originのsrcをbase64に変換する
-  const base64src = Buffer.from(src).toString('base64')
+  // originのsrcをbase64URLencodingに変換する
+  const base64src = btoa(src).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
   const caption = subText?.caption
   const title = subText?.title
 
