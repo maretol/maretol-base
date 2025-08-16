@@ -8,6 +8,7 @@ import { getOGPImageURL } from '@/lib/image'
 import { getHostname } from '@/lib/env'
 import { Metadata } from 'next'
 import LoadingIllustPage from './loading_illust'
+import ClientIllustPage from './client_page'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,6 +60,9 @@ export default async function IllustPage(props: {
     <div className="">
       <Suspense fallback={<LoadingIllustPage />}>
         <IllustSamples pageNumber={pageNumber} offset={offset} limit={limit} />
+      </Suspense>
+      <Suspense fallback={null}>
+        <ClientIllustPage />
       </Suspense>
     </div>
   )

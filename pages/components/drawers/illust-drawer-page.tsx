@@ -5,8 +5,8 @@ import IllustTags from '@/components/middle/illust_tags'
 import IllustDescription from '@/components/middle/illust_description'
 import { getHostname } from '@/lib/env'
 
-export default async function IllustDrawerPage({ id }: { id: string }) {
-  const atelier = await getAtelierByID(id)
+export default async function IllustDrawerPage({ id, draftKey }: { id: string; draftKey?: string }) {
+  const atelier = await getAtelierByID(id, draftKey)
   if (!atelier) {
     return <div>Atelier not found</div>
   }
