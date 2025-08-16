@@ -1,7 +1,5 @@
 import { getAtelierByID } from '@/lib/api/workers'
-import { convertJST } from '@/lib/time'
 import { Metadata } from 'next'
-import { OuterIllustArticle } from '@/components/large/illust_article'
 import { getOGPImageURL } from '@/lib/image'
 import ClientIllustPage from './client_page'
 
