@@ -1,8 +1,7 @@
 import { getAtelierByID } from '@/lib/api/workers'
-import { convertJST } from '@/lib/time'
 import { Metadata } from 'next'
-import { OuterIllustArticle } from '@/components/large/illust_article'
 import { getOGPImageURL } from '@/lib/image'
+import ClientIllustPage from './client_page'
 
 type Props = {
   params: Promise<{ id: string }>
@@ -48,32 +47,9 @@ export default async function IllustPage({ params, searchParams }: Props) {
   const { id } = await params
   const draftKey = (await searchParams)?.draftKey
 
-  const atelier = await getAtelierByID(id, draftKey)
-
-  if (!atelier) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">404</h1>
-          <p className="mt-2">イラストが見つかりません</p>
-        </div>
-      </div>
-    )
-  }
-
-  const publishedAt = convertJST(atelier.publishedAt)
-
   return (
     <div>
-      <OuterIllustArticle
-        id={atelier.id}
-        title={atelier.title}
-        imageSrc={atelier.src}
-        objectPosition="center"
-        tags={atelier.tag_or_category}
-        publishedAt={publishedAt}
-        description={atelier.parsed_description}
-      />
+      <ClientIllustPage illustID={id} draftKey={draftKey} />
     </div>
   )
 }
