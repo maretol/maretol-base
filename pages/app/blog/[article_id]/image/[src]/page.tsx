@@ -3,10 +3,11 @@
 import { getCMSContent } from '@/lib/api/workers'
 import { contentsAPIResult } from 'api-types'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
-import { ImageArticle } from '@/components/large/article'
 import { metadata } from '@/app/layout'
 import { Metadata } from 'next'
 import { getHostname } from '@/lib/env'
+import { Suspense } from 'react'
+import ImageRedirectPage from './client_page'
 
 // metadata定義
 export async function generateMetadata(props: {
@@ -52,29 +53,16 @@ export default async function ImagePage(props: {
   params: Promise<{ article_id: string; src: string }>
   searchParams: Promise<{ [key: string]: string | undefined }>
 }) {
-  const searchParams = await props.searchParams
   const params = await props.params
-  // base64エンコーディングだが、パスパラメータに入った時点でURIエンコードもされているため先にそのデコードをする
-  const imageSrcBase64 = decodeURIComponent(params.src)
-  const imageSrc = Buffer.from(imageSrcBase64, 'base64').toString('utf-8')
 
+  const imageSrcBase64 = params.src
   const articleID = params.article_id
-  const draftKey = searchParams['draftKey']
 
-  const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
-
-  const shareURL = `${getHostname()}/blog/${articleID}/image/${params.src}`
   return (
     <div>
-      <ImageArticle
-        id={content.id}
-        title={`IMAGE: ${content.title}`}
-        imageSrc={imageSrc}
-        shareURL={shareURL}
-        updatedAt={''}
-        parsedContents={[]}
-        categories={content.categories}
-      />
+      <Suspense fallback={null}>
+        <ImageRedirectPage articleID={articleID} imageSrcBase64={imageSrcBase64} />
+      </Suspense>
     </div>
   )
 }
