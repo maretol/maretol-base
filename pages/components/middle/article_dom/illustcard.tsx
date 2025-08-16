@@ -4,15 +4,7 @@ import { getAtelierByID } from '@/lib/api/workers'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
-export default async function IllustCard({
-  link,
-  articleID,
-  draftKey,
-}: {
-  link: string
-  articleID: string
-  draftKey?: string
-}) {
+export default async function IllustCard({ link, draftKey }: { link: string; draftKey?: string }) {
   const linkURL = new URL(link)
   const linkPath = linkURL.pathname
   const illustID = linkPath.split('/')[3]

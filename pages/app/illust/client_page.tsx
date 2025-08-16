@@ -15,8 +15,12 @@ export default function ClientIllustPage() {
     // クライアントサイドで /illust にリダイレクトする
     // metadataの都合、http redirectで転送はしない
     const target = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${draftKey}` : '')
+
+    // history の /illust?illust_id=... を /illust に置換する
+    window.history.replaceState(null, '', '/illust')
+
     router.push(target)
-  }, [illustID, router])
+  }, [illustID, router, draftKey])
 
   return <></>
 }
