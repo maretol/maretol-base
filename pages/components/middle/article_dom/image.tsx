@@ -24,7 +24,7 @@ export default async function ContentImage({
   if (tag === 'content_image') {
     return (
       // ここに画像のモーダルを実装する
-      <div className="w-fit mx-3">
+      <div className="w-fit mx-3" id={base64src}>
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
@@ -54,7 +54,7 @@ export default async function ContentImage({
     return <p>{src}</p>
   } else if (tag === 'content_photo') {
     return (
-      <div className={cn('bg-indigo-200 p-2 rounded-xs w-full max-w-2/5 mx-3')}>
+      <div className={cn('bg-indigo-200 p-2 rounded-xs w-full max-w-2/5 mx-3')} id={base64src}>
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
