@@ -54,6 +54,7 @@ interface CacheConfig {
 interface APIConfig<TResult> extends CacheConfig {
   fetcher: () => Promise<TResult>
   defaultResult: TResult
+  shouldCache?: (result: TResult) => boolean
 }
 
 // キャッシュ付きAPI関数（環境非依存）
@@ -71,8 +72,11 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
   try {
     const res = await config.fetcher()
 
-    // キャッシュの保存（skipCacheがfalseの場合のみ）
-    if (!config.skipCache) {
+    // shouldCacheコールバックでキャッシュ保存を判定
+    const shouldSaveCache = config.shouldCache ? config.shouldCache(res) : true
+
+    // キャッシュの保存（skipCacheがfalseかつshouldSaveCacheがtrueの場合のみ）
+    if (!config.skipCache && shouldSaveCache) {
       const expirationTtl = dev ? 60 : config.cacheTTL
       await config.cacheStore.put(config.cacheKey, JSON.stringify(res), { expirationTtl })
     }
@@ -218,6 +222,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
           )
       : () => env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr),
     defaultResult,
+    shouldCache: (result) => result.contents.length > 0, // コンテンツがある場合のみキャッシュ
   })
 }
 
