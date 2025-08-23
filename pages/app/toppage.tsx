@@ -77,7 +77,7 @@ export default async function TopPage() {
           <div>
             <TopPageTitle>
               <NotebookTextIcon className="w-6 h-6" />
-              Articles
+              Blog Articles
             </TopPageTitle>
           </div>
           {blogs.contents.slice(0, 3).map((content) => (
