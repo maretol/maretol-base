@@ -4,10 +4,9 @@ import { convertJST } from '@/lib/time'
 import Tags from '../middle/tags'
 import { Button } from '../ui/button'
 import ShareButton from '../small/share'
-import { ArrowBigLeft, BookIcon, HomeIcon } from 'lucide-react'
+import { BookIcon, HomeIcon } from 'lucide-react'
 import ArticleContent from '../middle/article_content'
 import { categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
-import ClientImage2 from '../small/client_image2'
 
 type ArticleProps = {
   id: string
@@ -101,60 +100,6 @@ export async function FullArticle({
           tableOfContents={tableOfContents}
           draftKey={draftKey}
         />
-      </CardContent>
-      <CardFooter>
-        <div className="w-full">
-          <div className="flex gap-1 items-center justify-end">
-            <ShareButton variant="twitter" url={shareURL} title={title} />
-            <ShareButton variant="bluesky" url={shareURL} title={title} />
-            <ShareButton variant="facebook" url={shareURL} title={title} />
-            <ShareButton variant="copy_and_paste" url={shareURL} title={title} />
-          </div>
-          <div className="flex justify-center mt-2">
-            <Button variant="secondary" className="w-96 flex justify-center gap-1" asChild>
-              <Link href="/">
-                <HomeIcon className="w-5 h-5" />
-                <h2 className="text-xl">Home</h2>
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </CardFooter>
-    </Card>
-  )
-}
-
-export function ImageArticle({ id, title, categories, imageSrc, shareURL }: ImageArticleProps) {
-  return (
-    <Card className="w-full bg-gray-100">
-      <CardHeader>
-        <CardTitleH1>
-          <div className="text-base">Image</div>
-          <div className="">{title}</div>
-        </CardTitleH1>
-        <CardContent className="pl-0 pt-2 pb-0">
-          <Tags tags={categories} />
-        </CardContent>
-      </CardHeader>
-      <CardContent className="my-8">
-        <div className="flex justify-center shadow-lg">
-          <ClientImage2
-            src={imageSrc}
-            alt={title}
-            width={500}
-            height={500}
-            format={'auto'}
-            className="w-full h-auto object-contain"
-          />
-        </div>
-        <div className="my-8 flex justify-center">
-          <Button variant="secondary" className="w-96 text-base" asChild>
-            <Link href={`/blog/${id}`}>
-              <ArrowBigLeft className="w-5 h-5" />
-              Back to article of this image
-            </Link>
-          </Button>
-        </div>
       </CardContent>
       <CardFooter>
         <div className="w-full">
