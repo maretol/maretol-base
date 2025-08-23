@@ -1,5 +1,5 @@
-import BlogLayout from '@/components/large/blog_layout'
+import BaseLayout from '@/components/large/base_layout'
 
 export default function ContactLayout({ children }: { children: React.ReactNode }) {
-  return <BlogLayout>{children}</BlogLayout>
+  return <BaseLayout>{children}</BaseLayout>
 }
