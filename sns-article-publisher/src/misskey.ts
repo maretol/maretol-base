@@ -1,3 +1,5 @@
+import { Env } from '.'
+
 type MisskeyAuthInfo = {
   apiToken: string
 }
@@ -25,6 +27,12 @@ async function NoteMisskey(authInfo: MisskeyAuthInfo, note: string): Promise<voi
   return
 }
 
+function createMisskeyAuthInfo(env: Env) {
+  return {
+    apiToken: env.MISSKEY_API_TOKEN,
+  } as MisskeyAuthInfo
+}
+
 export default NoteMisskey
 
-export { MisskeyAuthInfo }
+export { createMisskeyAuthInfo, MisskeyAuthInfo }

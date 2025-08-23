@@ -92,6 +92,13 @@ async function translateImage(env: Env, imageStream: ReadableStream): Promise<Ui
   return arrayBuffer
 }
 
+function createBlueSkyAuthInfo(env: Env) {
+  return {
+    username: env.BSKY_USERNAME,
+    password: env.BSKY_PASSWORD,
+  } as BlueSkyAuthInfo
+}
+
 export default PostBlueSky
 
-export { BlueSkyAuthInfo }
+export { createBlueSkyAuthInfo, BlueSkyAuthInfo }

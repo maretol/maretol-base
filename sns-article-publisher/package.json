@@ -10,7 +10,10 @@
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest run",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "test-twitter": "vitest run test/twitter.test.ts",
+    "test-nostr": "vitest run test/nostr.test.ts",
+    "test-misskey": "vitest run test/misskey.test.ts"
   },
   "dependencies": {
     "@atproto/api": "^0.16.3",

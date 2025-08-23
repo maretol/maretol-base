@@ -1,5 +1,6 @@
 import { finalizeEvent, verifyEvent } from 'nostr-tools/pure'
 import { nip19, SimplePool } from 'nostr-tools'
+import { Env } from '.'
 
 type NostrAuthInfo = {
   nsec: string
@@ -69,6 +70,12 @@ function parseNsec(nsec: string): Uint8Array {
   return secretKey
 }
 
+function createNostrAuthInfo(env: Env) {
+  return {
+    nsec: env.NOSTR_NSEC,
+  } as NostrAuthInfo
+}
+
 export default PostNostrKind1
 
-export { NostrAuthInfo }
+export { createNostrAuthInfo, NostrAuthInfo }
