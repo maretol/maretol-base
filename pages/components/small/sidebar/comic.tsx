@@ -49,7 +49,7 @@ export default async function ComicSidebar({ bandeDessinees }: { bandeDessinees:
 
 function ComicLink({ id, title, publishedAt, coverImage }: comic) {
   return (
-    <div className="mb-4 w-full relative">
+    <div className="mb-4 relative w-full">
       <Link href={`/comics/${id}`} className="hover:underline">
         <div className="bg-gray-200 p-4">
           <ClientImage2
