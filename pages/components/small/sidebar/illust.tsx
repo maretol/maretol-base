@@ -54,8 +54,8 @@ export default async function IllustSidebar({ atelier }: { atelier: atelierResul
 
 function IllustLink({ id, title, imageSrc, publishedAt, objectPosition }: illust) {
   return (
-    <div className="mb-4">
-      <Link href={`/illust/detail/${id}`} className="hover:underline relative">
+    <div className="mb-4 relative w-full">
+      <Link href={`/illust/detail/${id}`} className="hover:underline">
         <div className="bg-gray-200 p-4">
           <ClientImage2
             src={imageSrc}

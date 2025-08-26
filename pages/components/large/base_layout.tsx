@@ -17,7 +17,7 @@ export default function BaseLayout({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex justify-center pb-10" id="top">
-      <div className="max-w-[2000px] w-full sm:mx-6">
+      <div className="max-w-[1700px] w-full sm:mx-6">
         <div className="my-10">
           <div className="mb-2 pt-2">
             <Button variant={'link'} className="p-0" asChild>

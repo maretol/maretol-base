@@ -1,6 +1,7 @@
 import ClientImage2 from '@/components/small/client_image2'
 import { Button } from '@/components/ui/button'
 import { getAtelierByID } from '@/lib/api/workers'
+import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -12,7 +13,7 @@ export default async function IllustCard({ link, draftKey }: { link: string; dra
   const drawerLink = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${draftKey}` : '')
 
   const title = atelierData.title
-  const publishedAt = atelierData.publishedAt
+  const publishedAt = convertJST(atelierData.publishedAt)
   const illustSrc = atelierData.src
   const objectPosition = atelierData.object_position || 'center'
 

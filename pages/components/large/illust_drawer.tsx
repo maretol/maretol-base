@@ -34,7 +34,7 @@ export default function IllustDrawer({
             width={0}
             height={0}
             quality={90}
-            className="w-full h-full max-h-svh object-contain"
+            className="w-full h-full max-h-dvh object-contain"
           />
         </div>
       </div>
