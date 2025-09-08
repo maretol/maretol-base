@@ -18,6 +18,7 @@ import LoadingComicCard from '../../loading_dom/loading_comiccard'
 import IllustCard from '../../article_dom/illustcard'
 import MySiteCard from '../../article_dom/mysitecard'
 import LoadingIllustCard from '../../loading_dom/loading_illustcard'
+import NofetchLinkCard from '../../article_dom/nofetch_link'
 
 export function renderParagraph(content: ParsedContent, context: RenderContext): JSX.Element | null {
   const pOption = content.p_option as POptionType | null
@@ -41,6 +42,7 @@ export function renderParagraph(content: ParsedContent, context: RenderContext):
     illust_detail: () => renderIllust(content, context),
     empty: () => renderEmpty(content, context),
     table_of_contents: () => renderTableOfContents(content, context),
+    nofetch_url: () => renderNofetchURL(content, context),
     block_start: () => null, // TODO: Implement block handling
     block_end: () => null, // TODO: Implement block handling
   }
@@ -105,6 +107,18 @@ function renderURL(content: ParsedContent, context: RenderContext): JSX.Element 
       <Suspense fallback={<LoadingLinkcard link={content.text} />}>
         <LinkCard link={content.text} />
       </Suspense>
+    </div>
+  )
+}
+
+function renderNofetchURL(content: ParsedContent, context: RenderContext): JSX.Element {
+  const url = content.sub_texts?.url
+  const title = content.sub_texts?.title
+  const description = content.sub_texts?.description
+
+  return (
+    <div key={context.index} className="py-3">
+      <NofetchLinkCard url={url} title={title} description={description} />
     </div>
   )
 }

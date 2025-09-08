@@ -23,6 +23,7 @@ export type POptionType =
   | 'comic'
   | 'empty'
   | 'table_of_contents'
+  | 'nofetch_url'
   | 'block_start'
   | 'block_end'
 

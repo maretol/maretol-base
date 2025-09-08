@@ -69,3 +69,5 @@ h1 を記事タイトルに使用している都合、CMS の h1 はブログ内
 現状対応しているコマンドは以下の通り
 
 - `/table_of_contents` : 目次。目次となる対象は見出しコンテンツ（つまり h1~h5）で、かつ `<span class="index">` の指定が必要。こちらの指定は CMS の機能で付与する
+- `/nofetch_url` : サーバサイドで OGP データを取得しない URL・リンクカード。指定パラメータは画像のキャプション等と同じで `/nofetch_url@@url::https://example.com` と入力する
+  - 対応しているパラメータは `url`, `title`, `description` の 3 つ。URL のみ必須
