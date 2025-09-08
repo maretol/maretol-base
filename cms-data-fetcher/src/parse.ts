@@ -45,7 +45,8 @@ function getPOption(text: string) {
     if (text === '') {
       return 'empty'
     } else if (isCommand(text)) {
-      return text.replaceAll('/', '')
+      const mainText = getText(text)
+      return mainText.replaceAll('/', '')
     }
     return 'normal'
   }
