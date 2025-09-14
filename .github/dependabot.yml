@@ -23,7 +23,7 @@ updates:
       - dependency-type: 'all'
     ignore:
       - dependency-name: 'sns-article-publisher'
-      - dependensy-name: 'cms-cache-purger'
+      - dependency-name: 'cms-cache-purger'
       - dependency-name: 'cms-data-fetcher'
       - dependency-name: 'ogp-data-fetcher'
       - dependency-name: 'pages'
