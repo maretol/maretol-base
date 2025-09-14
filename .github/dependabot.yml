@@ -10,6 +10,10 @@ updates:
       - 'sns-article-publisher/'
     schedule:
       interval: 'daily'
+    cooldown:
+      default-days: 7
+      include:
+        - '*'
     groups:
       dependencies:
         patterns:
@@ -19,8 +23,23 @@ updates:
       - dependency-type: 'all'
     ignore:
       - dependency-name: 'sns-article-publisher'
+      - dependency-name: 'cms-cache-purger'
+      - dependency-name: 'cms-data-fetcher'
+      - dependency-name: 'ogp-data-fetcher'
+      - dependency-name: 'pages'
+      - dependency-name: 'packages/*'
+      - dependency-name: 'next'
+        update-types:
+          - 'version-update:semver-major'
+      - dependency-name: '@opennextjs/cloudflare'
+        update-types:
+          - 'version-update:semver-major'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'daily'
     target-branch: 'development'
+    cooldown:
+      default-days: 7
+      include:
+        - '*'
