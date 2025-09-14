@@ -12,7 +12,8 @@ updates:
       interval: 'daily'
     cooldown:
       default-days: 7
-      include: '*'
+      include:
+        - '*'
     groups:
       dependencies:
         patterns:
