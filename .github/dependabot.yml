@@ -26,8 +26,7 @@ updates:
       - dependency-name: 'cms-data-fetcher'
       - dependency-name: 'ogp-data-fetcher'
       - dependency-name: 'pages'
-      - dependency-name: 'api-types'
-      - dependency-name: 'cms-cache-key-gen'
+      - dependency-name: 'packages/*'
       - dependency-name: 'next'
         update-types: ['version-update:semver-major']
       - dependency-name: '@opennextjs/cloudflare'
