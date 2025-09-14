@@ -29,11 +29,17 @@ updates:
       - dependency-name: 'pages'
       - dependency-name: 'packages/*'
       - dependency-name: 'next'
-        update-types: ['version-update:semver-major']
+        update-types:
+          - 'version-update:semver-major'
       - dependency-name: '@opennextjs/cloudflare'
-        update-types: ['version-update:semver-major']
+        update-types:
+          - 'version-update:semver-major'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'daily'
     target-branch: 'development'
+    cooldown:
+      default-days: 7
+      include:
+        - '*'
