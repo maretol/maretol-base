@@ -38,6 +38,12 @@ type pageOption = {
   controller_disabled: boolean // コントローラー無効
 }
 
+// 現在表示中のコンテンツを識別する型
+type ContentPosition = {
+  type: 'cover' | 'content' | 'backCover'
+  pageIndex?: number // contentの場合のみ、originPageSrc配列のインデックス
+}
+
 const initPageOption: pageOption = {
   mode_static: false,
   controller_visible: false,
@@ -75,6 +81,9 @@ export default function ComicBook(props: ComicBookProps) {
   const [zoneFlag, setZoneFlag] = useState<'next' | 'prev' | 'none'>('none')
   const [width] = useWindowSize()
   const comicDivRef = useRef<HTMLDivElement>(null)
+  const [contentPosition, setContentPosition] = useState<ContentPosition>(
+    coverPageSrc ? { type: 'cover' } : { type: 'content', pageIndex: 0 }
+  )
 
   const singlePageList = useMemo(() => {
     const pageList: siglePageState[] = []
@@ -103,6 +112,161 @@ export default function ComicBook(props: ComicBookProps) {
 
     return pageList
   }, [startPageLeftRight, coverPageSrc, backCoverPageSrc, originPageSrc])
+
+  // シングルモードのスライドインデックスからコンテンツ位置を取得
+  const getContentPositionFromSingleIndex = useCallback(
+    (index: number): ContentPosition => {
+      let currentIndex = 0
+
+      // 表紙
+      if (coverPageSrc) {
+        if (index === currentIndex) return { type: 'cover' }
+        currentIndex++
+      }
+
+      // 本文ページ
+      const contentPageCount = originPageSrc.length
+      if (index < currentIndex + contentPageCount) {
+        return { type: 'content', pageIndex: index - currentIndex }
+      }
+      currentIndex += contentPageCount
+
+      // 裏表紙
+      if (backCoverPageSrc && index === currentIndex) {
+        return { type: 'backCover' }
+      }
+
+      // フォールバック
+      return { type: 'content', pageIndex: 0 }
+    },
+    [coverPageSrc, backCoverPageSrc, originPageSrc]
+  )
+
+  // ダブルモードのスライドインデックスからコンテンツ位置を取得
+  const getContentPositionFromDoubleIndex = useCallback(
+    (index: number): ContentPosition => {
+      let currentIndex = 0
+
+      // 表紙
+      if (coverPageSrc) {
+        if (index === currentIndex) return { type: 'cover' }
+        currentIndex++
+      }
+
+      // 本文ページの処理
+      if (startPageLeftRight === 'left') {
+        // 最初の単独ページ
+        if (index === currentIndex) {
+          return { type: 'content', pageIndex: 0 }
+        }
+        currentIndex++
+
+        // ペアページ
+        const remainingPages = originPageSrc.length - 1
+        const pairCount = Math.floor(remainingPages / 2)
+        if (index < currentIndex + pairCount) {
+          const pairIndex = index - currentIndex
+          // ペアの左ページを基準とする
+          return { type: 'content', pageIndex: 1 + pairIndex * 2 }
+        }
+        currentIndex += pairCount
+
+        // 最後の単独ページがある場合
+        if (remainingPages % 2 === 1) {
+          if (index === currentIndex) {
+            return { type: 'content', pageIndex: originPageSrc.length - 1 }
+          }
+          currentIndex++
+        }
+      } else {
+        // startPageLeftRight === 'right'
+        const pairCount = Math.floor(originPageSrc.length / 2)
+        if (index < currentIndex + pairCount) {
+          const pairIndex = index - currentIndex
+          // ペアの左ページを基準とする
+          return { type: 'content', pageIndex: pairIndex * 2 }
+        }
+        currentIndex += pairCount
+
+        // 最後の単独ページがある場合
+        if (originPageSrc.length % 2 === 1) {
+          if (index === currentIndex) {
+            return { type: 'content', pageIndex: originPageSrc.length - 1 }
+          }
+          currentIndex++
+        }
+      }
+
+      // 裏表紙
+      if (backCoverPageSrc && index === currentIndex) {
+        return { type: 'backCover' }
+      }
+
+      // フォールバック
+      return { type: 'content', pageIndex: 0 }
+    },
+    [coverPageSrc, backCoverPageSrc, originPageSrc, startPageLeftRight]
+  )
+
+  // コンテンツ位置からシングルモードのスライドインデックスを取得
+  const getSingleIndexFromContentPosition = useCallback(
+    (position: ContentPosition): number => {
+      let index = 0
+
+      if (position.type === 'cover') return 0
+
+      if (coverPageSrc) index++
+
+      if (position.type === 'content' && position.pageIndex !== undefined) {
+        return index + position.pageIndex
+      }
+
+      if (position.type === 'backCover') {
+        index += originPageSrc.length
+        return index
+      }
+
+      return 0
+    },
+    [coverPageSrc, originPageSrc]
+  )
+
+  // コンテンツ位置からダブルモードのスライドインデックスを取得
+  const getDoubleIndexFromContentPosition = useCallback(
+    (position: ContentPosition): number => {
+      let index = 0
+
+      if (position.type === 'cover') return 0
+
+      if (coverPageSrc) index++
+
+      if (position.type === 'content' && position.pageIndex !== undefined) {
+        const pageIdx = position.pageIndex
+
+        if (startPageLeftRight === 'left') {
+          if (pageIdx === 0) return index
+          // ページ1以降はペアで管理
+          return index + 1 + Math.floor((pageIdx - 1) / 2)
+        } else {
+          // 最初からペアで管理
+          return index + Math.floor(pageIdx / 2)
+        }
+      }
+
+      if (position.type === 'backCover') {
+        // 本文ページ数に基づいて計算
+        if (startPageLeftRight === 'left') {
+          index += 1 + Math.ceil((originPageSrc.length - 1) / 2)
+        } else {
+          index += Math.ceil(originPageSrc.length / 2)
+        }
+        return index
+      }
+
+      return 0
+    },
+    [coverPageSrc, originPageSrc, startPageLeftRight]
+  )
 
   const doublePageList = useMemo(() => {
     const pageList: doublePageState[] = []
@@ -213,15 +377,57 @@ export default function ComicBook(props: ComicBookProps) {
     }
   }, [])
 
+  // モード切り替え時にページ位置を維持する
   useEffect(() => {
     if (width < modeThreshold) {
       if (mode === 'single' || pageOption.mode_static) return
+
+      // doubleからsingleへの切り替え
+      const currentContent = getContentPositionFromDoubleIndex(currentPage)
+      const newIndex = getSingleIndexFromContentPosition(currentContent)
+
+      console.log('[Mode Switch] Double -> Single', {
+        currentPage,
+        currentContent,
+        newIndex,
+        doublePageListLength: doublePageList.length,
+        singlePageListLength: singlePageList.length
+      })
+
       setMode('single')
+      setContentPosition(currentContent)
+
+      // モード切り替え後にページを移動
+      setTimeout(() => {
+        swiperInstance?.slideTo(newIndex, 0)
+      }, 50)
     } else {
       if (mode === 'double' || pageOption.mode_static) return
+
+      // singleからdoubleへの切り替え
+      const currentContent = getContentPositionFromSingleIndex(currentPage)
+      const newIndex = getDoubleIndexFromContentPosition(currentContent)
+
+      console.log('[Mode Switch] Single -> Double', {
+        currentPage,
+        currentContent,
+        newIndex,
+        singlePageListLength: singlePageList.length,
+        doublePageListLength: doublePageList.length
+      })
+
       setMode('double')
+      setContentPosition(currentContent)
+
+      // モード切り替え後にページを移動
+      setTimeout(() => {
+        swiperInstance?.slideTo(newIndex, 0)
+      }, 50)
     }
-  }, [mode, width, pageOption.mode_static])
+  }, [mode, width, pageOption.mode_static, currentPage, swiperInstance,
+      getContentPositionFromSingleIndex, getContentPositionFromDoubleIndex,
+      getSingleIndexFromContentPosition, getDoubleIndexFromContentPosition,
+      singlePageList.length, doublePageList.length])
 
   return (
     <div className="h-[95svh] w-full bg-gray-700" tabIndex={0}>
@@ -259,6 +465,17 @@ export default function ComicBook(props: ComicBookProps) {
           onSwiper={setSwiperInstance}
           onActiveIndexChange={(swiper) => {
             setCurrentPage(swiper.activeIndex)
+            // 現在のコンテンツ位置を更新
+            const newPosition = mode === 'single'
+              ? getContentPositionFromSingleIndex(swiper.activeIndex)
+              : getContentPositionFromDoubleIndex(swiper.activeIndex)
+            setContentPosition(newPosition)
+
+            console.log('[Page Change]', {
+              mode,
+              slideIndex: swiper.activeIndex,
+              contentPosition: newPosition
+            })
           }}
           keyboard={{ enabled: true }}
           className="h-full w-full"
@@ -362,6 +579,10 @@ export default function ComicBook(props: ComicBookProps) {
               />
               <p>
                 Page: {currentPage + 1}/{singlePageList.length}
+                {contentPosition.type === 'cover' && ' (表紙)'}
+                {contentPosition.type === 'backCover' && ' (裏表紙)'}
+                {contentPosition.type === 'content' && contentPosition.pageIndex !== undefined &&
+                  ` (本文: ${contentPosition.pageIndex + 1}/${originPageSrc.length})`}
               </p>
             </div>
           )}
@@ -381,6 +602,10 @@ export default function ComicBook(props: ComicBookProps) {
               />
               <p>
                 Page: {currentPage + 1}/{doublePageList.length}
+                {contentPosition.type === 'cover' && ' (表紙)'}
+                {contentPosition.type === 'backCover' && ' (裏表紙)'}
+                {contentPosition.type === 'content' && contentPosition.pageIndex !== undefined &&
+                  ` (本文: ${contentPosition.pageIndex + 1}/${originPageSrc.length})`}
               </p>
             </div>
           )}
