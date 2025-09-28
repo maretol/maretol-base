@@ -36,7 +36,7 @@ export default function BaseLayout({ children }: { children: React.ReactNode }) 
         </div>
         {children}
         <div className="my-10">
-          <footer className="text-center text-sm text-gray-500">
+          <footer className="text-center text-sm text-gray-500 font-suse">
             <FooterButtons />
             <div>
               © 2024 - {year} Maretol

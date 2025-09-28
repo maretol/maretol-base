@@ -75,6 +75,10 @@
   }
 }
 
+.alphabet {
+  font-family: var(--font-suse);
+}
+
 ol {
   @apply pl-6;
   counter-reset: number;

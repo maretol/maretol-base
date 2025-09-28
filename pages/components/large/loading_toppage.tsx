@@ -87,7 +87,7 @@ export function LoadingTopPage() {
             </Card>
           ))}
           <div className="w-full">
-            <Button asChild variant="outline" className="w-full bg-gray-100 hover:bg-white">
+            <Button asChild variant="outline" className="w-full bg-gray-100 hover:bg-white font-suse">
               <Link href="/blog">See all blog articles</Link>
             </Button>
           </div>
@@ -104,14 +104,21 @@ export function LoadingTopPage() {
             <Button asChild variant="outline" className="w-full max-w-96">
               <Link href="/about">
                 <div className="flex items-center gap-2">
-                  <InfoIcon className="h-6 w-6" /> <p>About : このサイトについて</p>
+                  <InfoIcon className="h-6 w-6" />
+                  <p>
+                    <span className="alphabet">About :</span> このサイトについて
+                  </p>
                 </div>
               </Link>
             </Button>
             <Button asChild variant="outline" className="w-full max-w-96">
               <Link href="/contact">
                 <div className="flex items-center gap-2">
-                  <MailIcon className="h-6 w-6" /> <p>Contact : 連絡はこちら</p>
+                  <MailIcon className="h-6 w-6" />
+                  <p>
+                    <span className="alphabet">Contact :</span>
+                    連絡はこちら
+                  </p>
                 </div>
               </Link>
             </Button>
