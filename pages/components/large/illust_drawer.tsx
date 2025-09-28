@@ -39,7 +39,7 @@ export default function IllustDrawer({
         </div>
       </div>
       <div className="flex justify-between p-4">
-        <Button variant={'outline'} asChild>
+        <Button variant={'outline'} asChild className="font-suse">
           <Link
             href={`https://www.maretol.xyz/cdn-cgi/image/f=auto,q=100/${imageSrc}`}
             target={'_blank'}
@@ -67,7 +67,7 @@ export default function IllustDrawer({
             Close
           </Button>
         </DrawerClose>
-        <p>Drawn by Maretol. © {publishedAt.substring(0, 4)} Maretol</p>
+        <p className="font-suse">Drawn by Maretol. © {publishedAt.substring(0, 4)} Maretol</p>
       </DrawerFooter>
     </>
   )

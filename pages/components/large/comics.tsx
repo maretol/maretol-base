@@ -91,7 +91,7 @@ export async function ComicOverview(props: ComicArticleProps) {
         </div>
       </div>
       <CardFooter>
-        <Button variant="default" className="w-full gap-1" asChild>
+        <Button variant="default" className="w-full gap-1 font-suse" asChild>
           <Link href={linkURL}>
             <BookImageIcon className="w-4 h-4" />
             Read This
@@ -127,13 +127,18 @@ export function ComicDetailPage(props: ComicArticleProps) {
             <ShareButton variant="copy_and_paste" url={url} title={props.titleName} />
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
-            <Button disabled={!isNextExist} variant="secondary" className="w-80 gap-1" asChild={isNextExist}>
+            <Button disabled={!isNextExist} variant="secondary" className="w-80 gap-1 font-suse" asChild={isNextExist}>
               <Link href={nextLink} className="flex items-center justify-center gap-1">
                 <ArrowLeftSquareIcon className="w-4 h-4" />
                 Next episode
               </Link>
             </Button>
-            <Button disabled={!isPreviousExist} variant="secondary" className="w-80 gap-1" asChild={isPreviousExist}>
+            <Button
+              disabled={!isPreviousExist}
+              variant="secondary"
+              className="w-80 gap-1 font-suse"
+              asChild={isPreviousExist}
+            >
               <Link href={previousLink} className="flex items-center justify-center gap-1">
                 Previous episode
                 <ArrowRightSquareIcon className="w-4 h-4" />
@@ -141,7 +146,7 @@ export function ComicDetailPage(props: ComicArticleProps) {
             </Button>
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
-            <Button disabled={!isSereies} variant="secondary" className="w-80 gap-1" asChild={isSereies}>
+            <Button disabled={!isSereies} variant="secondary" className="w-80 gap-1 font-suse" asChild={isSereies}>
               <Link href={seriesLink} className="flex items-center justify-center gap-1">
                 <ArrowUpSquareIcon className="w-4 h-4" />
                 This series
@@ -168,13 +173,13 @@ export function ComicDetailPage(props: ComicArticleProps) {
           </div>
         </div>
         <div className="space-x-4 flex justify-center">
-          <Button className="w-48 gap-1" asChild>
+          <Button className="w-48 gap-1 font-suse" asChild>
             <Link href="/comics">
               <BookImageIcon className="w-4 h-4" />
               Comics Page Top
             </Link>
           </Button>
-          <Button className="w-48 gap-1" asChild>
+          <Button className="w-48 gap-1 font-suse" asChild>
             <Link href="/">
               <HomeIcon className="w-4 h-4" />
               Page Home
