@@ -14,7 +14,7 @@ const fontMPlus1 = M_PLUS_1({
   preload: false,
 })
 
-export const fontTitle = SUSE({
+const fontSuse = SUSE({
   subsets: ['latin'],
   variable: '--font-suse',
   display: 'swap',
@@ -59,7 +59,7 @@ export default async function RootLayout({ children, drawer }: { children: React
           'min-h-screen antialiased bg-gray-300',
           fontMPlus1.className,
           fontMPlus1.variable,
-          fontTitle.variable
+          fontSuse.variable
         )}
       >
         {children}
