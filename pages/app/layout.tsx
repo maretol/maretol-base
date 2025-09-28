@@ -1,6 +1,6 @@
 import React from 'react'
 import type { Metadata, Viewport } from 'next'
-import { M_PLUS_1 } from 'next/font/google'
+import { M_PLUS_1, SUSE } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import Script from 'next/script'
@@ -10,6 +10,15 @@ import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 const fontMPlus1 = M_PLUS_1({
   subsets: ['latin'],
   variable: '--font-mplus1',
+  display: 'swap',
+  preload: false,
+})
+
+export const fontTitle = SUSE({
+  subsets: ['latin'],
+  variable: '--font-suse',
+  display: 'swap',
+  preload: false,
 })
 
 export const viewport: Viewport = {
@@ -45,7 +54,14 @@ export default async function RootLayout({ children, drawer }: { children: React
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon='{"token": "e7ad45139e61492b95a8686432f438e4"}'
       />
-      <body className={cn('min-h-screen antialiased bg-gray-300', fontMPlus1.className, fontMPlus1.variable)}>
+      <body
+        className={cn(
+          'min-h-screen antialiased bg-gray-300',
+          fontMPlus1.className,
+          fontMPlus1.variable,
+          fontTitle.variable
+        )}
+      >
         {children}
         <div>{drawer}</div>
       </body>

@@ -46,7 +46,7 @@ export default function TopPageContentsViewer({
         {children}
         <div className={cn('md:snap-start snap-center snap-always', 'w-48 mb-4 mr-48', 'flex-none')}>
           <div className="h-full flex items-center justify-center">
-            <Button asChild variant="outline" className="h-full w-full bg-gray-100 hover:bg-white">
+            <Button asChild variant="outline" className="h-full w-full bg-gray-100 hover:bg-white font-suse">
               <Link href={moreLink}>{moreButtonText}</Link>
             </Button>
           </div>

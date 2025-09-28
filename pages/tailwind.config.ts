@@ -12,6 +12,10 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        mplus1: ['var(--font-mplus1)'],
+        suse: ['var(--font-suse)'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',

@@ -42,12 +42,12 @@ export async function IllustSampleArticle({
       <div className="p-4 h-full lg:w-1/4 flex flex-col lg:justify-between w-full gap-4">
         <div className="flex flex-col gap-2 mt-4">
           <div className="border-b-4 border-blue-900 pb-1">
-            <h1 className="font-bold text-2xl">{title}</h1>
+            <h2 className="font-bold text-2xl">{title}</h2>
           </div>
           <p className="text-sm text-right text-gray-500">Published at: {publishedAt.substring(0, 10)}</p>
           <IllustTags tagOrCategory={tags} />
         </div>
-        <Button asChild className="w-full" variant="default">
+        <Button asChild className="w-full font-suse" variant="default">
           <Link href={`/illust/detail/${id}`} className="flex items-center gap-2 font-bold" scroll={false}>
             <ZoomIn className="w-4 h-4" />
             Detail

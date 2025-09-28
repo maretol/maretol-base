@@ -4,7 +4,7 @@ import { BookOpenIcon, ImageIcon, Info, MailIcon, NotebookText, RssIcon } from '
 
 export default function HeaderButtons() {
   const iconClassName = 'w-4 h-4'
-  const buttonClassName = 'w-full gap-1'
+  const buttonClassName = 'w-full gap-1 font-suse font-semibold'
   const subButtonClassName = 'w-12'
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-1">
