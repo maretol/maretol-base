@@ -5,6 +5,7 @@ import { getHostname } from '@/lib/env'
 import { pageLimit } from '@/lib/static'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
+import { filterTags } from '@/lib/tag'
 
 export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -48,7 +49,11 @@ export default async function TagPage(props: {
 
   const tags = await getTags()
 
-  const { contents, total } = await getCMSContentsWithTags(tagIDs, offset, limit)
+  const firstTag = tagIDs.find((tagID) => tags.find((tag) => tag.id === tagID)) || tagIDs[0]
+
+  const { contents, total } = await getCMSContentsWithTags([firstTag], offset, limit)
+
+  const filteredContents = filterTags(contents, tagIDs)
 
   return (
     <div>
@@ -61,7 +66,7 @@ export default async function TagPage(props: {
         </div>
       </div>
       <div className="flex flex-col justify-center gap-10">
-        {contents.map((content) => (
+        {filteredContents.map((content) => (
           <Article
             key={content.id}
             id={content.id}
@@ -90,7 +95,7 @@ function getTagIDs(rawTagIDs: string | string[] | undefined): string[] {
   } else if (typeof rawTagIDs === 'string') {
     return [rawTagIDs]
   } else {
-    return rawTagIDs
+    return rawTagIDs.slice(0, 3)
   }
 }
 
@@ -100,7 +105,7 @@ function getTagNames(rawTagNames: string | string[] | undefined): string[] {
   } else if (typeof rawTagNames === 'string') {
     return [rawTagNames]
   } else {
-    return rawTagNames
+    return rawTagNames.slice(0, 3)
   }
 }
 
