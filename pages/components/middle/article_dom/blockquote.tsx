@@ -32,7 +32,7 @@ export default function Blockquote({
 
   return (
     <div className="py-3 mx-1">
-      <blockquote cite={citeText} className="bg-gray-100 text-gray-700 p-3 rounded-lg border-l-8 border-l-gray-500">
+      <blockquote cite={citeText} className="bg-gray-200 text-gray-700 p-3 rounded-lg border-l-8 border-l-gray-500">
         <div dangerouslySetInnerHTML={{ __html: innerHTML }} />
         <div className={'w-full text-right'}>
           <cite className="text-sm text-gray-500 text-left">

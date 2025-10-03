@@ -24,11 +24,6 @@ type FullAtricleProps = ArticleProps & {
   draftKey?: string
 }
 
-type ImageArticleProps = ArticleProps & {
-  imageSrc: string
-  shareURL: string
-}
-
 export async function Article({ id, title, updatedAt, parsedContents, categories }: ArticleProps) {
   return (
     <Card key={id} className="bg-gray-100">
@@ -46,10 +41,10 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
       <hr className="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
       <CardContent className="relative">
         <ArticleContent contents={parsedContents} sample articleID={id} />
-        <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-36 bg-gradient-to-t from-white/100 from-20% to-white/0" />
+        <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-36 bg-gradient-to-t from-gray-100/100 from-40% to-gray-100/0" />
       </CardContent>
       <CardFooter>
-        <Button className="w-full gap-1" asChild>
+        <Button className="w-full gap-1 font-suse" asChild>
           <Link href={`/blog/${id}`}>
             <BookIcon className="w-4 h-4" />
             Read more...
@@ -113,7 +108,7 @@ export async function FullArticle({
             <Button variant="secondary" className="w-96 flex justify-center gap-1" asChild>
               <Link href="/">
                 <HomeIcon className="w-5 h-5" />
-                <h2 className="text-xl">Home</h2>
+                <h2 className="text-xl font-suse">Home</h2>
               </Link>
             </Button>
           </div>

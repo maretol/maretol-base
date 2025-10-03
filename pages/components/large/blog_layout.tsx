@@ -57,7 +57,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
           </div>
         </div>
         <div className="my-10">
-          <footer className="text-center text-sm text-gray-500">
+          <footer className="text-center text-sm text-gray-500 font-suse">
             <FooterButtons />
             <div>
               © 2024 - {year} Maretol

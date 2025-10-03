@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { ArrowBigUpIcon, HomeIcon } from 'lucide-react'
 
 export default function FooterButtons() {
-  const buttonClassName = 'w-48 gap-1'
+  const buttonClassName = 'w-48 gap-1 font-suse'
   const iconClassName = 'w-4 h-4'
   return (
     <div className="flex sm:flex-row flex-col justify-center items-center mb-4">
