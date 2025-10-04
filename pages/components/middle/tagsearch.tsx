@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
 import { categoryAPIResult } from 'api-types'
+import { getMaxTagCount } from '@/lib/env'
 
 export default function TagSelector({
   tags,
@@ -11,7 +12,7 @@ export default function TagSelector({
   tagIDs: string[]
   tagNames: string[]
 }) {
-  const maxTags = 3
+  const maxTags = getMaxTagCount
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((t, i) => {

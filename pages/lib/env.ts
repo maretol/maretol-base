@@ -14,4 +14,6 @@ function getNodeEnv() {
   return process.env.NODE_ENV || 'development'
 }
 
-export { getHostname, getLocalEnv, getNodeEnv }
+const getMaxTagCount = 3
+
+export { getHostname, getLocalEnv, getNodeEnv, getMaxTagCount }

@@ -1,7 +1,7 @@
 import { getCMSContentsWithTags, getTags } from '@/lib/api/workers'
 import { Article } from '@/components/large/article'
 import { metadata } from '../layout'
-import { getHostname } from '@/lib/env'
+import { getHostname, getMaxTagCount } from '@/lib/env'
 import { pageLimit } from '@/lib/static'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
@@ -48,6 +48,7 @@ export default async function TagPage(props: {
   const rawTagIDs = searchParams['tag_id']
   const rawTagNames = searchParams['tag_name']
   const page = searchParams['p']
+  const maxTagCount = getMaxTagCount
 
   const tagIDs = getTagIDs(rawTagIDs)
   const tagNames = getTagNames(rawTagNames)
@@ -65,7 +66,7 @@ export default async function TagPage(props: {
       <div>
         <div className="mb-4">
           <div className="mb-2">
-            <h2 className="font-bold alphabet">Selected Tags (Max 3) : </h2>
+            <h2 className="font-bold alphabet">Selected Tags (Max {maxTagCount}) : </h2>
           </div>
           <TagSelector tags={tags} tagIDs={tagIDs} tagNames={tagNames} />
         </div>
