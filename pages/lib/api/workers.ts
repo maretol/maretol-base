@@ -22,12 +22,10 @@ import {
   generateAtelierContentKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
+import { DAY } from '../static'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
-
-const DAY = 60 * 60 * 24
-// const HOUR = 60 * 60
 
 const CacheTTL = {
   ogpData: 3 * DAY, // OGPデータの保持

@@ -16,6 +16,7 @@ import { Label } from '../ui/label'
 import { Slider } from '../ui/slider'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import ClientImage2 from '../small/client_image2'
+import { comicModeThreshold, comicScrollSpeed } from '@/lib/static'
 import 'swiper/css'
 
 type ComicBookProps = {
@@ -43,12 +44,6 @@ const initPageOption: pageOption = {
   controller_visible: false,
   controller_disabled: false,
 }
-
-// シングルモードとダブルモード（見開き）の切り替えの幅のしきい値
-// 指定未満の場合シングルモードになる
-const modeThreshold = 980
-// スクロールスピード
-const scrollSpeed = 150
 
 export default function ComicBook(props: ComicBookProps) {
   const { cmsResult } = props
@@ -144,12 +139,12 @@ export default function ComicBook(props: ComicBookProps) {
 
   const leftClick = useCallback(() => {
     if (!swiperInstance) return
-    swiperInstance.slideNext(scrollSpeed)
+    swiperInstance.slideNext(comicScrollSpeed)
   }, [swiperInstance])
 
   const rightClick = useCallback(() => {
     if (!swiperInstance) return
-    swiperInstance.slidePrev(scrollSpeed)
+    swiperInstance.slidePrev(comicScrollSpeed)
   }, [swiperInstance])
 
   const mouseMoveEvent = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -214,7 +209,7 @@ export default function ComicBook(props: ComicBookProps) {
   }, [])
 
   useEffect(() => {
-    if (width < modeThreshold) {
+    if (width < comicModeThreshold) {
       if (mode === 'single' || pageOption.mode_static) return
       setMode('single')
     } else {
@@ -255,7 +250,7 @@ export default function ComicBook(props: ComicBookProps) {
         <Swiper
           modules={[Keyboard]}
           dir={'rtl'}
-          speed={scrollSpeed}
+          speed={comicScrollSpeed}
           onSwiper={setSwiperInstance}
           onActiveIndexChange={(swiper) => {
             setCurrentPage(swiper.activeIndex)

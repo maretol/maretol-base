@@ -1,8 +1,8 @@
 import { getCMSContentsWithTags, getTags } from '@/lib/api/workers'
 import { Article } from '@/components/large/article'
 import { metadata } from '../layout'
-import { getHostname, getMaxTagCount } from '@/lib/env'
-import { pageLimit } from '@/lib/static'
+import { getHostname } from '@/lib/env'
+import { pageLimit, maxTagCount } from '@/lib/static'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
 
@@ -48,7 +48,6 @@ export default async function TagPage(props: {
   const rawTagIDs = searchParams['tag_id']
   const rawTagNames = searchParams['tag_name']
   const page = searchParams['p']
-  const maxTagCount = getMaxTagCount
 
   const tagIDs = getTagIDs(rawTagIDs)
   const tagNames = getTagNames(rawTagNames)
@@ -113,7 +112,7 @@ function getTagIDs(rawTagIDs: string | string[] | undefined): string[] {
   } else if (typeof rawTagIDs === 'string') {
     return [rawTagIDs]
   } else {
-    return rawTagIDs.slice(0, 3)
+    return rawTagIDs.slice(0, maxTagCount)
   }
 }
 
@@ -123,7 +122,7 @@ function getTagNames(rawTagNames: string | string[] | undefined): string[] {
   } else if (typeof rawTagNames === 'string') {
     return [rawTagNames]
   } else {
-    return rawTagNames.slice(0, 3)
+    return rawTagNames.slice(0, maxTagCount)
   }
 }
 

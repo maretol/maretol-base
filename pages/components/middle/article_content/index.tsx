@@ -1,9 +1,7 @@
 import { cn } from '@/lib/utils'
+import { maxSampleContentCount } from '@/lib/static'
 import { ArticleContentProps } from './types'
 import renderContent from './renderContent'
-
-// sampleの場合はコンテンツは6つまでの表示
-const MAX_SAMPLE_CONTENT_COUNT = 5
 
 export default async function ArticleContent({
   contents,
@@ -20,7 +18,7 @@ export default async function ArticleContent({
   return (
     <div className={cn(className)}>
       {contents.map((content, index) => {
-        if (sampleFlag && index > MAX_SAMPLE_CONTENT_COUNT) {
+        if (sampleFlag && index > maxSampleContentCount) {
           return null
         }
 
