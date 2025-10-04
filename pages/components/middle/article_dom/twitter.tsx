@@ -16,7 +16,7 @@ export default async function TwitterArea({ twitterURL }: { twitterURL: string }
 
     return <iframe srcDoc={twitterHTML} sandbox={sandbox} allowFullScreen width={width} height={400}></iframe>
   } catch (error) {
-    console.error('Error fetching tweet:', error)
+    console.error('[components/middle/article_dom/twitter.tsx:19] Error fetching tweet:', error)
     return <p>Error: fetching tweet is error.</p>
   }
 }

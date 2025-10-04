@@ -34,7 +34,7 @@ export default async function LinkCard({ link }: { link: string }) {
     site = ogpSite !== '' ? ogpSite : title
     image = ogpImage
   } catch (e) {
-    console.error(e)
+    console.error('[components/middle/article_dom/linkcard.tsx:37] OGP fetch error:', e)
 
     title = 'Title was not readable.'
     site = title

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   const response = await env.OGP_RPC.fetch(request)
 
   if (response.status !== 200) {
-    console.log('error: ', await response.text())
+    console.error('[app/api/ogp/route.ts:13] OGP RPC error:', await response.text())
     const errorResponse = {
       success: false,
     } as OGPResult

@@ -12,7 +12,7 @@ export default async function fetchBlurredImage(src: string) {
 
   const image = await fetch(imageSrc)
   if (image.status !== 200) {
-    console.error('Image fetch error:', image.status)
+    console.error('[lib/api/image.ts:14] Image fetch error:', image.status)
     return ''
   }
 
