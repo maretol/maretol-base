@@ -5,7 +5,6 @@ import { getHostname } from '@/lib/env'
 import { pageLimit } from '@/lib/static'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
-import { filterTags } from '@/lib/tag'
 
 export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -19,15 +18,25 @@ export async function generateMetadata(props: {
   const selectedTags = tags.filter((tag) => tagIDs.includes(tag.id))
   const title = `タグ検索：${selectedTags.map((t) => t.name).join(', ')} | Maretol Base`
 
+  // canonical URLの生成
+  let canonicalUrl = getHostname() + '/tag'
+  if (tagIDs.length > 0) {
+    const params = tagIDs.map((id) => `tag_id=${id}`).join('&')
+    canonicalUrl += `?${params}`
+  }
+
   return {
     title: title,
     description: 'タグ検索ページ',
-    robots: 'noindex',
+    robots: tagIDs.length === 1 ? 'index, follow' : 'noindex, follow',
+    alternates: {
+      canonical: canonicalUrl,
+    },
     openGraph: {
       ...metadata.openGraph,
       title: title,
       description: 'タグ検索ページ',
-      url: getHostname() + '/tag',
+      url: canonicalUrl,
     },
   }
 }
@@ -49,24 +58,20 @@ export default async function TagPage(props: {
 
   const tags = await getTags()
 
-  const firstTag = tagIDs.find((tagID) => tags.find((tag) => tag.id === tagID)) || tagIDs[0]
-
-  const { contents, total } = await getCMSContentsWithTags([firstTag], offset, limit)
-
-  const filteredContents = filterTags(contents, tagIDs)
+  const { contents, total } = await getCMSContentsWithTags(tagIDs, offset, limit)
 
   return (
     <div>
       <div>
         <div className="mb-4">
           <div className="mb-2">
-            <h2 className="font-bold">Selected Tags : </h2>
+            <h2 className="font-bold alphabet">Selected Tags (Max 3) : </h2>
           </div>
           <TagSelector tags={tags} tagIDs={tagIDs} tagNames={tagNames} />
         </div>
       </div>
       <div className="flex flex-col justify-center gap-10">
-        {filteredContents.map((content) => (
+        {contents.map((content) => (
           <Article
             key={content.id}
             id={content.id}
