@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
 import { categoryAPIResult } from 'api-types'
+import { getMaxTagCount } from '@/lib/env'
 
 export default function TagSelector({
   tags,
@@ -11,6 +12,7 @@ export default function TagSelector({
   tagIDs: string[]
   tagNames: string[]
 }) {
+  const maxTags = getMaxTagCount
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((t, i) => {
@@ -18,10 +20,12 @@ export default function TagSelector({
         const appendTagNames = [...tagNames, t.name]
         const detachTagIDs = tagIDs.filter((id) => id !== t.id)
         const detachTagNames = tagNames.filter((name) => name !== t.name)
+        const isSelected = tagIDs.includes(t.id)
+        const isMaxReached = tagIDs.length >= maxTags
         return (
           <div key={`tag-${i}`}>
-            {tagIDs.includes(t.id) ? (
-              <Button variant={tagIDs.includes(t.id) ? 'secondary' : 'default'} asChild>
+            {isSelected ? (
+              <Button variant="secondary" asChild>
                 <Link
                   href={{
                     pathname: '/tag',
@@ -35,7 +39,7 @@ export default function TagSelector({
                 </Link>
               </Button>
             ) : (
-              <Button variant={tagIDs.includes(t.id) ? 'secondary' : 'default'} asChild>
+              <Button variant="default" asChild disabled={isMaxReached}>
                 <Link
                   href={{
                     pathname: '/tag',
@@ -44,6 +48,7 @@ export default function TagSelector({
                       tag_name: appendTagNames,
                     },
                   }}
+                  className={isMaxReached ? 'pointer-events-none opacity-50' : ''}
                 >
                   {t.name}
                 </Link>
