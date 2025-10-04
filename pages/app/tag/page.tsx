@@ -71,24 +71,36 @@ export default async function TagPage(props: {
         </div>
       </div>
       <div className="flex flex-col justify-center gap-10">
-        {contents.map((content) => (
-          <Article
-            key={content.id}
-            id={content.id}
-            title={content.title}
-            updatedAt={content.updatedAt}
-            categories={content.categories}
-            parsedContents={content.parsed_content}
-          />
-        ))}
-        <div className="flex justify-center">
-          <Pagenation
-            path="/tag"
-            queryWithoutPage={{ tag_id: tagIDs, tag_name: tagNames }}
-            currentPage={pageNumber}
-            totalPage={Math.ceil(total / limit)}
-          />
-        </div>
+        {tagIDs.length === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-gray-500">タグを選択してください</p>
+          </div>
+        ) : total === 0 ? (
+          <div className="text-center py-10">
+            <p className="text-gray-500">検索結果が見つかりませんでした</p>
+          </div>
+        ) : (
+          <>
+            {contents.map((content) => (
+              <Article
+                key={content.id}
+                id={content.id}
+                title={content.title}
+                updatedAt={content.updatedAt}
+                categories={content.categories}
+                parsedContents={content.parsed_content}
+              />
+            ))}
+            <div className="flex justify-center">
+              <Pagenation
+                path="/tag"
+                queryWithoutPage={{ tag_id: tagIDs, tag_name: tagNames }}
+                currentPage={pageNumber}
+                totalPage={Math.ceil(total / limit)}
+              />
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
