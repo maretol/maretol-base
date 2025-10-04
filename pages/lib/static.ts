@@ -32,7 +32,7 @@ export const comicScrollSpeed = 150
 export const SECOND = 1
 export const MINUTE = 60 * SECOND
 export const HOUR = 60 * MINUTE
-export const DAY = 60 * 60 * 24
+export const DAY = HOUR * 24
 
 // 画像キャッシュの保持期間（秒）
 export const imageCacheDuration = 7 * DAY
