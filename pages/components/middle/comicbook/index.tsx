@@ -83,19 +83,21 @@ export default function ComicBook(props: ComicBookProps) {
     [mode, singlePageList.length, doublePageList.length]
   )
 
+  const handleNextPage = useCallback(() => {
+    if (!swiperInstance) return
+    swiperInstance.slideNext(comicScrollSpeed)
+  }, [swiperInstance])
+
+  const handlePrevPage = useCallback(() => {
+    if (!swiperInstance) return
+    swiperInstance.slidePrev(comicScrollSpeed)
+  }, [swiperInstance])
+
   const handleMouseClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
-      const leftClick = () => {
-        if (!swiperInstance) return
-        swiperInstance.slideNext(comicScrollSpeed)
-      }
-      const rightClick = () => {
-        if (!swiperInstance) return
-        swiperInstance.slidePrev(comicScrollSpeed)
-      }
-      mouseClickEvent(e, leftClick, rightClick)
+      mouseClickEvent(e, handleNextPage, handlePrevPage)
     },
-    [mouseClickEvent, swiperInstance]
+    [mouseClickEvent, handleNextPage, handlePrevPage]
   )
 
   return (
@@ -151,7 +153,7 @@ export default function ComicBook(props: ComicBookProps) {
                 <ComicSlide mode="double" page={page} />
               </SwiperSlide>
             ))}
-          <NavigationIcons pageOption={pageOption} zoneFlag={zoneFlag} />
+          <NavigationIcons pageOption={pageOption} zoneFlag={zoneFlag} onNextPage={handleNextPage} onPrevPage={handlePrevPage} />
         </Swiper>
       </div>
       <div className={cn('relative bg-gray-700', LAYOUT.FOOTER_HEIGHT, 'w-full text-white text-center flex justify-center items-center')}>
