@@ -22,12 +22,10 @@ import {
   generateAtelierContentKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
+import { DAY } from '../static'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
-
-const DAY = 60 * 60 * 24
-// const HOUR = 60 * 60
 
 const CacheTTL = {
   ogpData: 3 * DAY, // OGPデータの保持
@@ -83,7 +81,7 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
 
     return res as TResult
   } catch (e) {
-    console.error('API call error:', e)
+    console.error('[lib/api/workers.ts:84] API call error:', e)
     return config.defaultResult
   }
 }
@@ -157,7 +155,7 @@ async function getOGPDataOrigin(targetURL: string) {
     await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl })
     return res as OGPResult
   } catch (e) {
-    console.error(e)
+    console.error('[lib/api/workers.ts:158] OGP fetch error:', e)
     return { success: false } as OGPResult
   }
 }

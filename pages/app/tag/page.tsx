@@ -1,17 +1,17 @@
 import { getCMSContentsWithTags, getTags } from '@/lib/api/workers'
 import { Article } from '@/components/large/article'
 import { metadata } from '../layout'
-import { getHostname, getMaxTagCount } from '@/lib/env'
-import { pageLimit } from '@/lib/static'
+import { getHostname } from '@/lib/env'
+import { maxTagCount } from '@/lib/static'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
+import { parsePaginationParams, parseTagParams } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const rawTagIDs = searchParams['tag_id']
-  const tagIDs = getTagIDs(rawTagIDs)
+  const { tagIDs } = parseTagParams(searchParams)
 
   const tags = await getTags()
 
@@ -45,17 +45,8 @@ export default async function TagPage(props: {
   searchParams: Promise<{ [key: string]: string[] | string | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const rawTagIDs = searchParams['tag_id']
-  const rawTagNames = searchParams['tag_name']
-  const page = searchParams['p']
-  const maxTagCount = getMaxTagCount
-
-  const tagIDs = getTagIDs(rawTagIDs)
-  const tagNames = getTagNames(rawTagNames)
-  const pageNumber = getPageNumber(page)
-
-  const offset = (pageNumber - 1) * pageLimit
-  const limit = pageLimit
+  const { tagIDs, tagNames } = parseTagParams(searchParams)
+  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
 
   const tags = await getTags()
 
@@ -105,34 +96,4 @@ export default async function TagPage(props: {
       </div>
     </div>
   )
-}
-
-function getTagIDs(rawTagIDs: string | string[] | undefined): string[] {
-  if (rawTagIDs === undefined) {
-    return []
-  } else if (typeof rawTagIDs === 'string') {
-    return [rawTagIDs]
-  } else {
-    return rawTagIDs.slice(0, 3)
-  }
-}
-
-function getTagNames(rawTagNames: string | string[] | undefined): string[] {
-  if (rawTagNames === undefined) {
-    return []
-  } else if (typeof rawTagNames === 'string') {
-    return [rawTagNames]
-  } else {
-    return rawTagNames.slice(0, 3)
-  }
-}
-
-function getPageNumber(page: string | string[] | undefined): number {
-  if (page === undefined) {
-    return 1
-  } else if (typeof page === 'string') {
-    return Number(page)
-  } else {
-    return 1
-  }
 }

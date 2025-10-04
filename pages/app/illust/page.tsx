@@ -1,5 +1,3 @@
-import { isPage } from '@/lib/pagenation'
-import { pageLimit } from '@/lib/static'
 import IllustSamples from './illust_samples'
 import { Suspense } from 'react'
 import { getAteliers } from '@/lib/api/workers'
@@ -9,6 +7,7 @@ import { getHostname } from '@/lib/env'
 import { Metadata } from 'next'
 import LoadingIllustPage from './loading_illust'
 import ClientIllustPage from './client_page'
+import { parsePaginationParams } from '@/lib/searchParams'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,10 +16,8 @@ export async function generateMetadata({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const page = (await searchParams)['p']
-  const pageNumber = isPage(page) ? Number(page) : 1
-  const offset = (pageNumber - 1) * pageLimit
-  const limit = pageLimit
+  const params = await searchParams
+  const { pageNumber, offset, limit } = parsePaginationParams(params)
   const ateliers = await getAteliers(offset, limit)
   const firstAtelier = ateliers.ateliers[0]
 
@@ -51,10 +48,7 @@ export default async function IllustPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const page = searchParams['p']
-  const pageNumber = isPage(page) ? Number(page) : 1
-  const offset = (pageNumber - 1) * pageLimit
-  const limit = pageLimit
+  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
 
   return (
     <div className="">
