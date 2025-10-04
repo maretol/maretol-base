@@ -121,6 +121,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       c.parsed_content = parsed.contents_array
       c.table_of_contents = parsed.table_of_contents
     })
+    // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(contents))
   }
 
@@ -134,6 +135,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       c.parsed_content = parsed.contents_array
       c.table_of_contents = parsed.table_of_contents
     })
+    // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(contents))
   }
 
@@ -144,12 +146,14 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const parsed = parse(content.content)
     content.parsed_content = parsed.contents_array
     content.table_of_contents = parsed.table_of_contents
+    // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(content))
   }
 
   async fetchTags(): Promise<categoryAPIResult[]> {
     const apiKey = this.env.CMS_API_KEY
     const tags = await getTags(apiKey)
+    // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(tags))
   }
 
@@ -161,6 +165,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       i.parsed_content = parsed.contents_array
       i.table_of_contents = parsed.table_of_contents
     })
+    // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(info))
   }
 
@@ -168,6 +173,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const apiKey = this.env.CMS_API_KEY
     try {
       const staticData = await getStatic(apiKey)
+      // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(staticData))
     } catch (e) {
       console.error('Error fetching default data:', e)
@@ -190,6 +196,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
         bd.parsed_description = parsed.contents_array
         bd.table_of_contents = parsed.table_of_contents
       })
+      // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(contents))
     } catch (e) {
       console.error('Error fetching bandeDessinees:', e)
@@ -207,6 +214,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       const parsed = parse(content.description)
       content.parsed_description = parsed.contents_array
       content.table_of_contents = parsed.table_of_contents
+      // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(content))
     } catch (e) {
       console.error('Error fetching bandeDessinee:', e)
@@ -229,6 +237,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
         a.parsed_description = parsed.contents_array
         a.table_of_contents = parsed.table_of_contents
       })
+      // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(atelier))
     } catch (e) {
       console.error('Error fetching atelier:', e)
@@ -247,6 +256,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       const parsed = parse(atelier.description)
       atelier.parsed_description = parsed.contents_array
       atelier.table_of_contents = parsed.table_of_contents
+      // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(atelier))
     } catch (e) {
       console.error('Error fetching atelier:', e)
