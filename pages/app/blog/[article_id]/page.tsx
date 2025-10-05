@@ -7,6 +7,7 @@ import { Metadata } from 'next'
 import BlogPageArticle from './article'
 import { Suspense } from 'react'
 import LoadingBlogPage from './loading_article'
+import { parseDraftKey } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
   params: Promise<{ article_id: string }>
@@ -15,7 +16,7 @@ export async function generateMetadata(props: {
   const searchParams = await props.searchParams
   const params = await props.params
   const articleID = params.article_id
-  const draftKey = searchParams['draftKey']
+  const draftKey = parseDraftKey(searchParams)
 
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
   const ogpImage = content.ogp_image
@@ -55,7 +56,7 @@ export default async function BlogArticlePage(props: {
   const searchParams = await props.searchParams
   const params = await props.params
   const articleID = params.article_id
-  const draftKey = searchParams['draftKey']
+  const draftKey = parseDraftKey(searchParams)
 
   const host = getHostname()
   const path = `/blog/${articleID}`

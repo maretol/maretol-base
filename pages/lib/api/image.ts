@@ -1,4 +1,5 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { imageCacheDuration } from '@/lib/static'
 
 export default async function fetchBlurredImage(src: string) {
   const { env } = await getCloudflareContext({ async: true })
@@ -11,7 +12,7 @@ export default async function fetchBlurredImage(src: string) {
 
   const image = await fetch(imageSrc)
   if (image.status !== 200) {
-    console.error('Image fetch error:', image.status)
+    console.error('[lib/api/image.ts:14] Image fetch error:', image.status)
     return ''
   }
 
@@ -21,7 +22,7 @@ export default async function fetchBlurredImage(src: string) {
   const imageUrl = 'data:image/webp;base64,' + blogBase64
 
   await env.IMAGE_CACHE.put(src, imageUrl, {
-    expirationTtl: 7 * 60 * 60 * 24, // Cache for 7 day
+    expirationTtl: imageCacheDuration,
   })
 
   return imageUrl

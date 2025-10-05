@@ -59,7 +59,7 @@ export default async function ComicPageCard({ link }: { link: string }) {
       </div>
     )
   } catch (e) {
-    console.log(e)
+    console.error('[components/middle/article_dom/comiccard.tsx:62] Comic fetch error:', e)
     const noImage = getNoImageURL()
     const title = 'エラー：見つかりませんでした'
     const publishedAt = '0000/00/00 00:00:00 JST'

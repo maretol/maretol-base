@@ -8,6 +8,7 @@ import { getHostname } from '@/lib/env'
 import { getOGPImageURL } from '@/lib/image'
 import { Metadata } from 'next'
 import { Suspense } from 'react'
+import { parseDraftKey } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
@@ -16,7 +17,7 @@ export async function generateMetadata(props: {
   const searchParams = await props.searchParams
   const params = await props.params
   const id = params.id
-  const draftKey = searchParams['draftKey']
+  const draftKey = parseDraftKey(searchParams)
 
   const data = await getBandeDessineeByID(id, draftKey)
   const contentsUrl = data.contents_url
@@ -53,7 +54,7 @@ export default async function ComicPage(props: {
   const params = await props.params
   const searchParams = await props.searchParams
   const id = params.id
-  const draftKey = searchParams['draftKey']
+  const draftKey = parseDraftKey(searchParams)
   const asyncData = getBandeDessineeByID(id, draftKey)
   const data = await asyncData
 

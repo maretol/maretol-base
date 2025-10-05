@@ -16,7 +16,7 @@ type ArticleProps = {
   parsedContents: ParsedContent[]
 }
 
-type FullAtricleProps = ArticleProps & {
+type FullArticleProps = ArticleProps & {
   publishedAt: string
   type: 'blog' | 'info'
   shareURL: string
@@ -66,7 +66,7 @@ export async function FullArticle({
   type,
   draftKey,
   shareURL,
-}: FullAtricleProps) {
+}: FullArticleProps) {
   return (
     <Card className="w-full bg-gray-100">
       <CardHeader>
