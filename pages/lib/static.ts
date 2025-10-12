@@ -4,8 +4,8 @@
 export const pageLimit = 10
 
 // iframe内部のsandbox属性のデフォルト値
-export const defaultSandbox =
-  'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-top-navigation'
+// allow-scripts, allow-same-origin の併用は外部コンテンツのため併用しても問題ない
+export const outerContentIframeSandbox = 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin'
 
 // 通常ブログ等での画像編集オプション
 export const imageOption = 'format=auto,h=500'
