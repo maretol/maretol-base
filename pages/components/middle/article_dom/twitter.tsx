@@ -1,9 +1,9 @@
-import { defaultSandbox } from '@/lib/static'
+import { outerContentIframeSandbox } from '@/lib/static'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
 
 export default async function TwitterArea({ twitterURL }: { twitterURL: string }) {
-  const sandbox = defaultSandbox + ' allow-presentation'
+  const sandbox = outerContentIframeSandbox + ' allow-presentation'
   try {
     const twitterPublishJSON = await fetchTweet(twitterURL)
 

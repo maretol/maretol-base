@@ -24,6 +24,7 @@ export type POptionType =
   | 'empty'
   | 'table_of_contents'
   | 'nofetch_url'
+  | 'gmaps'
   | 'block_start'
   | 'block_end'
 
