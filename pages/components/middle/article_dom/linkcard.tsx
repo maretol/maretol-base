@@ -43,7 +43,7 @@ export default async function LinkCard({ link }: { link: string }) {
   }
 
   return (
-    <div className="max-w-2xl no-underline border-2 border-gray-300 rounded-[9px]">
+    <div className="max-w-2xl no-underline border-2 border-gray-300 rounded-[9px] mx-3">
       <Link href={link} target="_blank" className="no-underline hover:underline">
         <div className="flex flex-row h-24">
           <div className="row-span-3 w-36 h-24">

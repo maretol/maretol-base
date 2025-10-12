@@ -19,7 +19,7 @@ import IllustCard from '../../article_dom/illustcard'
 import MySiteCard from '../../article_dom/mysitecard'
 import LoadingIllustCard from '../../loading_dom/loading_illustcard'
 import NofetchLinkCard from '../../article_dom/nofetch_link'
-import { outerContentIframeSandbox } from '@/lib/static'
+import Gmaps from '../../article_dom/gmap'
 
 export function renderParagraph(content: ParsedContent, context: RenderContext): JSX.Element | null {
   const pOption = content.p_option as POptionType | null
@@ -176,35 +176,6 @@ function renderTableOfContents(content: ParsedContent, context: RenderContext): 
   return null
 }
 
-// 一旦は通常のGoogle Mapの埋め込みで得られるiframeをそのまま利用する
-// そのうちGCPのMaps APIを利用して、地点を入れるだけで表示できるようにしたい
 function renderGoogleMaps(content: ParsedContent, context: RenderContext): JSX.Element {
-  if (!content.sub_texts) {
-    return (
-      <div key={context.index} className="py-6">
-        <p>地図情報がありません</p>
-      </div>
-    )
-  }
-
-  const { iframe } = content.sub_texts
-  if (iframe) {
-    // iframeにsandbox属性を追加する
-    const sandbox = outerContentIframeSandbox
-    const sanitizedIframe = iframe.replace(/<iframe /, `<iframe sandbox="${sandbox}" `)
-
-    // iframeをそのまま表示する
-    // 注意: ここではdangerouslySetInnerHTMLを使用しているため、信頼できるコンテンツのみを使用してください
-    return (
-      <div key={context.index} className="py-6">
-        <div className="w-full h-96" dangerouslySetInnerHTML={{ __html: sanitizedIframe }} />
-      </div>
-    )
-  }
-
-  return (
-    <div key={context.index} className="py-6">
-      <p>現在その地図情報の埋め込みには対応していません</p>
-    </div>
-  )
+  return <Gmaps key={content.index} subtexts={content.sub_texts} />
 }
