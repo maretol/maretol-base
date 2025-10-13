@@ -264,7 +264,16 @@ function getContent(serviceType: ServiceType, newContent: ContentValue): Publish
     }
   }
   if (serviceType === 'comic') {
-    return {} as PublishContent
+    // 表紙、または1ページ目
+    // 1ページ目のファイル名生成はほぼ決め打ちでやっているので失敗時のリカバリが必要
+    const ogp = newContent.cover || newContent.filename + '_00' + newContent.first_page + '.' + newContent.format[0]
+
+    return {
+      url: `https://www.maretol.xyz/comics/${newContent.id}`,
+      title: newContent.title_name,
+      message: null,
+      ogpImage: ogp,
+    }
   }
 
   return {} as PublishContent
