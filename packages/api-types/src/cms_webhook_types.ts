@@ -21,8 +21,9 @@ export type Content = {
 }
 
 export type ContentValue = {
-  id: string
-  title: string
-  sns_text: string | null
-  ogp_image: string | null
+  id: string // 共通
+  title: string // 共通
+  src: string | null // illustのときの画像ソース
+  sns_text: string | null // blogのときのSNS投稿文（マンガ、イラストでは対応するときにこの名前に合わせる
+  ogp_image: string | null // blogのときのOGP画像。illustのときはsrcを読む
 }
