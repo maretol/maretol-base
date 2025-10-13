@@ -1,7 +1,7 @@
 import PostTweet, { TwitterAuthInfo } from './twitter'
 import PostBlueSky, { BlueSkyAuthInfo } from './bluesky'
 import PostNostrKind1, { NostrAuthInfo } from './nostr'
-import { Content, WebhookPayload } from 'api-types'
+import { Content, ContentValue, WebhookPayload } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import crypto from 'node:crypto'
 import NoteMisskey, { MisskeyAuthInfo } from './misskey'
@@ -33,6 +33,15 @@ const TARGET = {
   nostr: true,
   mastodon: false,
   misskey: true,
+}
+
+type ServiceType = 'blog' | 'illust' | 'comic'
+
+type PublishContent = {
+  url: string
+  title: string
+  message: string | null
+  ogpImage: string | null
 }
 
 export default class Publisher extends WorkerEntrypoint<Env> {
@@ -67,6 +76,12 @@ export default class Publisher extends WorkerEntrypoint<Env> {
     const bodyJSON = JSON.parse(body) as WebhookPayload
     console.log(bodyJSON)
 
+    const serviceType = getServiceType(bodyJSON)
+    if (serviceType === undefined) {
+      console.log('service name is not ready : ' + bodyJSON.service)
+      return new Response('OK', { status: 200 })
+    }
+
     if (!publishNecessary(bodyJSON)) {
       console.log('publishNecessary is false. end')
       return new Response('OK', { status: 200 })
@@ -75,34 +90,36 @@ export default class Publisher extends WorkerEntrypoint<Env> {
 
     const newContent = bodyJSON.contents.new.publishValue
 
-    const articleURL = `https://www.maretol.xyz/blog/${newContent.id}`
-    const articleTitle = newContent.title
-    const postMessage = newContent.sns_text
-    const ogpImage = newContent.ogp_image
+    const content = getContent(serviceType, newContent)
 
-    console.log('articleURL: ' + articleURL)
-    console.log('articleTitle: ' + articleTitle)
-    console.log('postMessage: ' + postMessage)
-    console.log('ogpImage: ' + ogpImage)
+    console.log('URL: ' + content.url)
+    console.log('Title: ' + content.title)
+    console.log('postMessage: ' + content.message)
+    console.log('ogpImage: ' + content.ogpImage)
     console.log('publish wait until')
-    this.ctx.waitUntil(publish(env, articleURL, articleTitle, postMessage, ogpImage))
+    this.ctx.waitUntil(publish(env, content, serviceType))
 
     return new Response('OK', { status: 200 })
   }
 }
 
-async function publish(
-  env: Env,
-  articleURL: string,
-  articleTitle: string,
-  postMessage: string | null,
-  ogpImage: string | null
-) {
+async function publish(env: Env, content: PublishContent, service: ServiceType) {
+  const url = content.url
+  const title = content.title
+  const postMessage = content.message
+  const ogpImage = content.ogpImage
+
+  const postPrefixMap: Record<ServiceType, string> = {
+    blog: '投稿しました',
+    illust: 'イラストを公開しました',
+    comic: 'マンガを公開しました',
+  }
+  const prefix = postPrefixMap[service]
   let postText = ''
   if (postMessage === undefined || postMessage === null || postMessage === '') {
-    postText = `投稿しました：${articleTitle} | Maretol Base\n${articleURL}`
+    postText = `${prefix}：${title} | Maretol Base\n${url}`
   } else {
-    postText = `${postMessage}\n\n投稿しました：${articleTitle} | Maretol Base\n${articleURL}`
+    postText = `${postMessage}\n\n${prefix}：${title} | Maretol Base\n${url}`
   }
   console.log('postText: ' + postText)
 
@@ -125,9 +142,9 @@ async function publish(
     console.log('post to BlueSky')
     const bskyAuth = createBlueSkyAuthInfo(env)
     const ogpInfo = {
-      title: articleTitle,
+      title: title,
       description: postMessage || '',
-      url: articleURL,
+      url: url,
       image: ogpImage,
     }
     try {
@@ -195,10 +212,19 @@ function createMisskeyAuthInfo(env: Env) {
   } as MisskeyAuthInfo
 }
 
-function publishNecessary(bodyJSON: WebhookPayload): boolean {
-  if (bodyJSON.service !== 'maretol-blog') {
-    return false
+function getServiceType(bodyJSON: WebhookPayload): ServiceType | undefined {
+  const serviceName = bodyJSON.service
+  switch (bodyJSON.service) {
+    case 'maretol-blog':
+      return 'blog'
+    case 'maretol-illust':
+      return 'illust'
+    case 'maretol-comic':
+      return 'comic'
   }
+}
+
+function publishNecessary(bodyJSON: WebhookPayload): boolean {
   if (bodyJSON.api !== 'contents') {
     return false
   }
@@ -218,4 +244,37 @@ function isDraftToPublish(old: Content | null, newContent: Content): boolean {
   }
   // 未公開で、下書き状態から公開状態に変更された場合
   return old.status.includes('DRAFT') && newContent.status.includes('PUBLISH')
+}
+
+function getContent(serviceType: ServiceType, newContent: ContentValue): PublishContent {
+  if (serviceType === 'blog') {
+    return {
+      url: `https://www.maretol.xyz/blog/${newContent.id}`,
+      title: newContent.title,
+      message: newContent.sns_text,
+      ogpImage: newContent.ogp_image,
+    }
+  }
+  if (serviceType === 'illust') {
+    return {
+      url: `https://www.maretol.xyz/illust/detail/${newContent.id}`,
+      title: newContent.title,
+      message: null,
+      ogpImage: newContent.src,
+    }
+  }
+  if (serviceType === 'comic') {
+    // 表紙、または1ページ目
+    // 1ページ目のファイル名生成はほぼ決め打ちでやっているので失敗時のリカバリが必要
+    const ogp = newContent.cover || newContent.filename + '_00' + newContent.first_page + '.' + newContent.format[0]
+
+    return {
+      url: `https://www.maretol.xyz/comics/${newContent.id}`,
+      title: newContent.title_name,
+      message: null,
+      ogpImage: ogp,
+    }
+  }
+
+  return {} as PublishContent
 }

@@ -247,12 +247,14 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
 
   async fetchAtelier(contentID: string, draftKey?: string | null): Promise<atelierResult> {
     const apiKey = this.env.CMS_API_KEY_AT
+    const parsedDraftKey = draftKey === null ? undefined : draftKey
+
     if (contentID === null) {
       throw new Error('contentID is empty')
     }
 
     try {
-      const atelier = await getAtelier(apiKey, contentID, draftKey || undefined)
+      const atelier = await getAtelier(apiKey, contentID, parsedDraftKey)
       const parsed = parse(atelier.description)
       atelier.parsed_description = parsed.contents_array
       atelier.table_of_contents = parsed.table_of_contents
