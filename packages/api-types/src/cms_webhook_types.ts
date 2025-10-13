@@ -21,8 +21,14 @@ export type Content = {
 }
 
 export type ContentValue = {
-  id: string
-  title: string
-  sns_text: string | null
-  ogp_image: string | null
+  id: string // 共通
+  title: string // blog/illustで共通
+  title_name: string // comicのタイトル
+  src: string | null // illustのときの画像ソース
+  sns_text: string | null // blogのときのSNS投稿文（マンガ、イラストでは対応するときにこの名前に合わせる
+  ogp_image: string | null // blogのときのOGP画像。illustのときはsrc、comicの場合coverまたはfirst_page
+  cover: string | null // comicのときの表紙。ただしない場合は1ページ目をogpにする
+  first_page: number // comicのときの1ページ目のファイル番号
+  filename: string // comicのときの1ページ目を取り出すときに利用する値
+  format: string[] // comicのときのファイル形式
 }
