@@ -7,7 +7,7 @@ import { getHostname } from '@/lib/env'
 
 export default async function IllustDrawerPage({ id, draftKey }: { id: string; draftKey?: string }) {
   const atelier = await getAtelierByID(id, draftKey)
-  if (!atelier) {
+  if (!atelier || !atelier.title) {
     return <div>Atelier not found</div>
   }
 
