@@ -12,7 +12,7 @@ export default function ClientIllustPage() {
 
   useEffect(() => {
     if (!illustID) return
-    // クライアントサイドで /illust にリダイレクトする
+    // クライアントサイドで /illust/detail/{illustID} にリダイレクトする
     // metadataの都合、http redirectで転送はしない
     const target = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${draftKey}` : '')
 
