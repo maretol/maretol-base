@@ -4,8 +4,9 @@ import { M_PLUS_1, SUSE } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import Script from 'next/script'
-import { getHostname } from '@/lib/env'
+import { getHostname, getLocalEnv } from '@/lib/env'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
+import { getClarityID } from '@/lib/api/secrets'
 
 const fontMPlus1 = M_PLUS_1({
   subsets: ['latin'],
@@ -48,12 +49,26 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children, drawer }: { children: React.ReactNode; drawer: React.ReactNode }) {
+  const notLocal = getLocalEnv() !== 'local'
+  const clarityID = await getClarityID()
+
   return (
     <html lang="ja" prefix="og: http://ogp.me/ns#">
       <Script
         src="https://static.cloudflareinsights.com/beacon.min.js"
         data-cf-beacon='{"token": "e7ad45139e61492b95a8686432f438e4"}'
       />
+      <Script type="text/javascript">
+        {notLocal &&
+          clarityID &&
+          `
+            (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+              })(window, document, "clarity", "script", "${clarityID}");
+              `}
+      </Script>
       <body
         className={cn(
           'min-h-screen antialiased bg-gray-300',
