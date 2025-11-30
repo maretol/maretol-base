@@ -13,6 +13,16 @@ export default function Gmaps({ subtexts }: { subtexts: { [key: string]: string 
 
   const { iframe } = subtexts
   if (iframe) {
+    // iframe の src がGoogle Mapsか確認する
+    const startPoint = iframe.indexOf('<iframe src="https://www.google.com/maps/embed?')
+    if (startPoint !== 0) {
+      return (
+        <div className="py-6 mx-3">
+          <p>現在その地図情報の埋め込みには対応していません</p>
+        </div>
+      )
+    }
+
     // iframeにsandbox属性を追加する
     const sandbox = outerContentIframeSandbox
     const sanitizedIframe = iframe.replace(/<iframe /, `<iframe sandbox="${sandbox}" `)
