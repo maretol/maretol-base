@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: 22.17.0
-  WRANGLER_VERSION: 4.20.4
+  WRANGLER_VERSION: 4.50.0
 
 permissions:
   contents: read

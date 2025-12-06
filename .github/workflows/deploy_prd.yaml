@@ -7,7 +7,7 @@ on:
 
 env:
   NODE_VERSION: 22.17.0
-  WRANGLER_VERSION: 4.20.4
+  WRANGLER_VERSION: 4.50.0
 
 permissions:
   contents: read
@@ -217,3 +217,25 @@ jobs:
     steps:
       - name: show status
         run: echo "deployed"
+      - name: show error
+        if: >-
+          ${{
+            needs.deploy-pages.result == 'failure' ||
+            needs.deploy-ogp-data-fetcher.result == 'failure' ||
+            needs.deploy-cms-data-fetcher.result == 'failure' ||
+            needs.deploy-cms-cache-purger.result == 'failure' ||
+            needs.deploy-sns-article-publisher.result == 'failure'
+          }}
+        env:
+          build_result: ${{ needs.deploy-pages.result }}
+          ogp_result: ${{ needs.deploy-ogp-data-fetcher.result }}
+          cms_result: ${{ needs.deploy-cms-data-fetcher.result }}
+          cms_cache_result: ${{ needs.deploy-cms-cache-purger.result }}
+          sns_result: ${{ needs.deploy-sns-article-publisher.result }}
+        run: |
+          echo "build result: $build_result"
+          echo "ogp result: $ogp_result"
+          echo "cms result: $cms_result"
+          echo "cms cache result: $cms_cache_result"
+          echo "sns result: $sns_result"
+          exit 1
