@@ -20,6 +20,7 @@ import MySiteCard from '../../article_dom/mysitecard'
 import LoadingIllustCard from '../../loading_dom/loading_illustcard'
 import NofetchLinkCard from '../../article_dom/nofetch_link'
 import Gmaps from '../../article_dom/gmap'
+import CiteImage from '../../article_dom/cite_image'
 
 export function renderParagraph(content: ParsedContent, context: RenderContext): JSX.Element | null {
   const pOption = content.p_option as POptionType | null
@@ -47,6 +48,7 @@ export function renderParagraph(content: ParsedContent, context: RenderContext):
     gmaps: () => renderGoogleMaps(content, context),
     block_start: () => null, // TODO: Implement block handling
     block_end: () => null, // TODO: Implement block handling
+    cite_image: () => renderCiteImage(content, context),
   }
 
   const renderer = renderers[pOption]
@@ -178,4 +180,23 @@ function renderTableOfContents(content: ParsedContent, context: RenderContext): 
 
 function renderGoogleMaps(content: ParsedContent, context: RenderContext): JSX.Element {
   return <Gmaps key={content.index} subtexts={content.sub_texts} />
+}
+
+function renderCiteImage(content: ParsedContent, context: RenderContext): JSX.Element | null {
+  const url = content.sub_texts?.url
+  const source = content.sub_texts?.source
+
+  // 必須パラメータ欠落時はnullを返却（行を非表示）
+  if (!url || !source) {
+    return null
+  }
+
+  const caption = content.sub_texts?.caption
+  const sourceTitle = content.sub_texts?.source_title
+
+  return (
+    <div key={context.index} className="py-6">
+      <CiteImage url={url} source={source} caption={caption} sourceTitle={sourceTitle} articleID={context.articleID} />
+    </div>
+  )
 }

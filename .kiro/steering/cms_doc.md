@@ -72,9 +72,3 @@ h1 を記事タイトルに使用している都合、CMS の h1 はブログ内
 - `/nofetch_url` : サーバサイドで OGP データを取得しない URL・リンクカード。指定パラメータは画像のキャプション等と同じで `/nofetch_url@@url::https://example.com` と入力する
   - 対応しているパラメータは `url`, `title`, `description` の 3 つ。URL のみ必須
 - `/gmaps` : Google Maps の埋め込み。現在は Google Maps の共有で生成する埋め込み iframe を `/gmaps@@iframe::<iframe src="~~" ...></iframe>` で指定して埋め込む
-- `/cite_image` : 外部画像の引用。外部サイトの画像を引用として表示し、引用元リンクを併記する
-  - 対応しているパラメータは `url`（画像URL）, `source`（引用元ページURL）, `caption`（キャプション）, `source_title`（引用元タイトル）の4つ。`url` と `source` は必須
-  - 例: `/cite_image@@url::https://example.com/image.png@@source::https://example.com/page@@caption::キャプション@@source_title::サイト名`
-  - 表示形式: 画像の下に `{caption}　引用元：[source_title](source)` と表示される。`source_title` が未指定の場合はURLがリンクテキストになる
-  - 外部画像はサーバサイドで取得しKVにキャッシュされる（7日間有効）。対応形式: jpg, jpeg, png, gif, webp
-  - 画像クリックでモーダル表示（通常の画像と同様）。画像取得失敗時はフォールバック画像が表示されモーダルは開かない

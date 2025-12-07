@@ -38,12 +38,12 @@ export default async function ContentImage({
         <div className="mt-3 space-y-1">
           {title && (
             <div className="flex justify-center">
-              <p className="text-center text-md text-wrap font-bold text-gray-800 max-w-[30rem]">{title}</p>
+              <p className="text-center text-md text-wrap font-bold text-gray-800 max-w-120">{title}</p>
             </div>
           )}
           {caption && (
             <div className="flex justify-center">
-              <p className="text-center text-sm text-wrap text-gray-800 max-w-[30rem]">{caption}</p>
+              <p className="text-center text-sm text-wrap text-gray-800 max-w-120">{caption}</p>
             </div>
           )}
         </div>
@@ -68,7 +68,7 @@ export default async function ContentImage({
         <div className="mt-3 space-y-1">
           {caption && (
             <div className="flex justify-center">
-              <p className="text-center text-sm text-wrap text-gray-800 max-w-[30rem]">{caption}</p>
+              <p className="text-center text-sm text-wrap text-gray-800 max-w-120">{caption}</p>
             </div>
           )}
         </div>
