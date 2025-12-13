@@ -18,6 +18,18 @@ updates:
       dependencies:
         patterns:
           - '*'
+        exclude-patterns:
+          - 'next'
+          - '@opennextjs/cloudflare'
+      next:
+        patterns:
+          - 'next'
+        update-types:
+          - 'minor'
+          - 'patch'
+      opennext-cloudflare:
+        patterns:
+          - '@opennextjs/cloudflare'
     target-branch: 'development'
     allow:
       - dependency-type: 'all'
@@ -29,9 +41,6 @@ updates:
       - dependency-name: 'pages'
       - dependency-name: 'packages/*'
       - dependency-name: 'next'
-        update-types:
-          - 'version-update:semver-major'
-      - dependency-name: '@opennextjs/cloudflare'
         update-types:
           - 'version-update:semver-major'
   - package-ecosystem: 'github-actions'
