@@ -5,7 +5,7 @@
   "main": "index.js",
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20251210.0",
-    "@types/node": "^24.10.2",
+    "@types/node": "^25.0.1",
     "cms-cache-key-gen": "^1.0.0",
     "wrangler": "^4.53.0"
   },
