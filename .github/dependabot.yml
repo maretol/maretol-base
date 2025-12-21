@@ -22,6 +22,8 @@ updates:
           - 'next'
           - 'eslint-config-next'
           - '@opennextjs/cloudflare'
+          - 'react*'
+          - '@types/react*'
       next:
         patterns:
           - 'next'
@@ -29,6 +31,10 @@ updates:
       opennext-cloudflare:
         patterns:
           - '@opennextjs/cloudflare'
+      react:
+        patterns:
+          - 'react*'
+          - '@types/react*'
     target-branch: 'development'
     allow:
       - dependency-type: 'all'
