@@ -28,7 +28,7 @@ export async function generateMetadata(props: {
   return {
     title: title,
     description: 'タグ検索ページ',
-    robots: tagIDs.length === 1 ? 'index, follow' : 'noindex, follow',
+    robots: tagIDs.length === 1 ? 'index, follow' : 'noindex, nofollow',
     alternates: {
       canonical: canonicalUrl,
     },
@@ -47,6 +47,17 @@ export default async function TagPage(props: {
   const searchParams = await props.searchParams
   const { tagIDs, tagNames } = parseTagParams(searchParams)
   const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+
+  // タグ数の上限チェック
+  if (tagIDs.length > maxTagCount) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-red-500 font-bold mb-2">エラー</p>
+        <p className="text-gray-700">タグは最大{maxTagCount}個まで選択可能です</p>
+        <p className="text-gray-500 text-sm mt-4">選択中のタグ数: {tagIDs.length}個</p>
+      </div>
+    )
+  }
 
   const tags = await getTags()
 
