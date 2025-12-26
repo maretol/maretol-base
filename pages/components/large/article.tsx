@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { convertJST } from '@/lib/time'
 import Tags from '../middle/tags'
 import { Button } from '../ui/button'
-import ShareButton from '../small/share'
+import ShareSection from '../middle/share_section'
 import { BookIcon, HomeIcon } from 'lucide-react'
 import ArticleContent from '../middle/article_content'
 import { categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
@@ -41,7 +41,7 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
       <hr className="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
       <CardContent className="relative">
         <ArticleContent contents={parsedContents} sample articleID={id} />
-        <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-36 bg-gradient-to-t from-gray-100/100 from-40% to-gray-100/0" />
+        <div className="absolute p-6 pt-0 bottom-0 left-0 w-full h-36 bg-linear-to-t from-gray-100 from-40% to-gray-100/0" />
       </CardContent>
       <CardFooter>
         <Button className="w-full gap-1 font-suse" asChild>
@@ -99,10 +99,7 @@ export async function FullArticle({
       <CardFooter>
         <div className="w-full">
           <div className="flex gap-1 items-center justify-end">
-            <ShareButton variant="twitter" url={shareURL} title={title} />
-            <ShareButton variant="bluesky" url={shareURL} title={title} />
-            <ShareButton variant="facebook" url={shareURL} title={title} />
-            <ShareButton variant="copy_and_paste" url={shareURL} title={title} />
+            <ShareSection shareURL={shareURL} shareTitle={title} contentType="blog" />
           </div>
           <div className="flex justify-center mt-2">
             <Button variant="secondary" className="w-96 flex justify-center gap-1" asChild>

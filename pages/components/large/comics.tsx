@@ -5,7 +5,7 @@ import ArticleContent from '../middle/article_content'
 import { Button } from '../ui/button'
 import Link from 'next/link'
 import { ArrowLeftSquareIcon, ArrowRightSquareIcon, ArrowUpSquareIcon, BookImageIcon, HomeIcon } from 'lucide-react'
-import ShareButton from '../small/share'
+import ShareSection from '../middle/share_section'
 import { getHostname } from '@/lib/env'
 import ClientImage2 from '../small/client_image2'
 
@@ -122,9 +122,7 @@ export function ComicDetailPage(props: ComicArticleProps) {
         <div className="mt-5 space-y-2">
           <h1 className="text-2xl font-bold pl-2 pb-1 content-h2">{props.titleName}</h1>
           <div className="flex items-center justify-end gap-2">
-            <ShareButton variant="twitter" url={url} title={props.titleName} />
-            <ShareButton variant="bluesky" url={url} title={props.titleName} />
-            <ShareButton variant="copy_and_paste" url={url} title={props.titleName} />
+            <ShareSection shareURL={url} shareTitle={props.titleName} contentType="comics" />
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
             <Button disabled={!isNextExist} variant="secondary" className="w-80 gap-1 font-suse" asChild={isNextExist}>
