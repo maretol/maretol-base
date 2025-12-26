@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBluesky, faTwitter, faXTwitter } from '@fortawesome/free-brands-svg-icons'
 import Link from 'next/link'
 import ShareCopyAndPasteButton from './share_client'
+import { addUtmParams, ContentType } from '@/lib/utm'
 
 const titleFormat = '${title} | Maretol Base'
 
@@ -10,26 +11,43 @@ export default function ShareButton(props: {
   variant: 'twitter' | 'x' | 'facebook' | 'bluesky' | 'copy_and_paste'
   url: string
   title: string
+  contentType?: ContentType
 }) {
+  const contentType = props.contentType ?? 'page'
+
   if (props.variant === 'twitter') {
-    return <ShareTwitterButton {...props} />
+    return <ShareTwitterButton {...props} contentType={contentType} />
   } else if (props.variant === 'x') {
-    return <ShareXButton {...props} />
+    return <ShareXButton {...props} contentType={contentType} />
   } else if (props.variant === 'facebook') {
     return <ShareFacebookButton {...props} />
   } else if (props.variant === 'bluesky') {
-    return <ShareBlurSkyButton {...props} />
+    return <ShareBlurSkyButton {...props} contentType={contentType} />
   } else if (props.variant === 'copy_and_paste') {
-    return <ShareCopyAndPasteButton {...props} />
+    return <ShareCopyAndPasteButton {...props} contentType={contentType} />
   } else {
     return <div></div>
   }
 }
 
-function ShareTwitterButton({ url, title }: { url: string; title: string }) {
+function ShareTwitterButton({
+  url,
+  title,
+  contentType,
+}: {
+  url: string
+  title: string
+  contentType: ContentType
+}) {
   const twitterURL = 'https://twitter.com/intent/tweet'
+  const urlWithUtm = addUtmParams(url, {
+    source: 'twitter',
+    medium: 'social',
+    campaign: 'share_button',
+    content: contentType,
+  })
   const queries = new URLSearchParams({
-    url: url,
+    url: urlWithUtm,
     text: titleFormat.replace('${title}', title),
   })
   const href = `${twitterURL}?${queries.toString()}`
@@ -42,10 +60,24 @@ function ShareTwitterButton({ url, title }: { url: string; title: string }) {
   )
 }
 
-function ShareXButton({ url, title }: { url: string; title: string }) {
+function ShareXButton({
+  url,
+  title,
+  contentType,
+}: {
+  url: string
+  title: string
+  contentType: ContentType
+}) {
   const xURL = 'https://x.com/intent/tweet'
+  const urlWithUtm = addUtmParams(url, {
+    source: 'twitter',
+    medium: 'social',
+    campaign: 'share_button',
+    content: contentType,
+  })
   const queries = new URLSearchParams({
-    url: url,
+    url: urlWithUtm,
     text: titleFormat.replace('${title}', title),
   })
   const href = `${xURL}?${queries.toString()}`
@@ -68,10 +100,24 @@ function ShareFacebookButton({ url }: { url: string }) {
   )
 }
 
-function ShareBlurSkyButton({ url, title }: { url: string; title: string }) {
+function ShareBlurSkyButton({
+  url,
+  title,
+  contentType,
+}: {
+  url: string
+  title: string
+  contentType: ContentType
+}) {
   const blurSkeyURL = 'https://bsky.app/intent/compose'
+  const urlWithUtm = addUtmParams(url, {
+    source: 'bluesky',
+    medium: 'social',
+    campaign: 'share_button',
+    content: contentType,
+  })
   const query = new URLSearchParams({
-    text: titleFormat.replace('${title}', title) + '\n' + url,
+    text: titleFormat.replace('${title}', title) + '\n' + urlWithUtm,
   })
   const href = `${blurSkeyURL}?${query.toString()}`
   return (
