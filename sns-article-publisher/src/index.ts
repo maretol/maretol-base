@@ -5,6 +5,7 @@ import { Content, ContentValue, WebhookPayload } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import crypto from 'node:crypto'
 import NoteMisskey, { MisskeyAuthInfo } from './misskey'
+import { addUtmParams, SNSTarget } from './utm'
 
 export interface Env {
   API_KEY: string
@@ -115,19 +116,29 @@ async function publish(env: Env, content: PublishContent, service: ServiceType) 
     comic: 'マンガを公開しました',
   }
   const prefix = postPrefixMap[service]
-  let postText = ''
-  if (postMessage === undefined || postMessage === null || postMessage === '') {
-    postText = `${prefix}：${title} | Maretol Base\n${url}`
-  } else {
-    postText = `${postMessage}\n\n${prefix}：${title} | Maretol Base\n${url}`
+
+  // SNSごとにUTMパラメータ付きURLを生成し、投稿テキストを作成
+  const createPostText = (snsTarget: SNSTarget): string => {
+    const urlWithUtm = addUtmParams(url, {
+      source: snsTarget,
+      medium: 'social',
+      campaign: 'auto_post',
+      content: service,
+    })
+    if (postMessage === undefined || postMessage === null || postMessage === '') {
+      return `${prefix}：${title} | Maretol Base\n${urlWithUtm}`
+    } else {
+      return `${postMessage}\n\n${prefix}：${title} | Maretol Base\n${urlWithUtm}`
+    }
   }
-  console.log('postText: ' + postText)
 
   // 以下各種SNSへのポスト
   // 1. Twitter
   if (TARGET['twitter']) {
     console.log('post to Twitter')
     const twiAuth = createTwitterAuthInfo(env)
+    const postText = createPostText('twitter')
+    console.log('postText (Twitter): ' + postText)
     try {
       await PostTweet(twiAuth, postText)
     } catch (e) {
@@ -141,10 +152,18 @@ async function publish(env: Env, content: PublishContent, service: ServiceType) 
   if (TARGET['bluesky']) {
     console.log('post to BlueSky')
     const bskyAuth = createBlueSkyAuthInfo(env)
+    const urlWithUtm = addUtmParams(url, {
+      source: 'bluesky',
+      medium: 'social',
+      campaign: 'auto_post',
+      content: service,
+    })
+    const postText = createPostText('bluesky')
+    console.log('postText (BlueSky): ' + postText)
     const ogpInfo = {
       title: title,
       description: postMessage || '',
-      url: url,
+      url: urlWithUtm,
       image: ogpImage,
     }
     try {
@@ -161,6 +180,8 @@ async function publish(env: Env, content: PublishContent, service: ServiceType) 
   if (TARGET['misskey']) {
     console.log('post to Misskey')
     const misskeyAuth = createMisskeyAuthInfo(env)
+    const postText = createPostText('misskey')
+    console.log('postText (Misskey): ' + postText)
     try {
       await NoteMisskey(misskeyAuth, postText)
     } catch (e) {
@@ -174,6 +195,8 @@ async function publish(env: Env, content: PublishContent, service: ServiceType) 
   if (TARGET['nostr']) {
     console.log('post to nostr')
     const nostrAuth = createNostrAuthInfo(env)
+    const postText = createPostText('nostr')
+    console.log('postText (nostr): ' + postText)
     try {
       await PostNostrKind1(nostrAuth, postText)
     } catch (e) {
