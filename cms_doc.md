@@ -4,6 +4,15 @@
 
 それらを忘れないためのメモ
 
+## テキスト装飾
+
+bold,italic,underline など、テキストの装飾は基本的には CMS 側の機能を利用する（それらは HTML で入ってくるのでそのまま HTML を処理して対応できる
+
+それとは別に非対応の機能は、CMS 側の `inline-markup` タグをつけることで対応する。markup の命名は基本的に HTML そのまま対応。現在対応しているのは下記のもの
+
+- ルビ（ruby）
+  - <span>約束された勝利の剣@@ruby::エクスカリバー</span>
+
 ## 画像
 
 画像周りは CMS 管理ではなく、Cloudflare のストレージにアップロードし、公開 URL を文中に配置する処理になっている
@@ -73,8 +82,8 @@ h1 を記事タイトルに使用している都合、CMS の h1 はブログ内
   - 対応しているパラメータは `url`, `title`, `description` の 3 つ。URL のみ必須
 - `/gmaps` : Google Maps の埋め込み。現在は Google Maps の共有で生成する埋め込み iframe を `/gmaps@@iframe::<iframe src="~~" ...></iframe>` で指定して埋め込む
 - `/cite_image` : 外部画像の引用。外部サイトの画像を引用として表示し、引用元リンクを併記する
-  - 対応しているパラメータは `url`（画像URL）, `source`（引用元ページURL）, `caption`（キャプション）, `source_title`（引用元タイトル）の4つ。`url` と `source` は必須
+  - 対応しているパラメータは `url`（画像 URL）, `source`（引用元ページ URL）, `caption`（キャプション）, `source_title`（引用元タイトル）の 4 つ。`url` と `source` は必須
   - 例: `/cite_image@@url::https://example.com/image.png@@source::https://example.com/page@@caption::キャプション@@source_title::サイト名`
-  - 表示形式: 画像の下に `{caption}　引用元：[source_title](source)` と表示される。`source_title` が未指定の場合はURLがリンクテキストになる
-  - 外部画像はサーバサイドで取得しKVにキャッシュされる（7日間有効）。対応形式: jpg, jpeg, png, gif, webp
+  - 表示形式: 画像の下に `{caption}　引用元：[source_title](source)` と表示される。`source_title` が未指定の場合は URL がリンクテキストになる
+  - 外部画像はサーバサイドで取得し KV にキャッシュされる（7 日間有効）。対応形式: jpg, jpeg, png, gif, webp
   - 画像クリックでモーダル表示（通常の画像と同様）。画像取得失敗時はフォールバック画像が表示されモーダルは開かない
