@@ -10,3 +10,4 @@ dist
 .wrangler
 
 .kiro/specs/**
+**/.kiro/specs/**
