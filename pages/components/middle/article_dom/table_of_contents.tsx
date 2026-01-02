@@ -4,7 +4,7 @@ import Link from 'next/link'
 export default function Table({ toc }: { toc: TableOfContents }) {
   let beforeLevel = 0
   return (
-    <div className="bg-gray-50 text-gray-800 p-4 mt-4 mx-4 border-1 border-gray-500/30 rounded-lg">
+    <div className="bg-gray-50 text-gray-800 p-4 mt-4 border-1 border-gray-500/30 rounded-lg">
       <h2 className="text-lg font-bold">Contents</h2>
       <hr className="border-gray-500" />
       <div className="ml-4 mt-2">
