@@ -4,7 +4,7 @@ export default function Hn({ tag, text, attrs }: { tag: string; text: string; at
 
   if (tag === 'h1') {
     return (
-      <div className="mt-2 pt-6 pb-2 space-y-0 -ml-1">
+      <div className="pt-8 pb-3 space-y-0 -ml-2">
         <h2 id={id} className="text-2xl font-bold pl-2 pb-1 content-h2">
           {text}
         </h2>
@@ -13,7 +13,7 @@ export default function Hn({ tag, text, attrs }: { tag: string; text: string; at
   }
   if (tag === 'h2') {
     return (
-      <div className="mt-2 pt-6 pb-3 space-y-0 -ml-1">
+      <div className="pt-8 pb-3 space-y-0 -ml-1">
         <h3 id={id} className="text-xl font-bold border-blue-900 pl-3 border-l-4">
           {text}
         </h3>
@@ -22,7 +22,7 @@ export default function Hn({ tag, text, attrs }: { tag: string; text: string; at
   }
   if (tag === 'h3') {
     return (
-      <div className="flex flex-row items-center pt-4 pb-1 space-x-2">
+      <div className="flex flex-row items-center pt-4 pb-3 space-x-2 -ml-2">
         <div className="w-2 h-2 rounded-full bg-blue-900 inline-block"></div>
         <h4 id={id} className="text-lg font-bold">
           {text}
@@ -32,7 +32,7 @@ export default function Hn({ tag, text, attrs }: { tag: string; text: string; at
   }
   if (tag === 'h4') {
     return (
-      <div className="flex flex-row items-center pt-4 pb-4 space-x-2">
+      <div className="flex flex-row items-center pt-4 pb-3 space-x-2 -ml-2">
         <div className="w-2 h-1 rounded-full bg-blue-900 inline-block"></div>
         <h5 id={id} className="font-bold">
           {text}
@@ -42,7 +42,7 @@ export default function Hn({ tag, text, attrs }: { tag: string; text: string; at
   }
   if (tag === 'h5') {
     return (
-      <h6 id={id} className="pt-2">
+      <h6 id={id} className="pt-2 pb-3">
         {text}
       </h6>
     )

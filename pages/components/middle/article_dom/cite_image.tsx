@@ -34,7 +34,7 @@ export default async function CiteImage({ url, source, caption, sourceTitle, art
   )
 
   return (
-    <div className="bg-gray-200 p-3 rounded-lg border-l-8 border-l-gray-500 w-fit mx-3 max-w-xl" id={base64src}>
+    <div className="bg-gray-200 p-3 rounded-lg border-l-8 border-l-gray-500 w-fit max-w-xl" id={base64src}>
       {isDataUrl ? (
         <Link href={`/blog/${articleID}/image/${base64src}`} className="x-blog-image" scroll={false}>
           {imageElement}

@@ -5,7 +5,7 @@ import { outerContentIframeSandbox } from '@/lib/static'
 export default function Gmaps({ subtexts }: { subtexts: { [key: string]: string } | undefined }) {
   if (!subtexts) {
     return (
-      <div className="py-6 mx-3 ">
+      <div className="py-6">
         <p>地図情報がありません</p>
       </div>
     )
@@ -17,7 +17,7 @@ export default function Gmaps({ subtexts }: { subtexts: { [key: string]: string 
     const startPoint = iframe.indexOf('<iframe src="https://www.google.com/maps/embed?')
     if (startPoint !== 0) {
       return (
-        <div className="py-6 mx-3">
+        <div className="py-6">
           <p>現在その地図情報の埋め込みには対応していません</p>
         </div>
       )
@@ -30,7 +30,7 @@ export default function Gmaps({ subtexts }: { subtexts: { [key: string]: string 
     // iframeをそのまま表示する
     // 注意: ここではdangerouslySetInnerHTMLを使用しているため、信頼できるコンテンツのみを使用してください
     return (
-      <div className="py-6 mx-3 w-full">
+      <div className="py-6 w-full">
         <div
           className="max-w-xl w-full h-auto p-2 rounded-xs bg-indigo-200"
           dangerouslySetInnerHTML={{ __html: sanitizedIframe }}
@@ -40,7 +40,7 @@ export default function Gmaps({ subtexts }: { subtexts: { [key: string]: string 
   }
 
   return (
-    <div className="py-6 mx-3">
+    <div className="py-6">
       <p>現在その地図情報の埋め込みには対応していません</p>
     </div>
   )
