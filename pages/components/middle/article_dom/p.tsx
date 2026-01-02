@@ -3,5 +3,5 @@ export default function P({ innerHTML, attrs }: { innerHTML: string; attrs?: { [
   const style = textAlign
     ? { textAlign: textAlign[1] as 'left' | 'center' | 'right' }
     : { textAlign: 'left' as 'left' | 'center' | 'right' }
-  return <p style={style} dangerouslySetInnerHTML={{ __html: innerHTML }} className={'leading-8 mx-3'} />
+  return <p style={style} dangerouslySetInnerHTML={{ __html: innerHTML }} className={'leading-8 my-2'} />
 }
