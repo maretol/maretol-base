@@ -86,8 +86,8 @@ export async function middleware(request: NextRequest) {
 
   try {
     const { env, ctx } = await getCloudflareContext({ async: true })
-    const endpoint = env.AXIOM_ENDPOINT
-    const apiToken = env.AXIOM_APITOKEN
+    const endpoint = await env.AXIOM_ENDPOINT.get()
+    const apiToken = await env.AXIOM_APITOKEN.get()
     ctx.waitUntil(sendLog(logObj, endpoint, apiToken))
   } catch (e) {
     console.log('Axiom send log error: ', e)
