@@ -18,6 +18,17 @@ updates:
       dependencies:
         patterns:
           - '*'
+        exclude-patterns:
+          - 'next'
+          - 'eslint-config-next'
+          - '@opennextjs/cloudflare'
+      next:
+        patterns:
+          - 'next'
+          - 'eslint-config-next'
+      opennext-cloudflare:
+        patterns:
+          - '@opennextjs/cloudflare'
     target-branch: 'development'
     allow:
       - dependency-type: 'all'
@@ -28,12 +39,6 @@ updates:
       - dependency-name: 'ogp-data-fetcher'
       - dependency-name: 'pages'
       - dependency-name: 'packages/*'
-      - dependency-name: 'next'
-        update-types:
-          - 'version-update:semver-major'
-      - dependency-name: '@opennextjs/cloudflare'
-        update-types:
-          - 'version-update:semver-major'
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:

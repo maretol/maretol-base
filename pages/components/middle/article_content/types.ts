@@ -27,6 +27,7 @@ export type POptionType =
   | 'gmaps'
   | 'block_start'
   | 'block_end'
+  | 'cite_image'
 
 export interface ArticleContentProps {
   contents: ParsedContent[]

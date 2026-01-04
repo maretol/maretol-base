@@ -3,9 +3,24 @@
 import { CheckIcon, Copy } from 'lucide-react'
 import { Button } from '../ui/button'
 import { useState } from 'react'
+import { addUtmParams, ContentType } from '@/lib/utm'
 
-export default function ShareCopyAndPasteButton({ url, title }: { url: string; title: string }) {
-  const text = `${title} | Maretol Base\n${url}`
+export default function ShareCopyAndPasteButton({
+  url,
+  title,
+  contentType = 'page',
+}: {
+  url: string
+  title: string
+  contentType?: ContentType
+}) {
+  const urlWithUtm = addUtmParams(url, {
+    source: 'clipboard',
+    medium: 'social',
+    campaign: 'share_button',
+    content: contentType,
+  })
+  const text = `${title} | Maretol Base\n${urlWithUtm}`
   const [clicked, setClicked] = useState(false)
   const onClick = () => {
     navigator.clipboard.writeText(text)

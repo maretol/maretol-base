@@ -50,7 +50,7 @@ export default function IllustDrawer({
           </Link>
         </Button>
         <div className="flex items-center gap-2 ">
-          <ShareSection shareURL={shareURL} shareTitle={shareTitle} />
+          <ShareSection shareURL={shareURL} shareTitle={shareTitle} contentType="illust" />
         </div>
       </div>
       <div className="mx-4">

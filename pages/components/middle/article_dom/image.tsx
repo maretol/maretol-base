@@ -24,7 +24,7 @@ export default async function ContentImage({
   if (tag === 'content_image') {
     return (
       // ここに画像のモーダルを実装する
-      <div className="w-fit mx-3" id={base64src}>
+      <div className="w-fit" id={base64src}>
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
@@ -38,12 +38,12 @@ export default async function ContentImage({
         <div className="mt-3 space-y-1">
           {title && (
             <div className="flex justify-center">
-              <p className="text-center text-md text-wrap font-bold text-gray-800 max-w-[30rem]">{title}</p>
+              <p className="text-center text-md text-wrap font-bold text-gray-800 max-w-120">{title}</p>
             </div>
           )}
           {caption && (
             <div className="flex justify-center">
-              <p className="text-center text-sm text-wrap text-gray-800 max-w-[30rem]">{caption}</p>
+              <p className="text-center text-sm text-wrap text-gray-800 max-w-120">{caption}</p>
             </div>
           )}
         </div>
@@ -54,7 +54,7 @@ export default async function ContentImage({
     return <p>{src}</p>
   } else if (tag === 'content_photo') {
     return (
-      <div className={cn('bg-indigo-200 p-2 rounded-xs w-full max-w-xl mx-3')} id={base64src}>
+      <div className={cn('bg-indigo-200 p-2 rounded-xs w-full max-w-xl')} id={base64src}>
         <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
@@ -68,7 +68,7 @@ export default async function ContentImage({
         <div className="mt-3 space-y-1">
           {caption && (
             <div className="flex justify-center">
-              <p className="text-center text-sm text-wrap text-gray-800 max-w-[30rem]">{caption}</p>
+              <p className="text-center text-sm text-wrap text-gray-800 max-w-120">{caption}</p>
             </div>
           )}
         </div>
