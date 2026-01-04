@@ -110,7 +110,8 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     {
-      source: '/((?!_next/static|_next/image|cdn-cgi|favicon.ico|icon.ico).*)',
+      source:
+        '/((?!_next/static|_next/image|cdn-cgi|favicon.ico|icon.ico|.well-known/nostr.json|sitemap.xml|rss/feed.rdf).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },
