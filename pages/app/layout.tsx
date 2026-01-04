@@ -7,7 +7,6 @@ import Script from 'next/script'
 import { getEnv, getHostname, getLocalEnv } from '@/lib/env'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { getClarityID } from '@/lib/api/secrets'
-import { getEnvironmentData } from 'node:worker_threads'
 
 const fontMPlus1 = M_PLUS_1({
   subsets: ['latin'],
@@ -50,7 +49,7 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children, drawer }: { children: React.ReactNode; drawer: React.ReactNode }) {
-  const notLocal = getLocalEnv() !== 'local' || getEnv() !== 'STG'
+  const isPrd = getLocalEnv() !== 'local' && getEnv() !== 'STG'
   const clarityID = await getClarityID()
 
   return (
@@ -60,7 +59,7 @@ export default async function RootLayout({ children, drawer }: { children: React
         data-cf-beacon='{"token": "e7ad45139e61492b95a8686432f438e4"}'
       />
       <Script type="text/javascript">
-        {notLocal &&
+        {isPrd &&
           clarityID &&
           `
             (function(c,l,a,r,i,t,y){
