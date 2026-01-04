@@ -14,4 +14,8 @@ function getNodeEnv() {
   return process.env.NODE_ENV || 'development'
 }
 
-export { getHostname, getLocalEnv, getNodeEnv }
+function getEnv() {
+  return process.env.ENV
+}
+
+export { getHostname, getLocalEnv, getNodeEnv, getEnv }

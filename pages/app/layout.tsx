@@ -4,7 +4,7 @@ import { M_PLUS_1, SUSE } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import Script from 'next/script'
-import { getHostname, getLocalEnv } from '@/lib/env'
+import { getEnv, getHostname, getLocalEnv } from '@/lib/env'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { getClarityID } from '@/lib/api/secrets'
 
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children, drawer }: { children: React.ReactNode; drawer: React.ReactNode }) {
-  const notLocal = getLocalEnv() !== 'local'
+  const isPrd = getLocalEnv() !== 'local' && getEnv() !== 'STG'
   const clarityID = await getClarityID()
 
   return (
@@ -59,7 +59,7 @@ export default async function RootLayout({ children, drawer }: { children: React
         data-cf-beacon='{"token": "e7ad45139e61492b95a8686432f438e4"}'
       />
       <Script type="text/javascript">
-        {notLocal &&
+        {isPrd &&
           clarityID &&
           `
             (function(c,l,a,r,i,t,y){

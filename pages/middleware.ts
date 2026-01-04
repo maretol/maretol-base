@@ -1,4 +1,6 @@
+import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { NextRequest, NextResponse } from 'next/server'
+import sendLog from './lib/logger'
 
 const BOT_PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'Googlebot', pattern: /googlebot/i },
@@ -46,6 +48,7 @@ function createLogObject(
     // アクセス情報
     timestamp: new Date().toISOString(),
     method: method,
+    host: url.host,
     path: url.pathname,
     search: url.search,
 
@@ -68,13 +71,7 @@ function createLogObject(
   }
 }
 
-export function middleware(request: NextRequest) {
-  // preloadのリクエストは除外
-  const rscHeader = request.headers.get('rsc') ?? request.headers.get('RSC')
-  if (rscHeader) {
-    return NextResponse.next()
-  }
-
+export async function middleware(request: NextRequest) {
   const method = request.method
   const url = new URL(request.url)
 
@@ -87,9 +84,26 @@ export function middleware(request: NextRequest) {
   const logObj = createLogObject(url, userAgent, referer, method, botName, ip, cf)
   console.log(logObj)
 
+  try {
+    const { env, ctx } = await getCloudflareContext({ async: true })
+    const endpoint = env.AXIOM_ENDPOINT
+    const apiToken = env.AXIOM_APITOKEN
+    ctx.waitUntil(sendLog(logObj, endpoint, apiToken))
+  } catch (e) {
+    console.log('Axiom send log error: ', e)
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|cdn-cgi|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)'],
+  matcher: [
+    {
+      source: '/((?!_next/static|_next/image|cdn-cgi|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
+      missing: [
+        { type: 'header', key: 'next-router-prefetch' },
+        { type: 'header', key: 'purpose', value: 'prefetch' },
+      ],
+    },
+  ],
 }

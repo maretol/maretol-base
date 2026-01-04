@@ -18,7 +18,9 @@ kv_namespaces = [
     { binding = "IMAGE_CACHE", id = "7dcf481f5bba4e4690f8480b02666015"}
 ]
 secrets_store_secrets = [
-    { binding="CLARITY_ID", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="CLARITY_ID" }
+    { binding="CLARITY_ID", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="CLARITY_ID" },
+    { binding="AXIOM_ENDPOINT", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="AXIOM_ENDPOINT" },
+    { binding="AXIOM_APITOKEN", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="AXIOM_APITOKEN" }
 ]
 
 [dev]
@@ -33,9 +35,11 @@ enabled = true
 
 [vars]
 HOST = "https://www.maretol.xyz"
+ENV = "PRD"
 
 [env.staging.vars]
 HOST = "https://maretol-base-v3-stg.maretol-ruha.workers.dev"
+ENV = "STG"
 
 [env.staging]
 name = "maretol-base-v3-stg"
@@ -52,4 +56,9 @@ kv_namespaces = [
     { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
     { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f"},
     { binding = "IMAGE_CACHE", id = "7dcf481f5bba4e4690f8480b02666015"}
+]
+secrets_store_secrets = [
+    { binding="CLARITY_ID", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="CLARITY_ID" },
+    { binding="AXIOM_ENDPOINT", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="AXIOM_ENDPOINT" },
+    { binding="AXIOM_APITOKEN", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="AXIOM_APITOKEN" }
 ]
