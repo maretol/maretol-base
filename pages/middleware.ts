@@ -69,13 +69,13 @@ function createLogObject(
 }
 
 export function middleware(request: NextRequest) {
-  const method = request.method
-  const url = new URL(request.url)
-
   // preloadのリクエストは除外
-  if (url.searchParams.has('_rsc')) {
+  if (request.headers.get('Rsc')) {
     return NextResponse.next()
   }
+
+  const method = request.method
+  const url = new URL(request.url)
 
   const userAgent = request.headers.get('user-agent') || 'non-user-agent'
   const referer = request.headers.get('referer') || 'non-referer'
