@@ -1,6 +1,6 @@
 export default async function sendLog(logObj: Object, endpoint: string, apiToken: string) {
   if (!endpoint || !apiToken) {
-    console.error('axiom config is error!')
+    console.error('Axiom config is error or invalid')
     return
   }
 
