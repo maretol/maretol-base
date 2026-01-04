@@ -14,8 +14,8 @@ interface CloudflareEnv {
   OGP_RPC: Service<OGPDataFetcher>
   CLARITY_ID: SecretsStoreSecret
   ENV: string
-  AXIOM_ENDPOINT: string
-  AXIOM_APITOKEN: string
+  AXIOM_ENDPOINT: SecretsStoreSecret
+  AXIOM_APITOKEN: SecretsStoreSecret
 }
 
 // 以下はローカル時に使う部分（特に支障はないのでそのまま読ませる）
