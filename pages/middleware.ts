@@ -1,6 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { NextRequest, NextResponse } from 'next/server'
 import sendLog from './lib/logger'
+import { NextURL } from 'next/dist/server/web/next-url'
 
 const BOT_PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'Googlebot', pattern: /googlebot/i },
@@ -35,7 +36,7 @@ function detectBot(userAgent: string): string | null {
 }
 
 function createLogObject(
-  url: URL,
+  nextURL: NextURL,
   userAgent: string,
   referer: string,
   method: string,
@@ -48,15 +49,15 @@ function createLogObject(
     // アクセス情報
     timestamp: new Date().toISOString(),
     method: method,
-    host: url.host,
-    path: url.pathname,
-    search: url.search,
+    host: nextURL.host,
+    path: nextURL.pathname,
+    search: nextURL.search,
 
     // 流入経路
     referer: referer,
-    utm_source: url.searchParams.get('utm_source'),
-    utm_medium: url.searchParams.get('utm_medium'),
-    utm_campaign: url.searchParams.get('utm_campaign'),
+    utm_source: nextURL.searchParams.get('utm_source'),
+    utm_medium: nextURL.searchParams.get('utm_medium'),
+    utm_campaign: nextURL.searchParams.get('utm_campaign'),
 
     // bot情報
     is_bot: botName !== null,
@@ -71,17 +72,27 @@ function createLogObject(
   }
 }
 
+function hasExcludeExtension(pathname: string): boolean {
+  pathname = pathname.toLowerCase()
+  const imageExtList = ['.svg', '.ico', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.bmp', '.css', '.js']
+  return imageExtList.some((ext) => pathname.endsWith(ext))
+}
+
 export async function middleware(request: NextRequest) {
   const method = request.method
-  const url = new URL(request.url)
+  const nextURL = request.nextUrl
 
-  const userAgent = request.headers.get('user-agent') || 'non-user-agent'
-  const referer = request.headers.get('referer') || 'non-referer'
+  if (hasExcludeExtension(nextURL.pathname)) {
+    return NextResponse.next()
+  }
+
+  const userAgent = request.headers.get('user-agent') || 'unknown'
+  const referer = request.headers.get('referer') || 'unknown'
   const botName = detectBot(userAgent)
   const cf: CfProperties | undefined = request.cf
   const ip = request.headers.get('cf-connecting-ip')
 
-  const logObj = createLogObject(url, userAgent, referer, method, botName, ip, cf)
+  const logObj = createLogObject(nextURL, userAgent, referer, method, botName, ip, cf)
   console.log(logObj)
 
   try {
@@ -99,7 +110,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     {
-      source: '/((?!_next/static|_next/image|cdn-cgi|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
+      source: '/((?!_next/static|_next/image|cdn-cgi|favicon.ico|icon.ico).*)',
       missing: [
         { type: 'header', key: 'next-router-prefetch' },
         { type: 'header', key: 'purpose', value: 'prefetch' },
