@@ -16,7 +16,7 @@ export default async function ArticleContent({
   const className = sampleFlag ? sampleClassName : contentClassName
 
   return (
-    <div className={cn(className, 'px-6')}>
+    <div className={cn(className, 'px-2 lg:px-6')}>
       {contents.map((content, index) => {
         if (sampleFlag && index > maxSampleContentCount) {
           return null
