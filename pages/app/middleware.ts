@@ -68,7 +68,7 @@ function createLogObject(
   }
 }
 
-export default function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const method = request.method
   const url = new URL(request.url)
   const userAgent = request.headers.get('user-agent') || 'non-user-agent'
