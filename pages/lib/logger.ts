@@ -6,7 +6,7 @@ export default async function sendLog(logObj: Object, endpoint: string, apiToken
 
   const body = '[' + JSON.stringify(logObj) + ']'
 
-  await fetch(endpoint, {
+  const response = await fetch(endpoint, {
     headers: {
       Authorization: `Bearer ${apiToken}`,
       'Content-Type': 'application/json',
@@ -14,4 +14,13 @@ export default async function sendLog(logObj: Object, endpoint: string, apiToken
     method: 'POST',
     body,
   })
+
+  if (!response.ok) {
+    const responseText = await response.text()
+    console.error('Error sending logdata', {
+      status: response.status,
+      statusText: response.statusText,
+      body: responseText,
+    })
+  }
 }
