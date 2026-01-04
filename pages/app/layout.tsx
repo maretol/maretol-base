@@ -4,9 +4,10 @@ import { M_PLUS_1, SUSE } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import Script from 'next/script'
-import { getHostname, getLocalEnv } from '@/lib/env'
+import { getEnv, getHostname, getLocalEnv } from '@/lib/env'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { getClarityID } from '@/lib/api/secrets'
+import { getEnvironmentData } from 'node:worker_threads'
 
 const fontMPlus1 = M_PLUS_1({
   subsets: ['latin'],
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
 }
 
 export default async function RootLayout({ children, drawer }: { children: React.ReactNode; drawer: React.ReactNode }) {
-  const notLocal = getLocalEnv() !== 'local'
+  const notLocal = getLocalEnv() !== 'local' || getEnv() !== 'STG'
   const clarityID = await getClarityID()
 
   return (
