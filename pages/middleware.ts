@@ -73,7 +73,7 @@ export function middleware(request: NextRequest) {
   const url = new URL(request.url)
 
   // preloadのリクエストは除外
-  if (url.searchParams.get('_rsc')) {
+  if (url.searchParams.has('_rsc')) {
     return NextResponse.next()
   }
 
