@@ -68,8 +68,7 @@ function createLogObject(
   }
 }
 
-export function proxy(request: NextRequest) {
-  const startTime = new Date()
+export default function middleware(request: NextRequest) {
   const method = request.method
   const url = new URL(request.url)
   const userAgent = request.headers.get('user-agent') || 'non-user-agent'
