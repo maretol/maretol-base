@@ -1,4 +1,4 @@
-export default async function sendLog(logObj: Object, endpoint: string, apiToken: string) {
+export default async function sendLog(logObj: Record<string, unknown>, endpoint: string, apiToken: string) {
   if (!endpoint || !apiToken) {
     console.error('Axiom config is error or invalid')
     return
