@@ -64,7 +64,7 @@ function createLogObject(
     country: cf?.country,
     region: cf?.region,
     city: cf?.city,
-    connectiong_ip: ip,
+    connecting_ip: ip,
   }
 }
 
