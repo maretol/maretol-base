@@ -71,6 +71,12 @@ function createLogObject(
 export function middleware(request: NextRequest) {
   const method = request.method
   const url = new URL(request.url)
+
+  // preloadのリクエストは除外
+  if (url.searchParams.get('_rsc')) {
+    return NextResponse.next()
+  }
+
   const userAgent = request.headers.get('user-agent') || 'non-user-agent'
   const referer = request.headers.get('referer') || 'non-referer'
   const botName = detectBot(userAgent)
@@ -84,7 +90,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|cdn-cgi|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$|.*\\?.*_rsc=).*)', // 静的アセットと ?_rsc= を含むURLを除外
-  ],
+  matcher: ['/((?!_next/static|_next/image|cdn-cgi|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)'],
 }
