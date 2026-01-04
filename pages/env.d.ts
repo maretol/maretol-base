@@ -13,6 +13,7 @@ interface CloudflareEnv {
   CMS_RPC: Service<CMSDataFetcher>
   OGP_RPC: Service<OGPDataFetcher>
   CLARITY_ID: SecretsStoreSecret
+  ENV: string
   AXIOM_ENDPOINT: string
   AXIOM_APITOKEN: string
 }
