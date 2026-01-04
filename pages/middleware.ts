@@ -70,7 +70,8 @@ function createLogObject(
 
 export function middleware(request: NextRequest) {
   // preloadのリクエストは除外
-  if (request.headers.get('Rsc')) {
+  const rscHeader = request.headers.get('rsc') ?? request.headers.get('RSC')
+  if (rscHeader) {
     return NextResponse.next()
   }
 
