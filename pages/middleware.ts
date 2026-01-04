@@ -1,6 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { NextRequest, NextResponse } from 'next/server'
 import sendLog from './lib/logger'
+import { NextURL } from 'next/dist/server/web/next-url'
 
 const BOT_PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'Googlebot', pattern: /googlebot/i },
@@ -35,9 +36,7 @@ function detectBot(userAgent: string): string | null {
 }
 
 function createLogObject(
-  host: string,
-  pathname: string,
-  searchParams: URLSearchParams,
+  nextURL: NextURL,
   userAgent: string,
   referer: string,
   method: string,
@@ -50,15 +49,15 @@ function createLogObject(
     // アクセス情報
     timestamp: new Date().toISOString(),
     method: method,
-    host: host,
-    path: pathname,
-    search: searchParams.toString(),
+    host: nextURL.host,
+    path: nextURL.pathname,
+    search: nextURL.search,
 
     // 流入経路
     referer: referer,
-    utm_source: searchParams.get('utm_source'),
-    utm_medium: searchParams.get('utm_medium'),
-    utm_campaign: searchParams.get('utm_campaign'),
+    utm_source: nextURL.searchParams.get('utm_source'),
+    utm_medium: nextURL.searchParams.get('utm_medium'),
+    utm_campaign: nextURL.searchParams.get('utm_campaign'),
 
     // bot情報
     is_bot: botName !== null,
@@ -73,17 +72,17 @@ function createLogObject(
   }
 }
 
-function hasImageExtension(pathname: string): boolean {
+function hasExcludeExtension(pathname: string): boolean {
   pathname = pathname.toLowerCase()
-  const imageExtList = ['.svg', '.ico', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.bmp']
+  const imageExtList = ['.svg', '.ico', '.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif', '.bmp', '.css', '.js']
   return imageExtList.some((ext) => pathname.endsWith(ext))
 }
 
 export async function middleware(request: NextRequest) {
   const method = request.method
-  const { host, pathname, searchParams } = request.nextUrl
+  const nextURL = request.nextUrl
 
-  if (hasImageExtension(pathname)) {
+  if (hasExcludeExtension(nextURL.pathname)) {
     return NextResponse.next()
   }
 
@@ -93,7 +92,7 @@ export async function middleware(request: NextRequest) {
   const cf: CfProperties | undefined = request.cf
   const ip = request.headers.get('cf-connecting-ip')
 
-  const logObj = createLogObject(host, pathname, searchParams, userAgent, referer, method, botName, ip, cf)
+  const logObj = createLogObject(nextURL, userAgent, referer, method, botName, ip, cf)
   console.log(logObj)
 
   try {
