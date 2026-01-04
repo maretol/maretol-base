@@ -85,7 +85,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|cdn-cgi|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)',
-    '/((?!.*\\?.*_rsc=).*)', // プリロードの ?_rsc= を中に含むURLを除外
+    '/((?!_next/static|_next/image|cdn-cgi|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$|.*\\?.*_rsc=).*)', // 静的アセットと ?_rsc= を含むURLを除外
   ],
 }
