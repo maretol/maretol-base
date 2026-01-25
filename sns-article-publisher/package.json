@@ -13,7 +13,7 @@
     "cf-typegen": "wrangler types"
   },
   "dependencies": {
-    "@atproto/api": "^0.18.13",
+    "@atproto/api": "^0.18.16",
     "oauth": "^0.10.2"
   },
   "devDependencies": {
