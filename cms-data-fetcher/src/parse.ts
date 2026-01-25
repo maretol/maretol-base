@@ -174,7 +174,7 @@ function isMySite(hostname: string, pathname: string) {
 
 function isImage(hostname: string, text: string) {
   if (hostname === 'r2.maretol.xyz') {
-    const ext = text.split('.').pop() || ''
+    const ext = (text.split('.').pop() || '').toLowerCase()
     if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
       return true
     }
@@ -186,7 +186,7 @@ function isPhoto(hostname: string, text: string) {
   const photoDomain = ['photos.maretol.xyz', 'capture.maretol.xyz']
   if (photoDomain.includes(hostname)) {
     const photoURL = text.split('@@')[0] // 画像URL。@@以降はタイトルやキャプション
-    const ext = photoURL.split('.').pop() || ''
+    const ext = (photoURL.split('.').pop() || '').toLowerCase()
     if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
       return true
     }
