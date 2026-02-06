@@ -38,7 +38,7 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260129.0",
+    "@cloudflare/workers-types": "^4.20260130.0",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
     "@fortawesome/free-brands-svg-icons": "^7.1.0",
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
