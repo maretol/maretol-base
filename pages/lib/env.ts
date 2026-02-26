@@ -3,7 +3,7 @@ function getHostname() {
 }
 
 function getLocalEnv() {
-  if (getEnv() === 'PRD') {
+  if (['prd', 'PRD', 'production'].includes(getEnv() || '')) {
     return ''
   }
 
