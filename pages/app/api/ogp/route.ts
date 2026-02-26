@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const isMiddlewareSubrequest =
     request.headers.get('x-nextjs-middleware-subrequest') === '1' || ua.includes('Next.js Middleware')
   if (isMiddlewareSubrequest) {
-    return new Response('Next.js Middlewareからのリクエストは処理しません', { status: 400 })
+    return new Response('Next.js Middlewareからのリクエストは処理しません', { status: 403 })
   }
 
   const { env } = await getCloudflareContext({ async: true })
