@@ -13,14 +13,14 @@
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.12.10",
-    "@cloudflare/workers-types": "^4.20260206.0",
+    "@cloudflare/vitest-pool-workers": "^0.12.14",
+    "@cloudflare/workers-types": "^4.20260219.0",
     "typescript": "^5.9.3",
     "vitest": "4.0.18",
-    "wrangler": "^4.63.0"
+    "wrangler": "^4.67.0"
   },
   "dependencies": {
     "cheerio": "^1.1.2",
-    "microcms-js-sdk": "^3.2.0"
+    "microcms-js-sdk": "^3.3.0"
   }
 }

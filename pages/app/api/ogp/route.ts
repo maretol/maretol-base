@@ -5,7 +5,19 @@ import { NextRequest } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  const ua = request.headers.get('user-agent') || ''
+  const isMiddlewareSubrequest =
+    request.headers.get('x-nextjs-middleware-subrequest') === '1' || ua.includes('Next.js Middleware')
+  if (isMiddlewareSubrequest) {
+    return new Response('Next.js Middlewareからのリクエストは処理しません', { status: 403 })
+  }
+
   const { env } = await getCloudflareContext({ async: true })
+  const apiKey = env.OGP_FETCHER_API_KEY
+  const headerApiKey = request.headers.get('x-api-key')
+  if (!apiKey || headerApiKey == null || apiKey !== headerApiKey) {
+    return new Response('Invalid API Key', { status: 401 })
+  }
 
   const response = await env.OGP_RPC.fetch(request)
 
