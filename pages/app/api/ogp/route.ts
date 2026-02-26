@@ -5,7 +5,17 @@ import { NextRequest } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
+  const ua = request.headers.get('user-agent') || ''
+  if (ua === 'Next.js Middleware') {
+    return new Response('Next.js Middlewareからのリクエストは処理しません', { status: 400 })
+  }
+
   const { env } = await getCloudflareContext({ async: true })
+  const apiKey = env.OGP_FETCHER_API_KEY
+  const headerApiKey = request.headers.get('x-api-key')
+  if (apiKey !== headerApiKey) {
+    return new Response('Invalid API Key', { status: 401 })
+  }
 
   const response = await env.OGP_RPC.fetch(request)
 
