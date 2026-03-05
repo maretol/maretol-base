@@ -13,12 +13,12 @@
     "cf-typegen": "wrangler types"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.12.17",
-    "@cloudflare/workers-types": "^4.20260304.0",
+    "@cloudflare/vitest-pool-workers": "^0.12.18",
+    "@cloudflare/workers-types": "^4.20260305.0",
     "html-rewriter-wasm": "^0.4.1",
     "typescript": "^5.9.3",
     "vitest": "4.0.18",
-    "wrangler": "^4.68.1"
+    "wrangler": "^4.69.0"
   },
   "dependencies": {
     "open-graph-scraper-lite": "^2.1.0"
