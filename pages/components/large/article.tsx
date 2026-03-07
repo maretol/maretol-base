@@ -6,7 +6,8 @@ import { Button } from '../ui/button'
 import ShareSection from '../middle/share_section'
 import { BookIcon, HomeIcon } from 'lucide-react'
 import ArticleContent from '../middle/article_content'
-import { categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
+import { Annotation, categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
+import Annotations from '../middle/article_dom/annotations'
 
 type ArticleProps = {
   id: string
@@ -22,6 +23,7 @@ type FullArticleProps = ArticleProps & {
   shareURL: string
   tableOfContents: TableOfContents
   draftKey?: string
+  annotations?: Annotation[]
 }
 
 export async function Article({ id, title, updatedAt, parsedContents, categories }: ArticleProps) {
@@ -66,6 +68,7 @@ export async function FullArticle({
   type,
   draftKey,
   shareURL,
+  annotations,
 }: FullArticleProps) {
   return (
     <Card className="w-full bg-gray-100">
@@ -95,6 +98,7 @@ export async function FullArticle({
           tableOfContents={tableOfContents}
           draftKey={draftKey}
         />
+        <Annotations annotations={annotations ?? []} />
       </CardContent>
       <CardFooter>
         <div className="w-full">

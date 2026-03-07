@@ -35,7 +35,7 @@ describe('parse_getPOptionのテスト', () => {
     const result = getPOption(text)
     expect(result).toBe('comic')
   })
-  it('YouTubeリンクの場合', () => {
+  ;(it('YouTubeリンクの場合', () => {
     const text = ['https://www.youtube.com/watch?v=test', 'https://youtu.be/test']
     text.forEach((t) => {
       const result = getPOption(t)
@@ -48,7 +48,7 @@ describe('parse_getPOptionのテスト', () => {
         const result = getPOption(t)
         expect(result).toBe('twitter')
       })
-    })
+    }))
   it('Amazonリンクの場合', () => {
     const text = ['https://www.amazon.co.jp/test', 'https://amzn.to/test']
     text.forEach((t) => {
@@ -150,7 +150,8 @@ describe('transformInlineMarkup のテスト', () => {
   })
 
   it('複数の inline-markup span を処理する', () => {
-    const html = '<p><span class="inline-markup">漢字@@ruby::かんじ</span>と<span class="inline-markup">単語@@ruby::たんご</span></p>'
+    const html =
+      '<p><span class="inline-markup">漢字@@ruby::かんじ</span>と<span class="inline-markup">単語@@ruby::たんご</span></p>'
     const $ = load(html)
     const element = $('p').get(0)!
     transformInlineMarkup($, element)
@@ -276,7 +277,8 @@ describe('Task 4.1: 基本的な変換テスト', () => {
 
 describe('Task 4.2: 複合ケースのテスト', () => {
   it('1つの段落内に複数の inline-markup span が含まれるケースを検証', () => {
-    const html = '<p><span class="inline-markup">漢字@@ruby::かんじ</span>と<span class="inline-markup">単語@@ruby::たんご</span></p>'
+    const html =
+      '<p><span class="inline-markup">漢字@@ruby::かんじ</span>と<span class="inline-markup">単語@@ruby::たんご</span></p>'
     const result = parse(html)
     expect(result.contents_array[0].inner_html).toContain('<ruby>漢字')
     expect(result.contents_array[0].inner_html).toContain('<ruby>単語')
@@ -313,7 +315,8 @@ describe('Task 4.3: 見出しと目次のテスト', () => {
   })
 
   it('目次生成時のタイトルにルビが含まれないことを検証', () => {
-    const html = '<h2 id="test-heading"><span class="index"></span><span class="inline-markup">難読@@ruby::なんどく</span>見出し</h2>'
+    const html =
+      '<h2 id="test-heading"><span class="index"></span><span class="inline-markup">難読@@ruby::なんどく</span>見出し</h2>'
     const result = parse(html)
     // 目次が生成されていることを確認
     expect(result.table_of_contents.length).toBe(1)
@@ -348,7 +351,7 @@ describe('Task 4.4: 既存機能との互換性テスト', () => {
     // インラインマークアップは変換される
     expect(result.contents_array[0].inner_html).toContain('<ruby>漢字')
     // 行単位サブテキストも抽出される
-    expect(result.contents_array[0].sub_texts).toEqual({ 'ruby': 'かんじのテスト', 'note': '備考' })
+    expect(result.contents_array[0].sub_texts).toEqual({ ruby: 'かんじのテスト', note: '備考' })
   })
 
   it('既存のコマンド記法（/command）への影響がないことを確認', () => {
@@ -368,5 +371,61 @@ describe('Task 4.4: 既存機能との互換性テスト', () => {
     const html = '<p>通常テキスト<span class="inline-markup">漢字@@ruby::かんじ</span></p>'
     const result = parse(html)
     expect(result.contents_array[0].p_option).toBe('normal')
+  })
+})
+
+describe('annotation インラインマークアップのテスト', () => {
+  it('annotation パラメータで上付き番号マーカーに変換される', () => {
+    const html = '<p>テキスト<span class="inline-markup">@@annotation::注釈テキスト</span></p>'
+    const result = parse(html)
+    expect(result.contents_array[0].inner_html).toContain('annotation-marker')
+    expect(result.contents_array[0].inner_html).toContain('[1]')
+    expect(result.contents_array[0].inner_html).toContain('href="#annotation-1"')
+    expect(result.contents_array[0].inner_html).toContain('id="annotation-ref-1"')
+    expect(result.annotations).toHaveLength(1)
+    expect(result.annotations[0]).toEqual({ number: 1, text: '注釈テキスト' })
+  })
+
+  it('複数の annotation が出現順にナンバリングされる', () => {
+    const html =
+      '<p><span class="inline-markup">@@annotation::注釈1</span>と<span class="inline-markup">@@annotation::注釈2</span></p>'
+    const result = parse(html)
+    expect(result.annotations).toHaveLength(2)
+    expect(result.annotations[0]).toEqual({ number: 1, text: '注釈1' })
+    expect(result.annotations[1]).toEqual({ number: 2, text: '注釈2' })
+    expect(result.contents_array[0].inner_html).toContain('[1]')
+    expect(result.contents_array[0].inner_html).toContain('[2]')
+  })
+
+  it('異なる要素にまたがる annotation が連番になる', () => {
+    const html =
+      '<p><span class="inline-markup">@@annotation::注釈1</span></p><p><span class="inline-markup">@@annotation::注釈2</span></p>'
+    const result = parse(html)
+    expect(result.annotations).toHaveLength(2)
+    expect(result.annotations[0].number).toBe(1)
+    expect(result.annotations[1].number).toBe(2)
+  })
+
+  it('annotation がない場合は空配列を返す', () => {
+    const html = '<p>通常のテキスト</p>'
+    const result = parse(html)
+    expect(result.annotations).toEqual([])
+  })
+
+  it('ruby と annotation が共存する場合', () => {
+    const html =
+      '<p><span class="inline-markup">漢字@@ruby::かんじ</span>と<span class="inline-markup">@@annotation::注釈</span></p>'
+    const result = parse(html)
+    expect(result.contents_array[0].inner_html).toContain('<ruby>')
+    expect(result.contents_array[0].inner_html).toContain('annotation-marker')
+    expect(result.annotations).toHaveLength(1)
+    expect(result.annotations[0]).toEqual({ number: 1, text: '注釈' })
+  })
+
+  it('baseText がある場合はマーカーの前に表示される', () => {
+    const html = '<p><span class="inline-markup">本文テキスト@@annotation::注釈内容</span></p>'
+    const result = parse(html)
+    expect(result.contents_array[0].inner_html).toContain('本文テキスト<sup')
+    expect(result.annotations[0].text).toBe('注釈内容')
   })
 })

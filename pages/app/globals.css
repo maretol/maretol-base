@@ -126,6 +126,9 @@ code {
   a[class='x-blog-image'] {
     pointer-events: none;
   }
+  .annotation-marker {
+    display: none;
+  }
 }
 
 .content-sample,
@@ -148,10 +151,10 @@ code {
       tr {
         @apply border-b-2 border-gray-600;
         td {
-          @apply py-2 pr-6 pl-4 border-r border-gray-400;
+          @apply md:min-w-40 py-2 pr-6 pl-4 border-x border-gray-400;
         }
         th {
-          @apply py-2 pr-6 pl-4 border-r border-gray-100 bg-gray-400;
+          @apply py-2 pr-6 pl-4 border-x border-gray-400 bg-gray-400;
           p {
             @apply font-bold;
           }
@@ -164,5 +167,5 @@ code {
 .content-h2 {
   border-image-source: linear-gradient(to right, rgb(30 58 138 / 1), rgb(30 58 138 / 0) 60%);
   border-image-slice: 1;
-  @apply border-b-[4px] to-60% border-blue-900;
+  @apply border-b-4 to-60% border-blue-900;
 }
