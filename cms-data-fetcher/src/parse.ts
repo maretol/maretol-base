@@ -1,6 +1,6 @@
 import { load, type CheerioAPI } from 'cheerio'
 import type { Element } from 'domhandler'
-import { ParsedContent, TableOfContents } from 'api-types'
+import { Annotation, ParsedContent, TableOfContents } from 'api-types'
 
 /**
  * インラインマークアップのパラメータ型
@@ -17,10 +17,55 @@ type InlineParams = {
 type InlineMarkupHandler = (baseText: string, value: string) => string
 
 /**
+ * コンテキスト付きインラインマークアップのハンドラー定義
+ * パース中に状態を蓄積する必要があるハンドラー用
+ */
+type InlineMarkupHandlerWithContext = (baseText: string, value: string, context: ParseContext) => string
+
+/**
+ * パース中の状態を保持するコンテキスト
+ */
+type ParseContext = {
+  annotations: Annotation[]
+  annotationCounter: number
+}
+
+/**
+ * HTML特殊文字をエスケープする
+ */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+/**
  * サポートするインラインマークアップのハンドラーマップ
  */
 const inlineMarkupHandlers: Record<string, InlineMarkupHandler> = {
-  ruby: (baseText, reading) => `<ruby>${baseText}<rp>(</rp><rt>${reading}</rt><rp>)</rp></ruby>`,
+  ruby: (baseText, reading) => {
+    const safeBase = escapeHtml(baseText)
+    const safeReading = escapeHtml(reading)
+    return `<ruby>${safeBase}<rp>(</rp><rt>${safeReading}</rt><rp>)</rp></ruby>`
+  },
+}
+
+/**
+ * コンテキスト付きインラインマークアップのハンドラーマップ
+ */
+const inlineMarkupHandlersWithContext: Record<string, InlineMarkupHandlerWithContext> = {
+  annotation: (baseText, annotationText, context) => {
+    context.annotationCounter++
+    const num = context.annotationCounter
+    // annotations には生のテキストを保持し、表示側（React）にエスケープを委ねる
+    context.annotations.push({ number: num, text: annotationText })
+    const safeBase = escapeHtml(baseText)
+    const safeAnnotation = escapeHtml(annotationText)
+    return `${safeBase}<sup class="annotation-marker" title="${safeAnnotation}"><a href="#annotation-${num}" id="annotation-ref-${num}" aria-label="${safeAnnotation}">[${num}]</a></sup>`
+  },
 }
 
 /**
@@ -53,7 +98,7 @@ export function parseInlineParams(text: string): InlineParams {
  * @param $ Cheerio インスタンス
  * @param element 変換対象の要素
  */
-export function transformInlineMarkup($: CheerioAPI, element: Element): void {
+export function transformInlineMarkup($: CheerioAPI, element: Element, context?: ParseContext): void {
   $(element)
     .find('span.inline-markup')
     .each((_, span) => {
@@ -68,6 +113,16 @@ export function transformInlineMarkup($: CheerioAPI, element: Element): void {
           return // 最初にマッチしたハンドラーで変換して終了
         }
       }
+      // コンテキスト付きハンドラーを探す
+      if (context) {
+        for (const [key, handler] of Object.entries(inlineMarkupHandlersWithContext)) {
+          if (params[key] !== undefined) {
+            const transformed = handler(baseText, params[key], context)
+            $(span).replaceWith(transformed)
+            return
+          }
+        }
+      }
       // マッチするハンドラーがない場合は何もしない（span をそのまま保持）
     })
 }
@@ -76,6 +131,7 @@ export function parse(content: string) {
   const $ = load(content)
 
   const toc: TableOfContents = []
+  const context: ParseContext = { annotations: [], annotationCounter: 0 }
 
   const details = $('body > *').map((index, element) => {
     const tagName = element.tagName
@@ -88,7 +144,7 @@ export function parse(content: string) {
 
     // インラインマークアップ変換を inner_html 取得前に適用
     if ($(element).find('span.inline-markup').length > 0) {
-      transformInlineMarkup($, element)
+      transformInlineMarkup($, element, context)
     }
     const innerHTML = $(element).html()
 
@@ -114,7 +170,7 @@ export function parse(content: string) {
     } as ParsedContent
   })
 
-  return { contents_array: details.toArray(), table_of_contents: toc }
+  return { contents_array: details.toArray(), table_of_contents: toc, annotations: context.annotations }
 }
 
 function getPOption(text: string) {

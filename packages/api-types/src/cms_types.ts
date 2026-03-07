@@ -2,6 +2,11 @@ type RequestJSONType = {
   cms_content: string
 }
 
+type Annotation = {
+  number: number
+  text: string
+}
+
 type ParsedContent = {
   index: number
   tag_name: string
@@ -32,6 +37,7 @@ type contentsAPIResult = {
   table_of_contents: TableOfContents
   ogp_image?: string
   categories: categoryAPIResult[]
+  annotations?: Annotation[]
 }
 
 type categoryAPIResult = {
@@ -54,6 +60,7 @@ type infoAPIResult = {
   main_text: string
   parsed_content: ParsedContent[]
   table_of_contents: TableOfContents
+  annotations?: Annotation[]
 }
 
 type staticAPIResult = {
@@ -88,6 +95,7 @@ type bandeDessineeResult = {
   first_left_right: ('right' | 'left')[]
   parsed_description: ParsedContent[]
   table_of_contents: TableOfContents
+  annotations?: Annotation[]
 }
 
 type bandeDessineeSerires = {
@@ -108,6 +116,7 @@ type atelierResult = {
   parsed_description: ParsedContent[]
   tag_or_category: atelierTagAndCategory[]
   table_of_contents: TableOfContents
+  annotations?: Annotation[]
   object_position: string // "left" | "right" | "top" | "bottom" | "center"
   createdAt: string
   updatedAt: string
@@ -129,6 +138,7 @@ export type {
   RequestJSONType,
   ParsedContent,
   TableOfContents,
+  Annotation,
   contentsAPIResult,
   categoryAPIResult,
   infoAPIResult,

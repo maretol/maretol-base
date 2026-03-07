@@ -19,6 +19,7 @@ export default async function BlogArticleTestPage() {
         tableOfContents={testPageContent.table_of_contents}
         type="blog"
         shareURL={``}
+        annotations={testPageContent.annotations}
       />
     </div>
   )

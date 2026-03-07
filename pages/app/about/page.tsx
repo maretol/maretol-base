@@ -39,6 +39,7 @@ export default async function About() {
         tableOfContents={aboutPageContents.table_of_contents}
         type="info"
         shareURL={url}
+        annotations={aboutPageContents.annotations}
       />
     </div>
   )

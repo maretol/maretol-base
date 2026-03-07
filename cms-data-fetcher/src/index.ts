@@ -120,6 +120,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
       c.table_of_contents = parsed.table_of_contents
+      c.annotations = parsed.annotations
     })
     // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(contents))
@@ -134,6 +135,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
       c.table_of_contents = parsed.table_of_contents
+      c.annotations = parsed.annotations
     })
     // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(contents))
@@ -146,6 +148,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const parsed = parse(content.content)
     content.parsed_content = parsed.contents_array
     content.table_of_contents = parsed.table_of_contents
+    content.annotations = parsed.annotations
     // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(content))
   }
@@ -164,6 +167,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       const parsed = parse(i.main_text)
       i.parsed_content = parsed.contents_array
       i.table_of_contents = parsed.table_of_contents
+      i.annotations = parsed.annotations
     })
     // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(info))
@@ -195,6 +199,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
         const parsed = parse(bd.description)
         bd.parsed_description = parsed.contents_array
         bd.table_of_contents = parsed.table_of_contents
+        bd.annotations = parsed.annotations
       })
       // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(contents))
@@ -214,6 +219,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       const parsed = parse(content.description)
       content.parsed_description = parsed.contents_array
       content.table_of_contents = parsed.table_of_contents
+      content.annotations = parsed.annotations
       // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(content))
     } catch (e) {
@@ -236,6 +242,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
         const parsed = parse(a.description)
         a.parsed_description = parsed.contents_array
         a.table_of_contents = parsed.table_of_contents
+        a.annotations = parsed.annotations
       })
       // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(atelier))
@@ -258,6 +265,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       const parsed = parse(atelier.description)
       atelier.parsed_description = parsed.contents_array
       atelier.table_of_contents = parsed.table_of_contents
+      atelier.annotations = parsed.annotations
       // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(atelier))
     } catch (e) {
