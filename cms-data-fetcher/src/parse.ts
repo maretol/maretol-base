@@ -64,7 +64,7 @@ const inlineMarkupHandlersWithContext: Record<string, InlineMarkupHandlerWithCon
     context.annotations.push({ number: num, text: annotationText })
     const safeBase = escapeHtml(baseText)
     const safeAnnotation = escapeHtml(annotationText)
-    return `${safeBase}<sup class="annotation-marker" title="${safeAnnotation}"><a href="#annotation-${num}" id="annotation-ref-${num}">[${num}]</a></sup>`
+    return `${safeBase}<sup class="annotation-marker" title="${safeAnnotation}"><a href="#annotation-${num}" id="annotation-ref-${num}" aria-label="${safeAnnotation}">[${num}]</a></sup>`
   },
 }
 
