@@ -34,7 +34,12 @@ type ParseContext = {
  * HTML特殊文字をエスケープする
  */
 function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
 }
 
 /**
@@ -58,7 +63,8 @@ const inlineMarkupHandlersWithContext: Record<string, InlineMarkupHandlerWithCon
     // annotations には生のテキストを保持し、表示側（React）にエスケープを委ねる
     context.annotations.push({ number: num, text: annotationText })
     const safeBase = escapeHtml(baseText)
-    return `${safeBase}<sup class="annotation-marker"><a href="#annotation-${num}" id="annotation-ref-${num}">[${num}]</a></sup>`
+    const safeAnnotation = escapeHtml(annotationText)
+    return `${safeBase}<sup class="annotation-marker" title="${safeAnnotation}"><a href="#annotation-${num}" id="annotation-ref-${num}">[${num}]</a></sup>`
   },
 }
 
