@@ -42,7 +42,7 @@ function createLogObject(
   method: string,
   botName: string | null,
   ip: string | null,
-  cf?: CfProperties
+  cf?: CfProperties,
 ) {
   return {
     type: 'access_log',
