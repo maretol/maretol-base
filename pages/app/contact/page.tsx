@@ -39,6 +39,7 @@ export default async function ContactPage() {
         tableOfContents={contactPageContents.table_of_contents}
         type="info"
         shareURL={url}
+        annotations={contactPageContents.annotations}
       />
     </div>
   )

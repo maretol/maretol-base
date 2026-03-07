@@ -39,6 +39,7 @@ export default async function PostForNostter() {
         tableOfContents={postForNostterContent.table_of_contents}
         type="info"
         shareURL={url}
+        annotations={postForNostterContent.annotations}
       />
     </div>
   )

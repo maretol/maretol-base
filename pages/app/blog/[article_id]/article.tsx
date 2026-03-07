@@ -25,6 +25,7 @@ export default async function BlogPageArticle({
         draftKey={draftKey}
         type="blog"
         shareURL={url}
+        annotations={content.annotations}
       />
     </div>
   )
