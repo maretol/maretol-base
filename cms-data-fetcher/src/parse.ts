@@ -31,10 +31,21 @@ type ParseContext = {
 }
 
 /**
+ * HTML特殊文字をエスケープする
+ */
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
+/**
  * サポートするインラインマークアップのハンドラーマップ
  */
 const inlineMarkupHandlers: Record<string, InlineMarkupHandler> = {
-  ruby: (baseText, reading) => `<ruby>${baseText}<rp>(</rp><rt>${reading}</rt><rp>)</rp></ruby>`,
+  ruby: (baseText, reading) => {
+    const safeBase = escapeHtml(baseText)
+    const safeReading = escapeHtml(reading)
+    return `<ruby>${safeBase}<rp>(</rp><rt>${safeReading}</rt><rp>)</rp></ruby>`
+  },
 }
 
 /**
@@ -44,8 +55,9 @@ const inlineMarkupHandlersWithContext: Record<string, InlineMarkupHandlerWithCon
   annotation: (baseText, annotationText, context) => {
     context.annotationCounter++
     const num = context.annotationCounter
-    context.annotations.push({ number: num, text: annotationText })
-    return `${baseText}<sup class="annotation-marker"><a href="#annotation-${num}" id="annotation-ref-${num}">[${num}]</a></sup>`
+    context.annotations.push({ number: num, text: escapeHtml(annotationText) })
+    const safeBase = escapeHtml(baseText)
+    return `${safeBase}<sup class="annotation-marker"><a href="#annotation-${num}" id="annotation-ref-${num}">[${num}]</a></sup>`
   },
 }
 
