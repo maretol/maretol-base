@@ -55,7 +55,8 @@ const inlineMarkupHandlersWithContext: Record<string, InlineMarkupHandlerWithCon
   annotation: (baseText, annotationText, context) => {
     context.annotationCounter++
     const num = context.annotationCounter
-    context.annotations.push({ number: num, text: escapeHtml(annotationText) })
+    // annotations には生のテキストを保持し、表示側（React）にエスケープを委ねる
+    context.annotations.push({ number: num, text: annotationText })
     const safeBase = escapeHtml(baseText)
     return `${safeBase}<sup class="annotation-marker"><a href="#annotation-${num}" id="annotation-ref-${num}">[${num}]</a></sup>`
   },
