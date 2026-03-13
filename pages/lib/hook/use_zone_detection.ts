@@ -24,9 +24,7 @@ function calculateZone(divElement: HTMLDivElement | null, clientX: number): Zone
 export function useZoneDetection(divRef: RefObject<HTMLDivElement | null>) {
   const [zoneFlag, setZoneFlag] = useState<ZoneFlag>('none')
 
-  // NOTE: refオブジェクトは依存配列に含めない
-  // ref自体は不変で、.currentの値だけが変わるため、依存配列に含める必要がない
-  // React 19以降では useEffectEvent を使用してより明示的に書ける
+  // NOTE: refオブジェクトは依存配列に含めない（ref自体は不変で、.currentの値だけが変わるため）
   const mouseMoveEvent = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const zone = calculateZone(divRef.current, e.clientX)
