@@ -12,7 +12,7 @@ export default async function fetchBlurredImage(src: string) {
 
   const image = await fetch(imageSrc)
   if (image.status !== 200) {
-    console.error('[lib/api/image.ts:14] Image fetch error:', image.status)
+    console.error('[lib/api/image.ts] Image fetch error:', image.status)
     return ''
   }
 
@@ -21,9 +21,14 @@ export default async function fetchBlurredImage(src: string) {
   const blogBase64 = Buffer.from(blogArrayBuffer).toString('base64')
   const imageUrl = 'data:image/webp;base64,' + blogBase64
 
-  await env.IMAGE_CACHE.put(src, imageUrl, {
-    expirationTtl: imageCacheDuration,
-  })
+  try {
+    await env.IMAGE_CACHE.put(src, imageUrl, {
+      expirationTtl: imageCacheDuration,
+    })
+  } catch (e) {
+    // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+    console.error(`[lib/api/image.ts] Cache put error for key ${src}:`, e)
+  }
 
   return imageUrl
 }
