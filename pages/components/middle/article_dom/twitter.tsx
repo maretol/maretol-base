@@ -16,7 +16,7 @@ export default async function TwitterArea({ twitterURL }: { twitterURL: string }
 
     return <iframe srcDoc={twitterHTML} sandbox={sandbox} allowFullScreen width={width} height={400}></iframe>
   } catch (error) {
-    console.error('[components/middle/article_dom/twitter.tsx:19] Error fetching tweet:', error)
+    console.error('[components/middle/article_dom/twitter.tsx] Error fetching tweet:', error)
     return <p>Error: fetching tweet is error.</p>
   }
 }
@@ -38,6 +38,11 @@ async function fetchTweetOrigin(tweetURL: string) {
     throw new Error(`Failed to fetch Twitter embed: ${tweetPublish.status} ${tweetPublish.statusText}`)
   }
   const tweetPublishJSON = await tweetPublish.json<{ html: string; width: number }>()
-  await env.OGP_FETCHER_CACHE.put(tweetKey, JSON.stringify(tweetPublishJSON), { expirationTtl: 60 * 60 * 24 }) // Cache for 24 hours
+  try {
+    await env.OGP_FETCHER_CACHE.put(tweetKey, JSON.stringify(tweetPublishJSON), { expirationTtl: 60 * 60 * 24 }) // Cache for 24 hours
+  } catch (e) {
+    // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+    console.error(`[components/middle/article_dom/twitter.tsx] Cache put error for key ${tweetKey}:`, e)
+  }
   return tweetPublishJSON
 }

@@ -76,12 +76,17 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
     // キャッシュの保存（skipCacheがfalseかつshouldSaveCacheがtrueの場合のみ）
     if (!config.skipCache && shouldSaveCache) {
       const expirationTtl = dev ? 60 : config.cacheTTL
-      await config.cacheStore.put(config.cacheKey, JSON.stringify(res), { expirationTtl })
+      try {
+        await config.cacheStore.put(config.cacheKey, JSON.stringify(res), { expirationTtl })
+      } catch (e) {
+        // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+        console.error(`[lib/api/workers.ts] Cache put error for key ${config.cacheKey}:`, e)
+      }
     }
 
     return res as TResult
   } catch (e) {
-    console.error('[lib/api/workers.ts:84] API call error:', e)
+    console.error('[lib/api/workers.ts] API call error:', e)
     return config.defaultResult
   }
 }
@@ -90,7 +95,7 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
 async function createLocalFetcher<TResult>(
   path: string,
   query?: Record<string, string>,
-  defaultResult?: TResult
+  defaultResult?: TResult,
 ): Promise<TResult> {
   const request = await cmsFetcher(path, query)
   const res = await fetch(request, { cache: 'no-store' })
@@ -145,17 +150,27 @@ async function getOGPDataOrigin(targetURL: string) {
       return data
     }
 
-    await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl: 60 })
+    try {
+      await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl: 60 })
+    } catch (e) {
+      // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+      console.error(`[lib/api/workers.ts] Cache put error for key ${targetURL}:`, e)
+    }
     return data
   }
 
   try {
     const res = await env.OGP_RPC.fetchOGPData(targetURL)
     const expirationTtl = dev ? 60 : CacheTTL.ogpData
-    await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl })
+    try {
+      await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl })
+    } catch (e) {
+      // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+      console.error(`[lib/api/workers.ts] Cache put error for key ${targetURL}:`, e)
+    }
     return res as OGPResult
   } catch (e) {
-    console.error('[lib/api/workers.ts:158] OGP fetch error:', e)
+    console.error('[lib/api/workers.ts] OGP fetch error:', e)
     return { success: false } as OGPResult
   }
 }
@@ -216,7 +231,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
           createLocalFetcher(
             '/api/cms/get_contents_with_tags',
             { tag_id: tagIDs.join('+'), offset: offsetStr, limit: limitStr },
-            defaultResult
+            defaultResult,
           )
       : () => env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr),
     defaultResult,
