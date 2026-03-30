@@ -28,7 +28,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.577.0",
+    "lucide-react": "^1.0.1",
     "next": "^16.2.0",
     "react": "^19",
     "react-dom": "^19",
@@ -52,7 +52,7 @@
     "eslint-config-next": "^16.2.0",
     "postcss": "^8",
     "tailwindcss": "^4.0.9",
-    "typescript": "^5",
+    "typescript": "^6",
     "wrangler": "^4.76.0"
   }
 }
