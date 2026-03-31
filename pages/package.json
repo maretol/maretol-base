@@ -28,7 +28,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.0.1",
+    "lucide-react": "^1.5.0",
     "next": "^16.2.1",
     "react": "^19",
     "react-dom": "^19",
@@ -53,6 +53,6 @@
     "postcss": "^8",
     "tailwindcss": "^4.0.9",
     "typescript": "^6",
-    "wrangler": "^4.76.0"
+    "wrangler": "^4.77.0"
   }
 }
