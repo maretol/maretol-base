@@ -25,7 +25,7 @@ export function parseDraftKey(searchParams: { [key: string]: string | string[] |
  */
 export function parseTagParams(searchParams: { [key: string]: string | string[] | undefined }) {
   const rawTagID = searchParams['tag_id']
-  const tagID = typeof rawTagID === 'string' ? rawTagID : undefined
+  const tagID = typeof rawTagID === 'string' ? rawTagID : Array.isArray(rawTagID) ? rawTagID[0] : undefined
 
   return { tagID }
 }
