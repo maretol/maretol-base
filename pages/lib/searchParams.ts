@@ -1,4 +1,4 @@
-import { pageLimit, maxTagCount } from './static'
+import { pageLimit } from './static'
 
 /**
  * searchParamsからページネーション情報を取得
@@ -24,13 +24,10 @@ export function parseDraftKey(searchParams: { [key: string]: string | string[] |
  * searchParamsからタグ情報を取得
  */
 export function parseTagParams(searchParams: { [key: string]: string | string[] | undefined }) {
-  const rawTagIDs = searchParams['tag_id']
-  const rawTagNames = searchParams['tag_name']
+  const rawTagID = searchParams['tag_id']
+  const tagID = typeof rawTagID === 'string' ? rawTagID : Array.isArray(rawTagID) ? rawTagID[0] : undefined
 
-  const tagIDs = normalizeStringArray(rawTagIDs, maxTagCount)
-  const tagNames = normalizeStringArray(rawTagNames, maxTagCount)
-
-  return { tagIDs, tagNames }
+  return { tagID }
 }
 
 /**
@@ -40,14 +37,4 @@ function isValidPage(page: string | string[] | undefined): boolean {
   if (page === undefined) return false
   if (typeof page === 'string') return !isNaN(Number(page))
   return false
-}
-
-/**
- * string | string[] | undefined を string[] に正規化
- */
-function normalizeStringArray(value: string | string[] | undefined, maxLength?: number): string[] {
-  if (value === undefined) return []
-
-  const arr = typeof value === 'string' ? [value] : value
-  return maxLength ? arr.slice(0, maxLength) : arr
 }
