@@ -1,54 +1,31 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
 import { categoryAPIResult } from 'api-types'
-import { maxTagCount } from '@/lib/static'
 
 export default function TagSelector({
   tags,
-  tagIDs,
-  tagNames,
+  selectedTagID,
 }: {
   tags: categoryAPIResult[]
-  tagIDs: string[]
-  tagNames: string[]
+  selectedTagID: string | undefined
 }) {
-  const maxTags = maxTagCount
   return (
     <div className="flex flex-wrap gap-2">
       {tags.map((t, i) => {
-        const appendTagIDs = [...tagIDs, t.id]
-        const appendTagNames = [...tagNames, t.name]
-        const detachTagIDs = tagIDs.filter((id) => id !== t.id)
-        const detachTagNames = tagNames.filter((name) => name !== t.name)
-        const isSelected = tagIDs.includes(t.id)
-        const isMaxReached = tagIDs.length >= maxTags
+        const isSelected = t.id === selectedTagID
         return (
           <div key={`tag-${i}`}>
             {isSelected ? (
               <Button variant="secondary" asChild>
-                <Link
-                  href={{
-                    pathname: '/tag',
-                    query: {
-                      tag_id: detachTagIDs,
-                      tag_name: detachTagNames,
-                    },
-                  }}
-                >
-                  {t.name}
-                </Link>
+                <Link href={{ pathname: '/tag' }}>{t.name}</Link>
               </Button>
             ) : (
-              <Button variant="default" asChild disabled={isMaxReached}>
+              <Button variant="default" asChild>
                 <Link
                   href={{
                     pathname: '/tag',
-                    query: {
-                      tag_id: appendTagIDs,
-                      tag_name: appendTagNames,
-                    },
+                    query: { tag_id: t.id },
                   }}
-                  className={isMaxReached ? 'pointer-events-none opacity-50' : ''}
                 >
                   {t.name}
                 </Link>

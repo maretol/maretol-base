@@ -2,7 +2,6 @@ import { getCMSContentsWithTags, getTags } from '@/lib/api/workers'
 import { Article } from '@/components/large/article'
 import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
-import { maxTagCount } from '@/lib/static'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
 import { parsePaginationParams, parseTagParams } from '@/lib/searchParams'
@@ -11,24 +10,23 @@ export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const { tagIDs } = parseTagParams(searchParams)
+  const { tagID } = parseTagParams(searchParams)
 
   const tags = await getTags()
 
-  const selectedTags = tags.filter((tag) => tagIDs.includes(tag.id))
-  const title = `タグ検索：${selectedTags.map((t) => t.name).join(', ')} | Maretol Base`
+  const selectedTag = tags.find((tag) => tag.id === tagID)
+  const title = selectedTag ? `タグ検索：${selectedTag.name} | Maretol Base` : 'タグ検索 | Maretol Base'
 
   // canonical URLの生成
   let canonicalUrl = getHostname() + '/tag'
-  if (tagIDs.length > 0) {
-    const params = tagIDs.map((id) => `tag_id=${id}`).join('&')
-    canonicalUrl += `?${params}`
+  if (tagID) {
+    canonicalUrl += `?tag_id=${tagID}`
   }
 
   return {
     title: title,
     description: 'タグ検索ページ',
-    robots: tagIDs.length === 1 ? 'index, follow' : 'noindex, nofollow',
+    robots: tagID ? 'index, follow' : 'noindex, nofollow',
     alternates: {
       canonical: canonicalUrl,
     },
@@ -45,22 +43,12 @@ export default async function TagPage(props: {
   searchParams: Promise<{ [key: string]: string[] | string | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const { tagIDs, tagNames } = parseTagParams(searchParams)
+  const { tagID } = parseTagParams(searchParams)
   const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
-
-  // タグ数の上限チェック
-  if (tagIDs.length > maxTagCount) {
-    return (
-      <div className="text-center py-10">
-        <p className="text-red-500 font-bold mb-2">エラー</p>
-        <p className="text-gray-700">タグは最大{maxTagCount}個まで選択可能です</p>
-        <p className="text-gray-500 text-sm mt-4">選択中のタグ数: {tagIDs.length}個</p>
-      </div>
-    )
-  }
 
   const tags = await getTags()
 
+  const tagIDs = tagID ? [tagID] : []
   const { contents, total } = await getCMSContentsWithTags(tagIDs, offset, limit)
 
   return (
@@ -68,13 +56,13 @@ export default async function TagPage(props: {
       <div>
         <div className="mb-4">
           <div className="mb-2">
-            <h2 className="font-bold alphabet">Selected Tags (Max {maxTagCount}) : </h2>
+            <h2 className="font-bold alphabet">Selected Tag : </h2>
           </div>
-          <TagSelector tags={tags} tagIDs={tagIDs} tagNames={tagNames} />
+          <TagSelector tags={tags} selectedTagID={tagID} />
         </div>
       </div>
       <div className="flex flex-col justify-center gap-10">
-        {tagIDs.length === 0 ? (
+        {!tagID ? (
           <div className="text-center py-10">
             <p className="text-gray-500">タグを選択してください</p>
           </div>
@@ -97,7 +85,7 @@ export default async function TagPage(props: {
             <div className="flex justify-center">
               <Pagenation
                 path="/tag"
-                queryWithoutPage={{ tag_id: tagIDs, tag_name: tagNames }}
+                queryWithoutPage={{ tag_id: tagID }}
                 currentPage={pageNumber}
                 totalPage={Math.ceil(total / limit)}
               />
