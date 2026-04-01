@@ -18,10 +18,11 @@ export async function generateMetadata(props: {
   const title = selectedTag ? `タグ検索：${selectedTag.name} | Maretol Base` : 'タグ検索 | Maretol Base'
 
   // canonical URLの生成
-  let canonicalUrl = getHostname() + '/tag'
+  const canonicalUrlObj = new URL('/tag', getHostname())
   if (tagID) {
-    canonicalUrl += `?tag_id=${tagID}`
+    canonicalUrlObj.searchParams.set('tag_id', tagID)
   }
+  const canonicalUrl = canonicalUrlObj.toString()
 
   return {
     title: title,
