@@ -86,7 +86,7 @@ export default async function TagPage(props: {
             <div className="flex justify-center">
               <Pagenation
                 path="/tag"
-                queryWithoutPage={{ tag_id: tagID }}
+                queryWithoutPage={tagID ? { tag_id: tagID } : {}}
                 currentPage={pageNumber}
                 totalPage={Math.ceil(total / limit)}
               />

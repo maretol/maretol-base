@@ -235,7 +235,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
           )
       : () => env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr),
     defaultResult,
-    shouldCache: (result) => false, // タグ検索はキャッシュしない
+    skipCache: true,
   })
 }
 
