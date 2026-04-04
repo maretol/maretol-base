@@ -16,9 +16,6 @@ export const ogpImageOption = 'w=1200,h=630,f=webp,q=70'
 // サイドバーで表示する画像のオプション
 export const sidebarImageOption = 'w=200,h=300,f=webp,q=70'
 
-// タグの最大選択数
-export const maxTagCount = 3
-
 // サンプル表示時の最大コンテンツ数
 export const maxSampleContentCount = 5
 
