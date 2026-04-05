@@ -74,7 +74,8 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
     const shouldSaveCache = config.shouldCache ? config.shouldCache(res) : true
 
     // キャッシュの保存（skipCacheがfalseかつshouldSaveCacheがtrueの場合のみ）
-    if (!config.skipCache && shouldSaveCache) {
+    // CMSキャッシュの書き込み数が異常に多いので、原因特定のため一旦すべてキャッシュしないようにする
+    if (true || (!config.skipCache && shouldSaveCache)) {
       const expirationTtl = dev ? 60 : config.cacheTTL
       try {
         await config.cacheStore.put(config.cacheKey, JSON.stringify(res), { expirationTtl })
