@@ -6,7 +6,7 @@ routes = [
     { pattern = "api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }
 ]
 kv_namespaces = [
-    { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
+    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca" }
 ]
 
 [dev]
@@ -18,7 +18,7 @@ routes = [
     { "pattern" = "dev-api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }
 ]
 kv_namespaces = [
-    { binding = "CMS_CACHE", id = "d646b5cb3f0944219d81897d4117e20f" }
+    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca" }
 ]
 
 [observability]
