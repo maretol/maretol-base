@@ -38,13 +38,13 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260402.1",
+    "@cloudflare/workers-types": "^4.20260403.1",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
     "@fortawesome/free-brands-svg-icons": "^7.1.0",
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@fortawesome/react-fontawesome": "^3.3.0",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^25",
+    "@types/node": "^25.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.27",
