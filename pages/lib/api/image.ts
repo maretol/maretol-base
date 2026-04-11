@@ -1,11 +1,14 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { imageCacheDuration } from '@/lib/static'
+import { isKVCacheEnabled } from '@/lib/env'
 
 export default async function fetchBlurredImage(src: string) {
   const { env } = await getCloudflareContext({ async: true })
-  const cache = await env.IMAGE_CACHE.get(src)
-  if (cache) {
-    return cache
+  if (isKVCacheEnabled()) {
+    const cache = await env.IMAGE_CACHE.get(src)
+    if (cache) {
+      return cache
+    }
   }
 
   const imageSrc = 'https://www.maretol.xyz/cdn-cgi/image/blur=100,h=400,w=300,format=webp,q=low/' + src
@@ -21,13 +24,15 @@ export default async function fetchBlurredImage(src: string) {
   const blogBase64 = Buffer.from(blogArrayBuffer).toString('base64')
   const imageUrl = 'data:image/webp;base64,' + blogBase64
 
-  try {
-    await env.IMAGE_CACHE.put(src, imageUrl, {
-      expirationTtl: imageCacheDuration,
-    })
-  } catch (e) {
-    // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
-    console.error(`[lib/api/image.ts] Cache put error for key ${src}:`, e)
+  if (isKVCacheEnabled()) {
+    try {
+      await env.IMAGE_CACHE.put(src, imageUrl, {
+        expirationTtl: imageCacheDuration,
+      })
+    } catch (e) {
+      // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+      console.error(`[lib/api/image.ts] Cache put error for key ${src}:`, e)
+    }
   }
 
   return imageUrl
