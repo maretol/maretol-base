@@ -26,7 +26,7 @@ function getEnv() {
 // 原因特定までKVキャッシュを全面的に無効化するための一括スイッチ。
 // 復旧時はこの定数を true に戻すだけでよい(他の変更は不要)。
 // 関連: PR #944, commit 46d1682
-const KV_CACHE_ENABLED = false
+const KV_CACHE_ENABLED = true
 
 function isKVCacheEnabled() {
   return KV_CACHE_ENABLED

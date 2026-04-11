@@ -12,11 +12,11 @@ services = [
     { binding = "OGP_RPC", service = "ogp-data-fetcher", environment = "production" },
     { binding = "CMS_RPC", service = "cms-data-fetcher", environment = "production" },
 ]
-#kv_namespaces = [
-#    { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
-#    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca"},
-#    { binding = "IMAGE_CACHE", id = "7dcf481f5bba4e4690f8480b02666015"}
-#]
+kv_namespaces = [
+    { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
+    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca"},
+    { binding = "IMAGE_CACHE", id = "7dcf481f5bba4e4690f8480b02666015"}
+]
 secrets_store_secrets = [
     { binding="CLARITY_ID", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="CLARITY_ID" },
     { binding="AXIOM_ENDPOINT", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="AXIOM_ENDPOINT" },
@@ -52,11 +52,11 @@ services = [
     { binding = "OGP_RPC", service = "ogp-data-fetcher-stg", environment = "production" },
     { binding = "CMS_RPC", service = "cms-data-fetcher-stg", environment = "production", entrypoint = "CMSDataFetcher" },
 ]
-#kv_namespaces = [
-#    { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
-#    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca"},
-#    { binding = "IMAGE_CACHE", id = "7dcf481f5bba4e4690f8480b02666015"}
-#]
+kv_namespaces = [
+    { binding = "OGP_FETCHER_CACHE", id = "e12d978b90ba4e798961650595d5e9a8"},
+    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca"},
+    { binding = "IMAGE_CACHE", id = "7dcf481f5bba4e4690f8480b02666015"}
+]
 secrets_store_secrets = [
     { binding="CLARITY_ID", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="CLARITY_ID" },
     { binding="AXIOM_ENDPOINT", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="AXIOM_ENDPOINT" },
