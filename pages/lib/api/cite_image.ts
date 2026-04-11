@@ -1,5 +1,6 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { imageCacheDuration } from '@/lib/static'
+import { isKVCacheEnabled } from '@/lib/env'
 
 export interface FetchCiteImageResult {
   success: boolean
@@ -17,12 +18,14 @@ export default async function fetchCiteImage(url: string): Promise<FetchCiteImag
     const cacheKey = CACHE_KEY_PREFIX + url
 
     // キャッシュ確認
-    const cached = await env.IMAGE_CACHE.get(cacheKey)
-    if (cached) {
-      // キャッシュからcontent-typeを抽出
-      const match = cached.match(/^data:(image\/[^;]+);base64,/)
-      const contentType = match ? match[1] : 'image/jpeg'
-      return { success: true, data: cached, contentType }
+    if (isKVCacheEnabled()) {
+      const cached = await env.IMAGE_CACHE.get(cacheKey)
+      if (cached) {
+        // キャッシュからcontent-typeを抽出
+        const match = cached.match(/^data:(image\/[^;]+);base64,/)
+        const contentType = match ? match[1] : 'image/jpeg'
+        return { success: true, data: cached, contentType }
+      }
     }
 
     // 外部URLから画像取得
@@ -56,13 +59,15 @@ export default async function fetchCiteImage(url: string): Promise<FetchCiteImag
     const dataUrl = `data:${contentType};base64,${base64}`
 
     // KVにキャッシュ保存
-    try {
-      await env.IMAGE_CACHE.put(cacheKey, dataUrl, {
-        expirationTtl: imageCacheDuration,
-      })
-    } catch (cacheError) {
-      console.error(`[lib/api/cite_image.ts] Failed to cache image: ${cacheError}`)
-      // キャッシュ失敗してもdata URLは返す
+    if (isKVCacheEnabled()) {
+      try {
+        await env.IMAGE_CACHE.put(cacheKey, dataUrl, {
+          expirationTtl: imageCacheDuration,
+        })
+      } catch (cacheError) {
+        console.error(`[lib/api/cite_image.ts] Failed to cache image: ${cacheError}`)
+        // キャッシュ失敗してもdata URLは返す
+      }
     }
 
     return { success: true, data: dataUrl, contentType }

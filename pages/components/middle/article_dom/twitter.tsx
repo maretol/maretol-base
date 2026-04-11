@@ -1,6 +1,7 @@
 import { outerContentIframeSandbox } from '@/lib/static'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { cache } from 'react'
+import { isKVCacheEnabled } from '@/lib/env'
 
 export default async function TwitterArea({ twitterURL }: { twitterURL: string }) {
   const sandbox = outerContentIframeSandbox + ' allow-presentation'
@@ -26,10 +27,12 @@ const fetchTweet = cache(fetchTweetOrigin)
 async function fetchTweetOrigin(tweetURL: string) {
   const { env } = await getCloudflareContext({ async: true })
   const tweetKey = 'tweet_' + tweetURL
-  const cache = await env.OGP_FETCHER_CACHE.get(tweetKey)
-  if (cache) {
-    const tweetData = (await JSON.parse(cache)) as { html: string; width: number }
-    return tweetData
+  if (isKVCacheEnabled()) {
+    const cache = await env.OGP_FETCHER_CACHE.get(tweetKey)
+    if (cache) {
+      const tweetData = (await JSON.parse(cache)) as { html: string; width: number }
+      return tweetData
+    }
   }
 
   const tweetPublishURL = `https://publish.twitter.com/oembed?url=${tweetURL}`
@@ -38,11 +41,13 @@ async function fetchTweetOrigin(tweetURL: string) {
     throw new Error(`Failed to fetch Twitter embed: ${tweetPublish.status} ${tweetPublish.statusText}`)
   }
   const tweetPublishJSON = await tweetPublish.json<{ html: string; width: number }>()
-  try {
-    await env.OGP_FETCHER_CACHE.put(tweetKey, JSON.stringify(tweetPublishJSON), { expirationTtl: 60 * 60 * 24 }) // Cache for 24 hours
-  } catch (e) {
-    // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
-    console.error(`[components/middle/article_dom/twitter.tsx] Cache put error for key ${tweetKey}:`, e)
+  if (isKVCacheEnabled()) {
+    try {
+      await env.OGP_FETCHER_CACHE.put(tweetKey, JSON.stringify(tweetPublishJSON), { expirationTtl: 60 * 60 * 24 }) // Cache for 24 hours
+    } catch (e) {
+      // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+      console.error(`[components/middle/article_dom/twitter.tsx] Cache put error for key ${tweetKey}:`, e)
+    }
   }
   return tweetPublishJSON
 }

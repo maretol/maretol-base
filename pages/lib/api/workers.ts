@@ -8,7 +8,7 @@ import {
   OGPResult,
   atelierResult,
 } from 'api-types'
-import { getLocalEnv, getNodeEnv } from '../env'
+import { getLocalEnv, getNodeEnv, isKVCacheEnabled } from '../env'
 import {
   generateBandeDessineeContentKey,
   generateBandeDessineeKey,
@@ -26,6 +26,7 @@ import { DAY } from '../static'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
+
 
 const CacheTTL = {
   ogpData: 3 * DAY, // OGPデータの保持
@@ -58,7 +59,7 @@ interface APIConfig<TResult> extends CacheConfig {
 // キャッシュ付きAPI関数（環境非依存）
 async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Promise<TResult> {
   // キャッシュの確認（skipCacheがfalseの場合のみ）
-  if (!config.skipCache) {
+  if (isKVCacheEnabled() && !config.skipCache) {
     const cache = await config.cacheStore.get(config.cacheKey)
     if (cache) {
       const data = JSON.parse(cache) as TResult
@@ -74,8 +75,7 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
     const shouldSaveCache = config.shouldCache ? config.shouldCache(res) : true
 
     // キャッシュの保存（skipCacheがfalseかつshouldSaveCacheがtrueの場合のみ）
-    // CMSキャッシュの書き込み数が異常に多いので、原因特定のため一旦すべてキャッシュしないようにする
-    if (false && !config.skipCache && shouldSaveCache) {
+    if (isKVCacheEnabled() && !config.skipCache && shouldSaveCache) {
       const expirationTtl = dev ? 60 : config.cacheTTL
       try {
         await config.cacheStore.put(config.cacheKey, JSON.stringify(res), { expirationTtl })
@@ -127,10 +127,12 @@ async function getOGPDataOrigin(targetURL: string) {
   const { env } = await getCloudflareContext({ async: true })
 
   // OGPデータは特殊な処理が必要なため、カスタム実装
-  const cache = await env.OGP_FETCHER_CACHE.get(targetURL)
-  if (cache) {
-    const data = JSON.parse(cache) as OGPResult
-    return data
+  if (isKVCacheEnabled()) {
+    const cache = await env.OGP_FETCHER_CACHE.get(targetURL)
+    if (cache) {
+      const data = JSON.parse(cache) as OGPResult
+      return data
+    }
   }
 
   if (getLocalEnv() === 'local') {
@@ -151,23 +153,27 @@ async function getOGPDataOrigin(targetURL: string) {
       return data
     }
 
-    try {
-      await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl: 60 })
-    } catch (e) {
-      // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
-      console.error(`[lib/api/workers.ts] Cache put error for key ${targetURL}:`, e)
+    if (isKVCacheEnabled()) {
+      try {
+        await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(data), { expirationTtl: 60 })
+      } catch (e) {
+        // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+        console.error(`[lib/api/workers.ts] Cache put error for key ${targetURL}:`, e)
+      }
     }
     return data
   }
 
   try {
     const res = await env.OGP_RPC.fetchOGPData(targetURL)
-    const expirationTtl = dev ? 60 : CacheTTL.ogpData
-    try {
-      await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl })
-    } catch (e) {
-      // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
-      console.error(`[lib/api/workers.ts] Cache put error for key ${targetURL}:`, e)
+    if (isKVCacheEnabled()) {
+      const expirationTtl = dev ? 60 : CacheTTL.ogpData
+      try {
+        await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl })
+      } catch (e) {
+        // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
+        console.error(`[lib/api/workers.ts] Cache put error for key ${targetURL}:`, e)
+      }
     }
     return res as OGPResult
   } catch (e) {
