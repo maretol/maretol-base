@@ -5,9 +5,9 @@ compatibility_flags = ["nodejs_compat"]
 routes = [
     { pattern = "api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }
 ]
-kv_namespaces = [
-    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca" }
-]
+#kv_namespaces = [
+#    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca" }
+#]
 
 [dev]
 port = 30223
@@ -17,9 +17,9 @@ name = "cms-cache-purger-stg"
 routes = [
     { "pattern" = "dev-api.maretol.xyz/cms-webhook", zone_name = "maretol.xyz" }
 ]
-kv_namespaces = [
-    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca" }
-]
+#kv_namespaces = [
+#    { binding = "CMS_CACHE", id = "b32e1875dbd741bd8345d733f6b60aca" }
+#]
 
 [observability]
 enabled = true
