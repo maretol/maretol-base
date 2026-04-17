@@ -74,7 +74,7 @@ jobs:
         run: npm run build:page
       - name: deploy dry run by wrangler
         id: deploy-dry
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v3.14.1
         with:
           wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
@@ -103,7 +103,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: deploy dry run by wrangler
         id: deploy-dry
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v3.14.1
         with:
           wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
@@ -132,7 +132,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: deploy dry run by wrangler
         id: deploy
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v3.14.1
         with:
           wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
@@ -161,7 +161,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: deploy dry run by wrangler
         id: deploy
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v3.14.1
         with:
           wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
@@ -190,7 +190,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
       - name: deploy dry run by wrangler
         id: deploy
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/wrangler-action@v3.14.1
         with:
           wranglerVersion: ${{ env.WRANGLER_VERSION }}
           apiToken: ${{ secrets.CF_API_TOKEN }}
