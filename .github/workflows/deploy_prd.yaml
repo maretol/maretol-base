@@ -6,8 +6,8 @@ on:
       - main
 
 env:
-  NODE_VERSION: 22.17.0
-  WRANGLER_VERSION: 4.50.0
+  NODE_VERSION: '22'
+  WRANGLER_VERSION: '4'
 
 permissions:
   contents: read
