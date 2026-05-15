@@ -29,22 +29,22 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.14.0",
-    "next": "^16.2.5",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "next": "^9.3.3",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "swiper": "^12.1.4",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260505.1",
+    "@cloudflare/workers-types": "^4.20260507.1",
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
     "@fortawesome/free-brands-svg-icons": "^7.1.0",
     "@fortawesome/free-solid-svg-icons": "^7.1.0",
     "@fortawesome/react-fontawesome": "^3.3.1",
     "@tailwindcss/postcss": "^4.2.4",
-    "@types/node": "^25.6.0",
+    "@types/node": "^25.6.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.5.0",
@@ -53,6 +53,6 @@
     "postcss": "^8.5.14",
     "tailwindcss": "^4.0.9",
     "typescript": "^6.0.3",
-    "wrangler": "^4.88.0"
+    "wrangler": "^4.90.0"
   }
 }
