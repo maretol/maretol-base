@@ -5,6 +5,7 @@
 
 import { cookies } from 'next/headers'
 import { getSecretArticleCookieKey } from './env'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
 
 const COOKIE_PREFIX = 'secret_unlock_'
 const MAX_AGE = 60 * 60 * 24 * 30 // 30日
@@ -14,7 +15,8 @@ function cookieName(articleID: string) {
 }
 
 async function getSigningKey(): Promise<string> {
-  const key = getSecretArticleCookieKey()
+  const { env } = await getCloudflareContext({ async: true })
+  const key = await getSecretArticleCookieKey(env)
   if (!key) {
     throw new Error('SECRET_ARTICLE_COOKIE_KEY is not set')
   }

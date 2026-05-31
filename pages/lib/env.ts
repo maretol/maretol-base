@@ -32,8 +32,8 @@ function isKVCacheEnabled() {
   return KV_CACHE_ENABLED
 }
 
-function getSecretArticleCookieKey() {
-  const key = process.env.SECRET_ARTICLE_COOKIE_KEY
+async function getSecretArticleCookieKey(env: CloudflareEnv) {
+  const key = await env.SECRET_ARTICLE_COOKIE_KEY.get()
   if (!key && getNodeEnv() !== 'production') {
     return 'test_dev_key'
   }
