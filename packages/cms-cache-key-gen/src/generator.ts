@@ -6,6 +6,10 @@ export function generateContentKey(articleID: string) {
   return `content_${articleID}`
 }
 
+export function generateSecretMetaKey(articleID: string) {
+  return `secret_meta_${articleID}`
+}
+
 export function generateContentsWithTagsKey(tagIDs: string[], offset: string, limit: string) {
   tagIDs = tagIDs.sort()
   return `contents_with_tags_${tagIDs.join('_')}_${offset}_${limit}`

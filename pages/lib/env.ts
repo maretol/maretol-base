@@ -32,4 +32,12 @@ function isKVCacheEnabled() {
   return KV_CACHE_ENABLED
 }
 
-export { getHostname, getLocalEnv, getNodeEnv, getEnv, isKVCacheEnabled }
+function getSecretArticleCookieKey() {
+  const key = process.env.SECRET_ARTICLE_COOKIE_KEY
+  if (!key && getNodeEnv() !== 'production') {
+    return 'test_dev_key'
+  }
+  return key
+}
+
+export { getHostname, getLocalEnv, getNodeEnv, getEnv, isKVCacheEnabled, getSecretArticleCookieKey }

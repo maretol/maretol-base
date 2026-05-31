@@ -9,6 +9,7 @@ interface CloudflareEnv {
   IMAGE_CACHE: KVNamespace
   CMS_FETCHER_API_KEY: string
   OGP_FETCHER_API_KEY: string
+  SECRET_ARTICLE_COOKIE_KEY: string // 限定公開記事の解錠Cookie署名用シークレット
   HOST: string
   CMS_RPC: Service<CMSDataFetcher>
   OGP_RPC: Service<OGPDataFetcher>

@@ -251,6 +251,11 @@ function publishNecessary(bodyJSON: WebhookPayload): boolean {
   if (bodyJSON.api !== 'contents') {
     return false
   }
+  // 限定公開記事（is_secret=true）はSNSへ自動投稿しない
+  if (bodyJSON.contents.new.publishValue.is_secret === true) {
+    console.log('content is secret (is_secret=true). skip publish')
+    return false
+  }
   return (
     bodyJSON.type === 'new' ||
     (bodyJSON.type === 'edit' && isDraftToPublish(bodyJSON.contents.old, bodyJSON.contents.new))

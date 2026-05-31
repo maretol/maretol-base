@@ -2,6 +2,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { NextRequest, NextResponse } from 'next/server'
 import sendLog from './lib/logger'
 import { NextURL } from 'next/dist/server/web/next-url'
+import { getNodeEnv } from './lib/env'
 
 const BOT_PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'Googlebot', pattern: /googlebot/i },
@@ -97,6 +98,10 @@ export async function middleware(request: NextRequest) {
 
   try {
     const { env, ctx } = await getCloudflareContext({ async: true })
+    if (getNodeEnv() !== 'production') {
+      console.log('Axiom skipped in non-production environment')
+      return NextResponse.next()
+    }
     const endpoint = await env.AXIOM_ENDPOINT.get()
     const apiToken = await env.AXIOM_APITOKEN.get()
     ctx.waitUntil(sendLog(logObj, endpoint, apiToken))
