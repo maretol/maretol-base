@@ -33,11 +33,15 @@ function isKVCacheEnabled() {
 }
 
 async function getSecretArticleCookieKey(env: CloudflareEnv) {
-  const key = await env.SECRET_ARTICLE_COOKIE_KEY.get()
-  if (!key && getNodeEnv() !== 'production') {
-    return 'test_dev_key'
+  try {
+    const key = await env.SECRET_ARTICLE_COOKIE_KEY.get()
+    return key
+  } catch (e) {
+    if (getNodeEnv() !== 'production') {
+      return 'test_dev_key'
+    }
+    throw new Error('SECRET_ARTICLE_COOKIE_KEY is not set')
   }
-  return key
 }
 
 export { getHostname, getLocalEnv, getNodeEnv, getEnv, isKVCacheEnabled, getSecretArticleCookieKey }
