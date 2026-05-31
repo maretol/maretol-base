@@ -2,7 +2,7 @@ import ClientImage2 from '@/components/small/client_image2'
 import { Button } from '@/components/ui/button'
 import { getCMSContent } from '@/lib/api/workers'
 import { convertJST } from '@/lib/time'
-import { NotebookText } from 'lucide-react'
+import { LockIcon, NotebookText } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function BlogCard({ link }: { link: string }) {
@@ -10,6 +10,29 @@ export default async function BlogCard({ link }: { link: string }) {
   const linkPath = linkURL.pathname
   const articleID = linkPath.split('/')[2]
   const linkArticle = await getCMSContent(articleID)
+
+  // 限定公開記事は常にマスク表示する
+  // （タイトルはゲート/metadataで公開済みの線引きに合わせて表示。サムネ・公開日は伏せる）
+  if (linkArticle.is_secret) {
+    return (
+      <div className="max-w-2xl">
+        <div className="bg-gray-300 h-full w-full px-4 py-2 rounded-md">
+          <div className="flex items-center gap-2">
+            <LockIcon className="w-6 h-6 shrink-0" />
+            <div className="w-full flex flex-col self-end">
+              <p className="text-md font-semibold text-wrap line-clamp-2">{linkArticle.title}</p>
+              <p className="text-gray-500 text-xs">限定公開・コード入力で閲覧</p>
+            </div>
+            <div>
+              <Button className="h-8" asChild>
+                <Link href={linkPath}>Read this</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const articleTitle = linkArticle.title
   const articlePublishedAt = linkArticle.publishedAt

@@ -72,6 +72,48 @@ export async function getContent(apiKey: string, articleID: string, draftKey?: s
   return parseContentsAPIResult(response.contents[0])
 }
 
+// 限定公開記事のコード照合用に is_secret と secret_code のみを取得する（本文は取得しない）
+// secret_code を含むため、この結果はクライアントへ渡さずサーバ側の照合でのみ使用する
+export async function getSecretMeta(
+  apiKey: string,
+  articleID: string
+): Promise<{ is_secret: boolean; secret_code: string | null }> {
+  if (apiKey === undefined) {
+    throw new Error('API_KEY is undefined')
+  }
+
+  const client = createClient({
+    serviceDomain: 'maretol-blog',
+    apiKey: apiKey,
+  })
+
+  const response = await client
+    .getList<{ id: string; is_secret?: boolean; secret_code?: string }>({
+      endpoint: 'contents',
+      queries: { ids: articleID, fields: 'id,is_secret,secret_code' },
+    })
+    .then((res) => {
+      return res
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
+  if (response === undefined) {
+    throw new Error('api access error')
+  }
+
+  const content = response.contents[0]
+  if (content === undefined) {
+    return { is_secret: false, secret_code: null }
+  }
+
+  return {
+    is_secret: content.is_secret ?? false,
+    secret_code: content.secret_code ?? null,
+  }
+}
+
 // タグ一覧を取得するAPIアクセス
 export async function getTags(apiKey: string) {
   if (apiKey === undefined) {

@@ -32,4 +32,22 @@ function isKVCacheEnabled() {
   return KV_CACHE_ENABLED
 }
 
-export { getHostname, getLocalEnv, getNodeEnv, getEnv, isKVCacheEnabled }
+async function getSecretArticleCookieKey(env: CloudflareEnv): Promise<string> {
+  try {
+    const key = await env.SECRET_ARTICLE_COOKIE_KEY.get()
+    if (key) {
+      return key
+    }
+    // get() が null/空を返すケースも下のフォールバック判定に流す（例外時と挙動を揃える）
+  } catch (e) {
+    // binding 未設定などで get() が例外を投げるケースも同様に扱う
+  }
+  // 鍵が未設定/空のとき: ローカル環境のみ既定値を許容し、それ以外はエラーにする。
+  // 推測可能な固定鍵で解錠Cookieを偽造されるのを防ぐため、preview等でも未設定はエラー。
+  if (getLocalEnv() === 'local') {
+    return 'test_dev_key'
+  }
+  throw new Error('SECRET_ARTICLE_COOKIE_KEY is not set')
+}
+
+export { getHostname, getLocalEnv, getNodeEnv, getEnv, isKVCacheEnabled, getSecretArticleCookieKey }

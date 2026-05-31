@@ -1,4 +1,4 @@
-import { WebhookPayload } from 'api-types'
+import { Content, WebhookPayload } from 'api-types'
 import { deleteCacheByPrefix, deleteCache } from './kv'
 import { Env } from './index'
 import { generateContentKey, generateInfoKey, generateStaticDataKey, generateTagsKey } from 'cms-cache-key-gen'
@@ -44,18 +44,20 @@ export default class Blog {
   }
 
   private async editContent(bodyJSON: WebhookPayload) {
-    if (this.isDraftToPublish(bodyJSON.contents.old, bodyJSON.contents.new)) {
-      // 下書きから公開に変更された場合
-      // contentsのキャッシュを削除する
+    // 編集時は対象IDの単体キャッシュは常に削除する
+    console.log('start deleteContentCache')
+    console.log('id: ' + bodyJSON.id)
+    const cacheKey = generateContentKey(bodyJSON.id)
+    await deleteCache(this.env, cacheKey)
+
+    // 下書き→公開、または限定公開フラグ(is_secret)の変更時は
+    // 記事の一覧表示有無が変わるため一覧キャッシュ(contents_*)も削除する
+    if (
+      this.isDraftToPublish(bodyJSON.contents.old, bodyJSON.contents.new) ||
+      this.isSecretChanged(bodyJSON.contents.old, bodyJSON.contents.new)
+    ) {
       console.log('start deleteContentsCache')
       await deleteCacheByPrefix(this.env, this.prefix)
-    } else {
-      // ブログのメインコンテンツに編集があった場合
-      // 対象のIDのコンテンツのキャッシュを削除する
-      console.log('start deleteContentCache')
-      console.log('id: ' + bodyJSON.id)
-      const cacheKey = generateContentKey(bodyJSON.id)
-      await deleteCache(this.env, cacheKey)
     }
   }
 
@@ -72,5 +74,16 @@ export default class Blog {
 
   private isDraftToPublish(oldContent: any, newContent: any): boolean {
     return oldContent.status.includes('DRAFT') && newContent.status.includes('PUBLISH')
+  }
+
+  // 限定公開フラグ(is_secret)が変更されたか（公開値ベースで比較）
+  // 未設定は false 扱い。old が無い場合は変更なしとみなす
+  private isSecretChanged(oldContent: Content | null, newContent: Content): boolean {
+    if (oldContent === null) {
+      return false
+    }
+    const oldSecret = oldContent.publishValue?.is_secret ?? false
+    const newSecret = newContent.publishValue?.is_secret ?? false
+    return oldSecret !== newSecret
   }
 }

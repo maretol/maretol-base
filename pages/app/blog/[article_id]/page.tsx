@@ -19,19 +19,27 @@ export async function generateMetadata(props: {
   const draftKey = parseDraftKey(searchParams)
 
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
+
+  // 限定公開記事（未解錠）は本文をメタに出さず、検索インデックスも避ける
+  const isSecretLocked = content.is_secret === true && draftKey === undefined
+
   const ogpImage = content.ogp_image
-  const ogpSrc = ogpImage === null || ogpImage === undefined ? getDefaultOGPImageURL() : ogpImage
+  const ogpSrc =
+    isSecretLocked || ogpImage === null || ogpImage === undefined ? getDefaultOGPImageURL() : ogpImage
   const ogpURL = getOGPImageURL(ogpSrc)
-  const description = content.parsed_content
-    .slice(0, 5)
-    .map((c) => c.text)
-    .join(' ')
-  const twitterCard = ogpImage === null || ogpImage === undefined ? 'summary' : 'summary_large_image'
+  const description = isSecretLocked
+    ? '限定公開記事です'
+    : content.parsed_content
+        .slice(0, 5)
+        .map((c) => c.text)
+        .join(' ')
+  const twitterCard = isSecretLocked || ogpImage === null || ogpImage === undefined ? 'summary' : 'summary_large_image'
 
   return {
     ...metadata,
     title: content.title + ' | Maretol Base',
     description: content.title,
+    robots: isSecretLocked ? { index: false, follow: false } : undefined,
     twitter: {
       ...metadata.twitter,
       card: twitterCard,
