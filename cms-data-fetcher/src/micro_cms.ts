@@ -22,7 +22,8 @@ export async function getContents(apiKey: string, offset: number, limit: number)
   const response = await client
     .getList<contentsAPIResult>({
       endpoint: 'contents',
-      queries: { offset: offset, limit: limit },
+      // 限定公開記事（is_secret=true）は一覧から除外する
+      queries: { offset: offset, limit: limit, filters: 'is_secret[not_equals]true' },
     })
     .then((res) => {
       return res
@@ -120,12 +121,14 @@ export async function getContentsByTag(apiKey: string, tagIDs: string[], offset:
   })
 
   const filters = tagIDs.map((id) => `categories[contains]${id}`)
+  // タグ絞り込みに加えて限定公開記事（is_secret=true）を一覧から除外する
+  const filterQuery = `${filters.join('[and]')}[and]is_secret[not_equals]true`
 
   const response = await client
     .getList<contentsAPIResult>({
       endpoint: 'contents',
       queries: {
-        filters: `${filters.join('[and]')}`,
+        filters: filterQuery,
         offset: offset,
         limit: limit,
       },
@@ -364,6 +367,8 @@ function parseContentsAPIResult(result: contentsAPIResult & MicroCMSContentId & 
     table_of_contents: result.table_of_contents,
     ogp_image: result.ogp_image,
     categories: result.categories,
+    is_secret: result.is_secret,
+    // secret_code はクライアントに漏らさないため意図的に含めない
   }
 }
 
