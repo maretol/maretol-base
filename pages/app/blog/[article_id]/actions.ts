@@ -28,7 +28,7 @@ export async function unlockSecretArticle(
     return { ok: false, error: 'コードが違います' }
   }
 
-  await setArticleUnlocked(articleID)
+  await setArticleUnlocked(articleID, meta.secret_code)
   revalidatePath(`/blog/${articleID}`)
   return { ok: true }
 }
