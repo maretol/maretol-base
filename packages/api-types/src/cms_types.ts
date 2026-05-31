@@ -38,6 +38,9 @@ type contentsAPIResult = {
   ogp_image?: string
   categories: categoryAPIResult[]
   annotations?: Annotation[]
+  // 限定公開フラグ。true の場合は一覧に表示しない（記事閲覧のゲートは別途対応）
+  // secret_code は秘匿情報のためクライアントへ渡る型には含めない（サーバ側でのみ扱う）
+  is_secret?: boolean
 }
 
 type categoryAPIResult = {
