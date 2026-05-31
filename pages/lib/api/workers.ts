@@ -13,6 +13,7 @@ import {
   generateBandeDessineeContentKey,
   generateBandeDessineeKey,
   generateContentKey,
+  generateSecretMetaKey,
   generateContentsKey,
   generateContentsWithTagsKey,
   generateStaticDataKey,
@@ -32,6 +33,7 @@ const CacheTTL = {
   ogpData: 3 * DAY, // OGPデータの保持
   contents: 15 * DAY, // トップページなどのブログコンテンツリスト
   content: 10 * DAY, // 特定のブログコンテンツ
+  secretMeta: 0, // 限定公開記事のコード照合メタ。secret_codeを含むため常にskipCache（保持しない）
   contentsWithTags: 10 * DAY, // タグ指定のブログコンテンツリスト
   tags: 30 * DAY, // タグリスト
   info: 30 * DAY, // 特定ページ（静的ページ）の情報。変更が少ないためキャッシュ長め
@@ -113,6 +115,7 @@ async function createLocalFetcher<TResult>(
 const getOGPData = cache(getOGPDataOrigin)
 const getCMSContents = cache(getCMSContentsOrigin)
 const getCMSContent = cache(getCMSContentOrigin)
+const getSecretMeta = cache(getSecretMetaOrigin)
 const getCMSContentsWithTags = cache(getCMSContentsWithTagsOrigin)
 const getTags = cache(getTagsOrigin)
 const getInfo = cache(getInfoOrigin)
@@ -218,6 +221,27 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
       : () => env.CMS_RPC.fetchContent(articleID, draftKey || null),
     defaultResult,
     skipCache: !!draftKey, // draftKeyがある場合はキャッシュをスキップ
+    // 限定公開記事は本文を KV に残さないようキャッシュ保存しない
+    shouldCache: (res) => res?.is_secret !== true,
+  })
+}
+
+// 限定公開記事のコード照合用メタ（is_secret / secret_code）の取得
+// secret_code を含むため skipCache で常にキャッシュせず、サーバ側の照合処理でのみ利用する
+async function getSecretMetaOrigin(articleID: string) {
+  const { env } = await getCloudflareContext({ async: true })
+  const isLocal = getLocalEnv() === 'local'
+  const defaultResult: { is_secret: boolean; secret_code: string | null } = { is_secret: false, secret_code: null }
+
+  return createCachedAPIFunction<{ is_secret: boolean; secret_code: string | null }>({
+    cacheKey: generateSecretMetaKey(articleID),
+    cacheTTL: CacheTTL.secretMeta,
+    cacheStore: env.CMS_CACHE,
+    fetcher: isLocal
+      ? () => createLocalFetcher('/api/cms/get_secret_meta', { article_id: articleID }, defaultResult)
+      : () => env.CMS_RPC.fetchSecretMeta(articleID),
+    defaultResult,
+    skipCache: true, // secret_code を KV に保存しないため常にキャッシュをスキップする
   })
 }
 
@@ -387,6 +411,7 @@ export {
   getOGPData,
   getCMSContents,
   getCMSContent,
+  getSecretMeta,
   getCMSContentsWithTags,
   getTags,
   getInfo,

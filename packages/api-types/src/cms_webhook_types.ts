@@ -31,4 +31,5 @@ export type ContentValue = {
   first_page: number // comicのときの1ページ目のファイル番号
   filename: string // comicのときの1ページ目を取り出すときに利用する値
   format: string[] // comicのときのファイル形式
+  is_secret?: boolean // blogのときの限定公開フラグ。trueの場合は一覧非表示・SNS自動投稿の対象外とする
 }
