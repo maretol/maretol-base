@@ -36,14 +36,20 @@ async function sign(articleID: string): Promise<string> {
   return bufferToHex(signature)
 }
 
-// 長さ・内容のタイミング差を抑えた文字列比較
-export function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) {
-    return false
-  }
+// 2つの文字列を SHA-256 でダイジェスト化してから定数時間比較する。
+// ダイジェストは常に固定長(32byte)になるため入力長の差がタイミングに出ず、
+// 生の secret_code を直接走査することもない。
+export async function secureEqual(a: string, b: string): Promise<boolean> {
+  const enc = new TextEncoder()
+  const [da, db] = await Promise.all([
+    crypto.subtle.digest('SHA-256', enc.encode(a)),
+    crypto.subtle.digest('SHA-256', enc.encode(b)),
+  ])
+  const ua = new Uint8Array(da)
+  const ub = new Uint8Array(db)
   let result = 0
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  for (let i = 0; i < ua.length; i++) {
+    result |= ua[i] ^ ub[i]
   }
   return result === 0
 }
@@ -57,7 +63,7 @@ export async function isArticleUnlocked(articleID: string): Promise<boolean> {
   }
   try {
     const expected = await sign(articleID)
-    return constantTimeEqual(cookie.value, expected)
+    return await secureEqual(cookie.value, expected)
   } catch {
     return false
   }

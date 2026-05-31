@@ -1,7 +1,7 @@
 'use server'
 
 import { getSecretMeta } from '@/lib/api/workers'
-import { constantTimeEqual, setArticleUnlocked } from '@/lib/secret_unlock'
+import { secureEqual, setArticleUnlocked } from '@/lib/secret_unlock'
 import { revalidatePath } from 'next/cache'
 
 export type UnlockState = { ok: boolean; error?: string }
@@ -24,7 +24,7 @@ export async function unlockSecretArticle(
     return { ok: false, error: '認証できませんでした' }
   }
 
-  if (!constantTimeEqual(input, meta.secret_code)) {
+  if (!(await secureEqual(input, meta.secret_code))) {
     return { ok: false, error: 'コードが違います' }
   }
 
