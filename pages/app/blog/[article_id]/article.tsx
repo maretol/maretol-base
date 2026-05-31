@@ -15,8 +15,8 @@ export default async function BlogPageArticle({
 }) {
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
 
-  // 限定公開記事はコード解錠まで本文を出さない（draftKey でのプレビューはバイパス）
-  if (content.is_secret && draftKey === undefined && !(await isArticleUnlocked(articleID))) {
+  // 限定公開記事はコード解錠まで本文を出さない（draftKey の有無に関わらずパスフレーズを要求する）
+  if (content.is_secret && !(await isArticleUnlocked(articleID))) {
     return (
       <div>
         <SecretGate articleID={content.id} title={content.title} />

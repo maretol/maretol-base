@@ -21,8 +21,8 @@ export async function generateMetadata(props: {
 
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
 
-  // 限定公開記事（未解錠）は本文をメタに出さず、検索インデックスも避ける（page.tsx と同様）
-  const isSecretLocked = content.is_secret === true && draftKey === undefined
+  // 限定公開記事は本文をメタに出さず、検索インデックスも避ける（page.tsx と同様、draftKey ではバイパスさせない）
+  const isSecretLocked = content.is_secret === true
 
   const ogpImage = content.ogp_image
   const ogpURL = getOGPImageURL(isSecretLocked || !ogpImage ? getDefaultOGPImageURL() : ogpImage)
