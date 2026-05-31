@@ -1,7 +1,8 @@
 // 限定公開記事の「解錠状態」を署名付き Cookie で保持するためのサーバ専用ユーティリティ
-//   - Cookie 値は HMAC-SHA256(articleID, SECRET_ARTICLE_COOKIE_KEY) の hex
+//   - Cookie 値は HMAC-SHA256(`${articleID}:${secret_code}`, SECRET_ARTICLE_COOKIE_KEY) の hex
 //   - 解錠時に発行し、以降の閲覧は Cookie 検証のみで本文を表示する（コード再入力不要）
-//   - secret_code そのものは Cookie に保存しない（解錠の瞬間だけ照合に使う）
+//   - secret_code を署名対象に含めるため、パスフレーズ変更時は既存 Cookie が自動的に無効化される
+//   - secret_code そのものは Cookie に保存しない（HMAC 経由でのみ反映する）
 
 import { cookies } from 'next/headers'
 import { getSecretArticleCookieKey } from './env'
@@ -29,10 +30,13 @@ function bufferToHex(buf: ArrayBuffer): string {
     .join('')
 }
 
-async function sign(articleID: string): Promise<string> {
+async function sign(articleID: string, secretCode: string): Promise<string> {
   const keyData = new TextEncoder().encode(await getSigningKey())
   const cryptoKey = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-  const signature = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(articleID))
+  // articleID と secret_code の両方を署名対象にすることで、パスフレーズ変更時に既存 Cookie を失効させる。
+  // articleID は CMS のコンテンツ ID（コロンを含まない）のため `:` を区切りに使っても一意性は保たれる。
+  const message = `${articleID}:${secretCode}`
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, new TextEncoder().encode(message))
   return bufferToHex(signature)
 }
 
@@ -54,15 +58,15 @@ export async function secureEqual(a: string, b: string): Promise<boolean> {
   return result === 0
 }
 
-// 対象記事が解錠済み（有効な署名 Cookie を持つ）かどうか
-export async function isArticleUnlocked(articleID: string): Promise<boolean> {
+// 対象記事が解錠済み（現在の secret_code に対応する有効な署名 Cookie を持つ）かどうか
+export async function isArticleUnlocked(articleID: string, secretCode: string): Promise<boolean> {
   const store = await cookies()
   const cookie = store.get(cookieName(articleID))
   if (!cookie) {
     return false
   }
   try {
-    const expected = await sign(articleID)
+    const expected = await sign(articleID, secretCode)
     return await secureEqual(cookie.value, expected)
   } catch {
     return false
@@ -70,9 +74,9 @@ export async function isArticleUnlocked(articleID: string): Promise<boolean> {
 }
 
 // 対象記事を解錠済みにする署名 Cookie を発行する（Server Action / Route Handler からのみ呼ぶ）
-export async function setArticleUnlocked(articleID: string): Promise<void> {
+export async function setArticleUnlocked(articleID: string, secretCode: string): Promise<void> {
   const store = await cookies()
-  const signature = await sign(articleID)
+  const signature = await sign(articleID, secretCode)
   store.set(cookieName(articleID), signature, {
     httpOnly: true,
     secure: true,
