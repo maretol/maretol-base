@@ -18,6 +18,15 @@ export default async function BlogPageArticle({
   // 限定公開記事はコード解錠まで本文を出さない（draftKey の有無に関わらずパスフレーズを要求する）
   // 解錠 Cookie は現在の secret_code に紐付けて検証するため、パスフレーズ変更時は自動的に失効する
   if (content.is_secret) {
+    const store = await (await import('next/headers')).cookies()
+    if (!store.get(`secret_unlock_${articleID}`)) {
+      // 解錠 Cookie がない場合は即座に SecretGate を出す（Cookie の有無で高速に分岐させる）
+      return (
+        <div>
+          <SecretGate articleID={content.id} title={content.title} />
+        </div>
+      )
+    }
     const meta = await getSecretMeta(articleID)
     if (!(await isArticleUnlocked(articleID, meta.secret_code ?? ''))) {
       return (
