@@ -74,9 +74,11 @@ export async function getContent(apiKey: string, articleID: string, draftKey?: s
 
 // 限定公開記事のコード照合用に is_secret と secret_code のみを取得する（本文は取得しない）
 // secret_code を含むため、この結果はクライアントへ渡さずサーバ側の照合でのみ使用する
+// 下書きプレビュー時は draftKey を渡さないと未公開の記事が取得できないため引数で受け取る
 export async function getSecretMeta(
   apiKey: string,
-  articleID: string
+  articleID: string,
+  draftKey?: string
 ): Promise<{ is_secret: boolean; secret_code: string | null }> {
   if (apiKey === undefined) {
     throw new Error('API_KEY is undefined')
@@ -90,7 +92,7 @@ export async function getSecretMeta(
   const response = await client
     .getList<{ id: string; is_secret?: boolean; secret_code?: string }>({
       endpoint: 'contents',
-      queries: { ids: articleID, fields: 'id,is_secret,secret_code' },
+      queries: { ids: articleID, fields: 'id,is_secret,secret_code', draftKey: draftKey },
     })
     .then((res) => {
       return res
