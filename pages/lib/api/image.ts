@@ -26,11 +26,16 @@ export default async function fetchBlurredImageAndMetadata(src: string): Promise
   try {
     const imageObject = await getR2ObjectByURL(src)
     const imageBytes = await imageObject.arrayBuffer()
-    if (!imageBytes) {
-      throw new Error(`No body found for R2 object: ${src}`)
+
+    // 画像変換APIでblur用の小さい画像を生成する前に、元画像のサイズを取得する
+    const info = await env.IMAGE_TRANSFORMATION.info(new Response(imageBytes).body!)
+    if (!('width' in info)) {
+      // svgなどのベクター画像はinfoにwidth/heightがない
+      // 現状svg画像は扱わないので、エラー扱いにする
+      throw new Error(`Unsupported image type for blur generation (missing width/height in info): ${src}`)
     }
 
-    // blur=100,w=16,format=webp,q=low/
+    // 画像データを変換APIに渡して、blur用の小さい画像を生成する
     const image = await env.IMAGE_TRANSFORMATION.input(new Response(imageBytes).body!)
       .transform({
         blur: 100,
@@ -42,16 +47,9 @@ export default async function fetchBlurredImageAndMetadata(src: string): Promise
         format: 'image/webp',
         quality: 20,
       })
-    const info = await env.IMAGE_TRANSFORMATION.info(new Response(imageBytes).body!)
     const imageArrayBuffer = await image.response().arrayBuffer()
     const blogBase64 = Buffer.from(imageArrayBuffer).toString('base64')
     const imageBase64 = 'data:image/webp;base64,' + blogBase64
-
-    if (!('width' in info)) {
-      // svgなどのベクター画像はinfoにwidth/heightがない
-      // 現状svg画像は扱わないので、エラー扱いにする
-      throw new Error(`Unsupported image type for blur generation (missing width/height in info): ${src}`)
-    }
 
     const result: BlurredImageMetadata = {
       imageBase64,
