@@ -3,34 +3,65 @@ import { imageCacheDuration } from '@/lib/static'
 import { isKVCacheEnabled } from '@/lib/env'
 import getR2ObjectByURL from '@/lib/api/r2'
 
-export default async function fetchBlurredImage(src: string) {
+// blurプレースホルダ画像(data URL)と、アスペクト比を扱うための元画像の縦横サイズ
+export type BlurredImageMetadata = {
+  imageBase64: string
+  width: number
+  height: number
+}
+
+export default async function fetchBlurredImageAndMetadata(src: string): Promise<BlurredImageMetadata | null> {
   const { env } = await getCloudflareContext({ async: true })
   if (isKVCacheEnabled()) {
     const cache = await env.IMAGE_CACHE.get(src)
     if (cache) {
-      return cache
+      const cached = parseCachedMetadata(cache)
+      if (cached) {
+        return cached
+      }
+      // 旧フォーマット(data URL文字列のみ)はcache missとして扱い、下で再生成してJSONへ移行する
     }
   }
 
   try {
     const imageObject = await getR2ObjectByURL(src)
-    const body = imageObject.body
-    if (!body) {
+    const imageBytes = await imageObject.arrayBuffer()
+    if (!imageBytes) {
       throw new Error(`No body found for R2 object: ${src}`)
     }
 
-    // blur=100,h=400,w=300,format=webp,q=low/
-    const image = await env.IMAGE_TRANSFORMATION.input(body).transform({ blur: 100 }).transform({ width: 300 }).output({
-      format: 'image/webp',
-      quality: 20,
-    })
+    // blur=100,w=16,format=webp,q=low/
+    const image = await env.IMAGE_TRANSFORMATION.input(new Response(imageBytes).body!)
+      .transform({
+        blur: 100,
+      })
+      .transform({
+        width: 16,
+      })
+      .output({
+        format: 'image/webp',
+        quality: 20,
+      })
+    const info = await env.IMAGE_TRANSFORMATION.info(new Response(imageBytes).body!)
     const imageArrayBuffer = await image.response().arrayBuffer()
     const blogBase64 = Buffer.from(imageArrayBuffer).toString('base64')
-    const imageUrl = 'data:image/webp;base64,' + blogBase64
+    const imageBase64 = 'data:image/webp;base64,' + blogBase64
+
+    if (!('width' in info)) {
+      // svgなどのベクター画像はinfoにwidth/heightがない
+      // 現状svg画像は扱わないので、エラー扱いにする
+      throw new Error(`Unsupported image type for blur generation (missing width/height in info): ${src}`)
+    }
+
+    const result: BlurredImageMetadata = {
+      imageBase64,
+      width: info.width,
+      height: info.height,
+    }
 
     if (isKVCacheEnabled()) {
       try {
-        await env.IMAGE_CACHE.put(src, imageUrl, {
+        await env.IMAGE_CACHE.put(src, JSON.stringify(result), {
           expirationTtl: imageCacheDuration,
         })
       } catch (e) {
@@ -39,10 +70,29 @@ export default async function fetchBlurredImage(src: string) {
       }
     }
 
-    return imageUrl
+    return result
   } catch (e) {
-    // プレースホルダ画像の生成失敗で記事本体の描画まで落とさないよう、空文字を返してグレースフルに劣化させる
+    // プレースホルダ画像の生成失敗で記事本体の描画まで落とさないよう、nullを返してグレースフルに劣化させる
     console.error(`[lib/api/image.ts] Error fetching image from R2 for URL ${src}:`, e)
-    return ''
+    return null
   }
+}
+
+// キャッシュ値をBlurredImageMetadataへ復元する。
+// 旧フォーマット(data URL文字列のみ)はJSONとしてparseできず、shapeも満たさないためnullを返す。
+function parseCachedMetadata(raw: string): BlurredImageMetadata | null {
+  try {
+    const parsed = JSON.parse(raw)
+    if (
+      parsed &&
+      typeof parsed.imageBase64 === 'string' &&
+      typeof parsed.width === 'number' &&
+      typeof parsed.height === 'number'
+    ) {
+      return parsed
+    }
+  } catch {
+    // 旧フォーマットはJSON.parseで例外になるので、cache missとして扱う
+  }
+  return null
 }
