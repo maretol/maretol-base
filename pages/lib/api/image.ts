@@ -48,8 +48,8 @@ export default async function fetchBlurredImageAndMetadata(src: string): Promise
         quality: 20,
       })
     const imageArrayBuffer = await image.response().arrayBuffer()
-    const blogBase64 = Buffer.from(imageArrayBuffer).toString('base64')
-    const imageBase64 = 'data:image/webp;base64,' + blogBase64
+    const blobBase64 = Buffer.from(imageArrayBuffer).toString('base64')
+    const imageBase64 = 'data:image/webp;base64,' + blobBase64
 
     const result: BlurredImageMetadata = {
       imageBase64,
