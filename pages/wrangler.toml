@@ -23,6 +23,14 @@ secrets_store_secrets = [
     { binding="AXIOM_APITOKEN", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="AXIOM_APITOKEN" },
     { binding="SECRET_ARTICLE_COOKIE_KEY", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="SECRET_ARTICLE_COOKIE_KEY" }
 ]
+r2_buckets = [
+    { binding="IMAGES", bucket_name="images" },
+    { binding="BANDE_DESSINEE", bucket_name="bande-dessinee" },
+    { binding="PHOTO", bucket_name="photo" },
+    { binding="SCREENSHOTS", bucket_name="screenshots" },
+    { binding="STATIC", bucket_name="static" }
+]
+images = { binding="IMAGE_TRANSFORMATION" }
 
 [dev]
 port = 9593
@@ -64,3 +72,11 @@ secrets_store_secrets = [
     { binding="AXIOM_APITOKEN", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="AXIOM_APITOKEN" },
     { binding="SECRET_ARTICLE_COOKIE_KEY", store_id="da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name="SECRET_ARTICLE_COOKIE_KEY" }
 ]
+r2_buckets = [
+    { binding="IMAGES", bucket_name="images" },
+    { binding="BANDE_DESSINEE", bucket_name="bande-dessinee" },
+    { binding="PHOTO", bucket_name="photo" },
+    { binding="SCREENSHOTS", bucket_name="screenshots" },
+    { binding="STATIC", bucket_name="static" }
+]
+images = { binding="IMAGE_TRANSFORMATION" }

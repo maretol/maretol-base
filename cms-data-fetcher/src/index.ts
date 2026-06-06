@@ -67,7 +67,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       if (articleID === null) {
         return new Response('articleID is empty', { status: 400 })
       }
-      const meta = await this.fetchSecretMeta(articleID)
+      const meta = await this.fetchSecretMeta(articleID, draftKey)
       return Response.json(meta)
     } else if (pathname.includes('/cms/get_content')) {
       // 単独の記事を取得
@@ -162,9 +162,14 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   // 限定公開記事のコード照合用メタを取得する。secret_code を含むためクライアントには渡さない
-  async fetchSecretMeta(articleID: string): Promise<{ is_secret: boolean; secret_code: string | null }> {
+  // 下書きプレビュー時は draftKey を渡して未公開の記事メタを取得する
+  async fetchSecretMeta(
+    articleID: string,
+    draftKey?: string | null
+  ): Promise<{ is_secret: boolean; secret_code: string | null }> {
     const apiKey = this.env.CMS_API_KEY
-    return await getSecretMeta(apiKey, articleID)
+    const parsedDraftKey = draftKey === null ? undefined : draftKey
+    return await getSecretMeta(apiKey, articleID, parsedDraftKey)
   }
 
   async fetchTags(): Promise<categoryAPIResult[]> {

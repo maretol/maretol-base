@@ -23,15 +23,16 @@ export default async function BlogPageArticle({
       // 解錠 Cookie がない場合は即座に SecretGate を出す（Cookie の有無で高速に分岐させる）
       return (
         <div>
-          <SecretGate articleID={content.id} title={content.title} />
+          <SecretGate articleID={content.id} title={content.title} draftKey={draftKey} />
         </div>
       )
     }
-    const meta = await getSecretMeta(articleID)
+    // 下書きプレビュー時は draftKey を渡さないと未公開記事の secret_code が取得できない
+    const meta = await getSecretMeta(articleID, draftKey)
     if (!(await isArticleUnlocked(articleID, meta.secret_code ?? ''))) {
       return (
         <div>
-          <SecretGate articleID={content.id} title={content.title} />
+          <SecretGate articleID={content.id} title={content.title} draftKey={draftKey} />
         </div>
       )
     }

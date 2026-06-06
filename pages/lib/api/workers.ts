@@ -28,7 +28,6 @@ import { DAY } from '../static'
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
 
-
 const CacheTTL = {
   ogpData: 3 * DAY, // OGPデータの保持
   contents: 15 * DAY, // トップページなどのブログコンテンツリスト
@@ -228,18 +227,21 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
 
 // 限定公開記事のコード照合用メタ（is_secret / secret_code）の取得
 // secret_code を含むため skipCache で常にキャッシュせず、サーバ側の照合処理でのみ利用する
-async function getSecretMetaOrigin(articleID: string) {
+// 下書きプレビュー時は draftKey を渡さないと未公開の記事メタが取得できない
+async function getSecretMetaOrigin(articleID: string, draftKey?: string) {
   const { env } = await getCloudflareContext({ async: true })
   const isLocal = getLocalEnv() === 'local'
   const defaultResult: { is_secret: boolean; secret_code: string | null } = { is_secret: false, secret_code: null }
+  const query: Record<string, string> =
+    draftKey !== undefined ? { article_id: articleID, draftKey } : { article_id: articleID }
 
   return createCachedAPIFunction<{ is_secret: boolean; secret_code: string | null }>({
     cacheKey: generateSecretMetaKey(articleID),
     cacheTTL: CacheTTL.secretMeta,
     cacheStore: env.CMS_CACHE,
     fetcher: isLocal
-      ? () => createLocalFetcher('/api/cms/get_secret_meta', { article_id: articleID }, defaultResult)
-      : () => env.CMS_RPC.fetchSecretMeta(articleID),
+      ? () => createLocalFetcher('/api/cms/get_secret_meta', query, defaultResult)
+      : () => env.CMS_RPC.fetchSecretMeta(articleID, draftKey || null),
     defaultResult,
     skipCache: true, // secret_code を KV に保存しないため常にキャッシュをスキップする
   })

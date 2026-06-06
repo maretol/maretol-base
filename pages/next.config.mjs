@@ -3,7 +3,12 @@ import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare'
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['www.maretol.xyz'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'www.maretol.xyz',
+      },
+    ],
     qualities: [75, 80, 90, 100],
   },
 }

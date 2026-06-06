@@ -9,9 +9,18 @@ import Form from 'next/form'
 
 const initialState: UnlockState = { ok: false }
 
-export default function SecretGate({ articleID, title }: { articleID: string; title: string }) {
-  // articleID を bind して useActionState のシグネチャ (state, formData) に合わせる
-  const action = unlockSecretArticle.bind(null, articleID)
+export default function SecretGate({
+  articleID,
+  title,
+  draftKey,
+}: {
+  articleID: string
+  title: string
+  draftKey?: string
+}) {
+  // articleID と draftKey を bind して useActionState のシグネチャ (state, formData) に合わせる
+  // 下書きプレビュー時は draftKey を渡さないとサーバ側で未公開記事の secret_code が照合できない
+  const action = unlockSecretArticle.bind(null, articleID, draftKey)
   const [state, formAction, pending] = useActionState(action, initialState)
   // 入力中のコードのマスク表示の切り替え（デフォルトは非マスク = 表示）
   const [masked, setMasked] = useState(false)
