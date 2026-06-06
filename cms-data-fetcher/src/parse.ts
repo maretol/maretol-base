@@ -230,7 +230,8 @@ function isMySite(hostname: string, pathname: string) {
 
 function isImage(hostname: string, text: string) {
   if (hostname === 'r2.maretol.xyz') {
-    const ext = (text.split('.').pop() || '').toLowerCase()
+    const imageURL = text.split('@@')[0] // 画像URL。@@以降はタイトルやキャプション
+    const ext = (imageURL.split('.').pop() || '').toLowerCase()
     if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
       return true
     }
