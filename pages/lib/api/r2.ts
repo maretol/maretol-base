@@ -47,5 +47,9 @@ function getObjectKeyFromURL(imageURL: string): { bucketName: R2BucketKey; objec
   }
   const rawObjectKey = pathname.startsWith('/') ? pathname.slice(1) : pathname
   // pathname はURLエンコードされているため、デコードして保存時のキー（スペースや日本語など）と一致させる
-  return { bucketName: r2Info.bucketName, objectKey: decodeURIComponent(rawObjectKey) }
+  try {
+    return { bucketName: r2Info.bucketName, objectKey: decodeURIComponent(rawObjectKey) }
+  } catch (e) {
+    throw new Error(`Failed to decode object key: ${rawObjectKey}`)
+  }
 }
