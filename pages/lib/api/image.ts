@@ -25,18 +25,12 @@ export default async function fetchBlurredImageAndMetadata(src: string): Promise
 
   try {
     const imageObject = await getR2ObjectByURL(src)
-    const imageBytes = await imageObject.arrayBuffer()
+    const [body1, body2] = imageObject.body.tee() // tee()で2本に分け、サイズ取得とblur生成で同時に消費する
 
-    // 画像変換APIでblur用の小さい画像を生成する前に、元画像のサイズを取得する
-    const info = await env.IMAGE_TRANSFORMATION.info(new Response(imageBytes).body!)
-    if (!('width' in info)) {
-      // svgなどのベクター画像はinfoにwidth/heightがない
-      // 現状svg画像は扱わないので、エラー扱いにする
-      throw new Error(`Unsupported image type for blur generation (missing width/height in info): ${src}`)
-    }
-
-    // 画像データを変換APIに渡して、blur用の小さい画像を生成する
-    const image = await env.IMAGE_TRANSFORMATION.input(new Response(imageBytes).body!)
+    // 元画像サイズの取得(info)とblur画像の生成(input)を並列実行する。
+    // tee()したストリームを両方同時に読むことで内部バッファの滞留も減り、変換待ち時間を重ねられる。
+    const infoPromise = env.IMAGE_TRANSFORMATION.info(body1)
+    const blurArrayBufferPromise = env.IMAGE_TRANSFORMATION.input(body2)
       .transform({
         blur: 100,
       })
@@ -47,7 +41,15 @@ export default async function fetchBlurredImageAndMetadata(src: string): Promise
         format: 'image/webp',
         quality: 20,
       })
-    const imageArrayBuffer = await image.response().arrayBuffer()
+      .then((image) => image.response().arrayBuffer())
+
+    const [info, imageArrayBuffer] = await Promise.all([infoPromise, blurArrayBufferPromise])
+    if (!('width' in info)) {
+      // svgなどのベクター画像はinfoにwidth/heightがない
+      // 現状svg画像は扱わないので、エラー扱いにする
+      throw new Error(`Unsupported image type for blur generation (missing width/height in info): ${src}`)
+    }
+
     const blobBase64 = Buffer.from(imageArrayBuffer).toString('base64')
     const imageBase64 = 'data:image/webp;base64,' + blobBase64
 
