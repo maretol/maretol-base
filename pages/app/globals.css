@@ -94,6 +94,31 @@ ol {
         }
       }
     }
+    ul {
+      li {
+        @apply pl-2 list-disc list-outside;
+        ul {
+          li {
+            @apply pl-2 list-square;
+            ul {
+              li {
+                @apply pl-2 list-circle;
+              }
+            }
+          }
+        }
+        ol {
+          li {
+            @apply pl-2 list-decimal;
+            ol {
+              li {
+                @apply pl-2 list-roman;
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }
 
@@ -107,6 +132,21 @@ ul {
         ul {
           li {
             @apply pl-2 list-circle;
+          }
+        }
+      }
+    }
+    ol {
+      li {
+        @apply pl-2 list-decimal;
+        ol {
+          li {
+            @apply pl-2 list-roman;
+            ol {
+              li {
+                @apply pl-2 list-alpha;
+              }
+            }
           }
         }
       }
