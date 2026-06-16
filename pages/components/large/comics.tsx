@@ -73,7 +73,7 @@ export async function ComicOverview(props: ComicArticleProps) {
               </>
             </CardDescription>
           </CardHeader>
-          <CardContent className="my-1 space-y-6 pb-2">
+          <CardContent className="my-1 space-y-6 pb-2 not-lg:hidden">
             <div className="w-full space-y-3 font-semibold">
               <h2 className="text-xl font-bold pl-2 pb-1 content-h2">作品情報</h2>
               <div>
