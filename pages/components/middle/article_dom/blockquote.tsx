@@ -34,7 +34,7 @@ export default function Blockquote({
     <div className="py-3">
       <blockquote
         lang="ja"
-        cite={citeText}
+        cite={citeURL ?? undefined}
         className="bg-gray-200 text-gray-700 p-6 rounded-lg border-l-8 border-l-gray-500"
       >
         <div dangerouslySetInnerHTML={{ __html: innerHTML }} />

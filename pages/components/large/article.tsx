@@ -31,7 +31,7 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
     <Card key={id} lang="ja" className="bg-gray-100">
       <CardHeader>
         <CardTitleH1 lang="ja">
-          <Link href={`blog/${id}`} className="hover:underline">
+          <Link href={`/blog/${id}`} className="hover:underline">
             {title}
           </Link>
         </CardTitleH1>

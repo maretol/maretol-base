@@ -6,7 +6,7 @@ export function renderTable(content: ParsedContent, context: RenderContext): JSX
   if (content.inner_html) {
     return (
       <div className="my-4 overflow-x-auto" key={context.index}>
-        <table key={context.index} lang="ja" dangerouslySetInnerHTML={{ __html: content.inner_html }} />
+        <table lang="ja" dangerouslySetInnerHTML={{ __html: content.inner_html }} />
       </div>
     )
   }
