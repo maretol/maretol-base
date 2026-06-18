@@ -70,6 +70,7 @@ export default async function RootLayout({ children, drawer }: { children: React
               `}
       </Script>
       <body
+        lang="ja"
         className={cn(
           'min-h-screen antialiased bg-gray-300',
           fontMPlus1.className,
