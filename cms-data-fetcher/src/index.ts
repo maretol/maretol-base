@@ -21,6 +21,7 @@ import {
   getTags,
   getAtelier,
   getAteliers,
+  getSecretMeta,
 } from './micro_cms'
 import { parse } from './parse'
 import { WorkerEntrypoint } from 'cloudflare:workers'
@@ -61,6 +62,13 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       // 通常の記事一覧での取得
       const contents = await this.fetchContents(offset, limit)
       return Response.json(contents)
+    } else if (pathname.includes('/cms/get_secret_meta')) {
+      // 限定公開記事のコード照合用メタ（is_secret / secret_code）を取得
+      if (articleID === null) {
+        return new Response('articleID is empty', { status: 400 })
+      }
+      const meta = await this.fetchSecretMeta(articleID, draftKey)
+      return Response.json(meta)
     } else if (pathname.includes('/cms/get_content')) {
       // 単独の記事を取得
       if (articleID === null) {
@@ -151,6 +159,17 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     content.annotations = parsed.annotations
     // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(content))
+  }
+
+  // 限定公開記事のコード照合用メタを取得する。secret_code を含むためクライアントには渡さない
+  // 下書きプレビュー時は draftKey を渡して未公開の記事メタを取得する
+  async fetchSecretMeta(
+    articleID: string,
+    draftKey?: string | null
+  ): Promise<{ is_secret: boolean; secret_code: string | null }> {
+    const apiKey = this.env.CMS_API_KEY
+    const parsedDraftKey = draftKey === null ? undefined : draftKey
+    return await getSecretMeta(apiKey, articleID, parsedDraftKey)
   }
 
   async fetchTags(): Promise<categoryAPIResult[]> {

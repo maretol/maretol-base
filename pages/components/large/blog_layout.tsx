@@ -27,7 +27,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="flex justify-center pb-10" id="top">
-      <div className="max-w-[1700px] w-full sm:mx-6">
+      <div className="max-w-425 w-full sm:mx-6">
         <div className="my-10">
           <div className="mb-2 pt-2">
             <Button variant={'link'} className="p-0" asChild>
@@ -36,7 +36,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
                   src={headerImage}
                   width={400}
                   height={100}
-                  className="w-[500px] object-contain"
+                  className="w-125 object-contain"
                   alt="Maretol Base"
                 />
               </Link>

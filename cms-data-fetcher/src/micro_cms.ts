@@ -22,7 +22,8 @@ export async function getContents(apiKey: string, offset: number, limit: number)
   const response = await client
     .getList<contentsAPIResult>({
       endpoint: 'contents',
-      queries: { offset: offset, limit: limit },
+      // 限定公開記事（is_secret=true）は一覧から除外する
+      queries: { offset: offset, limit: limit, filters: 'is_secret[not_equals]true' },
     })
     .then((res) => {
       return res
@@ -69,6 +70,50 @@ export async function getContent(apiKey: string, articleID: string, draftKey?: s
     throw new Error('api access error')
   }
   return parseContentsAPIResult(response.contents[0])
+}
+
+// 限定公開記事のコード照合用に is_secret と secret_code のみを取得する（本文は取得しない）
+// secret_code を含むため、この結果はクライアントへ渡さずサーバ側の照合でのみ使用する
+// 下書きプレビュー時は draftKey を渡さないと未公開の記事が取得できないため引数で受け取る
+export async function getSecretMeta(
+  apiKey: string,
+  articleID: string,
+  draftKey?: string
+): Promise<{ is_secret: boolean; secret_code: string | null }> {
+  if (apiKey === undefined) {
+    throw new Error('API_KEY is undefined')
+  }
+
+  const client = createClient({
+    serviceDomain: 'maretol-blog',
+    apiKey: apiKey,
+  })
+
+  const response = await client
+    .getList<{ id: string; is_secret?: boolean; secret_code?: string }>({
+      endpoint: 'contents',
+      queries: { ids: articleID, fields: 'id,is_secret,secret_code', draftKey: draftKey },
+    })
+    .then((res) => {
+      return res
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+
+  if (response === undefined) {
+    throw new Error('api access error')
+  }
+
+  const content = response.contents[0]
+  if (content === undefined) {
+    return { is_secret: false, secret_code: null }
+  }
+
+  return {
+    is_secret: content.is_secret ?? false,
+    secret_code: content.secret_code ?? null,
+  }
 }
 
 // タグ一覧を取得するAPIアクセス
@@ -120,12 +165,14 @@ export async function getContentsByTag(apiKey: string, tagIDs: string[], offset:
   })
 
   const filters = tagIDs.map((id) => `categories[contains]${id}`)
+  // タグ絞り込みに加えて限定公開記事（is_secret=true）を一覧から除外する
+  const filterQuery = `${filters.join('[and]')}[and]is_secret[not_equals]true`
 
   const response = await client
     .getList<contentsAPIResult>({
       endpoint: 'contents',
       queries: {
-        filters: `${filters.join('[and]')}`,
+        filters: filterQuery,
         offset: offset,
         limit: limit,
       },
@@ -364,6 +411,8 @@ function parseContentsAPIResult(result: contentsAPIResult & MicroCMSContentId & 
     table_of_contents: result.table_of_contents,
     ogp_image: result.ogp_image,
     categories: result.categories,
+    is_secret: result.is_secret,
+    // secret_code はクライアントに漏らさないため意図的に含めない
   }
 }
 

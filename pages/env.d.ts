@@ -9,6 +9,7 @@ interface CloudflareEnv {
   IMAGE_CACHE: KVNamespace
   CMS_FETCHER_API_KEY: string
   OGP_FETCHER_API_KEY: string
+  SECRET_ARTICLE_COOKIE_KEY: SecretsStoreSecret
   HOST: string
   CMS_RPC: Service<CMSDataFetcher>
   OGP_RPC: Service<OGPDataFetcher>
@@ -16,6 +17,14 @@ interface CloudflareEnv {
   ENV: string
   AXIOM_ENDPOINT: SecretsStoreSecret
   AXIOM_APITOKEN: SecretsStoreSecret
+
+  IMAGES: R2Bucket
+  BANDE_DESSINEE: R2Bucket
+  PHOTO: R2Bucket
+  SCREENSHOTS: R2Bucket
+  STATIC: R2Bucket
+
+  IMAGE_TRANSFORMATION: ImagesBinding
 }
 
 // 以下はローカル時に使う部分（特に支障はないのでそのまま読ませる）

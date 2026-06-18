@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import fetchBlurredImage from '@/lib/api/image'
+import fetchBlurredImageAndMetadata from '@/lib/api/image'
 import { cn } from '@/lib/utils'
 import ClientImage2 from '@/components/small/client_image2'
 
@@ -19,7 +19,10 @@ export default async function ContentImage({
   const caption = subText?.caption
   const title = subText?.title
 
-  const blurData = await fetchBlurredImage(src)
+  const blurImage = await fetchBlurredImageAndMetadata(src)
+  const blurData = blurImage?.imageBase64
+  const width = blurImage?.width
+  const height = blurImage?.height
 
   if (tag === 'content_image') {
     return (
@@ -29,8 +32,8 @@ export default async function ContentImage({
           <ClientImage2
             src={src}
             alt=""
-            width={300}
-            height={400}
+            width={width}
+            height={height}
             blurData={blurData}
             className="w-full h-auto object-contain shadow-xl inner-image rounded-2xl"
           />
@@ -59,8 +62,8 @@ export default async function ContentImage({
           <ClientImage2
             src={src}
             alt=""
-            width={400}
-            height={400}
+            width={width}
+            height={height}
             blurData={blurData}
             className="w-full h-auto shadow-xl object-contain inner-image rounded-2xl"
           />
