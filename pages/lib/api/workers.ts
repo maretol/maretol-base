@@ -1,6 +1,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import {
   bandeDessineeResult,
+  novelResult,
   categoryAPIResult,
   contentsAPIResult,
   staticAPIResult,
@@ -12,6 +13,9 @@ import { getLocalEnv, getNodeEnv, isKVCacheEnabled } from '../env'
 import {
   generateBandeDessineeContentKey,
   generateBandeDessineeKey,
+  generateNovelKey,
+  generateNovelContentKey,
+  generateNovelBodyKey,
   generateContentKey,
   generateSecretMetaKey,
   generateContentsKey,
@@ -39,6 +43,9 @@ const CacheTTL = {
   static: 30 * DAY, // サイドバーのデフォルト情報。変更が少ないためキャッシュ長め
   bandeDessinee: 30 * DAY, // マンガリスト。変更が少ないためキャッシュ長め
   bandeDessineeByID: 30 * DAY, // マンガの詳細情報。更新少なめなのでキャッシュ長め
+  novel: 30 * DAY, // 小説リスト。変更が少ないためキャッシュ長め
+  novelByID: 30 * DAY, // 小説の詳細メタ。更新少なめなのでキャッシュ長め
+  novelBody: 30 * DAY, // 小説本文（外部プレーンテキスト）。CMSメタとは別系統で独立キャッシュ
   atelier: 30 * DAY, // イラストリスト
   atelierByID: 30 * DAY, // イラストの詳細情報
 }
@@ -121,6 +128,9 @@ const getInfo = cache(getInfoOrigin)
 const getStatic = cache(getStaticOrigin)
 const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
+const getNovel = cache(getNovelOrigin)
+const getNovelByID = cache(getNovelByIDOrigin)
+const getNovelBody = cache(getNovelBodyOrigin)
 const getAteliers = cache(getAteliersOrigin)
 const getAtelierByID = cache(getAtelierByIDOrigin)
 
@@ -358,6 +368,87 @@ async function getBandeDessineeByIDOrigin(contentID: string, draftKey?: string) 
   })
 }
 
+// 小説のリスト取得
+async function getNovelOrigin(offset?: number, limit?: number) {
+  const { env } = await getCloudflareContext({ async: true })
+  const isLocal = getLocalEnv() === 'local'
+  const offsetStr = offset?.toString() || '0'
+  const limitStr = limit?.toString() || '10'
+  const query = { offset: offsetStr, limit: limitStr }
+
+  return createCachedAPIFunction<{ novels: novelResult[]; total: number }>({
+    cacheKey: generateNovelKey(offsetStr, limitStr),
+    cacheTTL: CacheTTL.novel,
+    cacheStore: env.CMS_CACHE,
+    fetcher: isLocal
+      ? () => createLocalFetcher('/api/cms/novels', query, { novels: [], total: 0 })
+      : () => env.CMS_RPC.fetchNovels(offsetStr, limitStr),
+    defaultResult: { novels: [], total: 0 },
+  })
+}
+
+// 単一の小説メタ取得
+async function getNovelByIDOrigin(contentID: string, draftKey?: string) {
+  const { env } = await getCloudflareContext({ async: true })
+  const isLocal = getLocalEnv() === 'local'
+
+  const query: Record<string, string> =
+    draftKey !== undefined ? { content_id: contentID, draftKey } : { content_id: contentID }
+
+  return createCachedAPIFunction<novelResult>({
+    cacheKey: generateNovelContentKey(contentID),
+    cacheTTL: CacheTTL.novelByID,
+    cacheStore: env.CMS_CACHE,
+    fetcher: isLocal
+      ? () => createLocalFetcher<novelResult>('/api/cms/novel', query, {} as novelResult)
+      : () => env.CMS_RPC.fetchNovel(contentID, draftKey || null),
+    defaultResult: {} as novelResult,
+    skipCache: !!draftKey,
+  })
+}
+
+// 小説本文（外部プレーンテキスト）の取得。
+// CMSメタとは別系統の本文キャッシュ(novel_body_*)に raw テキストのまま保持し、パースは呼び出し側(RSC)で行う。
+async function getNovelBodyOrigin(contentID: string, contentsUrl: string, draftKey?: string) {
+  const { env } = await getCloudflareContext({ async: true })
+
+  // SSRF対策: 自サイト管理ドメイン(maretol.xyz)配下の https URL のみ許可
+  if (!isAllowedNovelBodyURL(contentsUrl)) {
+    console.error('[lib/api/workers.ts] novel body url not allowed:', contentsUrl)
+    return ''
+  }
+
+  return createCachedAPIFunction<string>({
+    cacheKey: generateNovelBodyKey(contentID),
+    cacheTTL: CacheTTL.novelBody,
+    cacheStore: env.CMS_CACHE,
+    fetcher: async () => {
+      const res = await fetch(contentsUrl, { cache: 'no-store' })
+      if (!res.ok) {
+        return ''
+      }
+      return await res.text()
+    },
+    defaultResult: '',
+    skipCache: !!draftKey,
+    shouldCache: (res) => res !== '', // 空本文はキャッシュしない
+  })
+}
+
+// 小説本文の取得元URLが自サイト管理ドメイン配下かを検証する
+function isAllowedNovelBodyURL(rawUrl: string): boolean {
+  try {
+    const url = new URL(rawUrl)
+    if (url.protocol !== 'https:') {
+      return false
+    }
+    const host = url.hostname
+    return host === 'maretol.xyz' || host.endsWith('.maretol.xyz')
+  } catch {
+    return false
+  }
+}
+
 async function getAteliersOrigin(offset?: number, limit?: number) {
   const { env } = await getCloudflareContext({ async: true })
   const isLocal = getLocalEnv() === 'local'
@@ -420,6 +511,9 @@ export {
   getStatic,
   getBandeDessinee,
   getBandeDessineeByID,
+  getNovel,
+  getNovelByID,
+  getNovelBody,
   getAteliers,
   getAtelierByID,
 }

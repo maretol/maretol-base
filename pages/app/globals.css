@@ -209,3 +209,23 @@ code {
   border-image-slice: 1;
   @apply border-b-4 to-60% border-blue-900;
 }
+
+/* 小説リーダー本文。1行を1つの p、空行を br として描画する前提のため、p の余白は 0 にして
+   行間（空き）は br と line-height で表現する。 */
+.novel-body {
+  @apply leading-8 text-base;
+  p {
+    @apply m-0;
+  }
+  rt {
+    @apply text-xs text-gray-700;
+  }
+}
+
+/* 縦書き表示。writing-mode はリーダー側の arbitrary class で付与し、ここでは縦書き時の余白・行間を整える。 */
+.novel-body--vertical {
+  @apply leading-9;
+  p {
+    @apply m-0;
+  }
+}

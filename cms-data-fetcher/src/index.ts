@@ -4,6 +4,7 @@
 
 import {
   bandeDessineeResult,
+  novelResult,
   categoryAPIResult,
   contentsAPIResult,
   staticAPIResult,
@@ -13,6 +14,8 @@ import {
 import {
   getBandeDessinee,
   getBandeDessinees,
+  getNovel,
+  getNovels,
   getContent,
   getContents,
   getContentsByTag,
@@ -31,6 +34,7 @@ export interface Env {
   CMS_API_KEY: string
   CMS_API_KEY_BD: string
   CMS_API_KEY_AT: string
+  CMS_API_KEY_NOVEL: string
 }
 
 export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
@@ -95,6 +99,16 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       } else {
         // マンガの指定がある場合そのマンガを取得
         const content = await this.fetchBandeDessinee(contentID, draftKey)
+        return Response.json(content)
+      }
+    } else if (pathname.includes('/cms/novel')) {
+      if (contentID === '' || contentID === null) {
+        // 小説の指定がない場合offsetとlimitで一覧を取得
+        const contents = await this.fetchNovels(offset, limit)
+        return Response.json(contents)
+      } else {
+        // 小説の指定がある場合その小説を取得
+        const content = await this.fetchNovel(contentID, draftKey)
         return Response.json(content)
       }
     } else if (pathname.includes('/cms/atelier')) {
@@ -244,6 +258,46 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     } catch (e) {
       console.error('Error fetching bandeDessinee:', e)
       throw new Error('Error fetching bandeDessinee')
+    }
+  }
+
+  async fetchNovels(offset?: string, limit?: string): Promise<{ novels: novelResult[]; total: number }> {
+    const apiKey = this.env.CMS_API_KEY_NOVEL
+    const offsetNum = parseOffset(offset)
+    const limitNum = parseLimit(limit)
+
+    try {
+      const contents = await getNovels(apiKey, offsetNum, limitNum)
+      contents.novels.forEach((n) => {
+        const parsed = parse(n.description)
+        n.parsed_description = parsed.contents_array
+        n.table_of_contents = parsed.table_of_contents
+        n.annotations = parsed.annotations
+      })
+      // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
+      return JSON.parse(JSON.stringify(contents))
+    } catch (e) {
+      console.error('Error fetching novels:', e)
+      throw new Error('Error fetching novels')
+    }
+  }
+
+  async fetchNovel(contentID: string, draftKey?: string | null): Promise<novelResult> {
+    const apiKey = this.env.CMS_API_KEY_NOVEL
+    if (contentID === null) {
+      throw new Error('contentID is empty')
+    }
+    try {
+      const content = await getNovel(apiKey, contentID, draftKey || undefined)
+      const parsed = parse(content.description)
+      content.parsed_description = parsed.contents_array
+      content.table_of_contents = parsed.table_of_contents
+      content.annotations = parsed.annotations
+      // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
+      return JSON.parse(JSON.stringify(content))
+    } catch (e) {
+      console.error('Error fetching novel:', e)
+      throw new Error('Error fetching novel')
     }
   }
 

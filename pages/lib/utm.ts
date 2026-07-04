@@ -1,5 +1,5 @@
 export type SNSSource = 'twitter' | 'bluesky' | 'clipboard'
-export type ContentType = 'blog' | 'illust' | 'comics' | 'page'
+export type ContentType = 'blog' | 'illust' | 'comics' | 'novels' | 'page'
 export type Campaign = 'share_button' | 'auto_post'
 
 export interface UTMParams {

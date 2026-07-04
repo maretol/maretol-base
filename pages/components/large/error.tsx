@@ -3,6 +3,7 @@ import {
   ArrowRightSquareIcon,
   ArrowUpSquareIcon,
   BookImageIcon,
+  BookTextIcon,
   CircleAlertIcon,
   HomeIcon,
 } from 'lucide-react'
@@ -39,6 +40,41 @@ export function ErrorPageArticle({ title }: { title: string }) {
             <Link href="/">
               <HomeIcon />
               <h2>Home</h2>
+            </Link>
+          </Button>
+        </div>
+      </CardFooter>
+    </Card>
+  )
+}
+
+// 小説詳細ページ用のエラー表示。BaseLayout（共通ヘッダー/フッター）配下での表示を想定したカード。
+export function ErrorPageNovel({ title }: { title: string }) {
+  return (
+    <Card className="w-full bg-gray-100">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>現在時刻{convertJST(getCurrentTime())}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-5 content">
+          <p>対象の小説が見つかりませんでした。</p>
+          <p>リンクが正確でなかったか、公開が停止された可能性があります。</p>
+          <p>Novels Page Top のリンクから探すか、Maretol に連絡してください。</p>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <div className="flex justify-center mt-2 w-full gap-4">
+          <Button variant="secondary" className="w-48 flex justify-center items-center gap-1" asChild>
+            <Link href="/novels">
+              <BookTextIcon className="w-4 h-4" />
+              Novels Page Top
+            </Link>
+          </Button>
+          <Button variant="secondary" className="w-48 flex justify-center items-center gap-1" asChild>
+            <Link href="/">
+              <HomeIcon className="w-4 h-4" />
+              Home
             </Link>
           </Button>
         </div>

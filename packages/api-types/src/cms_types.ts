@@ -111,6 +111,39 @@ type bandeDessineeTag = {
   tag_name: string
 }
 
+// 小説（novel）コンテンツのメタ情報。
+// comic（bandeDessineeResult）から画像系フィールド（back_cover/format/filename/first_page/last_page/first_left_right）を除外し、
+// テキスト小説向けに再定義したもの。本文テキスト自体は contents_url が指す外部プレーンテキストファイルとして配信する。
+type novelResult = {
+  id: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  title_name: string
+  publish_date?: string
+  publish_event?: string
+  contents_url: string // 外部プレーンテキスト本文への参照
+  description: string // CMS リッチテキスト（メタ説明）
+  next_id?: string
+  previous_id?: string
+  series?: novelSeries
+  tag: novelTag
+  cover?: string // OGP 用の任意表紙。無ければ既定 OGP にフォールバックする
+  parsed_description: ParsedContent[]
+  table_of_contents: TableOfContents
+  annotations?: Annotation[]
+}
+
+type novelSeries = {
+  id: string
+  series_name: string
+}
+
+type novelTag = {
+  id: string
+  tag_name: string
+}
+
 type atelierResult = {
   id: string
   title: string
@@ -147,6 +180,9 @@ export type {
   infoAPIResult,
   staticAPIResult,
   bandeDessineeResult,
+  novelResult,
+  novelSeries,
+  novelTag,
   atelierResult,
   atelierTagAndCategory,
 }

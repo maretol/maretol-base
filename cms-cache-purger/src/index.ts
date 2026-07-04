@@ -3,6 +3,7 @@ import crypto from 'node:crypto'
 import { WebhookPayload } from 'api-types'
 import Blog from './blog'
 import Comic from './comic'
+import Novel from './novel'
 import Illust from './illust'
 
 export interface Env {
@@ -11,7 +12,7 @@ export interface Env {
   SECRET: string
 }
 
-const serviceList = ['maretol-blog', 'maretol-comic', 'maretol-illust']
+const serviceList = ['maretol-blog', 'maretol-comic', 'maretol-novel', 'maretol-illust']
 
 export default {
   async fetch(request: WorkerRequest, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -47,6 +48,9 @@ export default {
     } else if (bodyJSON.service === 'maretol-comic') {
       const comic = new Comic(env, ctx)
       return comic.purgeCache(bodyJSON)
+    } else if (bodyJSON.service === 'maretol-novel') {
+      const novel = new Novel(env, ctx)
+      return novel.purgeCache(bodyJSON)
     } else if (bodyJSON.service === 'maretol-illust') {
       const illust = new Illust(env, ctx)
       return illust.purgeCache(bodyJSON)
