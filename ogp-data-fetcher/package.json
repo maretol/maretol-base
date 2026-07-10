@@ -14,13 +14,14 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.17.0",
-    "@cloudflare/workers-types": "^4.20260629.1",
+    "@cloudflare/workers-types": "^5.20260710.1",
     "html-rewriter-wasm": "^0.4.1",
     "typescript": "^6.0.2",
     "vitest": "4.1.9",
     "wrangler": "^4.105.0"
   },
   "dependencies": {
+    "cms-cache-purger": "^1.0.0",
     "open-graph-scraper-lite": "^2.1.0"
   }
 }
