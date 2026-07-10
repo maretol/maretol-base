@@ -206,6 +206,17 @@ CREATE TABLE atelier_tag_relations (
 - 見出し id は `h` + FNV-1a 32bit の16進8桁。同一テキストは常に同じ id、同一記事内の重複時のみサフィックス付きで再ハッシュ
 - 改行は `breaks: true`（単一改行 → `<br>`、空行 → 段落分割。microCMS の shift+enter / enter に相当）
 
+### 互換性確認ツール
+
+`cms-data-fetcher/scripts/compare_md_html.ts`: Markdown と現行CMS出力HTMLを両方 parse() まで通し、ParsedContent レベル（tag_name / text / p_option / sub_texts / attributes / inner_html / 目次 / 注釈）で正規化比較して差分をレポートする。`npx tsx scripts/compare_md_html.ts [md] [html]`（省略時 tmp/test.md / tmp/test.html）
+
+確認済みの表現差（表示上は問題なし）:
+
+- テーブル: markdown-it は `<thead>/<tbody>` + align指定時の style 属性、microCMS は `<tbody>` + `colspan/rowspan` + セル内 `<p>`。pages の renderTable は inner_html をそのまま `<table>` に流すためどちらも正常に描画される
+- blockquote 内の連続行: Markdown は1つの `<p>` 内の `<br>` 区切り、microCMS は行ごとに `<p>`。空行（`>` のみの行）を挟めば `<p>` 分割になる
+- 空段落 `<p></p>`（スペーサー）は Markdown では表現できない。必要な場合は `<br>` のみの行で代替
+- リストを `0.` 始まりにすると `<ol start="0">` が付く（microCMS は常に 1 始まり）
+
 ## 3. 管理ページの Markdown エディタ: 素の textarea で開始（エディタ内プレビューなし）
 
 - 初期実装は**素の textarea** とし、最小工数で始める。シンタックスハイライトが欲しくなった段階で CodeMirror 6 等に差し替える（コンポーネント境界を切っておき差し替え可能にする）
