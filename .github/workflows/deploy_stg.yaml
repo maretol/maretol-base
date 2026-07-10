@@ -26,7 +26,7 @@ jobs:
       cms-cache-purger: ${{ steps.filter.outputs.cms-cache-purger }}
       sns-article-publisher: ${{ steps.filter.outputs.sns-article-publisher }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: path filter
         id: filter
         uses: dorny/paths-filter@v4
@@ -61,7 +61,7 @@ jobs:
       run:
         working-directory: ./pages
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -96,7 +96,7 @@ jobs:
       run:
         working-directory: ./ogp-data-fetcher
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -127,7 +127,7 @@ jobs:
       run:
         working-directory: ./cms-data-fetcher
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -158,7 +158,7 @@ jobs:
       run:
         working-directory: ./cms-cache-purger
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -189,7 +189,7 @@ jobs:
       run:
         working-directory: ./sns-article-publisher
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -246,3 +246,42 @@ jobs:
           echo "cms cache result: $cms_cache_result"
           echo "sns result: $sns_result"
           exit 1
+
+  e2e:
+    # status ジョブ成功（= どのデプロイも failure でない）時のみ実行する。
+    # デプロイ失敗時は needs 不成立で自動 skip され、差分の有無に依存せず常時実行される。
+    needs: [status]
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    env:
+      E2E_BASE_URL: ${{ vars.E2E_BASE_URL || 'https://maretol-base-v3-stg.maretol-ruha.workers.dev' }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        run: npm ci
+      - name: resolve playwright version
+        id: playwright
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: cache playwright browsers
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright.outputs.version }}
+      - name: install playwright browsers
+        run: npx playwright install --with-deps chromium
+      - name: run e2e tests
+        run: npm run test:e2e
+      - name: upload playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 14

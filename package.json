@@ -20,7 +20,8 @@
     "build:page": "npm run --workspace=pages pages:build",
     "lint:page": "npm run --workspace=pages lint",
     "test:cms": "npm run --workspace=cms-data-fetcher test",
-    "test:sns": "npm run --workspace=sns-article-publisher test"
+    "test:sns": "npm run --workspace=sns-article-publisher test",
+    "test:e2e": "npm run --workspace=e2e test:e2e"
   },
   "author": "maretol",
   "private": true,
@@ -30,7 +31,8 @@
     "ogp-data-fetcher",
     "packages/*",
     "cms-cache-purger",
-    "sns-article-publisher"
+    "sns-article-publisher",
+    "e2e"
   ],
   "devDependencies": {
     "esbuild": "0.28.1"

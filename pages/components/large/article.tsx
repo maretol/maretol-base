@@ -30,8 +30,8 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
   return (
     <Card key={id} lang="ja" className="bg-gray-100">
       <CardHeader>
-        <CardTitleH1>
-          <Link href={`blog/${id}`} className="hover:underline">
+        <CardTitleH1 lang="ja">
+          <Link href={`/blog/${id}`} className="hover:underline">
             {title}
           </Link>
         </CardTitleH1>
@@ -73,7 +73,7 @@ export async function FullArticle({
   return (
     <Card lang="ja" className="w-full bg-gray-100">
       <CardHeader>
-        <CardTitleH1>{title}</CardTitleH1>
+        <CardTitleH1 lang="ja">{title}</CardTitleH1>
         <CardDescription>
           {type === 'blog' ? (
             <>
