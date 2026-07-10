@@ -11,3 +11,5 @@ dist
 
 .kiro/specs/**
 **/.kiro/specs/**
+
+tmp/

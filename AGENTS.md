@@ -56,6 +56,11 @@ npm run lint:page      # Lint 実行
 - **注意**: `npm run next-dev:page` は Next.js のみ起動するため、CMS からのデータ取得ができない
 - **テストページ**: `localhost:3000/blog/test` - レイアウト確認用ページ
 
+## Git ワークフロー（Git workflow）
+
+- **PR の向き先**: PR を作成する際のマージ先ブランチは、基本的に `development` にする
+- `main` はリリース用ブランチのため、直接 PR を向けない
+
 ## 知識＆ライブラリ（Knowledge & Library）
 
 ### MCP Server
