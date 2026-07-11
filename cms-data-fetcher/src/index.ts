@@ -24,6 +24,7 @@ import {
   getSecretMeta,
 } from './micro_cms'
 import { parse } from './parse'
+import { getAteliersFromD1, getAtelierFromD1 } from './d1'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 
 export interface Env {
@@ -31,6 +32,10 @@ export interface Env {
   CMS_API_KEY: string
   CMS_API_KEY_BD: string
   CMS_API_KEY_AT: string
+  // サービスごとの参照先切り替え（段階移行用）。'd1' で D1、それ以外は microCMS を参照する
+  ATELIER_SOURCE?: string
+  // 内製CMSのD1データベース（maretol-cms）
+  DB: D1Database
 }
 
 export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
@@ -253,7 +258,10 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const limitNum = parseLimit(limit)
 
     try {
-      const atelier = await getAteliers(apiKey, offsetNum, limitNum)
+      const atelier =
+        this.env.ATELIER_SOURCE === 'd1'
+          ? await getAteliersFromD1(this.env.DB, offsetNum, limitNum)
+          : await getAteliers(apiKey, offsetNum, limitNum)
       atelier.ateliers.forEach((a) => {
         if (a.description === null) {
           a.description = ''
@@ -280,7 +288,11 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
 
     try {
-      const atelier = await getAtelier(apiKey, contentID, parsedDraftKey)
+      // D1参照時のdraftKeyプレビューはKV併用方式で別途対応する（cms_goal.md参照。M4で実装）
+      const atelier =
+        this.env.ATELIER_SOURCE === 'd1'
+          ? await getAtelierFromD1(this.env.DB, contentID)
+          : await getAtelier(apiKey, contentID, parsedDraftKey)
       const parsed = parse(atelier.description)
       atelier.parsed_description = parsed.contents_array
       atelier.table_of_contents = parsed.table_of_contents
