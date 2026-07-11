@@ -77,7 +77,8 @@ if (!target) {
 }
 const apiKey = process.env[target.apiKeyEnv]
 if (!apiKey) {
-  console.error(`環境変数 ${target.apiKeyEnv} が設定されていません`)
+  // APIキー関連の値をログに含めない（CodeQL: clear-text logging対策で静的メッセージとする）
+  console.error('microCMS APIキーの環境変数が未設定です（illust: CMS_API_KEY_AT / comic: CMS_API_KEY_BD / blog: CMS_API_KEY）')
   process.exit(1)
 }
 
