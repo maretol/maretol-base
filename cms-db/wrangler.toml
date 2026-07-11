@@ -1,0 +1,13 @@
+#:schema node_modules/wrangler/config-schema.json
+# cms-db は Worker としてデプロイしない。wrangler d1 コマンド（migrations / execute）の
+# 実行コンテキストとしてのみ使用する
+name = "cms-db"
+compatibility_date = "2025-05-05"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "maretol-cms"
+# TODO: `wrangler d1 create maretol-cms` 実行後に発行された database_id に差し替える
+# ローカル実行（--local）は database_id がプレースホルダのままでも動作する
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"

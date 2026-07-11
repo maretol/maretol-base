@@ -13,3 +13,4 @@ dist
 **/.kiro/specs/**
 
 tmp/
+cms-db/generated/

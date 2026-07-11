@@ -29,6 +29,7 @@
   "workspaces": [
     "pages",
     "cms-data-fetcher",
+    "cms-db",
     "ogp-data-fetcher",
     "packages/*",
     "cms-cache-purger",

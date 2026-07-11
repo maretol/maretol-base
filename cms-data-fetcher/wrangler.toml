@@ -8,6 +8,16 @@ routes = [
     { pattern = "api.maretol.xyz/cms/*", zone_name = "maretol.xyz" }
 ]
 
+[vars]
+# サービスごとの参照先。'd1' で内製CMS（D1）、'microcms' で従来のmicroCMSを参照する
+ATELIER_SOURCE = "microcms"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "maretol-cms"
+# TODO: `wrangler d1 create maretol-cms` 実行後に発行された database_id に差し替える
+database_id = "00000000-0000-0000-0000-000000000000"
+
 [dev]
 port = 8787
 
@@ -17,6 +27,16 @@ routes = [
     { pattern = "dev-api.maretol.xyz", custom_domain = true },
     { pattern = "dev-api.maretol.xyz/cms/*", zone_name = "maretol.xyz" }
 ]
+
+# ステージングは先行してD1を参照する（検証後に本番のATELIER_SOURCEをd1へ切り替える）
+[env.staging.vars]
+ATELIER_SOURCE = "d1"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "maretol-cms"
+# TODO: 本番と同じ database_id に差し替える（DBは共有。cms_design.md 参照）
+database_id = "00000000-0000-0000-0000-000000000000"
 
 [observability]
 enabled = true
