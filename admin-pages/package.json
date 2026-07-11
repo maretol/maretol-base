@@ -1,0 +1,33 @@
+{
+  "name": "admin-pages",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack --port 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "admin:build": "opennextjs-cloudflare build",
+    "run-dev": "opennextjs-cloudflare build && wrangler dev -c wrangler.toml",
+    "deploy-stg": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
+    "deploy-prd": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
+  },
+  "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.1",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260710.1",
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/node": "^26.1.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.0.9",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.107.0"
+  }
+}
