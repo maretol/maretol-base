@@ -19,7 +19,7 @@ type ExportTarget = {
 const TARGETS: Record<string, ExportTarget> = {
   illust: {
     serviceDomain: 'maretol-illust',
-    endpoints: ['atelier', 'tag'],
+    endpoints: ['atelier', 'categories'],
     apiKeyEnv: 'CMS_API_KEY_AT',
   },
   comic: {

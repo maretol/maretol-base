@@ -16,7 +16,7 @@ ATELIER_SOURCE = "microcms"
 binding = "DB"
 database_name = "maretol-cms"
 # TODO: `wrangler d1 create maretol-cms` 実行後に発行された database_id に差し替える
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "58e13952-8750-4f5a-a75f-553bd4235f7c"
 
 [dev]
 port = 8787
@@ -36,7 +36,7 @@ ATELIER_SOURCE = "d1"
 binding = "DB"
 database_name = "maretol-cms"
 # TODO: 本番と同じ database_id に差し替える（DBは共有。cms_design.md 参照）
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "58e13952-8750-4f5a-a75f-553bd4235f7c"
 
 [observability]
 enabled = true
