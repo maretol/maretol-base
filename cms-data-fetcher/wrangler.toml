@@ -15,10 +15,9 @@ kv_namespaces = [
 
 [vars]
 # サービスごとの参照先。'd1' で内製CMS（D1）、'microcms' で従来のmicroCMSを参照する
-# illust はステージング検証済み（2026-07-11）のため本番も D1 を参照する
+# illust・comic はステージング検証済み（2026-07-11）のため本番も D1 を参照する
 ATELIER_SOURCE = "d1"
-# comic はステージング検証後に 'd1' へ切り替える
-COMIC_SOURCE = "microcms"
+COMIC_SOURCE = "d1"
 
 [[d1_databases]]
 binding = "DB"
