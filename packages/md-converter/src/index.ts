@@ -91,7 +91,8 @@ function createConverter(): MarkdownIt {
 
   // cite:: 行の保護: 引用元記法 cite::[タイトル](URL) は pages 側が「生テキスト」を
   // 正規表現で解釈するため、Markdown のリンク記法として <a> に変換されると URL が失われる。
-  // cite:: で始まる行は [ をエスケープしてリンク解釈を抑止し、リテラルのまま出力する
+  // cite:: で始まる行は \ と [ をエスケープしてリンク解釈を抑止し、リテラルのまま出力する
+  // （\ を先にエスケープしないと、入力中の「\[」が「\\[」となりリンク解釈の抑止をすり抜ける）
   md.core.ruler.before('inline', 'cms_protect_cite', (state) => {
     for (const token of state.tokens) {
       if (token.type !== 'inline' || !token.content.includes('cite::')) {
@@ -99,7 +100,9 @@ function createConverter(): MarkdownIt {
       }
       token.content = token.content
         .split('\n')
-        .map((line) => (line.trimStart().startsWith('cite::') ? line.replace(/\[/g, '\\[') : line))
+        .map((line) =>
+          line.trimStart().startsWith('cite::') ? line.replace(/\\/g, '\\\\').replace(/\[/g, '\\[') : line
+        )
         .join('\n')
     }
   })
