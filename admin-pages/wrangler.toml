@@ -6,9 +6,11 @@ main = ".open-next/worker.js"
 compatibility_date = "2025-05-05"
 compatibility_flags = ["nodejs_compat"]
 
-# TODO: 管理ページ用ドメイン（例: admin.maretol.xyz）に Cloudflare Access を設定してから
-# routes を有効化する。Access 未設定のまま公開しないこと
-routes = []
+# admin.maretol.xyz は Cloudflare Access 配下（2026-07-11 設定済み）
+# Access 対象外の経路（workers.dev 等）は開けないこと
+routes = [
+    { pattern = "admin.maretol.xyz", custom_domain = true }
+]
 workers_dev = false
 
 kv_namespaces = [
@@ -36,9 +38,10 @@ PAGES_HOST = "https://www.maretol.xyz"
 
 [env.staging]
 name = "admin-pages-stg"
+# staging は Access 対象ドメインがないため公開経路を持たない（デプロイのみ）
+# 公開したい場合は dev-admin.maretol.xyz 等を Access に追加してから routes を設定する
 routes = []
-# TODO: CRUD実装を載せる前に staging も Access 配下のドメインに切り替える
-workers_dev = true
+workers_dev = false
 kv_namespaces = [
     { binding = "CMS_CACHE", id = "eda084a77bf54fab906cd6b02fa1b3a1" },
     { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
