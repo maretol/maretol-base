@@ -24,7 +24,14 @@ import {
   getSecretMeta,
 } from './micro_cms'
 import { parse } from './parse'
-import { getAteliersFromD1, getAtelierFromD1, getAtelierDraftFromKV } from './d1'
+import {
+  getAteliersFromD1,
+  getAtelierFromD1,
+  getAtelierDraftFromKV,
+  getBandeDessineesFromD1,
+  getBandeDessineeFromD1,
+  getBandeDessineeDraftFromKV,
+} from './d1'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 
 export interface Env {
@@ -34,6 +41,7 @@ export interface Env {
   CMS_API_KEY_AT: string
   // サービスごとの参照先切り替え（段階移行用）。'd1' で D1、それ以外は microCMS を参照する
   ATELIER_SOURCE?: string
+  COMIC_SOURCE?: string
   // 内製CMSのD1データベース（maretol-cms）
   DB: D1Database
   // KVプレビュー（draftKey互換）のドラフト参照先。管理ページ（admin-pages）が書き込む
@@ -220,7 +228,10 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const limitNum = parseLimit(limit)
 
     try {
-      const contents = await getBandeDessinees(apiKey, offsetNum, limitNum)
+      const contents =
+        this.env.COMIC_SOURCE === 'd1'
+          ? await getBandeDessineesFromD1(this.env.DB, offsetNum, limitNum)
+          : await getBandeDessinees(apiKey, offsetNum, limitNum)
       contents.bandeDessinees.forEach((bd) => {
         const parsed = parse(bd.description)
         bd.parsed_description = parsed.contents_array
@@ -241,7 +252,12 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       throw new Error('contentID is empty')
     }
     try {
-      const content = await getBandeDessinee(apiKey, contentID, draftKey || undefined)
+      // D1参照時のdraftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
+      const content =
+        this.env.COMIC_SOURCE === 'd1'
+          ? (draftKey ? await getBandeDessineeDraftFromKV(this.env.CMS_DRAFT, contentID, draftKey) : null) ??
+            (await getBandeDessineeFromD1(this.env.DB, contentID))
+          : await getBandeDessinee(apiKey, contentID, draftKey || undefined)
       const parsed = parse(content.description)
       content.parsed_description = parsed.contents_array
       content.table_of_contents = parsed.table_of_contents
