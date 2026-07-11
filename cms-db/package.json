@@ -8,7 +8,8 @@
     "migrate:local": "wrangler d1 migrations apply maretol-cms --local",
     "migrate:remote": "wrangler d1 migrations apply maretol-cms --remote",
     "export": "tsx scripts/export_microcms.ts",
-    "generate-sql:illust": "tsx scripts/generate_illust_sql.ts"
+    "generate-sql:illust": "tsx scripts/generate_illust_sql.ts",
+    "generate-sql:comic": "tsx scripts/generate_comic_sql.ts"
   },
   "devDependencies": {
     "tsx": "^4.20.0",
