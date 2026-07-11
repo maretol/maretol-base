@@ -8,7 +8,7 @@ import {
   OGPResult,
   atelierResult,
 } from 'api-types'
-import { getLocalEnv, getNodeEnv, isKVCacheEnabled } from '../env'
+import { getLocalEnv, getNodeEnv, isKVCacheEnabled, isCMSCacheEnabled } from '../env'
 import {
   generateBandeDessineeContentKey,
   generateBandeDessineeKey,
@@ -60,7 +60,7 @@ interface APIConfig<TResult> extends CacheConfig {
 // キャッシュ付きAPI関数（環境非依存）
 async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Promise<TResult> {
   // キャッシュの確認（skipCacheがfalseの場合のみ）
-  if (isKVCacheEnabled() && !config.skipCache) {
+  if (isCMSCacheEnabled() && !config.skipCache) {
     const cache = await config.cacheStore.get(config.cacheKey)
     if (cache) {
       const data = JSON.parse(cache) as TResult
@@ -76,7 +76,7 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
     const shouldSaveCache = config.shouldCache ? config.shouldCache(res) : true
 
     // キャッシュの保存（skipCacheがfalseかつshouldSaveCacheがtrueの場合のみ）
-    if (isKVCacheEnabled() && !config.skipCache && shouldSaveCache) {
+    if (isCMSCacheEnabled() && !config.skipCache && shouldSaveCache) {
       const expirationTtl = dev ? 60 : config.cacheTTL
       try {
         await config.cacheStore.put(config.cacheKey, JSON.stringify(res), { expirationTtl })

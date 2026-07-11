@@ -32,6 +32,16 @@ function isKVCacheEnabled() {
   return KV_CACHE_ENABLED
 }
 
+// CMSコンテンツのKVキャッシュ(CMS_CACHE)の有効判定。
+// stg環境はprdとCMS_CACHEのKV namespaceを共有しているため、stgのCMS(cms-data-fetcher-stg)の
+// データがprdのキャッシュに混入しないよう、stgではCMSキャッシュを無効にする。
+function isCMSCacheEnabled() {
+  if (['stg', 'STG', 'staging'].includes(getEnv() || '')) {
+    return false
+  }
+  return isKVCacheEnabled()
+}
+
 async function getSecretArticleCookieKey(env: CloudflareEnv): Promise<string> {
   try {
     const key = await env.SECRET_ARTICLE_COOKIE_KEY.get()
@@ -50,4 +60,4 @@ async function getSecretArticleCookieKey(env: CloudflareEnv): Promise<string> {
   throw new Error('SECRET_ARTICLE_COOKIE_KEY is not set')
 }
 
-export { getHostname, getLocalEnv, getNodeEnv, getEnv, isKVCacheEnabled, getSecretArticleCookieKey }
+export { getHostname, getLocalEnv, getNodeEnv, getEnv, isKVCacheEnabled, isCMSCacheEnabled, getSecretArticleCookieKey }
