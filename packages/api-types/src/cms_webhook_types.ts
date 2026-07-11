@@ -20,6 +20,10 @@ export type Content = {
   draftValue: ContentValue | null
 }
 
+// 管理ページ（admin-pages）から sns-article-publisher へ RPC で渡す公開コンテンツ情報
+// ContentValue のうち投稿文組み立てに使うフィールドのみ必須とする
+export type SNSPublishValue = Partial<ContentValue> & { id: string }
+
 export type ContentValue = {
   id: string // 共通
   title: string // blog/illustで共通

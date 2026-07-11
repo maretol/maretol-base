@@ -27,4 +27,4 @@ async function NoteMisskey(authInfo: MisskeyAuthInfo, note: string): Promise<voi
 
 export default NoteMisskey
 
-export { MisskeyAuthInfo }
+export type { MisskeyAuthInfo }

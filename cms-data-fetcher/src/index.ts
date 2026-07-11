@@ -32,6 +32,17 @@ import {
   getBandeDessineeFromD1,
   getBandeDessineeDraftFromKV,
 } from './d1'
+import {
+  getBlogContentsFromD1,
+  getBlogContentsByTagFromD1,
+  getBlogContentFromD1,
+  getBlogSecretMetaFromD1,
+  getBlogSecretMetaFromDraft,
+  getBlogContentDraftFromKV,
+  getBlogTagsFromD1,
+  getBlogInfoFromD1,
+  getBlogStaticFromD1,
+} from './d1_blog'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 
 export interface Env {
@@ -42,6 +53,7 @@ export interface Env {
   // サービスごとの参照先切り替え（段階移行用）。'd1' で D1、それ以外は microCMS を参照する
   ATELIER_SOURCE?: string
   COMIC_SOURCE?: string
+  BLOG_SOURCE?: string
   // 内製CMSのD1データベース（maretol-cms）
   DB: D1Database
   // KVプレビュー（draftKey互換）のドラフト参照先。管理ページ（admin-pages）が書き込む
@@ -138,7 +150,10 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
-    const contents = await getContentsByTag(apiKey, tagIDs, offsetNum, limitNum)
+    const contents =
+      this.env.BLOG_SOURCE === 'd1'
+        ? await getBlogContentsByTagFromD1(this.env.DB, tagIDs, offsetNum, limitNum)
+        : await getContentsByTag(apiKey, tagIDs, offsetNum, limitNum)
     contents.contents.forEach((c) => {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
@@ -153,7 +168,10 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const apiKey = this.env.CMS_API_KEY
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
-    const contents = await getContents(apiKey, offsetNum, limitNum)
+    const contents =
+      this.env.BLOG_SOURCE === 'd1'
+        ? await getBlogContentsFromD1(this.env.DB, offsetNum, limitNum)
+        : await getContents(apiKey, offsetNum, limitNum)
     contents.contents.forEach((c) => {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
@@ -167,7 +185,13 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   async fetchContent(articleID: string, draftKey?: string | null): Promise<contentsAPIResult> {
     const apiKey = this.env.CMS_API_KEY
     const parsedDraftKey = draftKey === null ? undefined : draftKey
-    const content = await getContent(apiKey, articleID, parsedDraftKey)
+    // D1参照時のdraftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
+    const content =
+      this.env.BLOG_SOURCE === 'd1'
+        ? (parsedDraftKey !== undefined
+            ? await getBlogContentDraftFromKV(this.env.CMS_DRAFT, articleID, parsedDraftKey)
+            : null) ?? (await getBlogContentFromD1(this.env.DB, articleID))
+        : await getContent(apiKey, articleID, parsedDraftKey)
     const parsed = parse(content.content)
     content.parsed_content = parsed.contents_array
     content.table_of_contents = parsed.table_of_contents
@@ -184,19 +208,29 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   ): Promise<{ is_secret: boolean; secret_code: string | null }> {
     const apiKey = this.env.CMS_API_KEY
     const parsedDraftKey = draftKey === null ? undefined : draftKey
+    if (this.env.BLOG_SOURCE === 'd1') {
+      // プレビュー時は下書きの is_secret / secret_code を優先する
+      if (parsedDraftKey !== undefined) {
+        const draftMeta = await getBlogSecretMetaFromDraft(this.env.CMS_DRAFT, articleID, parsedDraftKey)
+        if (draftMeta !== null) {
+          return draftMeta
+        }
+      }
+      return await getBlogSecretMetaFromD1(this.env.DB, articleID)
+    }
     return await getSecretMeta(apiKey, articleID, parsedDraftKey)
   }
 
   async fetchTags(): Promise<categoryAPIResult[]> {
     const apiKey = this.env.CMS_API_KEY
-    const tags = await getTags(apiKey)
+    const tags = this.env.BLOG_SOURCE === 'd1' ? await getBlogTagsFromD1(this.env.DB) : await getTags(apiKey)
     // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(tags))
   }
 
   async fetchInfo(): Promise<infoAPIResult[]> {
     const apiKey = this.env.CMS_API_KEY
-    const info = await getInfo(apiKey)
+    const info = this.env.BLOG_SOURCE === 'd1' ? await getBlogInfoFromD1(this.env.DB) : await getInfo(apiKey)
     info.forEach((i) => {
       const parsed = parse(i.main_text)
       i.parsed_content = parsed.contents_array
@@ -210,7 +244,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   async fetchStatic(): Promise<staticAPIResult> {
     const apiKey = this.env.CMS_API_KEY
     try {
-      const staticData = await getStatic(apiKey)
+      const staticData = this.env.BLOG_SOURCE === 'd1' ? await getBlogStaticFromD1(this.env.DB) : await getStatic(apiKey)
       // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(staticData))
     } catch (e) {
