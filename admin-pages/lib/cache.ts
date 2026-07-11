@@ -30,6 +30,62 @@ export async function purgeBlogMetaCache(key: 'tags' | 'info' | 'static'): Promi
   await env.CMS_CACHE.delete(key)
 }
 
+// --- キャッシュ管理ページ（cms-cache-purger の運用機能の移行先） ---
+// 保存時の自動パージで賄えないケース（D1直接編集後・カテゴリ改名後・不整合時など）のための手動パージ
+
+export const CACHE_GROUPS = {
+  illust: { label: 'イラスト（一覧・単体）', prefixes: [ATELIER_PREFIX], keys: [] as string[] },
+  comic: { label: 'マンガ（一覧・単体）', prefixes: [BANDE_DESSINEE_PREFIX], keys: [] as string[] },
+  blog_list: { label: 'ブログ一覧・タグ絞り込み', prefixes: ['contents_'], keys: [] as string[] },
+  blog_content: { label: 'ブログ記事単体', prefixes: ['content_'], keys: [] as string[] },
+  blog_meta: { label: 'ブログメタ（tags / info / static）', prefixes: [] as string[], keys: ['tags', 'info', 'static'] },
+} as const
+
+export type CacheGroupKey = keyof typeof CACHE_GROUPS
+
+// グループごとのキャッシュ済みキー数を数える
+export async function getCacheStats(): Promise<Record<CacheGroupKey, number>> {
+  const { env } = await getCloudflareContext({ async: true })
+  const stats = {} as Record<CacheGroupKey, number>
+  for (const [group, def] of Object.entries(CACHE_GROUPS) as [CacheGroupKey, (typeof CACHE_GROUPS)[CacheGroupKey]][]) {
+    let count = 0
+    for (const prefix of def.prefixes) {
+      count += await countByPrefix(env.CMS_CACHE, prefix)
+    }
+    for (const key of def.keys) {
+      count += (await env.CMS_CACHE.get(key)) !== null ? 1 : 0
+    }
+    stats[group] = count
+  }
+  return stats
+}
+
+export async function purgeCacheGroup(group: CacheGroupKey): Promise<void> {
+  const { env } = await getCloudflareContext({ async: true })
+  const def = CACHE_GROUPS[group]
+  for (const prefix of def.prefixes) {
+    await deleteByPrefix(env.CMS_CACHE, prefix)
+  }
+  await Promise.all(def.keys.map((key) => env.CMS_CACHE.delete(key)))
+}
+
+export async function purgeAllCMSCache(): Promise<void> {
+  for (const group of Object.keys(CACHE_GROUPS) as CacheGroupKey[]) {
+    await purgeCacheGroup(group)
+  }
+}
+
+async function countByPrefix(kv: KVNamespace, prefix: string): Promise<number> {
+  let count = 0
+  let cursor: string | undefined
+  do {
+    const list = await kv.list({ prefix, cursor })
+    count += list.keys.length
+    cursor = list.list_complete ? undefined : list.cursor
+  } while (cursor !== undefined)
+  return count
+}
+
 async function deleteByPrefix(kv: KVNamespace, prefix: string): Promise<void> {
   const list = await kv.list({ prefix })
   await Promise.all(list.keys.map((key) => kv.delete(key.name)))
