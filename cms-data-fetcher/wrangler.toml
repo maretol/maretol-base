@@ -10,12 +10,12 @@ routes = [
 
 [vars]
 # サービスごとの参照先。'd1' で内製CMS（D1）、'microcms' で従来のmicroCMSを参照する
-ATELIER_SOURCE = "microcms"
+# illust はステージング検証済み（2026-07-11）のため本番も D1 を参照する
+ATELIER_SOURCE = "d1"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "maretol-cms"
-# TODO: `wrangler d1 create maretol-cms` 実行後に発行された database_id に差し替える
 database_id = "58e13952-8750-4f5a-a75f-553bd4235f7c"
 
 [dev]
