@@ -11,6 +11,13 @@ compatibility_flags = ["nodejs_compat"]
 routes = []
 workers_dev = false
 
+kv_namespaces = [
+    # pages の CMS キャッシュ（公開・更新時にパージする。cms-cache-purger と同じ namespace）
+    { binding = "CMS_CACHE", id = "eda084a77bf54fab906cd6b02fa1b3a1" },
+    # KVプレビュー（draftKey互換）のドラフト保存先
+    { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
+]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "maretol-cms"
@@ -25,15 +32,21 @@ binding = "ASSETS"
 
 [vars]
 ENV = "PRD"
+PAGES_HOST = "https://www.maretol.xyz"
 
 [env.staging]
 name = "admin-pages-stg"
 routes = []
 # TODO: CRUD実装を載せる前に staging も Access 配下のドメインに切り替える
 workers_dev = true
+kv_namespaces = [
+    { binding = "CMS_CACHE", id = "eda084a77bf54fab906cd6b02fa1b3a1" },
+    { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
+]
 
 [env.staging.vars]
 ENV = "STG"
+PAGES_HOST = "https://maretol-base-v3-stg.maretol-ruha.workers.dev"
 
 [[env.staging.d1_databases]]
 binding = "DB"

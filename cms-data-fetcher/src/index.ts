@@ -24,7 +24,7 @@ import {
   getSecretMeta,
 } from './micro_cms'
 import { parse } from './parse'
-import { getAteliersFromD1, getAtelierFromD1 } from './d1'
+import { getAteliersFromD1, getAtelierFromD1, getAtelierDraftFromKV } from './d1'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 
 export interface Env {
@@ -36,6 +36,8 @@ export interface Env {
   ATELIER_SOURCE?: string
   // 内製CMSのD1データベース（maretol-cms）
   DB: D1Database
+  // KVプレビュー（draftKey互換）のドラフト参照先。管理ページ（admin-pages）が書き込む
+  CMS_DRAFT: KVNamespace
 }
 
 export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
@@ -288,10 +290,12 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
 
     try {
-      // D1参照時のdraftKeyプレビューはKV併用方式で別途対応する（cms_goal.md参照。M4で実装）
+      // D1参照時のdraftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
       const atelier =
         this.env.ATELIER_SOURCE === 'd1'
-          ? await getAtelierFromD1(this.env.DB, contentID)
+          ? (parsedDraftKey !== undefined
+              ? await getAtelierDraftFromKV(this.env.CMS_DRAFT, contentID, parsedDraftKey)
+              : null) ?? (await getAtelierFromD1(this.env.DB, contentID))
           : await getAtelier(apiKey, contentID, parsedDraftKey)
       const parsed = parse(atelier.description)
       atelier.parsed_description = parsed.contents_array

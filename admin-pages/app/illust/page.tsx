@@ -1,25 +1,7 @@
-import { getCloudflareContext } from '@opennextjs/cloudflare'
+import Link from 'next/link'
+import { listAteliers } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
-
-type AtelierListRow = {
-  id: string
-  title: string
-  src: string
-  status: string
-  description_format: string
-  published_at: string | null
-  updated_at: string
-}
-
-async function getAteliers(): Promise<AtelierListRow[]> {
-  const { env } = await getCloudflareContext({ async: true })
-  const result = await env.DB.prepare(
-    `SELECT id, title, src, status, description_format, published_at, updated_at
-     FROM ateliers ORDER BY published_at DESC`
-  ).all<AtelierListRow>()
-  return result.results
-}
 
 const statusLabel: Record<string, string> = {
   PUBLISH: '公開',
@@ -28,13 +10,20 @@ const statusLabel: Record<string, string> = {
 }
 
 export default async function IllustList() {
-  const ateliers = await getAteliers()
+  const ateliers = await listAteliers()
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">イラスト一覧</h1>
-        {/* TODO: M4 CRUD実装で新規作成ボタンを追加する */}
+        <div className="flex gap-2">
+          <Link href="/illust/tags" className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100">
+            タグ管理
+          </Link>
+          <Link href="/illust/new" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
+            新規作成
+          </Link>
+        </div>
       </div>
 
       <table className="w-full border-collapse bg-white text-sm">
@@ -45,6 +34,7 @@ export default async function IllustList() {
             <th className="p-2">状態</th>
             <th className="p-2">形式</th>
             <th className="p-2">公開日時</th>
+            <th className="p-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -55,11 +45,16 @@ export default async function IllustList() {
               <td className="p-2">{statusLabel[a.status] ?? a.status}</td>
               <td className="p-2 font-mono text-xs">{a.description_format}</td>
               <td className="p-2 text-xs">{a.published_at ?? '-'}</td>
+              <td className="p-2">
+                <Link href={`/illust/${a.id}/edit`} className="text-blue-600 underline">
+                  編集
+                </Link>
+              </td>
             </tr>
           ))}
           {ateliers.length === 0 && (
             <tr>
-              <td colSpan={5} className="p-4 text-center text-gray-400">
+              <td colSpan={6} className="p-4 text-center text-gray-400">
                 データがありません
               </td>
             </tr>

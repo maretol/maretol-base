@@ -4,22 +4,10 @@
  *
  * cms_design.md「主要クエリの対応表」参照。公開サイト向けのため常に status='PUBLISH' で絞る
  */
-import { atelierResult, atelierTagAndCategory } from 'api-types'
+import { atelierResult, atelierTagAndCategory, atelierRow, atelierDraftRecord } from 'api-types'
 import { convertMarkdownToHtml } from 'md-converter'
 
-type AtelierRow = {
-  id: string
-  title: string
-  src: string
-  object_position: string
-  description: string | null
-  description_format: 'html' | 'markdown'
-  status: string
-  created_at: string
-  updated_at: string
-  published_at: string | null
-  revised_at: string | null
-}
+type AtelierRow = atelierRow
 
 type AtelierTagJoinRow = {
   atelier_id: string
@@ -126,6 +114,24 @@ export async function getAtelierFromD1(db: D1Database, contentID: string): Promi
   }
   const tagMap = await getTagsByAtelierIDs(db, [row.id])
   return toAtelierResult(row, tagMap.get(row.id) ?? [])
+}
+
+// KVプレビュー: 管理ページが保存したドラフト（draft_atelier_{id}）を参照する
+// draftKey が一致した場合のみドラフトを返し、それ以外は null（呼び出し側でD1にフォールバック）
+export async function getAtelierDraftFromKV(
+  kv: KVNamespace,
+  contentID: string,
+  draftKey: string
+): Promise<atelierResult | null> {
+  const raw = await kv.get(`draft_atelier_${contentID}`)
+  if (!raw) {
+    return null
+  }
+  const record = JSON.parse(raw) as atelierDraftRecord
+  if (record.draftKey !== draftKey) {
+    return null
+  }
+  return toAtelierResult(record.row, record.tags)
 }
 
 // テスト用に公開する
