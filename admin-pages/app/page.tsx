@@ -13,8 +13,20 @@ async function getCounts() {
         (SELECT COUNT(*) FROM atelier_tags) AS atelier_tags,
         (SELECT COUNT(*) FROM bande_dessinees) AS comics,
         (SELECT COUNT(*) FROM bande_dessinee_tags) AS comic_tags,
-        (SELECT COUNT(*) FROM bande_dessinee_series) AS comic_series`
-    ).first<{ ateliers: number; atelier_tags: number; comics: number; comic_tags: number; comic_series: number }>()
+        (SELECT COUNT(*) FROM bande_dessinee_series) AS comic_series,
+        (SELECT COUNT(*) FROM blog_contents) AS blogs,
+        (SELECT COUNT(*) FROM blog_categories) AS blog_categories,
+        (SELECT COUNT(*) FROM blog_info) AS blog_info`
+    ).first<{
+      ateliers: number
+      atelier_tags: number
+      comics: number
+      comic_tags: number
+      comic_series: number
+      blogs: number
+      blog_categories: number
+      blog_info: number
+    }>()
     return {
       ok: true as const,
       ateliers: row?.ateliers ?? 0,
@@ -22,6 +34,9 @@ async function getCounts() {
       comics: row?.comics ?? 0,
       comicTags: row?.comic_tags ?? 0,
       comicSeries: row?.comic_series ?? 0,
+      blogs: row?.blogs ?? 0,
+      blogCategories: row?.blog_categories ?? 0,
+      blogInfo: row?.blog_info ?? 0,
     }
   } catch (e) {
     console.error('D1 access error:', e)
@@ -49,10 +64,13 @@ export default async function Home() {
             タグ {counts.ok ? counts.comicTags : '—'} 件 / シリーズ {counts.ok ? counts.comicSeries : '—'} 件
           </p>
         </Link>
-        <div className="rounded-lg border border-dashed border-gray-300 p-4 text-gray-400">
-          <p className="text-sm">ブログ（blog）</p>
-          <p className="mt-1 text-xs">M6 で移行予定</p>
-        </div>
+        <Link href="/blog" className="rounded-lg border border-gray-200 bg-white p-4 hover:border-gray-400">
+          <p className="text-sm text-gray-500">ブログ（blog）</p>
+          <p className="mt-1 text-3xl font-bold">{counts.ok ? counts.blogs : '—'}</p>
+          <p className="mt-1 text-xs text-gray-400">
+            カテゴリ {counts.ok ? counts.blogCategories : '—'} 件 / 固定ページ {counts.ok ? counts.blogInfo : '—'} 件
+          </p>
+        </Link>
       </section>
 
       {!counts.ok && (
