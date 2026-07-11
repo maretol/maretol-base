@@ -31,6 +31,10 @@
 		{
 			"name": "package cms-cache-key-gen",
 			"path": "packages/cms-cache-key-gen"
+		},
+		{
+			"name": "package md-converter",
+			"path": "packages/md-converter"
 		}
 	],
 	"settings": {
