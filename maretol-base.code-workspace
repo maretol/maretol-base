@@ -9,6 +9,10 @@
 			"path": "pages"
 		},
 		{
+			"name": "maretol-base admin page",
+			"path": "admin-pages"
+		},
+		{
 			"name": "worker cms-data-fetcher",
 			"path": "cms-data-fetcher"
 		},

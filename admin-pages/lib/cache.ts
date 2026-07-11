@@ -6,10 +6,16 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 
 const ATELIER_PREFIX = 'atelier_'
+const BANDE_DESSINEE_PREFIX = 'bande_dessinee_'
 
 export async function purgeAtelierCache(): Promise<void> {
   const { env } = await getCloudflareContext({ async: true })
   await deleteByPrefix(env.CMS_CACHE, ATELIER_PREFIX)
+}
+
+export async function purgeBandeDessineeCache(): Promise<void> {
+  const { env } = await getCloudflareContext({ async: true })
+  await deleteByPrefix(env.CMS_CACHE, BANDE_DESSINEE_PREFIX)
 }
 
 async function deleteByPrefix(kv: KVNamespace, prefix: string): Promise<void> {
