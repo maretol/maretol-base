@@ -26,6 +26,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/blog" className="text-gray-600 hover:text-gray-900">
                 ブログ
               </Link>
+              <Link href="/cache" className="text-gray-600 hover:text-gray-900">
+                キャッシュ
+              </Link>
             </nav>
           </div>
         </header>
