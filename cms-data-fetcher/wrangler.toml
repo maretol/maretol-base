@@ -19,6 +19,8 @@ kv_namespaces = [
 ATELIER_SOURCE = "d1"
 # comic はステージング検証後に 'd1' へ切り替える
 COMIC_SOURCE = "microcms"
+# blog はステージング検証後に 'd1' へ切り替える
+BLOG_SOURCE = "microcms"
 
 [[d1_databases]]
 binding = "DB"
@@ -42,6 +44,7 @@ kv_namespaces = [
 ATELIER_SOURCE = "d1"
 # ステージングは先行してD1を参照する
 COMIC_SOURCE = "d1"
+BLOG_SOURCE = "d1"
 
 [[env.staging.d1_databases]]
 binding = "DB"
