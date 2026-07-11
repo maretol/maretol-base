@@ -151,4 +151,12 @@ describe('基本記法', () => {
     const html = convertMarkdownToHtml('これは[リンク](https://example.com)です')
     expect(html).toBe('<p>これは<a href="https://example.com">リンク</a>です</p>\n')
   })
+
+  it('cite::行にバックスラッシュが含まれてもリンク解釈の抑止をすり抜けない', () => {
+    // 「\[」を含む入力: \ を先にエスケープしないと「\\[」となり [x](y) がリンク化してしまう
+    const md = '> 引用\n> cite::\\[タイトル](https://example.com)'
+    const html = convertMarkdownToHtml(md)
+    expect(html).not.toContain('<a href')
+    expect(html).toContain('cite::\\[タイトル](https://example.com)')
+  })
 })
