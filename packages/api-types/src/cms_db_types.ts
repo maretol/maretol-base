@@ -86,3 +86,49 @@ export type bandeDessineeDraftRecord = {
   tag: { id: string; tag_name: string }
   series: { id: string; series_name: string } | null
 }
+
+export type blogContentRow = {
+  id: string
+  title: string
+  content: string
+  content_format: 'html' | 'markdown'
+  ogp_image: string | null
+  sns_text: string | null
+  is_secret: number // SQLiteのためboolean は 0/1
+  secret_code: string | null
+  status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
+  created_at: string
+  updated_at: string
+  published_at: string | null
+  revised_at: string | null
+}
+
+export type blogCategoryRow = {
+  id: string
+  name: string
+  sort_order: number
+  created_at: string
+  updated_at: string
+  published_at: string | null
+  revised_at: string | null
+}
+
+export type blogInfoRow = {
+  id: string
+  page_pathname: string
+  title: string | null
+  main_text: string
+  main_text_format: 'html' | 'markdown'
+  status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
+  created_at: string
+  updated_at: string
+  published_at: string | null
+  revised_at: string | null
+}
+
+// キー: draft_blog_{id}
+export type blogContentDraftRecord = {
+  draftKey: string
+  row: blogContentRow
+  categories: blogCategoryRow[]
+}

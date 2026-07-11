@@ -20,6 +20,11 @@ kv_namespaces = [
     { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
 ]
 
+services = [
+    # blog記事の公開時にSNS自動投稿の通知を送る（WebhookPayload互換。lib/sns.ts 参照）
+    { binding = "SNS_PUBLISHER", service = "sns-article-publisher" }
+]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "maretol-cms"
@@ -35,6 +40,8 @@ binding = "ASSETS"
 [vars]
 ENV = "PRD"
 PAGES_HOST = "https://www.maretol.xyz"
+# SNS自動投稿の通知を送るか。本番のみ有効（staging/ローカルからの誤投稿防止）
+SNS_NOTIFY_ENABLED = "true"
 
 [env.staging]
 name = "admin-pages-stg"
@@ -46,10 +53,14 @@ kv_namespaces = [
     { binding = "CMS_CACHE", id = "eda084a77bf54fab906cd6b02fa1b3a1" },
     { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
 ]
+services = [
+    { binding = "SNS_PUBLISHER", service = "sns-article-publisher-stg" }
+]
 
 [env.staging.vars]
 ENV = "STG"
 PAGES_HOST = "https://maretol-base-v3-stg.maretol-ruha.workers.dev"
+SNS_NOTIFY_ENABLED = "false"
 
 [[env.staging.d1_databases]]
 binding = "DB"

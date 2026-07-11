@@ -83,4 +83,4 @@ function createSignature(nonce: string, timestamp: string, authInfo: TwitterAuth
 
 export default PostTweet
 
-export { TwitterAuthInfo }
+export type { TwitterAuthInfo }

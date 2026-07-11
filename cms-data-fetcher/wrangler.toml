@@ -17,7 +17,10 @@ kv_namespaces = [
 # サービスごとの参照先。'd1' で内製CMS（D1）、'microcms' で従来のmicroCMSを参照する
 # illust・comic はステージング検証済み（2026-07-11）のため本番も D1 を参照する
 ATELIER_SOURCE = "d1"
+# comic はステージング検証後に 'd1' へ切り替える
 COMIC_SOURCE = "d1"
+# blog はステージング検証後に 'd1' へ切り替える
+BLOG_SOURCE = "microcms"
 
 [[d1_databases]]
 binding = "DB"
@@ -41,6 +44,7 @@ kv_namespaces = [
 ATELIER_SOURCE = "d1"
 # ステージングは先行してD1を参照する
 COMIC_SOURCE = "d1"
+BLOG_SOURCE = "d1"
 
 [[env.staging.d1_databases]]
 binding = "DB"

@@ -23,7 +23,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/comic" className="text-gray-600 hover:text-gray-900">
                 マンガ
               </Link>
-              {/* blog は M6 で追加する */}
+              <Link href="/blog" className="text-gray-600 hover:text-gray-900">
+                ブログ
+              </Link>
             </nav>
           </div>
         </header>

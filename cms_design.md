@@ -237,18 +237,15 @@ CREATE TABLE atelier_tag_relations (
 - **エディタ内プレビューは設けない**。プレビューは KV + draftKey 経由で pages 本体を表示する「実プレビュー」で行う（描画結果が本番と完全一致するため、簡易プレビューより信頼できる）
 - 将来エディタ内プレビューが欲しくなった場合は packages/md-converter を管理ページから import して実装できる（構成上の選択肢として保持）
 
-## 4. SNS 通知: 現行 WebhookPayload 完全互換（sns-article-publisher 無改修）
+## 4. SNS 通知: Service Binding + RPC（M6 レビューで WebhookPayload 互換方式から変更）
 
-sns-article-publisher の受け口実装を確認した結果、以下を送れば無改修で動作する
+管理ページ → sns-article-publisher の通知は **Service Binding の RPC 呼び出し**（`publishArticle(serviceType, value)`）で行う
 
-- ヘッダ: `x-mcms-api-key`（SNS_PUB_CMS_KEY と一致）、`x-microcms-signature`（ボディの HMAC-SHA256、鍵は SNS_PUB_CMS_SECRET）
-- ボディ: `WebhookPayload` 形式。受け側が実際に参照するフィールドは以下のみ
-  - `service`: `maretol-blog` / `maretol-comic` / `maretol-illust`（この名前を新CMSでも維持する）
-  - `api`: `'contents'` 固定（それ以外は投稿スキップされる）
-  - `type`: `'new'`（新規公開）または `'edit'`
-  - `contents.old.status` / `contents.new.status`: edit 時の DRAFT→PUBLISH 判定に使用
-  - `contents.new.publishValue`: id, title, title_name, src, sns_text, ogp_image, cover, filename, first_page, format, is_secret
-- 送信タイミング: 管理ページでの「公開」操作時（新規公開・下書き→公開）。is_secret 記事は受け側でも除外されるが、送信側でも公開操作の対象外とする
+- 当初は「WebhookPayload 完全互換 + HMAC署名で無改修」の方針だったが、APIキー・HMAC署名は**公開エンドポイント（microCMS Webhook 受信）のための防御**であり、Service Binding は同一アカウント内でバインディングを宣言した Worker からしか呼べない（プラットフォームレベルで認証済み）ため、内製CMSからの呼び出しでは不要と判断して排除した
+- これによりシークレット管理（admin-pages への SNS_PUB_CMS_KEY / SECRET 設定）と偽 WebhookPayload の組み立てが不要になる
+- sns-article-publisher に RPC メソッド `publishArticle` を追加（既存の投稿処理 `publish()` の薄いラッパー。`waitUntil` で非同期投稿）。投稿可否の判定（新規公開・下書き→公開のみ、is_secret 除外）は呼び出し側（admin-pages）が行う
+- 送信は `SNS_NOTIFY_ENABLED = 'true'` の環境（本番のみ）に限定し、staging・ローカルからの誤投稿を防ぐ
+- 公開 Webhook（fetch ハンドラ + HMAC検証）は microCMS 用として撤去フェーズまで残置する
 
 ## 5. microCMS からのデータインポート
 
