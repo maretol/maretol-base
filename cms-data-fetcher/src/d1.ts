@@ -4,7 +4,15 @@
  *
  * cms_design.md「主要クエリの対応表」参照。公開サイト向けのため常に status='PUBLISH' で絞る
  */
-import { atelierResult, atelierTagAndCategory, atelierRow, atelierDraftRecord } from 'api-types'
+import {
+  atelierResult,
+  atelierTagAndCategory,
+  atelierRow,
+  atelierDraftRecord,
+  bandeDessineeResult,
+  bandeDessineeRow,
+  bandeDessineeDraftRecord,
+} from 'api-types'
 import { convertMarkdownToHtml } from 'md-converter'
 
 type AtelierRow = atelierRow
@@ -134,6 +142,104 @@ export async function getAtelierDraftFromKV(
   return toAtelierResult(record.row, record.tags)
 }
 
+// --- comic (bande-dessinee) ---
+
+// JOIN結果の行型（本体 + タグ名 + シリーズ名）
+type BandeDessineeJoinRow = bandeDessineeRow & {
+  tag_name: string
+  series_name: string | null
+}
+
+function toBandeDessineeResult(
+  row: bandeDessineeRow,
+  tag: { id: string; tag_name: string },
+  series: { id: string; series_name: string } | null
+): bandeDessineeResult {
+  return {
+    id: row.id,
+    title_name: row.title_name,
+    publish_date: row.publish_date ?? undefined,
+    publish_event: row.publish_event ?? undefined,
+    contents_url: row.contents_url,
+    next_id: row.next_id ?? undefined,
+    previous_id: row.previous_id ?? undefined,
+    tag: tag,
+    series: series ?? undefined,
+    cover: row.cover ?? undefined,
+    back_cover: row.back_cover ?? undefined,
+    format: JSON.parse(row.format) as string[],
+    filename: row.filename,
+    first_page: row.first_page,
+    last_page: row.last_page,
+    first_left_right: JSON.parse(row.first_left_right) as ('right' | 'left')[],
+    description: toDeliveryHTML(row.description, row.description_format),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    publishedAt: row.published_at ?? row.created_at,
+  } as bandeDessineeResult // parsed_description / table_of_contents は index.ts が parse() 結果を代入する
+}
+
+function joinRowToResult(row: BandeDessineeJoinRow): bandeDessineeResult {
+  const { tag_name, series_name, ...body } = row
+  return toBandeDessineeResult(
+    body,
+    { id: row.tag_id, tag_name },
+    row.series_id !== null && series_name !== null ? { id: row.series_id, series_name } : null
+  )
+}
+
+const BANDE_DESSINEE_SELECT = `
+  SELECT b.*, t.tag_name, s.series_name
+  FROM bande_dessinees b
+  JOIN bande_dessinee_tags t ON t.id = b.tag_id
+  LEFT JOIN bande_dessinee_series s ON s.id = b.series_id`
+
+export async function getBandeDessineesFromD1(
+  db: D1Database,
+  offset: number,
+  limit: number
+): Promise<{ bandeDessinees: bandeDessineeResult[]; total: number }> {
+  const countRow = await db
+    .prepare(`SELECT COUNT(*) AS cnt FROM bande_dessinees WHERE status = 'PUBLISH'`)
+    .first<{ cnt: number }>()
+  const total = countRow?.cnt ?? 0
+
+  const rows = await db
+    .prepare(`${BANDE_DESSINEE_SELECT} WHERE b.status = 'PUBLISH' ORDER BY b.published_at DESC LIMIT ?1 OFFSET ?2`)
+    .bind(limit, offset)
+    .all<BandeDessineeJoinRow>()
+
+  return { bandeDessinees: rows.results.map(joinRowToResult), total }
+}
+
+export async function getBandeDessineeFromD1(db: D1Database, contentID: string): Promise<bandeDessineeResult> {
+  const row = await db
+    .prepare(`${BANDE_DESSINEE_SELECT} WHERE b.id = ?1 AND b.status = 'PUBLISH'`)
+    .bind(contentID)
+    .first<BandeDessineeJoinRow>()
+  if (!row) {
+    throw new Error(`bande dessinee not found: ${contentID}`)
+  }
+  return joinRowToResult(row)
+}
+
+// KVプレビュー: 管理ページが保存したドラフト（draft_bande_dessinee_{id}）を参照する
+export async function getBandeDessineeDraftFromKV(
+  kv: KVNamespace,
+  contentID: string,
+  draftKey: string
+): Promise<bandeDessineeResult | null> {
+  const raw = await kv.get(`draft_bande_dessinee_${contentID}`)
+  if (!raw) {
+    return null
+  }
+  const record = JSON.parse(raw) as bandeDessineeDraftRecord
+  if (record.draftKey !== draftKey) {
+    return null
+  }
+  return toBandeDessineeResult(record.row, record.tag, record.series)
+}
+
 // テスト用に公開する
-export { toAtelierResult, toDeliveryHTML }
+export { toAtelierResult, toDeliveryHTML, toBandeDessineeResult }
 export type { AtelierRow }
