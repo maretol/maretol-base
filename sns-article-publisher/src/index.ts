@@ -1,7 +1,7 @@
 import PostTweet, { TwitterAuthInfo } from './twitter'
 import PostBlueSky, { BlueSkyAuthInfo } from './bluesky'
 import PostNostrKind1, { NostrAuthInfo } from './nostr'
-import { Content, ContentValue, WebhookPayload } from 'api-types'
+import { Content, ContentValue, SNSPublishValue, WebhookPayload } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import crypto from 'node:crypto'
 import NoteMisskey, { MisskeyAuthInfo } from './misskey'
@@ -46,6 +46,16 @@ type PublishContent = {
 }
 
 export default class Publisher extends WorkerEntrypoint<Env> {
+  // 管理ページ（admin-pages）からの Service Binding RPC 呼び出し用
+  // Service Binding は同一アカウント内でバインディングを宣言した Worker からしか呼べないため、
+  // 公開Webhook（fetchハンドラ）と異なり API キー・署名検証は不要
+  // 投稿可否の判定（新規公開・下書き→公開のみ、限定公開除外）は呼び出し側で行う
+  async publishArticle(serviceType: ServiceType, value: SNSPublishValue): Promise<void> {
+    const content = getContent(serviceType, value as ContentValue)
+    console.log('RPC publishArticle:', serviceType, content.url)
+    this.ctx.waitUntil(publish(this.env, content, serviceType))
+  }
+
   async fetch(request: Request): Promise<Response> {
     const env = this.env
 

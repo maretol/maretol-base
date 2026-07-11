@@ -71,4 +71,4 @@ function parseNsec(nsec: string): Uint8Array {
 
 export default PostNostrKind1
 
-export { NostrAuthInfo }
+export type { NostrAuthInfo }

@@ -94,4 +94,4 @@ async function translateImage(env: Env, imageStream: ReadableStream): Promise<Ui
 
 export default PostBlueSky
 
-export { BlueSkyAuthInfo }
+export type { BlueSkyAuthInfo }
