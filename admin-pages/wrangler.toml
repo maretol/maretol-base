@@ -1,0 +1,44 @@
+#:schema node_modules/wrangler/config-schema.json
+# 内製CMSの管理ページ（cms_goal.md 参照）
+# ログインは Cloudflare Access に委譲するため、アプリ側に認証機能は持たない
+name = "admin-pages"
+main = ".open-next/worker.js"
+compatibility_date = "2025-05-05"
+compatibility_flags = ["nodejs_compat"]
+
+# TODO: 管理ページ用ドメイン（例: admin.maretol.xyz）に Cloudflare Access を設定してから
+# routes を有効化する。Access 未設定のまま公開しないこと
+routes = []
+workers_dev = false
+
+[[d1_databases]]
+binding = "DB"
+database_name = "maretol-cms"
+database_id = "58e13952-8750-4f5a-a75f-553bd4235f7c"
+
+[dev]
+port = 9601
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[vars]
+ENV = "PRD"
+
+[env.staging]
+name = "admin-pages-stg"
+routes = []
+# TODO: CRUD実装を載せる前に staging も Access 配下のドメインに切り替える
+workers_dev = true
+
+[env.staging.vars]
+ENV = "STG"
+
+[[env.staging.d1_databases]]
+binding = "DB"
+database_name = "maretol-cms"
+database_id = "58e13952-8750-4f5a-a75f-553bd4235f7c"
+
+[observability]
+enabled = true
