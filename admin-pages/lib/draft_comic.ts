@@ -9,10 +9,19 @@ import type { BandeDessineeInput } from './db_comic'
 
 const DRAFT_TTL_SECONDS = 3 * 24 * 60 * 60
 
-export async function saveBandeDessineeDraft(input: BandeDessineeInput): Promise<string> {
+export async function saveBandeDessineeDraft(input: BandeDessineeInput, regenerateKey = false): Promise<string> {
   const { env } = await getCloudflareContext({ async: true })
   const now = new Date().toISOString()
   const current = await getBandeDessinee(input.id)
+  const kvKey = `draft_bande_dessinee_${input.id}`
+
+  // 既存ドラフトのdraftKeyを維持する（共有済みのプレビューURLを変えないため）。再生成指定時のみ新しいキーにする
+  let draftKey: string | null = null
+  if (!regenerateKey) {
+    const existing = await env.CMS_DRAFT.get<bandeDessineeDraftRecord>(kvKey, 'json')
+    draftKey = existing?.draftKey ?? null
+  }
+  draftKey ??= generateDraftKey()
 
   const row: bandeDessineeRow = {
     id: input.id,
@@ -32,7 +41,8 @@ export async function saveBandeDessineeDraft(input: BandeDessineeInput): Promise
     last_page: input.last_page,
     first_left_right: JSON.stringify(input.first_left_right),
     description: input.description,
-    description_format: current?.description_format ?? 'markdown',
+    // フォームで選択された形式でプレビューする（形式変更もプレビューで確認できるようにする）
+    description_format: input.description_format,
     status: input.status,
     created_at: current?.created_at ?? now,
     updated_at: now,
@@ -47,7 +57,6 @@ export async function saveBandeDessineeDraft(input: BandeDessineeInput): Promise
   }
   const series = input.series_id ? ((await listComicSeries()).find((s) => s.id === input.series_id) ?? null) : null
 
-  const draftKey = generateDraftKey()
   const record: bandeDessineeDraftRecord = {
     draftKey,
     row,
@@ -55,7 +64,7 @@ export async function saveBandeDessineeDraft(input: BandeDessineeInput): Promise
     series: series ? { id: series.id, series_name: series.series_name } : null,
   }
 
-  await env.CMS_DRAFT.put(`draft_bande_dessinee_${input.id}`, JSON.stringify(record), {
+  await env.CMS_DRAFT.put(kvKey, JSON.stringify(record), {
     expirationTtl: DRAFT_TTL_SECONDS,
   })
 

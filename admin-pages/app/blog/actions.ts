@@ -20,7 +20,8 @@ import { purgeBlogContentCache, purgeBlogMetaCache } from '@/lib/cache'
 import { saveBlogContentDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
-import type { PreviewActionState } from '@/lib/form-state'
+import { parseContentFormat } from '@/lib/content-format'
+import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
@@ -47,6 +48,7 @@ function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: s
     id,
     title: text(formData, 'title'),
     content: (formData.get('content') as string | null) ?? '',
+    content_format: parseContentFormat(formData.get('content_format') as string | null),
     ogp_image: textOrNull(formData, 'ogp_image'),
     sns_text: textOrNull(formData, 'sns_text'),
     is_secret: formData.get('is_secret') === 'on',
@@ -81,7 +83,8 @@ export async function createBlogContentAction(formData: FormData): Promise<void>
   await notifyBlogPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/blog')
-  redirect('/blog')
+  // 保存後は一覧へ戻らず、作成した記事の編集画面へ遷移する（連続編集のため）
+  redirect(`/blog/${input.id}/edit?saved=1`)
 }
 
 export async function updateBlogContentAction(formData: FormData): Promise<void> {
@@ -99,7 +102,8 @@ export async function updateBlogContentAction(formData: FormData): Promise<void>
   await notifyBlogPublishToSNS({ input, type: 'edit', oldStatus })
 
   revalidatePath('/blog')
-  redirect('/blog')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/blog/${input.id}/edit?saved=1`)
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
@@ -112,9 +116,28 @@ export async function previewBlogContentAction(
     return { error }
   }
 
-  const draftKey = await saveBlogContentDraft(input)
+  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
+  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
+  const draftKey = await saveBlogContentDraft(input, regenerateKey)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/blog/${input.id}?draftKey=${draftKey}` }
+}
+
+// 編集画面からの手動キャッシュ削除。編集中の本文を失わないようページ遷移させない
+export async function purgeBlogContentCacheAction(
+  _prev: PurgeActionState,
+  formData: FormData
+): Promise<PurgeActionState> {
+  const id = text(formData, 'id')
+  if (id === '') {
+    return { error: 'IDが不正です' }
+  }
+  try {
+    await purgeBlogContentCache(id)
+    return { done: 'この記事のキャッシュを削除しました（一覧・記事単体）' }
+  } catch {
+    return { error: 'キャッシュ削除に失敗しました' }
+  }
 }
 
 // カテゴリ表示順の一括更新（order_{id} = 数値 のフォーム値を反映）
@@ -163,6 +186,7 @@ function parseInfoForm(formData: FormData): { input: BlogInfoInput; error?: stri
     page_pathname: text(formData, 'page_pathname'),
     title: textOrNull(formData, 'title'),
     main_text: (formData.get('main_text') as string | null) ?? '',
+    main_text_format: parseContentFormat(formData.get('main_text_format') as string | null),
     status: parseStatus(formData),
   }
   if (!ID_PATTERN.test(input.id)) {
@@ -187,7 +211,8 @@ export async function createBlogInfoAction(formData: FormData): Promise<void> {
   await purgeBlogMetaCache('info')
 
   revalidatePath('/blog/info')
-  redirect('/blog/info')
+  // 保存後は一覧へ戻らず、作成したページの編集画面へ遷移する
+  redirect(`/blog/info/${input.id}/edit?saved=1`)
 }
 
 export async function updateBlogInfoAction(formData: FormData): Promise<void> {
@@ -200,7 +225,8 @@ export async function updateBlogInfoAction(formData: FormData): Promise<void> {
   await purgeBlogMetaCache('info')
 
   revalidatePath('/blog/info')
-  redirect('/blog/info')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/blog/info/${input.id}/edit?saved=1`)
 }
 
 export async function updateBlogStaticAction(formData: FormData): Promise<void> {

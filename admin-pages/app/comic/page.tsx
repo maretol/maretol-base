@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { listBandeDessinees } from '@/lib/db_comic'
+import { formatJST, formatJSTDate } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,9 +35,13 @@ export default async function ComicList() {
           <tr className="border-b border-gray-200 text-left text-gray-500">
             <th className="p-2">ID</th>
             <th className="p-2">タイトル</th>
+            <th className="p-2">タグ</th>
+            <th className="p-2">シリーズ</th>
+            <th className="p-2">発行日</th>
             <th className="p-2">状態</th>
             <th className="p-2">形式</th>
             <th className="p-2">公開日時</th>
+            <th className="p-2">更新日時</th>
             <th className="p-2"></th>
           </tr>
         </thead>
@@ -45,9 +50,13 @@ export default async function ComicList() {
             <tr key={c.id} className="border-b border-gray-100">
               <td className="p-2 font-mono text-xs">{c.id}</td>
               <td className="p-2">{c.title_name}</td>
+              <td className="p-2 text-xs">{c.tag_name ?? '-'}</td>
+              <td className="p-2 text-xs">{c.series_name ?? '-'}</td>
+              <td className="p-2 text-xs">{formatJSTDate(c.publish_date)}</td>
               <td className="p-2">{statusLabel[c.status] ?? c.status}</td>
               <td className="p-2 font-mono text-xs">{c.description_format}</td>
-              <td className="p-2 text-xs">{c.published_at ?? '-'}</td>
+              <td className="p-2 text-xs">{formatJST(c.published_at)}</td>
+              <td className="p-2 text-xs">{formatJST(c.updated_at)}</td>
               <td className="p-2">
                 <Link href={`/comic/${c.id}/edit`} className="text-blue-600 underline">
                   編集
@@ -57,7 +66,7 @@ export default async function ComicList() {
           ))}
           {comics.length === 0 && (
             <tr>
-              <td colSpan={6} className="p-4 text-center text-gray-400">
+              <td colSpan={10} className="p-4 text-center text-gray-400">
                 データがありません
               </td>
             </tr>

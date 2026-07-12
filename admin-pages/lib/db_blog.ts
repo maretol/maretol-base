@@ -4,6 +4,7 @@
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { blogContentRow, blogCategoryRow, blogInfoRow } from 'api-types'
+import type { ContentFormat } from './content-format'
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true })
@@ -12,11 +13,19 @@ async function getDB(): Promise<D1Database> {
 
 // --- 記事（contents） ---
 
-export async function listBlogContents(): Promise<blogContentRow[]> {
+// 一覧表示用: カテゴリ名を連結して付加した行
+export type BlogContentListRow = blogContentRow & { category_names: string | null }
+
+export async function listBlogContents(): Promise<BlogContentListRow[]> {
   const db = await getDB()
   const result = await db
-    .prepare(`SELECT * FROM blog_contents ORDER BY created_at DESC`)
-    .all<blogContentRow>()
+    .prepare(
+      `SELECT c.*,
+        (SELECT group_concat(bc.name, ', ') FROM blog_content_categories r
+          JOIN blog_categories bc ON bc.id = r.category_id WHERE r.content_id = c.id) AS category_names
+       FROM blog_contents c ORDER BY c.created_at DESC`
+    )
+    .all<BlogContentListRow>()
   return result.results
 }
 
@@ -38,6 +47,7 @@ export type BlogContentInput = {
   id: string
   title: string
   content: string
+  content_format: ContentFormat
   ogp_image: string | null
   sns_text: string | null
   is_secret: boolean
@@ -55,7 +65,7 @@ export async function createBlogContent(input: BlogContentInput): Promise<void> 
     .prepare(
       `INSERT INTO blog_contents
         (id, title, content, content_format, ogp_image, sns_text, is_secret, secret_code, status, created_at, updated_at, published_at, revised_at)
-       VALUES (?1, ?2, ?3, 'markdown', ?4, ?5, ?6, ?7, ?8, ?9, ?9, ?10, ?10)`
+       VALUES (?1, ?2, ?3, ?11, ?4, ?5, ?6, ?7, ?8, ?9, ?9, ?10, ?10)`
     )
     .bind(
       input.id,
@@ -67,7 +77,8 @@ export async function createBlogContent(input: BlogContentInput): Promise<void> 
       input.secret_code,
       input.status,
       now,
-      publishedAt
+      publishedAt,
+      input.content_format
     )
     .run()
 
@@ -87,7 +98,7 @@ export async function updateBlogContent(input: BlogContentInput): Promise<void> 
   await db
     .prepare(
       `UPDATE blog_contents SET
-        title = ?2, content = ?3, ogp_image = ?4, sns_text = ?5, is_secret = ?6, secret_code = ?7, status = ?8,
+        title = ?2, content = ?3, content_format = ?12, ogp_image = ?4, sns_text = ?5, is_secret = ?6, secret_code = ?7, status = ?8,
         updated_at = ?9, published_at = ?10, revised_at = ?11
        WHERE id = ?1`
     )
@@ -102,7 +113,8 @@ export async function updateBlogContent(input: BlogContentInput): Promise<void> 
       input.status,
       now,
       publishedAt,
-      revisedAt
+      revisedAt,
+      input.content_format
     )
     .run()
 
@@ -179,6 +191,7 @@ export type BlogInfoInput = {
   page_pathname: string
   title: string | null
   main_text: string
+  main_text_format: ContentFormat
   status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
 }
 
@@ -189,9 +202,18 @@ export async function createBlogInfo(input: BlogInfoInput): Promise<void> {
   await db
     .prepare(
       `INSERT INTO blog_info (id, page_pathname, title, main_text, main_text_format, status, created_at, updated_at, published_at, revised_at)
-       VALUES (?1, ?2, ?3, ?4, 'markdown', ?5, ?6, ?6, ?7, ?7)`
+       VALUES (?1, ?2, ?3, ?4, ?8, ?5, ?6, ?6, ?7, ?7)`
     )
-    .bind(input.id, input.page_pathname, input.title, input.main_text, input.status, now, publishedAt)
+    .bind(
+      input.id,
+      input.page_pathname,
+      input.title,
+      input.main_text,
+      input.status,
+      now,
+      publishedAt,
+      input.main_text_format
+    )
     .run()
 }
 
@@ -206,11 +228,21 @@ export async function updateBlogInfo(input: BlogInfoInput): Promise<void> {
   const revisedAt = input.status === 'PUBLISH' ? now : current.revised_at
   await db
     .prepare(
-      `UPDATE blog_info SET page_pathname = ?2, title = ?3, main_text = ?4, status = ?5,
+      `UPDATE blog_info SET page_pathname = ?2, title = ?3, main_text = ?4, main_text_format = ?9, status = ?5,
         updated_at = ?6, published_at = ?7, revised_at = ?8
        WHERE id = ?1`
     )
-    .bind(input.id, input.page_pathname, input.title, input.main_text, input.status, now, publishedAt, revisedAt)
+    .bind(
+      input.id,
+      input.page_pathname,
+      input.title,
+      input.main_text,
+      input.status,
+      now,
+      publishedAt,
+      revisedAt,
+      input.main_text_format
+    )
     .run()
 }
 
