@@ -1,5 +1,6 @@
 import type { blogInfoRow } from 'api-types'
 import { createBlogInfoAction, updateBlogInfoAction } from '../actions'
+import { SubmitButton } from '@/components/submit-button'
 
 type Props = {
   mode: 'new' | 'edit'
@@ -82,9 +83,7 @@ export function InfoForm({ mode, info, error, saved }: Props) {
           </select>
         </div>
 
-        <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
-          保存
-        </button>
+        <SubmitButton pendingText="保存中...">保存</SubmitButton>
       </form>
     </div>
   )

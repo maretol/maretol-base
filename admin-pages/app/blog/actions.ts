@@ -8,6 +8,7 @@ import {
   updateBlogContent,
   getBlogContent,
   createBlogCategory,
+  listBlogCategories,
   updateBlogCategoryOrders,
   createBlogInfo,
   updateBlogInfo,
@@ -21,7 +22,7 @@ import { saveBlogContentDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
-import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
+import type { PreviewActionState, PurgeActionState, AddCategoryState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
@@ -159,6 +160,30 @@ export async function updateBlogCategoryOrderAction(formData: FormData): Promise
 
   revalidatePath('/blog/categories')
   redirect('/blog/categories')
+}
+
+// 記事編集画面からのカテゴリ追加。編集中の本文を失わないようページ遷移させず、
+// 追加したカテゴリを累積して返す（フォーム側でチェックボックスに反映する）
+export async function addBlogCategoryInlineAction(
+  prev: AddCategoryState,
+  formData: FormData
+): Promise<AddCategoryState> {
+  const name = text(formData, 'new_category_name')
+  if (name === '') {
+    return { ...prev, error: 'カテゴリ名は必須です' }
+  }
+
+  const existing = await listBlogCategories()
+  if (existing.some((c) => c.name === name)) {
+    return { ...prev, error: `カテゴリ '${name}' は既に存在します` }
+  }
+
+  const id = generateContentID()
+  await createBlogCategory({ id, name })
+  await purgeBlogMetaCache('tags')
+
+  revalidatePath('/blog/categories')
+  return { categories: [...prev.categories, { id, name }] }
 }
 
 export async function createBlogCategoryAction(formData: FormData): Promise<void> {

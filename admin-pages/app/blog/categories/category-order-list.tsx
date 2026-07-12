@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { blogCategoryRow } from 'api-types'
 import { updateBlogCategoryOrderAction } from '../actions'
+import { SubmitButton } from '@/components/submit-button'
 
 // カテゴリの表示順をドラッグ&ドロップ（と↑↓ボタン）で並べ替えるリスト。
 // 並び順は hidden input（order_{id} = index）として送信し、既存のアクションで一括保存する
@@ -73,9 +74,7 @@ export function CategoryOrderList({ categories }: { categories: blogCategoryRow[
         ))}
         {items.length === 0 && <li className="p-4 text-center text-sm text-gray-400">カテゴリがありません</li>}
       </ul>
-      <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
-        この並び順で保存
-      </button>
+      <SubmitButton pendingText="保存中...">この並び順で保存</SubmitButton>
       <p className="text-xs text-gray-400">ドラッグ&ドロップまたは↑↓ボタンで並べ替え、保存で確定します</p>
     </form>
   )
