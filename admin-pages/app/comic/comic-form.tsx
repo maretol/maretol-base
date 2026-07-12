@@ -10,6 +10,7 @@ type Props = {
   allTags: bandeDessineeTagRow[]
   allSeries: bandeDessineeSeriesRow[]
   error?: string
+  saved?: boolean
 }
 
 // ISO 8601 UTC の日時を date input 用の JST 日付（YYYY-MM-DD）に変換する
@@ -19,7 +20,7 @@ function toJSTDateValue(iso: string | null | undefined): string {
   return jst.toISOString().slice(0, 10)
 }
 
-export function ComicForm({ mode, comic, allTags, allSeries, error }: Props) {
+export function ComicForm({ mode, comic, allTags, allSeries, error, saved }: Props) {
   const action = mode === 'new' ? createBandeDessineeAction : updateBandeDessineeAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewBandeDessineeAction, {})
@@ -28,6 +29,7 @@ export function ComicForm({ mode, comic, allTags, allSeries, error }: Props) {
 
   return (
     <div className="space-y-4">
+      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {preview.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
