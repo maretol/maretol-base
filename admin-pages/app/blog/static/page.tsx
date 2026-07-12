@@ -1,5 +1,6 @@
 import { listBlogStatic } from '@/lib/db_blog'
 import { updateBlogStaticAction } from '../actions'
+import { SubmitButton } from '@/components/submit-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -32,9 +33,9 @@ export default async function BlogStatic({ searchParams }: { searchParams: Promi
               rows={Math.min(6, Math.max(2, e.value.split('\n').length))}
               className="w-full rounded-md border border-gray-300 p-2 text-sm"
             />
-            <button type="submit" className="rounded-md bg-gray-900 px-3 py-1.5 text-sm text-white hover:bg-gray-700">
+            <SubmitButton size="sm" pendingText="保存中...">
               保存
-            </button>
+            </SubmitButton>
           </form>
         ))}
       </div>

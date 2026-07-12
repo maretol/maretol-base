@@ -1,5 +1,6 @@
 import { getCacheStats, CACHE_GROUPS, type CacheGroupKey } from '@/lib/cache'
 import { purgeCacheGroupAction, purgeAllCacheAction } from './actions'
+import { SubmitButton } from '@/components/submit-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,12 +50,9 @@ export default async function CacheManagement({
               <td className="p-2">
                 <form action={purgeCacheGroupAction}>
                   <input type="hidden" name="group" value={key} />
-                  <button
-                    type="submit"
-                    className="rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-100"
-                  >
+                  <SubmitButton variant="secondary" size="sm" pendingText="パージ中...">
                     パージ
-                  </button>
+                  </SubmitButton>
                 </form>
               </td>
             </tr>
@@ -63,9 +61,9 @@ export default async function CacheManagement({
       </table>
 
       <form action={purgeAllCacheAction}>
-        <button type="submit" className="rounded-md bg-red-700 px-4 py-2 text-sm text-white hover:bg-red-600">
+        <SubmitButton variant="danger" pendingText="パージ中...">
           すべてパージ
-        </button>
+        </SubmitButton>
         <p className="mt-1 text-xs text-gray-400">
           全キャッシュを削除します。直後のアクセスはD1への取得が発生しますが表示への影響はありません
         </p>

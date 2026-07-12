@@ -1,18 +1,21 @@
 import type { blogInfoRow } from 'api-types'
 import { createBlogInfoAction, updateBlogInfoAction } from '../actions'
+import { SubmitButton } from '@/components/submit-button'
 
 type Props = {
   mode: 'new' | 'edit'
   info?: blogInfoRow
   error?: string
+  saved?: boolean
 }
 
-export function InfoForm({ mode, info, error }: Props) {
+export function InfoForm({ mode, info, error, saved }: Props) {
   const action = mode === 'new' ? createBlogInfoAction : updateBlogInfoAction
   const inputClass = 'mt-1 w-full rounded-md border border-gray-300 p-2 text-sm'
 
   return (
     <div className="space-y-4">
+      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
@@ -45,9 +48,20 @@ export function InfoForm({ mode, info, error }: Props) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium">
-            本文（{info?.main_text_format === 'html' ? 'HTML（既存ページのため）' : 'Markdown'}）
-          </label>
+          <div className="flex items-center gap-3">
+            <label className="block text-sm font-medium">本文</label>
+            <select
+              name="main_text_format"
+              defaultValue={info?.main_text_format ?? 'markdown'}
+              className="rounded-md border border-gray-300 p-1 text-xs"
+            >
+              <option value="markdown">Markdown</option>
+              <option value="html">HTML（旧CMS形式）</option>
+            </select>
+          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            形式を変更しても本文は自動変換されません。切り替える場合は書き直しとセットで保存してください
+          </p>
           <textarea
             name="main_text"
             defaultValue={info?.main_text ?? ''}
@@ -69,9 +83,7 @@ export function InfoForm({ mode, info, error }: Props) {
           </select>
         </div>
 
-        <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
-          保存
-        </button>
+        <SubmitButton pendingText="保存中...">保存</SubmitButton>
       </form>
     </div>
   )
