@@ -10,11 +10,20 @@ async function getDB(): Promise<D1Database> {
   return env.DB
 }
 
-export async function listBandeDessinees(): Promise<bandeDessineeRow[]> {
+// 一覧表示用: タグ名・シリーズ名を付加した行
+export type BandeDessineeListRow = bandeDessineeRow & { tag_name: string | null; series_name: string | null }
+
+export async function listBandeDessinees(): Promise<BandeDessineeListRow[]> {
   const db = await getDB()
   const result = await db
-    .prepare(`SELECT * FROM bande_dessinees ORDER BY created_at DESC`)
-    .all<bandeDessineeRow>()
+    .prepare(
+      `SELECT b.*, t.tag_name AS tag_name, s.series_name AS series_name
+       FROM bande_dessinees b
+       LEFT JOIN bande_dessinee_tags t ON t.id = b.tag_id
+       LEFT JOIN bande_dessinee_series s ON s.id = b.series_id
+       ORDER BY b.created_at DESC`
+    )
+    .all<BandeDessineeListRow>()
   return result.results
 }
 
