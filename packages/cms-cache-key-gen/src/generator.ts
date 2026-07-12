@@ -6,6 +6,10 @@ export function generateContentKey(articleID: string) {
   return `content_${articleID}`
 }
 
+export function generateAdjacentContentsKey(articleID: string) {
+  return `adjacent_contents_${articleID}`
+}
+
 export function generateSecretMetaKey(articleID: string) {
   return `secret_meta_${articleID}`
 }
