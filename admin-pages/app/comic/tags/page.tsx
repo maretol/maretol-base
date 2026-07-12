@@ -1,5 +1,6 @@
 import { listComicTags } from '@/lib/db_comic'
 import { createComicTagAction } from '../actions'
+import { SubmitButton } from '@/components/submit-button'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,9 +43,7 @@ export default async function ComicTags({ searchParams }: { searchParams: Promis
             <input name="tag_name" required className="mt-1 w-full rounded-md border border-gray-300 p-2 text-sm" />
           </div>
         </div>
-        <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
-          追加
-        </button>
+        <SubmitButton pendingText="追加中...">追加</SubmitButton>
       </form>
     </div>
   )
