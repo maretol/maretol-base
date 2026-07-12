@@ -30,6 +30,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/cache" className="text-gray-600 hover:text-gray-900">
                 キャッシュ
               </Link>
+              <Link href="/sns" className="text-gray-600 hover:text-gray-900">
+                SNS投稿
+              </Link>
             </nav>
           </div>
         </header>
