@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import type { bandeDessineeRow, bandeDessineeTagRow, bandeDessineeSeriesRow } from 'api-types'
 import { createBandeDessineeAction, updateBandeDessineeAction, previewBandeDessineeAction } from './actions'
+import { SubmitButton } from '@/components/submit-button'
 
 type Props = {
   mode: 'new' | 'edit'
@@ -210,16 +211,10 @@ export function ComicForm({ mode, comic, allTags, allSeries, error, saved }: Pro
 
         <div className="space-y-2 border-t border-gray-100 pt-4">
           <div className="flex gap-3">
-            <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
-              保存
-            </button>
-            <button
-              type="submit"
-              formAction={previewFormAction}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
-            >
+            <SubmitButton pendingText="保存中...">保存</SubmitButton>
+            <SubmitButton variant="secondary" formAction={previewFormAction} pendingText="プレビュー保存中...">
               プレビュー保存（D1には保存しない）
-            </button>
+            </SubmitButton>
           </div>
           <label className="flex items-center gap-2 text-xs text-gray-500">
             <input type="checkbox" name="regenerate_draft_key" />
