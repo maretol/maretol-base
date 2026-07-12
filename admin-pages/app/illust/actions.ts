@@ -7,6 +7,7 @@ import { createAtelier, updateAtelier, getAtelier, createTag, type AtelierInput 
 import { purgeAtelierCache } from '@/lib/cache'
 import { saveAtelierDraft } from '@/lib/draft'
 import { generateContentID } from '@/lib/id'
+import type { PreviewActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const VALID_POSITION = ['center', 'top', 'bottom', 'left', 'right']
@@ -70,19 +71,20 @@ export async function updateAtelierAction(formData: FormData): Promise<void> {
   redirect('/illust')
 }
 
-// 編集中の内容をKVに保存し、pages本体のプレビューURLへ誘導する（D1には書き込まない）
-export async function previewAtelierAction(formData: FormData): Promise<void> {
+// 編集中の内容をKVに保存し、pages本体のプレビューURLを返す（D1には書き込まない）
+// ページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
+export async function previewAtelierAction(
+  _prev: PreviewActionState,
+  formData: FormData
+): Promise<PreviewActionState> {
   const { input, error } = parseAtelierForm(formData)
-  const backTo = formData.get('mode') === 'new' ? '/illust/new' : `/illust/${input.id}/edit`
   if (error) {
-    redirect(`${backTo}?error=${encodeURIComponent(error)}`)
+    return { error }
   }
 
   const draftKey = await saveAtelierDraft(input)
   const { env } = await getCloudflareContext({ async: true })
-  const previewURL = `${env.PAGES_HOST}/illust/detail/${input.id}?draftKey=${draftKey}`
-
-  redirect(`${backTo}?preview=${encodeURIComponent(previewURL)}`)
+  return { previewURL: `${env.PAGES_HOST}/illust/detail/${input.id}?draftKey=${draftKey}` }
 }
 
 export async function createTagAction(formData: FormData): Promise<void> {

@@ -13,7 +13,7 @@ async function getDB(): Promise<D1Database> {
 export async function listAteliers(): Promise<atelierRow[]> {
   const db = await getDB()
   const result = await db
-    .prepare(`SELECT * FROM ateliers ORDER BY published_at DESC, updated_at DESC`)
+    .prepare(`SELECT * FROM ateliers ORDER BY created_at DESC`)
     .all<atelierRow>()
   return result.results
 }

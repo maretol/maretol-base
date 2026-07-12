@@ -1,3 +1,6 @@
+'use client'
+
+import { useActionState } from 'react'
 import type { bandeDessineeRow, bandeDessineeTagRow, bandeDessineeSeriesRow } from 'api-types'
 import { createBandeDessineeAction, updateBandeDessineeAction, previewBandeDessineeAction } from './actions'
 
@@ -7,7 +10,6 @@ type Props = {
   allTags: bandeDessineeTagRow[]
   allSeries: bandeDessineeSeriesRow[]
   error?: string
-  previewURL?: string
 }
 
 // ISO 8601 UTC の日時を date input 用の JST 日付（YYYY-MM-DD）に変換する
@@ -17,19 +19,24 @@ function toJSTDateValue(iso: string | null | undefined): string {
   return jst.toISOString().slice(0, 10)
 }
 
-export function ComicForm({ mode, comic, allTags, allSeries, error, previewURL }: Props) {
+export function ComicForm({ mode, comic, allTags, allSeries, error }: Props) {
   const action = mode === 'new' ? createBandeDessineeAction : updateBandeDessineeAction
+  // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
+  const [preview, previewFormAction] = useActionState(previewBandeDessineeAction, {})
   const inputClass = 'mt-1 w-full rounded-md border border-gray-300 p-2 text-sm'
   const monoClass = `${inputClass} font-mono`
 
   return (
     <div className="space-y-4">
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {previewURL && (
+      {preview.error && (
+        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
+      )}
+      {preview.previewURL && (
         <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
           プレビューを保存しました:{' '}
-          <a href={previewURL} target="_blank" rel="noopener noreferrer" className="underline">
-            {previewURL}
+          <a href={preview.previewURL} target="_blank" rel="noopener noreferrer" className="underline">
+            {preview.previewURL}
           </a>
         </p>
       )}
@@ -194,7 +201,7 @@ export function ComicForm({ mode, comic, allTags, allSeries, error, previewURL }
           </button>
           <button
             type="submit"
-            formAction={previewBandeDessineeAction}
+            formAction={previewFormAction}
             className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
           >
             プレビュー保存（D1には保存しない）

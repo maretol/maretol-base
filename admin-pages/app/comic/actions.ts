@@ -14,6 +14,7 @@ import {
 import { purgeBandeDessineeCache } from '@/lib/cache'
 import { saveBandeDessineeDraft } from '@/lib/draft_comic'
 import { generateContentID } from '@/lib/id'
+import type { PreviewActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
@@ -108,18 +109,19 @@ export async function updateBandeDessineeAction(formData: FormData): Promise<voi
   redirect('/comic')
 }
 
-export async function previewBandeDessineeAction(formData: FormData): Promise<void> {
+// プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
+export async function previewBandeDessineeAction(
+  _prev: PreviewActionState,
+  formData: FormData
+): Promise<PreviewActionState> {
   const { input, error } = parseComicForm(formData)
-  const backTo = formData.get('mode') === 'new' ? '/comic/new' : `/comic/${input.id}/edit`
   if (error) {
-    redirect(`${backTo}?error=${encodeURIComponent(error)}`)
+    return { error }
   }
 
   const draftKey = await saveBandeDessineeDraft(input)
   const { env } = await getCloudflareContext({ async: true })
-  const previewURL = `${env.PAGES_HOST}/comics/${input.id}?draftKey=${draftKey}`
-
-  redirect(`${backTo}?preview=${encodeURIComponent(previewURL)}`)
+  return { previewURL: `${env.PAGES_HOST}/comics/${input.id}?draftKey=${draftKey}` }
 }
 
 export async function createComicTagAction(formData: FormData): Promise<void> {

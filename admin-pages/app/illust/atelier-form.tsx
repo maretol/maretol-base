@@ -1,3 +1,6 @@
+'use client'
+
+import { useActionState } from 'react'
 import type { atelierRow, atelierTagRow } from 'api-types'
 import { createAtelierAction, updateAtelierAction, previewAtelierAction } from './actions'
 
@@ -7,22 +10,26 @@ type Props = {
   selectedTagIDs?: string[]
   allTags: atelierTagRow[]
   error?: string
-  previewURL?: string
 }
 
 const positions = ['center', 'top', 'bottom', 'left', 'right']
 
-export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error, previewURL }: Props) {
+export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error }: Props) {
   const action = mode === 'new' ? createAtelierAction : updateAtelierAction
+  // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
+  const [preview, previewFormAction] = useActionState(previewAtelierAction, {})
 
   return (
     <div className="space-y-4">
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {previewURL && (
+      {preview.error && (
+        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
+      )}
+      {preview.previewURL && (
         <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
           プレビューを保存しました:{' '}
-          <a href={previewURL} target="_blank" rel="noopener noreferrer" className="underline">
-            {previewURL}
+          <a href={preview.previewURL} target="_blank" rel="noopener noreferrer" className="underline">
+            {preview.previewURL}
           </a>
         </p>
       )}
@@ -133,7 +140,7 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error
           </button>
           <button
             type="submit"
-            formAction={previewAtelierAction}
+            formAction={previewFormAction}
             className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
           >
             プレビュー保存（D1には保存しない）

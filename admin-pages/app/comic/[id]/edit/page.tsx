@@ -9,10 +9,10 @@ export default async function EditComic({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; preview?: string }>
+  searchParams: Promise<{ error?: string }>
 }) {
   const { id } = await params
-  const { error, preview } = await searchParams
+  const { error } = await searchParams
 
   const comic = await getBandeDessinee(id)
   if (!comic) {
@@ -29,7 +29,6 @@ export default async function EditComic({
         allTags={allTags}
         allSeries={allSeries}
         error={error}
-        previewURL={preview}
       />
     </div>
   )

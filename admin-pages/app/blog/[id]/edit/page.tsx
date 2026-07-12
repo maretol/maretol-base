@@ -9,10 +9,10 @@ export default async function EditBlogContent({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; preview?: string }>
+  searchParams: Promise<{ error?: string }>
 }) {
   const { id } = await params
-  const { error, preview } = await searchParams
+  const { error } = await searchParams
 
   const article = await getBlogContent(id)
   if (!article) {
@@ -29,7 +29,6 @@ export default async function EditBlogContent({
         selectedCategoryIDs={selectedCategoryIDs}
         allCategories={allCategories}
         error={error}
-        previewURL={preview}
       />
     </div>
   )
