@@ -10,11 +10,19 @@ async function getDB(): Promise<D1Database> {
   return env.DB
 }
 
-export async function listAteliers(): Promise<atelierRow[]> {
+// 一覧表示用: タグ名を連結して付加した行
+export type AtelierListRow = atelierRow & { tag_names: string | null }
+
+export async function listAteliers(): Promise<AtelierListRow[]> {
   const db = await getDB()
   const result = await db
-    .prepare(`SELECT * FROM ateliers ORDER BY created_at DESC`)
-    .all<atelierRow>()
+    .prepare(
+      `SELECT a.*,
+        (SELECT group_concat(t.tag, ', ') FROM atelier_tag_relations r
+          JOIN atelier_tags t ON t.id = r.tag_id WHERE r.atelier_id = a.id) AS tag_names
+       FROM ateliers a ORDER BY a.created_at DESC`
+    )
+    .all<AtelierListRow>()
   return result.results
 }
 

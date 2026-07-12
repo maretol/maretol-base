@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { listAteliers } from '@/lib/db'
+import { formatJST } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,22 +30,31 @@ export default async function IllustList() {
       <table className="w-full border-collapse bg-white text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-left text-gray-500">
+            <th className="p-2">画像</th>
             <th className="p-2">ID</th>
             <th className="p-2">タイトル</th>
+            <th className="p-2">タグ</th>
             <th className="p-2">状態</th>
             <th className="p-2">形式</th>
             <th className="p-2">公開日時</th>
+            <th className="p-2">更新日時</th>
             <th className="p-2"></th>
           </tr>
         </thead>
         <tbody>
           {ateliers.map((a) => (
             <tr key={a.id} className="border-b border-gray-100">
+              <td className="p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={a.src} alt="" className="h-10 w-10 rounded object-cover" style={{ objectPosition: a.object_position }} />
+              </td>
               <td className="p-2 font-mono text-xs">{a.id}</td>
               <td className="p-2">{a.title}</td>
+              <td className="p-2 text-xs">{a.tag_names ?? '-'}</td>
               <td className="p-2">{statusLabel[a.status] ?? a.status}</td>
               <td className="p-2 font-mono text-xs">{a.description_format}</td>
-              <td className="p-2 text-xs">{a.published_at ?? '-'}</td>
+              <td className="p-2 text-xs">{formatJST(a.published_at)}</td>
+              <td className="p-2 text-xs">{formatJST(a.updated_at)}</td>
               <td className="p-2">
                 <Link href={`/illust/${a.id}/edit`} className="text-blue-600 underline">
                   編集
@@ -54,7 +64,7 @@ export default async function IllustList() {
           ))}
           {ateliers.length === 0 && (
             <tr>
-              <td colSpan={6} className="p-4 text-center text-gray-400">
+              <td colSpan={9} className="p-4 text-center text-gray-400">
                 データがありません
               </td>
             </tr>
