@@ -4,6 +4,7 @@
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { atelierRow, atelierTagRow } from 'api-types'
+import type { ContentFormat } from './content-format'
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true })
@@ -53,6 +54,7 @@ export type AtelierInput = {
   src: string
   object_position: string
   description: string
+  description_format: ContentFormat
   status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
   tagIDs: string[]
 }
@@ -67,9 +69,19 @@ export async function createAtelier(input: AtelierInput): Promise<void> {
     .prepare(
       `INSERT INTO ateliers
         (id, title, src, object_position, description, description_format, status, created_at, updated_at, published_at, revised_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, 'markdown', ?6, ?7, ?7, ?8, ?8)`
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8, ?9, ?9)`
     )
-    .bind(input.id, input.title, input.src, input.object_position, input.description, input.status, now, publishedAt)
+    .bind(
+      input.id,
+      input.title,
+      input.src,
+      input.object_position,
+      input.description,
+      input.description_format,
+      input.status,
+      now,
+      publishedAt
+    )
     .run()
 
   await replaceTagRelations(db, input.id, input.tagIDs)
@@ -90,8 +102,8 @@ export async function updateAtelier(input: AtelierInput): Promise<void> {
   await db
     .prepare(
       `UPDATE ateliers SET
-        title = ?2, src = ?3, object_position = ?4, description = ?5, status = ?6,
-        updated_at = ?7, published_at = ?8, revised_at = ?9
+        title = ?2, src = ?3, object_position = ?4, description = ?5, description_format = ?6, status = ?7,
+        updated_at = ?8, published_at = ?9, revised_at = ?10
        WHERE id = ?1`
     )
     .bind(
@@ -100,6 +112,7 @@ export async function updateAtelier(input: AtelierInput): Promise<void> {
       input.src,
       input.object_position,
       input.description,
+      input.description_format,
       input.status,
       now,
       publishedAt,

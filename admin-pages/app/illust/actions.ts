@@ -7,6 +7,7 @@ import { createAtelier, updateAtelier, getAtelier, createTag, type AtelierInput 
 import { purgeAtelierCache } from '@/lib/cache'
 import { saveAtelierDraft } from '@/lib/draft'
 import { generateContentID } from '@/lib/id'
+import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
@@ -27,6 +28,7 @@ function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: st
     src,
     object_position: VALID_POSITION.includes(objectPosition) ? objectPosition : 'center',
     description,
+    description_format: parseContentFormat(formData.get('description_format') as string | null),
     status: VALID_STATUS.includes(status as (typeof VALID_STATUS)[number])
       ? (status as AtelierInput['status'])
       : 'DRAFT',

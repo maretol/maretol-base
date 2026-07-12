@@ -14,6 +14,7 @@ import {
 import { purgeBandeDessineeCache } from '@/lib/cache'
 import { saveBandeDessineeDraft } from '@/lib/draft_comic'
 import { generateContentID } from '@/lib/id'
+import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
@@ -60,6 +61,7 @@ function parseComicForm(formData: FormData): { input: BandeDessineeInput; error?
     last_page: parseInt(text(formData, 'last_page'), 10),
     first_left_right: [firstLeftRight],
     description: (formData.get('description') as string | null) ?? '',
+    description_format: parseContentFormat(formData.get('description_format') as string | null),
     status: VALID_STATUS.includes(status as (typeof VALID_STATUS)[number])
       ? (status as BandeDessineeInput['status'])
       : 'DRAFT',

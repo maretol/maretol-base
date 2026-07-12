@@ -32,8 +32,8 @@ export async function saveAtelierDraft(input: AtelierInput, regenerateKey = fals
     src: input.src,
     object_position: input.object_position,
     description: input.description,
-    // 既存レコードの形式を維持する。新規（D1未保存）は markdown
-    description_format: current?.description_format ?? 'markdown',
+    // フォームで選択された形式でプレビューする（形式変更もプレビューで確認できるようにする）
+    description_format: input.description_format,
     status: input.status,
     created_at: current?.created_at ?? now,
     updated_at: now,

@@ -41,7 +41,8 @@ export async function saveBandeDessineeDraft(input: BandeDessineeInput, regenera
     last_page: input.last_page,
     first_left_right: JSON.stringify(input.first_left_right),
     description: input.description,
-    description_format: current?.description_format ?? 'markdown',
+    // フォームで選択された形式でプレビューする（形式変更もプレビューで確認できるようにする）
+    description_format: input.description_format,
     status: input.status,
     created_at: current?.created_at ?? now,
     updated_at: now,

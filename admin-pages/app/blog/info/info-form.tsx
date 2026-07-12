@@ -47,9 +47,20 @@ export function InfoForm({ mode, info, error, saved }: Props) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium">
-            本文（{info?.main_text_format === 'html' ? 'HTML（既存ページのため）' : 'Markdown'}）
-          </label>
+          <div className="flex items-center gap-3">
+            <label className="block text-sm font-medium">本文</label>
+            <select
+              name="main_text_format"
+              defaultValue={info?.main_text_format ?? 'markdown'}
+              className="rounded-md border border-gray-300 p-1 text-xs"
+            >
+              <option value="markdown">Markdown</option>
+              <option value="html">HTML（旧CMS形式）</option>
+            </select>
+          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            形式を変更しても本文は自動変換されません。切り替える場合は書き直しとセットで保存してください
+          </p>
           <textarea
             name="main_text"
             defaultValue={info?.main_text ?? ''}

@@ -20,6 +20,7 @@ import { purgeBlogContentCache, purgeBlogMetaCache } from '@/lib/cache'
 import { saveBlogContentDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
+import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
@@ -47,6 +48,7 @@ function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: s
     id,
     title: text(formData, 'title'),
     content: (formData.get('content') as string | null) ?? '',
+    content_format: parseContentFormat(formData.get('content_format') as string | null),
     ogp_image: textOrNull(formData, 'ogp_image'),
     sns_text: textOrNull(formData, 'sns_text'),
     is_secret: formData.get('is_secret') === 'on',
@@ -184,6 +186,7 @@ function parseInfoForm(formData: FormData): { input: BlogInfoInput; error?: stri
     page_pathname: text(formData, 'page_pathname'),
     title: textOrNull(formData, 'title'),
     main_text: (formData.get('main_text') as string | null) ?? '',
+    main_text_format: parseContentFormat(formData.get('main_text_format') as string | null),
     status: parseStatus(formData),
   }
   if (!ID_PATTERN.test(input.id)) {
