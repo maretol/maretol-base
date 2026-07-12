@@ -13,7 +13,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="ja">
       <body className="min-h-screen bg-gray-50 text-gray-900">
         <header className="border-b border-gray-200 bg-white">
-          <div className="mx-auto flex max-w-5xl items-center gap-6 px-4 py-3">
+          <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-4 py-3">
             <Link href="/" className="text-lg font-bold">
               Maretol Base CMS Admin
             </Link>
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-5xl px-4 py-6">
+        <main className="mx-auto max-w-[1600px] px-4 py-6">
           <Breadcrumbs />
           {children}
         </main>
