@@ -10,17 +10,19 @@ type Props = {
   selectedTagIDs?: string[]
   allTags: atelierTagRow[]
   error?: string
+  saved?: boolean
 }
 
 const positions = ['center', 'top', 'bottom', 'left', 'right']
 
-export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error }: Props) {
+export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error, saved }: Props) {
   const action = mode === 'new' ? createAtelierAction : updateAtelierAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewAtelierAction, {})
 
   return (
     <div className="space-y-4">
+      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {preview.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>

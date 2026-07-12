@@ -10,9 +10,10 @@ type Props = {
   selectedCategoryIDs?: string[]
   allCategories: blogCategoryRow[]
   error?: string
+  saved?: boolean
 }
 
-export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error }: Props) {
+export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error, saved }: Props) {
   const action = mode === 'new' ? createBlogContentAction : updateBlogContentAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewBlogContentAction, {})
@@ -20,6 +21,7 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
 
   return (
     <div className="space-y-4">
+      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {preview.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>

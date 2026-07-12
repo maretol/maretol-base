@@ -55,7 +55,8 @@ export async function createAtelierAction(formData: FormData): Promise<void> {
   await purgeAtelierCache()
 
   revalidatePath('/illust')
-  redirect('/illust')
+  // 保存後は一覧へ戻らず、作成したイラストの編集画面へ遷移する（連続編集のため）
+  redirect(`/illust/${input.id}/edit?saved=1`)
 }
 
 export async function updateAtelierAction(formData: FormData): Promise<void> {
@@ -68,7 +69,8 @@ export async function updateAtelierAction(formData: FormData): Promise<void> {
   await purgeAtelierCache()
 
   revalidatePath('/illust')
-  redirect('/illust')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/illust/${input.id}/edit?saved=1`)
 }
 
 // 編集中の内容をKVに保存し、pages本体のプレビューURLを返す（D1には書き込まない）
