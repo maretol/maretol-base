@@ -82,7 +82,9 @@ export async function previewAtelierAction(
     return { error }
   }
 
-  const draftKey = await saveAtelierDraft(input)
+  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
+  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
+  const draftKey = await saveAtelierDraft(input, regenerateKey)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/illust/detail/${input.id}?draftKey=${draftKey}` }
 }
