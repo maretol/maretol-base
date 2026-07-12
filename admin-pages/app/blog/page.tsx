@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { listBlogContents } from '@/lib/db_blog'
+import { formatJST } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,10 +38,12 @@ export default async function BlogList() {
           <tr className="border-b border-gray-200 text-left text-gray-500">
             <th className="p-2">ID</th>
             <th className="p-2">タイトル</th>
+            <th className="p-2">カテゴリ</th>
             <th className="p-2">状態</th>
             <th className="p-2">限定</th>
             <th className="p-2">形式</th>
             <th className="p-2">公開日時</th>
+            <th className="p-2">更新日時</th>
             <th className="p-2"></th>
           </tr>
         </thead>
@@ -49,10 +52,12 @@ export default async function BlogList() {
             <tr key={a.id} className="border-b border-gray-100">
               <td className="p-2 font-mono text-xs">{a.id}</td>
               <td className="p-2">{a.title}</td>
+              <td className="p-2 text-xs">{a.category_names ?? '-'}</td>
               <td className="p-2">{statusLabel[a.status] ?? a.status}</td>
               <td className="p-2">{a.is_secret === 1 ? '🔒' : ''}</td>
               <td className="p-2 font-mono text-xs">{a.content_format}</td>
-              <td className="p-2 text-xs">{a.published_at ?? '-'}</td>
+              <td className="p-2 text-xs">{formatJST(a.published_at)}</td>
+              <td className="p-2 text-xs">{formatJST(a.updated_at)}</td>
               <td className="p-2">
                 <Link href={`/blog/${a.id}/edit`} className="text-blue-600 underline">
                   編集
@@ -62,7 +67,7 @@ export default async function BlogList() {
           ))}
           {articles.length === 0 && (
             <tr>
-              <td colSpan={7} className="p-4 text-center text-gray-400">
+              <td colSpan={9} className="p-4 text-center text-gray-400">
                 データがありません
               </td>
             </tr>

@@ -10,9 +10,10 @@ type Props = {
   selectedCategoryIDs?: string[]
   allCategories: blogCategoryRow[]
   error?: string
+  saved?: boolean
 }
 
-export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error }: Props) {
+export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error, saved }: Props) {
   const action = mode === 'new' ? createBlogContentAction : updateBlogContentAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewBlogContentAction, {})
@@ -20,6 +21,7 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
 
   return (
     <div className="space-y-4">
+      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {preview.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
@@ -130,17 +132,23 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
           </p>
         </div>
 
-        <div className="flex gap-3 border-t border-gray-100 pt-4">
-          <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
-            保存
-          </button>
-          <button
-            type="submit"
-            formAction={previewFormAction}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
-          >
-            プレビュー保存（D1には保存しない）
-          </button>
+        <div className="space-y-2 border-t border-gray-100 pt-4">
+          <div className="flex gap-3">
+            <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
+              保存
+            </button>
+            <button
+              type="submit"
+              formAction={previewFormAction}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
+            >
+              プレビュー保存（D1には保存しない）
+            </button>
+          </div>
+          <label className="flex items-center gap-2 text-xs text-gray-500">
+            <input type="checkbox" name="regenerate_draft_key" />
+            プレビューURL（draftKey）を再生成する（未チェックなら既存のプレビューURLのまま内容だけ更新されます）
+          </label>
         </div>
       </form>
     </div>

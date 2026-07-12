@@ -93,7 +93,8 @@ export async function createBandeDessineeAction(formData: FormData): Promise<voi
   await purgeBandeDessineeCache()
 
   revalidatePath('/comic')
-  redirect('/comic')
+  // 保存後は一覧へ戻らず、作成したマンガの編集画面へ遷移する（連続編集のため）
+  redirect(`/comic/${input.id}/edit?saved=1`)
 }
 
 export async function updateBandeDessineeAction(formData: FormData): Promise<void> {
@@ -106,7 +107,8 @@ export async function updateBandeDessineeAction(formData: FormData): Promise<voi
   await purgeBandeDessineeCache()
 
   revalidatePath('/comic')
-  redirect('/comic')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/comic/${input.id}/edit?saved=1`)
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
@@ -119,7 +121,9 @@ export async function previewBandeDessineeAction(
     return { error }
   }
 
-  const draftKey = await saveBandeDessineeDraft(input)
+  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
+  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
+  const draftKey = await saveBandeDessineeDraft(input, regenerateKey)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/comics/${input.id}?draftKey=${draftKey}` }
 }

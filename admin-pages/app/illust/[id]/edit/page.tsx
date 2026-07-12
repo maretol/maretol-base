@@ -11,10 +11,10 @@ export default async function EditIllust({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; saved?: string }>
 }) {
   const { id } = await params
-  const { error } = await searchParams
+  const { error, saved } = await searchParams
 
   const atelier = await getAtelier(id)
   if (!atelier) {
@@ -37,6 +37,7 @@ export default async function EditIllust({
         selectedTagIDs={selectedTagIDs}
         allTags={allTags}
         error={error}
+        saved={saved === '1'}
       />
     </div>
   )

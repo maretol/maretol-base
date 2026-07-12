@@ -81,7 +81,8 @@ export async function createBlogContentAction(formData: FormData): Promise<void>
   await notifyBlogPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/blog')
-  redirect('/blog')
+  // 保存後は一覧へ戻らず、作成した記事の編集画面へ遷移する（連続編集のため）
+  redirect(`/blog/${input.id}/edit?saved=1`)
 }
 
 export async function updateBlogContentAction(formData: FormData): Promise<void> {
@@ -99,7 +100,8 @@ export async function updateBlogContentAction(formData: FormData): Promise<void>
   await notifyBlogPublishToSNS({ input, type: 'edit', oldStatus })
 
   revalidatePath('/blog')
-  redirect('/blog')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/blog/${input.id}/edit?saved=1`)
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
@@ -112,7 +114,9 @@ export async function previewBlogContentAction(
     return { error }
   }
 
-  const draftKey = await saveBlogContentDraft(input)
+  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
+  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
+  const draftKey = await saveBlogContentDraft(input, regenerateKey)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/blog/${input.id}?draftKey=${draftKey}` }
 }
@@ -204,7 +208,8 @@ export async function createBlogInfoAction(formData: FormData): Promise<void> {
   await purgeBlogMetaCache('info')
 
   revalidatePath('/blog/info')
-  redirect('/blog/info')
+  // 保存後は一覧へ戻らず、作成したページの編集画面へ遷移する
+  redirect(`/blog/info/${input.id}/edit?saved=1`)
 }
 
 export async function updateBlogInfoAction(formData: FormData): Promise<void> {
@@ -217,7 +222,8 @@ export async function updateBlogInfoAction(formData: FormData): Promise<void> {
   await purgeBlogMetaCache('info')
 
   revalidatePath('/blog/info')
-  redirect('/blog/info')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/blog/info/${input.id}/edit?saved=1`)
 }
 
 export async function updateBlogStaticAction(formData: FormData): Promise<void> {

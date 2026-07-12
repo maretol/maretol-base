@@ -55,7 +55,8 @@ export async function createAtelierAction(formData: FormData): Promise<void> {
   await purgeAtelierCache()
 
   revalidatePath('/illust')
-  redirect('/illust')
+  // 保存後は一覧へ戻らず、作成したイラストの編集画面へ遷移する（連続編集のため）
+  redirect(`/illust/${input.id}/edit?saved=1`)
 }
 
 export async function updateAtelierAction(formData: FormData): Promise<void> {
@@ -68,7 +69,8 @@ export async function updateAtelierAction(formData: FormData): Promise<void> {
   await purgeAtelierCache()
 
   revalidatePath('/illust')
-  redirect('/illust')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/illust/${input.id}/edit?saved=1`)
 }
 
 // 編集中の内容をKVに保存し、pages本体のプレビューURLを返す（D1には書き込まない）
@@ -82,7 +84,9 @@ export async function previewAtelierAction(
     return { error }
   }
 
-  const draftKey = await saveAtelierDraft(input)
+  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
+  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
+  const draftKey = await saveAtelierDraft(input, regenerateKey)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/illust/detail/${input.id}?draftKey=${draftKey}` }
 }
