@@ -8,7 +8,7 @@
  * - SNS_NOTIFY_ENABLED が 'true' の環境でのみ送信する（staging/ローカルからの誤投稿防止）
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import type { SNSPublishValue } from 'api-types'
+import type { SNSPostTextResult, SNSPublishValue } from 'api-types'
 import type { BlogContentInput } from './db_blog'
 import type { BandeDessineeInput } from './db_comic'
 import type { AtelierInput } from './db'
@@ -46,6 +46,24 @@ async function publishToSNS(serviceType: 'blog' | 'illust' | 'comic', value: SNS
   } catch (e) {
     // SNS通知の失敗でコンテンツ保存を失敗させない
     console.error('SNS notify error:', e)
+  }
+}
+
+// 管理ページからの自由文面投稿（sns-article-publisher の postText RPC 呼び出し）
+// 自動通知（publishToSNS）と異なり結果を画面に表示するため、エラーを握りつぶさず成否を返す
+export async function postTextToSNS(text: string): Promise<{ results?: SNSPostTextResult[]; error?: string }> {
+  const { env } = await getCloudflareContext({ async: true })
+
+  if (env.SNS_NOTIFY_ENABLED !== 'true') {
+    return { error: 'この環境ではSNS投稿が無効化されています（SNS_NOTIFY_ENABLED が true ではありません）' }
+  }
+
+  try {
+    const results = await env.SNS_PUBLISHER.postText(text)
+    return { results }
+  } catch (e) {
+    console.error('SNS post error:', e)
+    return { error: e instanceof Error ? e.message : 'SNSへの投稿に失敗しました' }
   }
 }
 
