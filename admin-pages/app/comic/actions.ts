@@ -13,6 +13,7 @@ import {
 } from '@/lib/db_comic'
 import { purgeBandeDessineeCache } from '@/lib/cache'
 import { saveBandeDessineeDraft } from '@/lib/draft_comic'
+import { notifyComicPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
@@ -93,6 +94,7 @@ export async function createBandeDessineeAction(formData: FormData): Promise<voi
 
   await createBandeDessinee(input)
   await purgeBandeDessineeCache()
+  await notifyComicPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/comic')
   // 保存後は一覧へ戻らず、作成したマンガの編集画面へ遷移する（連続編集のため）
@@ -105,8 +107,13 @@ export async function updateBandeDessineeAction(formData: FormData): Promise<voi
     redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(error)}`)
   }
 
+  // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
+  const current = await getBandeDessinee(input.id)
+  const oldStatus = current?.status
+
   await updateBandeDessinee(input)
   await purgeBandeDessineeCache()
+  await notifyComicPublishToSNS({ input, type: 'edit', oldStatus })
 
   revalidatePath('/comic')
   // 保存後は一覧へ戻らず、編集画面に留まる

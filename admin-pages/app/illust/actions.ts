@@ -6,6 +6,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { createAtelier, updateAtelier, getAtelier, createTag, type AtelierInput } from '@/lib/db'
 import { purgeAtelierCache } from '@/lib/cache'
 import { saveAtelierDraft } from '@/lib/draft'
+import { notifyAtelierPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
@@ -55,6 +56,7 @@ export async function createAtelierAction(formData: FormData): Promise<void> {
 
   await createAtelier(input)
   await purgeAtelierCache()
+  await notifyAtelierPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/illust')
   // 保存後は一覧へ戻らず、作成したイラストの編集画面へ遷移する（連続編集のため）
@@ -67,8 +69,13 @@ export async function updateAtelierAction(formData: FormData): Promise<void> {
     redirect(`/illust/${input.id}/edit?error=${encodeURIComponent(error)}`)
   }
 
+  // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
+  const current = await getAtelier(input.id)
+  const oldStatus = current?.status
+
   await updateAtelier(input)
   await purgeAtelierCache()
+  await notifyAtelierPublishToSNS({ input, type: 'edit', oldStatus })
 
   revalidatePath('/illust')
   // 保存後は一覧へ戻らず、編集画面に留まる
