@@ -9,10 +9,19 @@ import type { BlogContentInput } from './db_blog'
 
 const DRAFT_TTL_SECONDS = 3 * 24 * 60 * 60
 
-export async function saveBlogContentDraft(input: BlogContentInput): Promise<string> {
+export async function saveBlogContentDraft(input: BlogContentInput, regenerateKey = false): Promise<string> {
   const { env } = await getCloudflareContext({ async: true })
   const now = new Date().toISOString()
   const current = await getBlogContent(input.id)
+  const kvKey = `draft_blog_${input.id}`
+
+  // 既存ドラフトのdraftKeyを維持する（共有済みのプレビューURLを変えないため）。再生成指定時のみ新しいキーにする
+  let draftKey: string | null = null
+  if (!regenerateKey) {
+    const existing = await env.CMS_DRAFT.get<blogContentDraftRecord>(kvKey, 'json')
+    draftKey = existing?.draftKey ?? null
+  }
+  draftKey ??= generateDraftKey()
 
   const row: blogContentRow = {
     id: input.id,
@@ -36,10 +45,9 @@ export async function saveBlogContentDraft(input: BlogContentInput): Promise<str
     .map((id) => allCategories.find((c) => c.id === id))
     .filter((c) => c !== undefined)
 
-  const draftKey = generateDraftKey()
   const record: blogContentDraftRecord = { draftKey, row, categories }
 
-  await env.CMS_DRAFT.put(`draft_blog_${input.id}`, JSON.stringify(record), {
+  await env.CMS_DRAFT.put(kvKey, JSON.stringify(record), {
     expirationTtl: DRAFT_TTL_SECONDS,
   })
 

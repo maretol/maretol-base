@@ -5,14 +5,16 @@ type Props = {
   mode: 'new' | 'edit'
   info?: blogInfoRow
   error?: string
+  saved?: boolean
 }
 
-export function InfoForm({ mode, info, error }: Props) {
+export function InfoForm({ mode, info, error, saved }: Props) {
   const action = mode === 'new' ? createBlogInfoAction : updateBlogInfoAction
   const inputClass = 'mt-1 w-full rounded-md border border-gray-300 p-2 text-sm'
 
   return (
     <div className="space-y-4">
+      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
       <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">

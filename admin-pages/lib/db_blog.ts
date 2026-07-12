@@ -13,11 +13,19 @@ async function getDB(): Promise<D1Database> {
 
 // --- 記事（contents） ---
 
-export async function listBlogContents(): Promise<blogContentRow[]> {
+// 一覧表示用: カテゴリ名を連結して付加した行
+export type BlogContentListRow = blogContentRow & { category_names: string | null }
+
+export async function listBlogContents(): Promise<BlogContentListRow[]> {
   const db = await getDB()
   const result = await db
-    .prepare(`SELECT * FROM blog_contents ORDER BY created_at DESC`)
-    .all<blogContentRow>()
+    .prepare(
+      `SELECT c.*,
+        (SELECT group_concat(bc.name, ', ') FROM blog_content_categories r
+          JOIN blog_categories bc ON bc.id = r.category_id WHERE r.content_id = c.id) AS category_names
+       FROM blog_contents c ORDER BY c.created_at DESC`
+    )
+    .all<BlogContentListRow>()
   return result.results
 }
 

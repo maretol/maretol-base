@@ -15,7 +15,7 @@ import { purgeBandeDessineeCache } from '@/lib/cache'
 import { saveBandeDessineeDraft } from '@/lib/draft_comic'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
-import type { PreviewActionState } from '@/lib/form-state'
+import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
@@ -95,7 +95,8 @@ export async function createBandeDessineeAction(formData: FormData): Promise<voi
   await purgeBandeDessineeCache()
 
   revalidatePath('/comic')
-  redirect('/comic')
+  // 保存後は一覧へ戻らず、作成したマンガの編集画面へ遷移する（連続編集のため）
+  redirect(`/comic/${input.id}/edit?saved=1`)
 }
 
 export async function updateBandeDessineeAction(formData: FormData): Promise<void> {
@@ -108,7 +109,8 @@ export async function updateBandeDessineeAction(formData: FormData): Promise<voi
   await purgeBandeDessineeCache()
 
   revalidatePath('/comic')
-  redirect('/comic')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/comic/${input.id}/edit?saved=1`)
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
@@ -121,9 +123,24 @@ export async function previewBandeDessineeAction(
     return { error }
   }
 
-  const draftKey = await saveBandeDessineeDraft(input)
+  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
+  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
+  const draftKey = await saveBandeDessineeDraft(input, regenerateKey)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/comics/${input.id}?draftKey=${draftKey}` }
+}
+
+// 編集画面からの手動キャッシュ削除。マンガのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
+export async function purgeBandeDessineeCacheAction(
+  _prev: PurgeActionState,
+  _formData: FormData
+): Promise<PurgeActionState> {
+  try {
+    await purgeBandeDessineeCache()
+    return { done: 'マンガのキャッシュを削除しました（一覧・単体すべて）' }
+  } catch {
+    return { error: 'キャッシュ削除に失敗しました' }
+  }
 }
 
 export async function createComicTagAction(formData: FormData): Promise<void> {

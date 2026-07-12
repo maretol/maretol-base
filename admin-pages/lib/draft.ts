@@ -12,10 +12,19 @@ import type { AtelierInput } from './db'
 // プレビューURLの有効期間（KVのTTL）。失効後は再度プレビュー保存すればよい
 const DRAFT_TTL_SECONDS = 3 * 24 * 60 * 60
 
-export async function saveAtelierDraft(input: AtelierInput): Promise<string> {
+export async function saveAtelierDraft(input: AtelierInput, regenerateKey = false): Promise<string> {
   const { env } = await getCloudflareContext({ async: true })
   const now = new Date().toISOString()
   const current = await getAtelier(input.id)
+  const kvKey = `draft_atelier_${input.id}`
+
+  // 既存ドラフトのdraftKeyを維持する（共有済みのプレビューURLを変えないため）。再生成指定時のみ新しいキーにする
+  let draftKey: string | null = null
+  if (!regenerateKey) {
+    const existing = await env.CMS_DRAFT.get<atelierDraftRecord>(kvKey, 'json')
+    draftKey = existing?.draftKey ?? null
+  }
+  draftKey ??= generateDraftKey()
 
   const row: atelierRow = {
     id: input.id,
@@ -47,10 +56,9 @@ export async function saveAtelierDraft(input: AtelierInput): Promise<string> {
       revisedAt: t.revised_at ?? t.updated_at,
     }))
 
-  const draftKey = generateDraftKey()
   const record: atelierDraftRecord = { draftKey, row, tags }
 
-  await env.CMS_DRAFT.put(`draft_atelier_${input.id}`, JSON.stringify(record), {
+  await env.CMS_DRAFT.put(kvKey, JSON.stringify(record), {
     expirationTtl: DRAFT_TTL_SECONDS,
   })
 
