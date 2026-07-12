@@ -1,5 +1,5 @@
 import { listBlogCategories } from '@/lib/db_blog'
-import { createBlogCategoryAction } from '../actions'
+import { createBlogCategoryAction, updateBlogCategoryOrderAction } from '../actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,24 +13,36 @@ export default async function BlogCategories({ searchParams }: { searchParams: P
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
-      <table className="w-full border-collapse bg-white text-sm">
-        <thead>
-          <tr className="border-b border-gray-200 text-left text-gray-500">
-            <th className="p-2">表示順</th>
-            <th className="p-2">ID</th>
-            <th className="p-2">カテゴリ名</th>
-          </tr>
-        </thead>
-        <tbody>
-          {categories.map((c) => (
-            <tr key={c.id} className="border-b border-gray-100">
-              <td className="p-2 text-xs">{c.sort_order}</td>
-              <td className="p-2 font-mono text-xs">{c.id}</td>
-              <td className="p-2">{c.name}</td>
+      <form action={updateBlogCategoryOrderAction} className="space-y-3">
+        <table className="w-full border-collapse bg-white text-sm">
+          <thead>
+            <tr className="border-b border-gray-200 text-left text-gray-500">
+              <th className="p-2">表示順</th>
+              <th className="p-2">ID</th>
+              <th className="p-2">カテゴリ名</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {categories.map((c) => (
+              <tr key={c.id} className="border-b border-gray-100">
+                <td className="p-2">
+                  <input
+                    type="number"
+                    name={`order_${c.id}`}
+                    defaultValue={c.sort_order}
+                    className="w-20 rounded-md border border-gray-300 p-1 text-sm"
+                  />
+                </td>
+                <td className="p-2 font-mono text-xs">{c.id}</td>
+                <td className="p-2">{c.name}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <button type="submit" className="rounded-md bg-gray-900 px-4 py-2 text-sm text-white hover:bg-gray-700">
+          表示順を保存（小さい順に表示されます）
+        </button>
+      </form>
 
       <form action={createBlogCategoryAction} className="space-y-3 rounded-lg border border-gray-200 bg-white p-4">
         <h2 className="font-bold">カテゴリ追加（末尾に追加されます）</h2>

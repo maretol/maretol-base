@@ -22,6 +22,7 @@ export type POptionType =
   | 'artifact'
   | 'comic'
   | 'empty'
+  | 'br'
   | 'table_of_contents'
   | 'nofetch_url'
   | 'gmaps'

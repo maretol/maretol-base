@@ -15,7 +15,7 @@ async function getDB(): Promise<D1Database> {
 export async function listBlogContents(): Promise<blogContentRow[]> {
   const db = await getDB()
   const result = await db
-    .prepare(`SELECT * FROM blog_contents ORDER BY published_at DESC, updated_at DESC`)
+    .prepare(`SELECT * FROM blog_contents ORDER BY created_at DESC`)
     .all<blogContentRow>()
   return result.results
 }
@@ -143,6 +143,22 @@ export async function createBlogCategory(input: { id: string; name: string }): P
     )
     .bind(input.id, input.name, (maxRow?.max_order ?? -1) + 1, now)
     .run()
+}
+
+// カテゴリの表示順を一括更新する
+export async function updateBlogCategoryOrders(orders: { id: string; sort_order: number }[]): Promise<void> {
+  if (orders.length === 0) {
+    return
+  }
+  const db = await getDB()
+  const now = new Date().toISOString()
+  await db.batch(
+    orders.map((o) =>
+      db
+        .prepare(`UPDATE blog_categories SET sort_order = ?2, updated_at = ?3 WHERE id = ?1`)
+        .bind(o.id, o.sort_order, now)
+    )
+  )
 }
 
 // --- 固定ページ（info） ---
