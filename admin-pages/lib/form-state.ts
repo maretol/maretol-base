@@ -11,3 +11,10 @@ export type PurgeActionState = {
   done?: string
   error?: string
 }
+
+// ブログ編集画面からのカテゴリ追加（インライン）の結果
+// 追加済みカテゴリを累積して返し、フォーム側でチェックボックスに反映する（ページ遷移させない）
+export type AddCategoryState = {
+  categories: { id: string; name: string }[]
+  error?: string
+}
