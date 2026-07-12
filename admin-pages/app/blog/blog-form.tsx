@@ -1,3 +1,6 @@
+'use client'
+
+import { useActionState } from 'react'
 import type { blogContentRow, blogCategoryRow } from 'api-types'
 import { createBlogContentAction, updateBlogContentAction, previewBlogContentAction } from './actions'
 
@@ -7,21 +10,25 @@ type Props = {
   selectedCategoryIDs?: string[]
   allCategories: blogCategoryRow[]
   error?: string
-  previewURL?: string
 }
 
-export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error, previewURL }: Props) {
+export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error }: Props) {
   const action = mode === 'new' ? createBlogContentAction : updateBlogContentAction
+  // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
+  const [preview, previewFormAction] = useActionState(previewBlogContentAction, {})
   const inputClass = 'mt-1 w-full rounded-md border border-gray-300 p-2 text-sm'
 
   return (
     <div className="space-y-4">
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {previewURL && (
+      {preview.error && (
+        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
+      )}
+      {preview.previewURL && (
         <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
           プレビューを保存しました:{' '}
-          <a href={previewURL} target="_blank" rel="noopener noreferrer" className="underline">
-            {previewURL}
+          <a href={preview.previewURL} target="_blank" rel="noopener noreferrer" className="underline">
+            {preview.previewURL}
           </a>
         </p>
       )}
@@ -129,7 +136,7 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
           </button>
           <button
             type="submit"
-            formAction={previewBlogContentAction}
+            formAction={previewFormAction}
             className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
           >
             プレビュー保存（D1には保存しない）

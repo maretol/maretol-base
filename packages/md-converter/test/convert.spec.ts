@@ -102,6 +102,7 @@ describe('URL・コマンド行の保持', () => {
 
   it('コマンド行がそのまま保持される', () => {
     expect(convertMarkdownToHtml('/table_of_contents')).toBe('<p>/table_of_contents</p>\n')
+    expect(convertMarkdownToHtml('/br')).toBe('<p>/br</p>\n')
     expect(convertMarkdownToHtml('/nofetch_url@@url::https://example.com@@title::Example')).toBe(
       '<p>/nofetch_url@@url::https://example.com@@title::Example</p>\n'
     )

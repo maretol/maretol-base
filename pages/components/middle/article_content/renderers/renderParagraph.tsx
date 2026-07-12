@@ -43,6 +43,8 @@ export function renderParagraph(content: ParsedContent, context: RenderContext):
     comic: () => renderComic(content, context),
     illust_detail: () => renderIllust(content, context),
     empty: () => renderEmpty(content, context),
+    // /br コマンド: Markdownでは空段落を表現できないため、明示的に空行を挿入する
+    br: () => renderEmpty(content, context),
     table_of_contents: () => renderTableOfContents(content, context),
     nofetch_url: () => renderNofetchURL(content, context),
     gmaps: () => renderGoogleMaps(content, context),
