@@ -2,7 +2,12 @@
 
 import { useActionState } from 'react'
 import type { blogContentRow, blogCategoryRow } from 'api-types'
-import { createBlogContentAction, updateBlogContentAction, previewBlogContentAction } from './actions'
+import {
+  createBlogContentAction,
+  updateBlogContentAction,
+  previewBlogContentAction,
+  addBlogCategoryInlineAction,
+} from './actions'
 import { SubmitButton } from '@/components/submit-button'
 
 type Props = {
@@ -18,6 +23,11 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
   const action = mode === 'new' ? createBlogContentAction : updateBlogContentAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewBlogContentAction, {})
+  // カテゴリのインライン追加もページ遷移させない。追加分は累積されチェック済みで表示する
+  const [added, addCategoryFormAction, addingCategory] = useActionState(addBlogCategoryInlineAction, {
+    categories: [],
+  })
+  const addedCategories = added.categories.filter((c) => !allCategories.some((a) => a.id === c.id))
   const inputClass = 'mt-1 w-full rounded-md border border-gray-300 p-2 text-sm'
 
   return (
@@ -93,9 +103,38 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
                 {c.name}
               </label>
             ))}
+            {addedCategories.map((c) => (
+              <label key={c.id} className="flex items-center gap-1 text-sm">
+                {/* インライン追加した直後のカテゴリはチェック済みで表示する */}
+                <input type="checkbox" name="category_ids" value={c.id} defaultChecked />
+                {c.name} <span className="text-xs text-green-600">（追加済み）</span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-2 flex items-center gap-2">
+            {/* form属性で本文フォームの外にある追加専用フォームに紐づける（フォームのネスト回避） */}
+            <input
+              form="add-category-form"
+              name="new_category_name"
+              placeholder="新しいカテゴリ名"
+              className="w-64 rounded-md border border-gray-300 p-1.5 text-sm"
+            />
+            <button
+              type="submit"
+              form="add-category-form"
+              disabled={addingCategory}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {addingCategory ? '追加中...' : 'カテゴリ追加'}
+            </button>
+            {added.error && <span className="text-xs text-red-700">{added.error}</span>}
           </div>
           <p className="mt-1 text-xs text-gray-400">
-            追加は <a href="/blog/categories" className="underline">カテゴリ管理</a> から
+            IDの指定や表示順の変更は{' '}
+            <a href="/blog/categories" target="_blank" rel="noopener noreferrer" className="underline">
+              カテゴリ管理
+            </a>{' '}
+            から（新しいタブで開きます）
           </p>
         </div>
 
@@ -156,6 +195,9 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
           </label>
         </div>
       </form>
+
+      {/* カテゴリ追加用フォームの実体。本文フォームとネストできないため外に置き、form属性で参照する */}
+      <form id="add-category-form" action={addCategoryFormAction} />
     </div>
   )
 }
