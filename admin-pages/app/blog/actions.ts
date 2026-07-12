@@ -8,6 +8,7 @@ import {
   updateBlogContent,
   getBlogContent,
   createBlogCategory,
+  updateBlogCategoryOrders,
   createBlogInfo,
   updateBlogInfo,
   getBlogInfo,
@@ -19,6 +20,7 @@ import { purgeBlogContentCache, purgeBlogMetaCache } from '@/lib/cache'
 import { saveBlogContentDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
+import type { PreviewActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
@@ -100,18 +102,40 @@ export async function updateBlogContentAction(formData: FormData): Promise<void>
   redirect('/blog')
 }
 
-export async function previewBlogContentAction(formData: FormData): Promise<void> {
+// プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
+export async function previewBlogContentAction(
+  _prev: PreviewActionState,
+  formData: FormData
+): Promise<PreviewActionState> {
   const { input, error } = parseBlogForm(formData)
-  const backTo = formData.get('mode') === 'new' ? '/blog/new' : `/blog/${input.id}/edit`
   if (error) {
-    redirect(`${backTo}?error=${encodeURIComponent(error)}`)
+    return { error }
   }
 
   const draftKey = await saveBlogContentDraft(input)
   const { env } = await getCloudflareContext({ async: true })
-  const previewURL = `${env.PAGES_HOST}/blog/${input.id}?draftKey=${draftKey}`
+  return { previewURL: `${env.PAGES_HOST}/blog/${input.id}?draftKey=${draftKey}` }
+}
 
-  redirect(`${backTo}?preview=${encodeURIComponent(previewURL)}`)
+// カテゴリ表示順の一括更新（order_{id} = 数値 のフォーム値を反映）
+export async function updateBlogCategoryOrderAction(formData: FormData): Promise<void> {
+  const orders: { id: string; sort_order: number }[] = []
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith('order_')) {
+      continue
+    }
+    const sortOrder = parseInt(String(value), 10)
+    if (Number.isNaN(sortOrder)) {
+      redirect(`/blog/categories?error=${encodeURIComponent('表示順は数値で入力してください')}`)
+    }
+    orders.push({ id: key.slice('order_'.length), sort_order: sortOrder })
+  }
+
+  await updateBlogCategoryOrders(orders)
+  await purgeBlogMetaCache('tags')
+
+  revalidatePath('/blog/categories')
+  redirect('/blog/categories')
 }
 
 export async function createBlogCategoryAction(formData: FormData): Promise<void> {
