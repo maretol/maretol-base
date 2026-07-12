@@ -14,7 +14,7 @@ import {
 import { purgeBandeDessineeCache } from '@/lib/cache'
 import { saveBandeDessineeDraft } from '@/lib/draft_comic'
 import { generateContentID } from '@/lib/id'
-import type { PreviewActionState } from '@/lib/form-state'
+import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
@@ -122,6 +122,19 @@ export async function previewBandeDessineeAction(
   const draftKey = await saveBandeDessineeDraft(input)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/comics/${input.id}?draftKey=${draftKey}` }
+}
+
+// 編集画面からの手動キャッシュ削除。マンガのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
+export async function purgeBandeDessineeCacheAction(
+  _prev: PurgeActionState,
+  _formData: FormData
+): Promise<PurgeActionState> {
+  try {
+    await purgeBandeDessineeCache()
+    return { done: 'マンガのキャッシュを削除しました（一覧・単体すべて）' }
+  } catch {
+    return { error: 'キャッシュ削除に失敗しました' }
+  }
 }
 
 export async function createComicTagAction(formData: FormData): Promise<void> {

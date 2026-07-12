@@ -20,7 +20,7 @@ import { purgeBlogContentCache, purgeBlogMetaCache } from '@/lib/cache'
 import { saveBlogContentDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
-import type { PreviewActionState } from '@/lib/form-state'
+import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
@@ -115,6 +115,23 @@ export async function previewBlogContentAction(
   const draftKey = await saveBlogContentDraft(input)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/blog/${input.id}?draftKey=${draftKey}` }
+}
+
+// 編集画面からの手動キャッシュ削除。編集中の本文を失わないようページ遷移させない
+export async function purgeBlogContentCacheAction(
+  _prev: PurgeActionState,
+  formData: FormData
+): Promise<PurgeActionState> {
+  const id = text(formData, 'id')
+  if (id === '') {
+    return { error: 'IDが不正です' }
+  }
+  try {
+    await purgeBlogContentCache(id)
+    return { done: 'この記事のキャッシュを削除しました（一覧・記事単体）' }
+  } catch {
+    return { error: 'キャッシュ削除に失敗しました' }
+  }
 }
 
 // カテゴリ表示順の一括更新（order_{id} = 数値 のフォーム値を反映）

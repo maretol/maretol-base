@@ -7,7 +7,7 @@ import { createAtelier, updateAtelier, getAtelier, createTag, type AtelierInput 
 import { purgeAtelierCache } from '@/lib/cache'
 import { saveAtelierDraft } from '@/lib/draft'
 import { generateContentID } from '@/lib/id'
-import type { PreviewActionState } from '@/lib/form-state'
+import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const VALID_POSITION = ['center', 'top', 'bottom', 'left', 'right']
@@ -85,6 +85,16 @@ export async function previewAtelierAction(
   const draftKey = await saveAtelierDraft(input)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/illust/detail/${input.id}?draftKey=${draftKey}` }
+}
+
+// 編集画面からの手動キャッシュ削除。イラストのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
+export async function purgeAtelierCacheAction(_prev: PurgeActionState, _formData: FormData): Promise<PurgeActionState> {
+  try {
+    await purgeAtelierCache()
+    return { done: 'イラストのキャッシュを削除しました（一覧・単体すべて）' }
+  } catch {
+    return { error: 'キャッシュ削除に失敗しました' }
+  }
 }
 
 export async function createTagAction(formData: FormData): Promise<void> {
