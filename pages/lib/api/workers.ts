@@ -3,6 +3,7 @@ import {
   bandeDessineeResult,
   categoryAPIResult,
   contentsAPIResult,
+  adjacentContentsResult,
   staticAPIResult,
   infoAPIResult,
   OGPResult,
@@ -10,6 +11,7 @@ import {
 } from 'api-types'
 import { getLocalEnv, getNodeEnv, isKVCacheEnabled } from '../env'
 import {
+  generateAdjacentContentsKey,
   generateBandeDessineeContentKey,
   generateBandeDessineeKey,
   generateContentKey,
@@ -23,7 +25,7 @@ import {
   generateAtelierContentKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
-import { DAY } from '../static'
+import { DAY, HOUR } from '../static'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
 const dev = getNodeEnv() === 'development'
@@ -32,6 +34,7 @@ const CacheTTL = {
   ogpData: 3 * DAY, // OGPデータの保持
   contents: 15 * DAY, // トップページなどのブログコンテンツリスト
   content: 10 * DAY, // 特定のブログコンテンツ
+  adjacentContents: 1 * HOUR, // 前後記事ナビ。新記事公開で「一つあとの記事」が変わるため記事本体と別キーで短め
   secretMeta: 0, // 限定公開記事のコード照合メタ。secret_codeを含むため常にskipCache（保持しない）
   contentsWithTags: 10 * DAY, // タグ指定のブログコンテンツリスト
   tags: 30 * DAY, // タグリスト
@@ -114,6 +117,7 @@ async function createLocalFetcher<TResult>(
 const getOGPData = cache(getOGPDataOrigin)
 const getCMSContents = cache(getCMSContentsOrigin)
 const getCMSContent = cache(getCMSContentOrigin)
+const getAdjacentContents = cache(getAdjacentContentsOrigin)
 const getSecretMeta = cache(getSecretMetaOrigin)
 const getCMSContentsWithTags = cache(getCMSContentsWithTagsOrigin)
 const getTags = cache(getTagsOrigin)
@@ -222,6 +226,23 @@ async function getCMSContentOrigin(articleID: string, draftKey?: string) {
     skipCache: !!draftKey, // draftKeyがある場合はキャッシュをスキップ
     // 限定公開記事は本文を KV に残さないようキャッシュ保存しない
     shouldCache: (res) => res?.is_secret !== true,
+  })
+}
+
+// 前後記事（一つ前・一つあと）ナビの取得
+async function getAdjacentContentsOrigin(articleID: string) {
+  const { env } = await getCloudflareContext({ async: true })
+  const isLocal = getLocalEnv() === 'local'
+  const defaultResult: adjacentContentsResult = { prev: null, next: null }
+
+  return createCachedAPIFunction<adjacentContentsResult>({
+    cacheKey: generateAdjacentContentsKey(articleID),
+    cacheTTL: CacheTTL.adjacentContents,
+    cacheStore: env.CMS_CACHE,
+    fetcher: isLocal
+      ? () => createLocalFetcher('/api/cms/get_adjacent_contents', { article_id: articleID }, defaultResult)
+      : () => env.CMS_RPC.fetchAdjacentContents(articleID),
+    defaultResult,
   })
 }
 
@@ -413,6 +434,7 @@ export {
   getOGPData,
   getCMSContents,
   getCMSContent,
+  getAdjacentContents,
   getSecretMeta,
   getCMSContentsWithTags,
   getTags,

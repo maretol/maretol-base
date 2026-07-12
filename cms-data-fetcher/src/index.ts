@@ -6,6 +6,7 @@ import {
   bandeDessineeResult,
   categoryAPIResult,
   contentsAPIResult,
+  adjacentContentsResult,
   staticAPIResult,
   infoAPIResult,
   atelierResult,
@@ -36,6 +37,7 @@ import {
   getBlogContentsFromD1,
   getBlogContentsByTagFromD1,
   getBlogContentFromD1,
+  getBlogAdjacentContentsFromD1,
   getBlogSecretMetaFromD1,
   getBlogSecretMetaFromDraft,
   getBlogContentDraftFromKV,
@@ -81,7 +83,14 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const contentID = searchParams.get('content_id')
     const draftKey = searchParams.get('draftKey') || undefined
 
-    if (pathname.includes('/cms/get_contents_with_tag')) {
+    if (pathname.includes('/cms/get_adjacent_contents')) {
+      // 前後記事（一つ前・一つあと）のナビ情報を取得
+      if (articleID === null) {
+        return new Response('articleID is empty', { status: 400 })
+      }
+      const adjacent = await this.fetchAdjacentContents(articleID)
+      return Response.json(adjacent)
+    } else if (pathname.includes('/cms/get_contents_with_tag')) {
       // タグで絞り込んで記事一覧を取得
       const contents = await this.fetchContentsByTag(tagIDsStr, offset, limit)
       return Response.json(contents)
@@ -198,6 +207,14 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     content.annotations = parsed.annotations
     // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(content))
+  }
+
+  // 前後記事（一つ前・一つあと）の取得。D1移行後の新機能のためmicroCMS参照時は前後なしを返す
+  async fetchAdjacentContents(articleID: string): Promise<adjacentContentsResult> {
+    if (this.env.BLOG_SOURCE !== 'd1') {
+      return { prev: null, next: null }
+    }
+    return await getBlogAdjacentContentsFromD1(this.env.DB, articleID)
   }
 
   // 限定公開記事のコード照合用メタを取得する。secret_code を含むためクライアントには渡さない

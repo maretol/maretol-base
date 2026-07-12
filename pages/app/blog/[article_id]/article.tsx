@@ -1,5 +1,5 @@
 import { FullArticle } from '@/components/large/article'
-import { getCMSContent, getSecretMeta } from '@/lib/api/workers'
+import { getAdjacentContents, getCMSContent, getSecretMeta } from '@/lib/api/workers'
 import { isArticleUnlocked } from '@/lib/secret_unlock'
 import { contentsAPIResult } from 'api-types'
 import SecretGate from './secret_gate'
@@ -38,6 +38,9 @@ export default async function BlogPageArticle({
     }
   }
 
+  // 前後記事ナビ。未公開記事のプレビュー時は前後なしが返るため描画されない
+  const adjacent = await getAdjacentContents(articleID)
+
   return (
     <div>
       <FullArticle
@@ -52,6 +55,7 @@ export default async function BlogPageArticle({
         type="blog"
         shareURL={url}
         annotations={content.annotations}
+        adjacent={adjacent}
       />
     </div>
   )

@@ -8,6 +8,7 @@
  */
 import {
   contentsAPIResult,
+  adjacentContentsResult,
   categoryAPIResult,
   infoAPIResult,
   staticAPIResult,
@@ -149,6 +150,48 @@ export async function getBlogContentFromD1(db: D1Database, articleID: string): P
   }
   const contents = await assembleContents(db, [row])
   return contents[0]
+}
+
+// 前後記事の取得。prev = 一つ前（古い方）、next = 一つあと（新しい方）
+// 一覧系と同様に限定公開記事はナビに出さない（基準記事自身は限定公開でも前後は計算する）
+// published_at が同時刻の記事でも順序が安定するよう id をタイブレークに使う
+export async function getBlogAdjacentContentsFromD1(
+  db: D1Database,
+  articleID: string
+): Promise<adjacentContentsResult> {
+  const base = await db
+    .prepare(
+      `SELECT id, COALESCE(published_at, created_at) AS published_at
+       FROM blog_contents WHERE id = ?1 AND status = 'PUBLISH'`
+    )
+    .bind(articleID)
+    .first<{ id: string; published_at: string }>()
+  // 未公開（下書きプレビュー等）は前後なしを返す
+  if (!base) {
+    return { prev: null, next: null }
+  }
+
+  const prev = await db
+    .prepare(
+      `SELECT id, title FROM blog_contents
+       WHERE status = 'PUBLISH' AND is_secret = 0
+         AND (COALESCE(published_at, created_at), id) < (?1, ?2)
+       ORDER BY COALESCE(published_at, created_at) DESC, id DESC LIMIT 1`
+    )
+    .bind(base.published_at, base.id)
+    .first<{ id: string; title: string }>()
+
+  const next = await db
+    .prepare(
+      `SELECT id, title FROM blog_contents
+       WHERE status = 'PUBLISH' AND is_secret = 0
+         AND (COALESCE(published_at, created_at), id) > (?1, ?2)
+       ORDER BY COALESCE(published_at, created_at) ASC, id ASC LIMIT 1`
+    )
+    .bind(base.published_at, base.id)
+    .first<{ id: string; title: string }>()
+
+  return { prev: prev ?? null, next: next ?? null }
 }
 
 // 限定公開記事のコード照合用メタ。secret_code を含むためクライアントへ渡さないこと

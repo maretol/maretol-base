@@ -3,7 +3,13 @@
  */
 import { describe, it, expect } from 'vitest'
 import type { blogContentRow, blogCategoryRow, blogContentDraftRecord } from 'api-types'
-import { toContentsAPIResult, toCategoryAPIResult, getBlogContentDraftFromKV, getBlogSecretMetaFromDraft } from '../src/d1_blog'
+import {
+  toContentsAPIResult,
+  toCategoryAPIResult,
+  getBlogContentDraftFromKV,
+  getBlogSecretMetaFromDraft,
+  getBlogAdjacentContentsFromD1,
+} from '../src/d1_blog'
 import { parse } from '../src/parse'
 
 const categoryRow: blogCategoryRow = {
@@ -67,6 +73,64 @@ describe('toContentsAPIResult', () => {
     const result = toContentsAPIResult(secretRow, [])
     expect(result.is_secret).toBe(true)
     expect('secret_code' in result).toBe(false)
+  })
+})
+
+describe('getBlogAdjacentContentsFromD1', () => {
+  // 公開記事の並び（published_at昇順）: old_article < base < new_article
+  // secret_article は base と new_article の間だが is_secret=1 のためナビに出ない想定
+  const publishedRows = [
+    { id: 'old_article', title: '古い記事', published_at: '2026-07-01T00:00:00.000Z', is_secret: 0 },
+    { id: 'base_article', title: '基準記事', published_at: '2026-07-05T00:00:00.000Z', is_secret: 0 },
+    { id: 'secret_article', title: '限定公開記事', published_at: '2026-07-07T00:00:00.000Z', is_secret: 1 },
+    { id: 'new_article', title: '新しい記事', published_at: '2026-07-10T00:00:00.000Z', is_secret: 0 },
+  ]
+
+  // SQL文字列を見て挙動を切り替える簡易D1モック
+  const db = {
+    prepare: (sql: string) => ({
+      bind: (...params: unknown[]) => ({
+        first: async () => {
+          if (sql.includes('WHERE id = ?1')) {
+            const row = publishedRows.find((r) => r.id === params[0])
+            return row ? { id: row.id, published_at: row.published_at } : null
+          }
+          const [publishedAt, id] = params as [string, string]
+          const isPrev = sql.includes('< (?1, ?2)')
+          const candidates = publishedRows
+            .filter((r) => r.is_secret === 0)
+            .filter((r) =>
+              isPrev
+                ? r.published_at < publishedAt || (r.published_at === publishedAt && r.id < id)
+                : r.published_at > publishedAt || (r.published_at === publishedAt && r.id > id)
+            )
+            .sort((a, b) => (a.published_at < b.published_at ? -1 : 1))
+          const row = isPrev ? candidates[candidates.length - 1] : candidates[0]
+          return row ? { id: row.id, title: row.title } : null
+        },
+      }),
+    }),
+  } as unknown as D1Database
+
+  it('前後の公開記事を返す（限定公開記事はスキップされる）', async () => {
+    const result = await getBlogAdjacentContentsFromD1(db, 'base_article')
+    expect(result.prev).toEqual({ id: 'old_article', title: '古い記事' })
+    expect(result.next).toEqual({ id: 'new_article', title: '新しい記事' })
+  })
+
+  it('最古・最新の記事では片側がnullになる', async () => {
+    const oldest = await getBlogAdjacentContentsFromD1(db, 'old_article')
+    expect(oldest.prev).toBeNull()
+    expect(oldest.next).toEqual({ id: 'base_article', title: '基準記事' })
+
+    const newest = await getBlogAdjacentContentsFromD1(db, 'new_article')
+    expect(newest.prev).toEqual({ id: 'base_article', title: '基準記事' })
+    expect(newest.next).toBeNull()
+  })
+
+  it('基準記事が存在しない場合は両方null', async () => {
+    const result = await getBlogAdjacentContentsFromD1(db, 'no_such_article')
+    expect(result).toEqual({ prev: null, next: null })
   })
 })
 
