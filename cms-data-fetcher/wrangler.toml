@@ -24,6 +24,8 @@ BLOG_SOURCE = "d1"
 binding = "DB"
 database_name = "maretol-cms"
 database_id = "58e13952-8750-4f5a-a75f-553bd4235f7c"
+# ローカル開発（wrangler dev）でもリモートの本番D1を参照する。デプロイ時の挙動には影響しない
+remote = true
 
 [dev]
 port = 8787
