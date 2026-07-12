@@ -18,7 +18,8 @@ export async function saveBlogContentDraft(input: BlogContentInput): Promise<str
     id: input.id,
     title: input.title,
     content: input.content,
-    content_format: current?.content_format ?? 'markdown',
+    // フォームで選択された形式でプレビューする（形式変更もプレビューで確認できるようにする）
+    content_format: input.content_format,
     ogp_image: input.ogp_image,
     sns_text: input.sns_text,
     is_secret: input.is_secret ? 1 : 0,

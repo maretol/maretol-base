@@ -94,9 +94,20 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error
         </div>
 
         <div>
-          <label className="block text-sm font-medium">
-            説明文（{atelier?.description_format === 'html' ? 'HTML（既存記事のため）' : 'Markdown'}）
-          </label>
+          <div className="flex items-center gap-3">
+            <label className="block text-sm font-medium">説明文</label>
+            <select
+              name="description_format"
+              defaultValue={atelier?.description_format ?? 'markdown'}
+              className="rounded-md border border-gray-300 p-1 text-xs"
+            >
+              <option value="markdown">Markdown</option>
+              <option value="html">HTML（旧CMS形式）</option>
+            </select>
+          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            形式を変更しても本文は自動変換されません。切り替える場合は書き直しとセットで保存してください
+          </p>
           <textarea
             name="description"
             defaultValue={atelier?.description ?? ''}

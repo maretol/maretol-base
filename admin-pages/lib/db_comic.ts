@@ -4,6 +4,7 @@
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { bandeDessineeRow, bandeDessineeTagRow, bandeDessineeSeriesRow } from 'api-types'
+import type { ContentFormat } from './content-format'
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true })
@@ -55,6 +56,7 @@ export type BandeDessineeInput = {
   last_page: number
   first_left_right: ('left' | 'right')[]
   description: string
+  description_format: ContentFormat
   status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
 }
 
@@ -69,7 +71,7 @@ export async function createBandeDessinee(input: BandeDessineeInput): Promise<vo
         (id, title_name, publish_date, publish_event, contents_url, next_id, previous_id, tag_id, series_id,
          cover, back_cover, format, filename, first_page, last_page, first_left_right,
          description, description_format, status, created_at, updated_at, published_at, revised_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, 'markdown', ?18, ?19, ?19, ?20, ?20)`
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, ?17, ?21, ?18, ?19, ?19, ?20, ?20)`
     )
     .bind(
       input.id,
@@ -91,7 +93,8 @@ export async function createBandeDessinee(input: BandeDessineeInput): Promise<vo
       input.description,
       input.status,
       now,
-      publishedAt
+      publishedAt,
+      input.description_format
     )
     .run()
 }
@@ -112,7 +115,7 @@ export async function updateBandeDessinee(input: BandeDessineeInput): Promise<vo
       `UPDATE bande_dessinees SET
         title_name = ?2, publish_date = ?3, publish_event = ?4, contents_url = ?5, next_id = ?6, previous_id = ?7,
         tag_id = ?8, series_id = ?9, cover = ?10, back_cover = ?11, format = ?12, filename = ?13,
-        first_page = ?14, last_page = ?15, first_left_right = ?16, description = ?17, status = ?18,
+        first_page = ?14, last_page = ?15, first_left_right = ?16, description = ?17, description_format = ?22, status = ?18,
         updated_at = ?19, published_at = ?20, revised_at = ?21
        WHERE id = ?1`
     )
@@ -137,7 +140,8 @@ export async function updateBandeDessinee(input: BandeDessineeInput): Promise<vo
       input.status,
       now,
       publishedAt,
-      revisedAt
+      revisedAt,
+      input.description_format
     )
     .run()
 }

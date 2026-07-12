@@ -54,10 +54,20 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
         </div>
 
         <div>
-          <label className="block text-sm font-medium">
-            本文（{article?.content_format === 'html' ? 'HTML（既存記事のため）' : 'Markdown'}。独自記法は cms_doc.md
-            参照）
-          </label>
+          <div className="flex items-center gap-3">
+            <label className="block text-sm font-medium">本文（独自記法は cms_doc.md 参照）</label>
+            <select
+              name="content_format"
+              defaultValue={article?.content_format ?? 'markdown'}
+              className="rounded-md border border-gray-300 p-1 text-xs"
+            >
+              <option value="markdown">Markdown</option>
+              <option value="html">HTML（旧CMS形式）</option>
+            </select>
+          </div>
+          <p className="mt-1 text-xs text-gray-400">
+            形式を変更しても本文は自動変換されません。切り替える場合は本文の書き直しとセットで保存してください
+          </p>
           <textarea
             name="content"
             defaultValue={article?.content ?? ''}
