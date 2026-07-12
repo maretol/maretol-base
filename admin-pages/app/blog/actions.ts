@@ -114,7 +114,9 @@ export async function previewBlogContentAction(
     return { error }
   }
 
-  const draftKey = await saveBlogContentDraft(input)
+  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
+  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
+  const draftKey = await saveBlogContentDraft(input, regenerateKey)
   const { env } = await getCloudflareContext({ async: true })
   return { previewURL: `${env.PAGES_HOST}/blog/${input.id}?draftKey=${draftKey}` }
 }
