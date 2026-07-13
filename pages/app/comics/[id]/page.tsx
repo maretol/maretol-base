@@ -67,7 +67,7 @@ export default async function ComicPage(props: {
         <ComicBook cmsResult={asyncData} />
       </Suspense>
       <div className="flex justify-center w-full">
-        <div className="w-full max-w-[1500px]">
+        <div className="w-full max-w-375">
           <ComicDetailPage
             id={id}
             titleName={title}

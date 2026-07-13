@@ -30,7 +30,8 @@ function NavigationIcons(props: NavigationIconsProps) {
         aria-label="次のページへ"
         className={cn(
           'text-white h-20 w-20 cursor-pointer',
-          'absolute left-0 top-1/2 flex justify-center items-center opacity-30',
+          // swiper-wrapperがz-index: 1を持つため、ページ画像より手前に出すにはそれより上げる必要がある
+          'absolute z-10 left-0 top-1/2 flex justify-center items-center opacity-30',
           pageOption.controller_visible && 'opacity-100',
           zoneFlag === 'next' && 'opacity-100'
         )}
@@ -45,7 +46,7 @@ function NavigationIcons(props: NavigationIconsProps) {
         aria-label="前のページへ"
         className={cn(
           'text-white h-20 w-20 cursor-pointer',
-          'absolute right-0 top-1/2 flex justify-center items-center opacity-30',
+          'absolute z-10 right-0 top-1/2 flex justify-center items-center opacity-30',
           pageOption.controller_visible && 'opacity-100',
           zoneFlag === 'prev' && 'opacity-100'
         )}

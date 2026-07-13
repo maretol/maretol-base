@@ -1,3 +1,5 @@
+import type { SNSPostTextResult } from 'api-types'
+
 // useActionState で受け渡すプレビューアクションの結果
 // プレビューはページ遷移させない（遷移すると編集中の本文が消えるため）
 export type PreviewActionState = {
@@ -9,6 +11,13 @@ export type PreviewActionState = {
 // 編集画面上のボタンのためページ遷移させない（遷移すると編集中の本文が消えるため）
 export type PurgeActionState = {
   done?: string
+  error?: string
+}
+
+// useActionState で受け渡すSNS自由文面投稿の結果
+// 一部のSNSで失敗したときに文面を保持して再送できるよう、ページ遷移させない
+export type SNSPostActionState = {
+  results?: SNSPostTextResult[]
   error?: string
 }
 

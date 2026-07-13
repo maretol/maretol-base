@@ -1,7 +1,7 @@
 import PostTweet, { TwitterAuthInfo } from './twitter'
 import PostBlueSky, { BlueSkyAuthInfo } from './bluesky'
 import PostNostrKind1, { NostrAuthInfo } from './nostr'
-import { Content, ContentValue, SNSPublishValue, WebhookPayload } from 'api-types'
+import { Content, ContentValue, SNSPostTextResult, SNSPublishValue, WebhookPayload } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import crypto from 'node:crypto'
 import NoteMisskey, { MisskeyAuthInfo } from './misskey'
@@ -54,6 +54,14 @@ export default class Publisher extends WorkerEntrypoint<Env> {
     const content = getContent(serviceType, value as ContentValue)
     console.log('RPC publishArticle:', serviceType, content.url)
     this.ctx.waitUntil(publish(this.env, content, serviceType))
+  }
+
+  // 管理ページ（admin-pages）から自由文面を各SNSへそのまま投稿する RPC
+  // 記事に紐づかないためURL組み立て・UTMパラメータ付与は行わない
+  // 結果を管理ページの画面に表示するため、publishArticle と異なり完了まで待って成否を返す
+  async postText(text: string): Promise<SNSPostTextResult[]> {
+    console.log('RPC postText')
+    return await postFreeText(this.env, text)
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -215,6 +223,33 @@ async function publish(env: Env, content: PublishContent, service: ServiceType) 
   } else {
     console.log('skip nostr')
   }
+}
+
+// 自由文面を有効な各SNSへそのまま投稿し、SNSごとの成否を返す
+async function postFreeText(env: Env, text: string): Promise<SNSPostTextResult[]> {
+  const results: SNSPostTextResult[] = []
+
+  const post = async (target: SNSTarget, doPost: () => Promise<unknown>) => {
+    if (!TARGET[target]) {
+      console.log(`skip ${target}`)
+      return
+    }
+    console.log(`post to ${target}`)
+    try {
+      await doPost()
+      results.push({ target, success: true })
+    } catch (e) {
+      console.error(`Error posting to ${target}:`, e)
+      results.push({ target, success: false, error: e instanceof Error ? e.message : String(e) })
+    }
+  }
+
+  await post('twitter', () => PostTweet(createTwitterAuthInfo(env), text))
+  await post('bluesky', () => PostBlueSky(env, createBlueSkyAuthInfo(env), text))
+  await post('misskey', () => NoteMisskey(createMisskeyAuthInfo(env), text))
+  await post('nostr', () => PostNostrKind1(createNostrAuthInfo(env), text))
+
+  return results
 }
 
 function createTwitterAuthInfo(env: Env) {

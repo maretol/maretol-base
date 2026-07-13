@@ -1,11 +1,6 @@
-export type SinglePageState = {
-  position: 'left' | 'right' | 'center'
-  src: string
-}
-
-export type DoublePageState = {
-  position: 'left' | 'right' | 'center' | 'pair'
-  src: string | { left: string; right: string }
+export type PageState = {
+  position: 'left' | 'right' | 'center' // 見開き時の視覚上の配置。rightが先に読むページ、centerは表紙・裏表紙
+  src: string | null // null = 見開き整列用の空白スライド
 }
 
 export type PageOption = {

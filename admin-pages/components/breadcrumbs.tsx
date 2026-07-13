@@ -8,6 +8,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   comic: 'マンガ',
   blog: 'ブログ',
   cache: 'キャッシュ管理',
+  sns: 'SNS投稿',
   new: '新規作成',
   edit: '編集',
   tags: 'タグ管理',
