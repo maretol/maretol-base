@@ -1,6 +1,6 @@
 'use client'
 
-import React, { use, useCallback, useMemo, useRef, useState } from 'react'
+import React, { use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Swiper, SwiperClass, SwiperSlide } from 'swiper/react'
 import { Keyboard } from 'swiper/modules'
 import { Button } from '@/components/ui/button'
@@ -35,7 +35,11 @@ export default function ComicBook(props: ComicBookProps) {
   const startPage = data.first_page
   const lastPage = data.last_page
   const format = data.format[0]
-  const pageArray = Array.from({ length: lastPage - startPage + 1 }, (_, i) => i + startPage)
+  // メモ化しないと毎レンダーで再生成され、下流のuseMemo（originPageSrc/pageList）が毎回作り直されてしまう
+  const pageArray = useMemo(
+    () => Array.from({ length: lastPage - startPage + 1 }, (_, i) => i + startPage),
+    [startPage, lastPage],
+  )
 
   const coverPageSrc = data.cover ? baseUrl + '/' + data.cover : null
   const backCoverPageSrc = data.back_cover ? baseUrl + '/' + data.back_cover : null
@@ -75,6 +79,37 @@ export default function ComicBook(props: ComicBookProps) {
 
   const displayPageList = mode === 'double' ? pageList : singlePageList
   const totalPages = displayPageList.length
+
+  // 表示中ページの論理ID。モード切替でスライドリストが差し替わったときの位置復元に使う
+  // 差し替え直後はcurrentPageが旧リストのindexのままなので、復元（下のuseLayoutEffect）より後に更新されるよう通常のuseEffectで持つ
+  const currentPageIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    currentPageIdRef.current = displayPageList[currentPage]?.id ?? currentPageIdRef.current
+  }, [currentPage, displayPageList])
+
+  // モード切替でリストが差し替わるとactiveIndexが別のページを指してしまうため、同じページIDの位置へ即時移動して復元する
+  // モードが実際に変わったときだけ動かす（それ以外のレンダーで動くと通常のページ送りと競合する）
+  const prevModeRef = useRef(mode)
+  useLayoutEffect(() => {
+    if (prevModeRef.current === mode) return
+    if (!swiperInstance || swiperInstance.destroyed) return
+    prevModeRef.current = mode
+    const pageId = currentPageIdRef.current
+    if (pageId === null) return
+
+    let index = displayPageList.findIndex((page) => page.id === pageId)
+    if (index < 0) {
+      // singleモードで除外される先頭・末尾の空白スライドにいた場合は最寄りの端ページへ
+      index = pageList.findIndex((page) => page.id === pageId) <= 0 ? 0 : displayPageList.length - 1
+    }
+    if (mode === 'double') {
+      // 見開きの先頭（偶数index）に揃える
+      index -= index % 2
+    }
+    if (index !== swiperInstance.activeIndex) {
+      swiperInstance.slideTo(index, 0)
+    }
+  }, [mode, swiperInstance, displayPageList, pageList])
 
   const handleNextPage = useCallback(() => {
     if (!swiperInstance) return
@@ -136,8 +171,8 @@ export default function ComicBook(props: ComicBookProps) {
           className="h-full w-full"
           lazyPreloadPrevNext={SWIPER.LAZY_PRELOAD}
         >
-          {displayPageList.map((page, i) => (
-            <SwiperSlide key={i}>
+          {displayPageList.map((page) => (
+            <SwiperSlide key={page.id}>
               <ComicSlide mode={mode} page={page} />
             </SwiperSlide>
           ))}
