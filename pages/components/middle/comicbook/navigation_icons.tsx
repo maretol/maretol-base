@@ -29,11 +29,11 @@ function NavigationIcons(props: NavigationIconsProps) {
         tabIndex={0}
         aria-label="次のページへ"
         className={cn(
-          'text-white h-20 w-20 cursor-pointer',
+          'text-white h-20 w-20 cursor-pointer mix-blend-difference',
           // swiper-wrapperがz-index: 1を持つため、ページ画像より手前に出すにはそれより上げる必要がある
           'absolute z-10 left-0 top-1/2 flex justify-center items-center opacity-30',
           pageOption.controller_visible && 'opacity-100',
-          zoneFlag === 'next' && 'opacity-100'
+          zoneFlag === 'next' && 'opacity-100',
         )}
         onClick={onNextPage}
         onKeyDown={(e) => handleKeyDown(e, onNextPage)}
@@ -45,10 +45,10 @@ function NavigationIcons(props: NavigationIconsProps) {
         tabIndex={0}
         aria-label="前のページへ"
         className={cn(
-          'text-white h-20 w-20 cursor-pointer',
+          'text-white h-20 w-20 cursor-pointer mix-blend-difference',
           'absolute z-10 right-0 top-1/2 flex justify-center items-center opacity-30',
           pageOption.controller_visible && 'opacity-100',
-          zoneFlag === 'prev' && 'opacity-100'
+          zoneFlag === 'prev' && 'opacity-100',
         )}
         onClick={onPrevPage}
         onKeyDown={(e) => handleKeyDown(e, onPrevPage)}
