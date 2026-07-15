@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "tsx": "^4.20.0",
-    "typescript": "^6.0.2",
-    "wrangler": "^4.105.0"
+    "typescript": "^7.0.2",
+    "wrangler": "^4.107.1"
   }
 }
