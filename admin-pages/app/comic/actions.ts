@@ -7,10 +7,13 @@ import {
   createBandeDessinee,
   updateBandeDessinee,
   getBandeDessinee,
+  setBandeDessineeNextID,
+  setBandeDessineePreviousID,
   createComicTag,
   createComicSeries,
   type BandeDessineeInput,
 } from '@/lib/db_comic'
+import type { bandeDessineeRow } from 'api-types'
 import { purgeBandeDessineeCache } from '@/lib/cache'
 import { saveBandeDessineeDraft } from '@/lib/draft_comic'
 import { notifyComicPublishToSNS } from '@/lib/sns'
@@ -83,6 +86,88 @@ function parseComicForm(formData: FormData): { input: BandeDessineeInput; error?
   return { input }
 }
 
+type ChainNeighbors = { prev: bandeDessineeRow | null; next: bandeDessineeRow | null }
+
+// チェーン制約の検証（issue #1155）: 前後の巻は必ず同一シリーズ内で完結する
+// 検証で取得した隣接マンガの行は syncChainPointers で再利用する
+async function validateChain(input: BandeDessineeInput): Promise<{ neighbors: ChainNeighbors; error?: string }> {
+  const neighbors: ChainNeighbors = { prev: null, next: null }
+  if (!input.previous_id && !input.next_id) {
+    return { neighbors }
+  }
+
+  if (input.previous_id === input.id || input.next_id === input.id) {
+    return { neighbors, error: '前の巻・次の巻に自分自身は指定できません' }
+  }
+  if (input.previous_id && input.previous_id === input.next_id) {
+    return { neighbors, error: '前の巻と次の巻に同じマンガは指定できません' }
+  }
+  if (!input.series_id) {
+    return { neighbors, error: '前の巻・次の巻を設定するにはシリーズの設定が必要です' }
+  }
+  if (input.previous_id) {
+    neighbors.prev = await getBandeDessinee(input.previous_id)
+    if (!neighbors.prev) {
+      return { neighbors, error: `前の巻 '${input.previous_id}' が見つかりません` }
+    }
+    if (neighbors.prev.series_id !== input.series_id) {
+      return { neighbors, error: `前の巻「${neighbors.prev.title_name}」が同じシリーズではありません` }
+    }
+  }
+  if (input.next_id) {
+    neighbors.next = await getBandeDessinee(input.next_id)
+    if (!neighbors.next) {
+      return { neighbors, error: `次の巻 '${input.next_id}' が見つかりません` }
+    }
+    if (neighbors.next.series_id !== input.series_id) {
+      return { neighbors, error: `次の巻「${neighbors.next.title_name}」が同じシリーズではありません` }
+    }
+  }
+  return { neighbors }
+}
+
+// 双方向リンクの自動同期（issue #1155）。本体保存後に呼ぶ
+// - 新しい前後の巻の逆ポインタは無条件に上書きする（保存のたびに整合性が収束する）
+// - 付け替え・解除で残った旧リンクは、相手がまだ自分を指している場合のみ解除する
+// 実施内容はメッセージとして返し、保存後の画面で可視化する
+async function syncChainPointers(
+  input: BandeDessineeInput,
+  neighbors: ChainNeighbors,
+  current: bandeDessineeRow | null
+): Promise<string[]> {
+  const messages: string[] = []
+
+  const oldPrevId = current?.previous_id ?? null
+  if (oldPrevId && oldPrevId !== input.previous_id) {
+    const oldPrev = await getBandeDessinee(oldPrevId)
+    if (oldPrev?.next_id === input.id) {
+      await setBandeDessineeNextID(oldPrevId, null)
+      messages.push(`「${oldPrev.title_name}」の次の巻を解除しました`)
+    }
+  }
+  const oldNextId = current?.next_id ?? null
+  if (oldNextId && oldNextId !== input.next_id) {
+    const oldNext = await getBandeDessinee(oldNextId)
+    if (oldNext?.previous_id === input.id) {
+      await setBandeDessineePreviousID(oldNextId, null)
+      messages.push(`「${oldNext.title_name}」の前の巻を解除しました`)
+    }
+  }
+  if (neighbors.prev && neighbors.prev.next_id !== input.id) {
+    await setBandeDessineeNextID(neighbors.prev.id, input.id)
+    messages.push(`「${neighbors.prev.title_name}」の次の巻をこのマンガに設定しました`)
+  }
+  if (neighbors.next && neighbors.next.previous_id !== input.id) {
+    await setBandeDessineePreviousID(neighbors.next.id, input.id)
+    messages.push(`「${neighbors.next.title_name}」の前の巻をこのマンガに設定しました`)
+  }
+  return messages
+}
+
+function chainInfoParam(messages: string[]): string {
+  return messages.length > 0 ? `&info=${encodeURIComponent(messages.join(' / '))}` : ''
+}
+
 export async function createBandeDessineeAction(formData: FormData): Promise<void> {
   const { input, error } = parseComicForm(formData)
   if (error) {
@@ -91,14 +176,19 @@ export async function createBandeDessineeAction(formData: FormData): Promise<voi
   if (await getBandeDessinee(input.id)) {
     redirect(`/comic/new?error=${encodeURIComponent(`ID '${input.id}' は既に使用されています`)}`)
   }
+  const { neighbors, error: chainError } = await validateChain(input)
+  if (chainError) {
+    redirect(`/comic/new?error=${encodeURIComponent(chainError)}`)
+  }
 
   await createBandeDessinee(input)
+  const syncMessages = await syncChainPointers(input, neighbors, null)
   await purgeBandeDessineeCache()
   await notifyComicPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/comic')
   // 保存後は一覧へ戻らず、作成したマンガの編集画面へ遷移する（連続編集のため）
-  redirect(`/comic/${input.id}/edit?saved=1`)
+  redirect(`/comic/${input.id}/edit?saved=1${chainInfoParam(syncMessages)}`)
 }
 
 export async function updateBandeDessineeAction(formData: FormData): Promise<void> {
@@ -107,17 +197,24 @@ export async function updateBandeDessineeAction(formData: FormData): Promise<voi
     redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(error)}`)
   }
 
+  const { neighbors, error: chainError } = await validateChain(input)
+  if (chainError) {
+    redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(chainError)}`)
+  }
+
   // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
+  // （前後リンクの付け替え掃除の判定にも旧値を使う）
   const current = await getBandeDessinee(input.id)
   const oldStatus = current?.status
 
   await updateBandeDessinee(input)
+  const syncMessages = await syncChainPointers(input, neighbors, current)
   await purgeBandeDessineeCache()
   await notifyComicPublishToSNS({ input, type: 'edit', oldStatus })
 
   revalidatePath('/comic')
   // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(`/comic/${input.id}/edit?saved=1`)
+  redirect(`/comic/${input.id}/edit?saved=1${chainInfoParam(syncMessages)}`)
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）

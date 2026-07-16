@@ -47,6 +47,42 @@ export async function listComicSeries(): Promise<bandeDessineeSeriesRow[]> {
   return result.results
 }
 
+// 前後の巻セレクトの候補用: シリーズで絞り込むため series_id を含む軽量な行
+export type BandeDessineeRef = {
+  id: string
+  title_name: string
+  series_id: string | null
+}
+
+export async function listBandeDessineeRefs(): Promise<BandeDessineeRef[]> {
+  const db = await getDB()
+  const result = await db
+    .prepare(
+      `SELECT id, title_name, series_id FROM bande_dessinees
+       ORDER BY publish_date IS NULL, publish_date, created_at`
+    )
+    .all<BandeDessineeRef>()
+  return result.results
+}
+
+// 双方向リンクの自動同期用: 隣接するマンガのポインタのみ書き換える
+// SNS通知・published_at 等の副作用を伴わないよう、通常の update とは分けている
+export async function setBandeDessineeNextID(id: string, nextId: string | null): Promise<void> {
+  const db = await getDB()
+  await db
+    .prepare(`UPDATE bande_dessinees SET next_id = ?2, updated_at = ?3 WHERE id = ?1`)
+    .bind(id, nextId, new Date().toISOString())
+    .run()
+}
+
+export async function setBandeDessineePreviousID(id: string, previousId: string | null): Promise<void> {
+  const db = await getDB()
+  await db
+    .prepare(`UPDATE bande_dessinees SET previous_id = ?2, updated_at = ?3 WHERE id = ?1`)
+    .bind(id, previousId, new Date().toISOString())
+    .run()
+}
+
 export type BandeDessineeInput = {
   id: string
   title_name: string

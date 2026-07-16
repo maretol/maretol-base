@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { getBandeDessinee, listComicTags, listComicSeries } from '@/lib/db_comic'
+import { getBandeDessinee, listComicTags, listComicSeries, listBandeDessineeRefs } from '@/lib/db_comic'
 import { ComicForm } from '../../comic-form'
 import { purgeBandeDessineeCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
@@ -11,16 +11,20 @@ export default async function EditComic({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string }>
+  searchParams: Promise<{ error?: string; saved?: string; info?: string }>
 }) {
   const { id } = await params
-  const { error, saved } = await searchParams
+  const { error, saved, info } = await searchParams
 
   const comic = await getBandeDessinee(id)
   if (!comic) {
     notFound()
   }
-  const [allTags, allSeries] = await Promise.all([listComicTags(), listComicSeries()])
+  const [allTags, allSeries, allComics] = await Promise.all([
+    listComicTags(),
+    listComicSeries(),
+    listBandeDessineeRefs(),
+  ])
 
   return (
     <div className="space-y-4">
@@ -36,8 +40,10 @@ export default async function EditComic({
         comic={comic}
         allTags={allTags}
         allSeries={allSeries}
+        allComics={allComics}
         error={error}
         saved={saved === '1'}
+        info={info}
       />
     </div>
   )
