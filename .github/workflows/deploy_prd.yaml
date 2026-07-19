@@ -45,12 +45,16 @@ jobs:
             cms-data-fetcher:
               - "cms-data-fetcher/**"
               - "packages/api-types/src/cms_types.ts"
+              - "packages/api-types/src/cms_db_types.ts"
+              - "packages/md-converter/**"
             cms-cache-purger:
               - "cms-cache-purger/**"
               - "packages/cms-cache-key-gen/**"
+              - "packages/api-types/src/cms_webhook_types.ts"
             sns-article-publisher:
               - "sns-article-publisher/**"
               - "packages/api-types/src/sns_pub.ts"
+              - "packages/api-types/src/cms_webhook_types.ts"
             workflow:
               - ".github/workflows/**"
 
