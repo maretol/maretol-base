@@ -43,6 +43,18 @@ type contentsAPIResult = {
   is_secret?: boolean
 }
 
+// 記事下部の前後記事ナビ用。prev = 一つ前（古い方）、next = 一つあと（新しい方）
+// 限定公開記事は一覧系と同様にナビに含めない
+type adjacentArticle = {
+  id: string
+  title: string
+}
+
+type adjacentContentsResult = {
+  prev: adjacentArticle | null
+  next: adjacentArticle | null
+}
+
 type categoryAPIResult = {
   id: string
   createdAt: string
@@ -176,6 +188,7 @@ export type {
   TableOfContents,
   Annotation,
   contentsAPIResult,
+  adjacentContentsResult,
   categoryAPIResult,
   infoAPIResult,
   staticAPIResult,

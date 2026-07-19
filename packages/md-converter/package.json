@@ -1,0 +1,20 @@
+{
+  "name": "md-converter",
+  "version": "1.0.0",
+  "description": "Markdownを現行CMS互換のHTMLへ変換する処理",
+  "main": "index.ts",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "typescript": "^6.0.2",
+    "vitest": "4.1.10"
+  }
+}

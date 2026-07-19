@@ -15,7 +15,7 @@ type BlueSkyOGPInfo = {
 
 const defaultOGPSrc = 'https://r2.maretol.xyz/assets/maretol_base_ogp.png'
 
-async function PostBlueSky(env: Env, authInfo: BlueSkyAuthInfo, postText: string, ogp: BlueSkyOGPInfo): Promise<void> {
+async function PostBlueSky(env: Env, authInfo: BlueSkyAuthInfo, postText: string, ogp?: BlueSkyOGPInfo): Promise<void> {
   const agent = new AtpAgent({
     service: 'https://bsky.social',
   })
@@ -24,6 +24,15 @@ async function PostBlueSky(env: Env, authInfo: BlueSkyAuthInfo, postText: string
   await richText.detectFacets(agent)
 
   await agent.login({ identifier: authInfo.username, password: authInfo.password })
+
+  // OGP情報がない場合（記事に紐づかない自由文面の投稿）はリンクカードを付けずテキストのみ投稿する
+  if (!ogp) {
+    await agent.post({
+      text: richText.text,
+      facets: richText.facets,
+    })
+    return
+  }
 
   let blob = null
   try {
@@ -94,4 +103,4 @@ async function translateImage(env: Env, imageStream: ReadableStream): Promise<Ui
 
 export default PostBlueSky
 
-export { BlueSkyAuthInfo }
+export type { BlueSkyAuthInfo }

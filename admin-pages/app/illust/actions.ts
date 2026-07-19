@@ -1,0 +1,129 @@
+'use server'
+
+import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { createAtelier, updateAtelier, getAtelier, createTag, type AtelierInput } from '@/lib/db'
+import { purgeAtelierCache } from '@/lib/cache'
+import { saveAtelierDraft } from '@/lib/draft'
+import { notifyAtelierPublishToSNS } from '@/lib/sns'
+import { generateContentID } from '@/lib/id'
+import { parseContentFormat } from '@/lib/content-format'
+import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
+
+const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
+const VALID_POSITION = ['center', 'top', 'bottom', 'left', 'right']
+
+function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: string } {
+  const id = (formData.get('id') as string | null)?.trim() || generateContentID()
+  const title = (formData.get('title') as string | null)?.trim() ?? ''
+  const src = (formData.get('src') as string | null)?.trim() ?? ''
+  const objectPosition = (formData.get('object_position') as string | null) ?? 'center'
+  const description = (formData.get('description') as string | null) ?? ''
+  const status = (formData.get('status') as string | null) ?? 'DRAFT'
+  const tagIDs = formData.getAll('tag_ids').map((v) => String(v))
+
+  const input: AtelierInput = {
+    id,
+    title,
+    src,
+    object_position: VALID_POSITION.includes(objectPosition) ? objectPosition : 'center',
+    description,
+    description_format: parseContentFormat(formData.get('description_format') as string | null),
+    status: VALID_STATUS.includes(status as (typeof VALID_STATUS)[number])
+      ? (status as AtelierInput['status'])
+      : 'DRAFT',
+    tagIDs,
+  }
+
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    return { input, error: 'IDは英数字・ハイフン・アンダースコアのみ使用できます' }
+  }
+  if (title === '' || src === '') {
+    return { input, error: 'タイトルと画像URLは必須です' }
+  }
+  return { input }
+}
+
+export async function createAtelierAction(formData: FormData): Promise<void> {
+  const { input, error } = parseAtelierForm(formData)
+  if (error) {
+    redirect(`/illust/new?error=${encodeURIComponent(error)}`)
+  }
+  if (await getAtelier(input.id)) {
+    redirect(`/illust/new?error=${encodeURIComponent(`ID '${input.id}' は既に使用されています`)}`)
+  }
+
+  await createAtelier(input)
+  await purgeAtelierCache()
+  await notifyAtelierPublishToSNS({ input, type: 'new' })
+
+  revalidatePath('/illust')
+  // 保存後は一覧へ戻らず、作成したイラストの編集画面へ遷移する（連続編集のため）
+  redirect(`/illust/${input.id}/edit?saved=1`)
+}
+
+export async function updateAtelierAction(formData: FormData): Promise<void> {
+  const { input, error } = parseAtelierForm(formData)
+  if (error) {
+    redirect(`/illust/${input.id}/edit?error=${encodeURIComponent(error)}`)
+  }
+
+  // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
+  const current = await getAtelier(input.id)
+  const oldStatus = current?.status
+
+  await updateAtelier(input)
+  await purgeAtelierCache()
+  await notifyAtelierPublishToSNS({ input, type: 'edit', oldStatus })
+
+  revalidatePath('/illust')
+  // 保存後は一覧へ戻らず、編集画面に留まる
+  redirect(`/illust/${input.id}/edit?saved=1`)
+}
+
+// 編集中の内容をKVに保存し、pages本体のプレビューURLを返す（D1には書き込まない）
+// ページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
+export async function previewAtelierAction(
+  _prev: PreviewActionState,
+  formData: FormData
+): Promise<PreviewActionState> {
+  const { input, error } = parseAtelierForm(formData)
+  if (error) {
+    return { error }
+  }
+
+  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
+  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
+  const draftKey = await saveAtelierDraft(input, regenerateKey)
+  const { env } = await getCloudflareContext({ async: true })
+  return { previewURL: `${env.PAGES_HOST}/illust/detail/${input.id}?draftKey=${draftKey}` }
+}
+
+// 編集画面からの手動キャッシュ削除。イラストのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
+export async function purgeAtelierCacheAction(_prev: PurgeActionState, _formData: FormData): Promise<PurgeActionState> {
+  try {
+    await purgeAtelierCache()
+    return { done: 'イラストのキャッシュを削除しました（一覧・単体すべて）' }
+  } catch {
+    return { error: 'キャッシュ削除に失敗しました' }
+  }
+}
+
+export async function createTagAction(formData: FormData): Promise<void> {
+  const id = (formData.get('id') as string | null)?.trim() || generateContentID()
+  const tag = (formData.get('tag') as string | null)?.trim() ?? ''
+  const type = (formData.get('type') as string | null)?.trim() ?? ''
+
+  if (tag === '' || type === '') {
+    redirect(`/illust/tags?error=${encodeURIComponent('タグ名と種別は必須です')}`)
+  }
+  if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
+    redirect(`/illust/tags?error=${encodeURIComponent('IDは英数字・ハイフン・アンダースコアのみ使用できます')}`)
+  }
+
+  await createTag({ id, tag, type })
+
+  revalidatePath('/illust/tags')
+  redirect('/illust/tags')
+}

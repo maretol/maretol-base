@@ -6,11 +6,12 @@ export default function Blockquote({
   text: string
   attrs?: { [name: string]: string }
 }) {
-  // text の cite:: 以降を引用元として解釈し、cite属性にセットする
+  // 引用元表記は引用の最終行に cite:: で記述する仕様。最後の cite:: 以降を引用元として解釈し、cite属性にセットする
+  // Markdown変換後のHTMLでは行末に改行が残るため、trimして解釈・除去する
   let citeText = ''
   let citeURL = null
   if (text.includes('cite::')) {
-    const lastLine = text.split('cite::').pop()
+    const lastLine = text.split('cite::').pop()?.trim()
     if (lastLine) {
       // lastLine は [引用元のテキスト](URL) という形式、または [引用元のテキスト] という形式
       const urlMatch = lastLine.match(/\(([^)]+)\)/)
@@ -26,7 +27,8 @@ export default function Blockquote({
           citeURL = lastLine
         }
       }
-      innerHTML = innerHTML.replace(`cite::${lastLine}`, '')
+      // 直前の <br> ごと除去し、引用末尾に空行が残らないようにする（<br> がない旧HTML構造では後者のみマッチ）
+      innerHTML = innerHTML.replace(`<br>\ncite::${lastLine}`, '').replace(`cite::${lastLine}`, '')
     }
   }
 

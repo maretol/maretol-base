@@ -7,6 +7,11 @@
     "dev": "bash dev.sh",
     "dev:page": "npm run --workspace=pages run-dev",
     "next-dev:page": "npm run --workspace=pages dev",
+    "dev:admin": "npm run --workspace=admin-pages run-dev",
+    "next-dev:admin": "npm run --workspace=admin-pages dev",
+    "build:admin": "npm run --workspace=admin-pages admin:build",
+    "deploy:admin": "npm run --workspace=admin-pages deploy-prd",
+    "deploy-stg:admin": "npm run --workspace=admin-pages deploy-stg",
     "dev:ogp": "npm run --workspace=ogp-data-fetcher dev",
     "dev:cms": "npm run --workspace=cms-data-fetcher dev",
     "dev:sns": "npm run --workspace=sns-article-publisher dev",
@@ -20,18 +25,23 @@
     "build:page": "npm run --workspace=pages pages:build",
     "lint:page": "npm run --workspace=pages lint",
     "test:cms": "npm run --workspace=cms-data-fetcher test",
+    "test:md": "npm run --workspace=md-converter test",
     "test:sns": "npm run --workspace=sns-article-publisher test",
-    "test:page": "npm run --workspace=pages test"
+    "test:page": "npm run --workspace=pages test",
+    "test:e2e": "npm run --workspace=e2e test:e2e"
   },
   "author": "maretol",
   "private": true,
   "workspaces": [
     "pages",
+    "admin-pages",
     "cms-data-fetcher",
+    "cms-db",
     "ogp-data-fetcher",
     "packages/*",
     "cms-cache-purger",
-    "sns-article-publisher"
+    "sns-article-publisher",
+    "e2e"
   ],
   "devDependencies": {
     "esbuild": "0.28.1"

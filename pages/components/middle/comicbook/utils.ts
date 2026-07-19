@@ -1,4 +1,4 @@
-import { SinglePageState, DoublePageState } from './types'
+import { PageState } from './types'
 
 export function getPageImageSrc(baseUrl: string, filename: string, pageNumber: number, format: string): string {
   // 3桁まで0埋め
@@ -13,72 +13,54 @@ type CreatePageListParams = {
   originPageSrc: string[]
 }
 
-export function createSinglePageList(params: CreatePageListParams): SinglePageState[] {
+// 1スライド=1ページのリストを生成する
+// 常に2スライドずつ追加するためリスト長は必ず偶数になり、偶数indexが見開きの先頭（視覚上の右ページ）になる
+// この整列を保つため、ページのない箇所には空白スライド（src: null）を挿入する
+// idはsingle/double両モードのリストで共通になるため、モード切替時のページ位置の復元に使える
+export function createPageList(params: CreatePageListParams): PageState[] {
   const { coverPageSrc, backCoverPageSrc, startPageLeftRight, originPageSrc } = params
-  const pageList: SinglePageState[] = []
+  const pageList: PageState[] = []
 
-  // 表紙が指定済みの場合（ない場合スキップ
+  // 表紙が指定済みの場合（ない場合スキップ。空白と連続しないよう視覚上の左側に配置
   if (coverPageSrc) {
-    pageList.push({ position: 'center', src: coverPageSrc })
+    pageList.push(
+      { id: 'blank-cover', position: 'right', src: null },
+      { id: 'cover', position: 'left', src: coverPageSrc },
+    )
   }
 
-  if (startPageLeftRight === 'left') {
-    // 本文1ページ目が左だった場合、最初のページは左でその次が交互に左右でセットされる
-    originPageSrc.forEach((src, i) => {
-      const position = i % 2 === 0 ? 'left' : 'right'
-      pageList.push({ position, src })
-    })
-  } else {
-    // 本文1ページ目が右だった場合、最初のページは右でその次が交互に左右でセットされる
-    originPageSrc.forEach((src, i) => {
-      const position = i % 2 === 0 ? 'right' : 'left'
-      pageList.push({ position, src })
-    })
-  }
-
-  // 裏表紙が指定済みの場合（ない場合スキップ
-  if (backCoverPageSrc) {
-    pageList.push({ position: 'center', src: backCoverPageSrc })
-  }
-
-  return pageList
-}
-
-export function createDoublePageList(params: CreatePageListParams): DoublePageState[] {
-  const { coverPageSrc, backCoverPageSrc, startPageLeftRight, originPageSrc } = params
-  const pageList: DoublePageState[] = []
-
-  // 表紙が指定済みの場合追加
-  if (coverPageSrc) {
-    pageList.push({ position: 'center', src: coverPageSrc })
-  }
-
-  if (startPageLeftRight === 'left') {
-    // 本文1ページ目が左だった場合、最初のページは左だけで、そこから残りのページは2ページペアで処理する
-    pageList.push({ position: 'left', src: originPageSrc[0] })
-    for (let i = 1; i < originPageSrc.length; i += 2) {
-      if (i >= originPageSrc.length - 1) {
-        // 最後のページが1ページだけだった場合
-        pageList.push({ position: 'right', src: originPageSrc[i] })
-        break
-      }
-      pageList.push({ position: 'pair', src: { left: originPageSrc[i], right: originPageSrc[i + 1] } })
+  if (originPageSrc.length > 0) {
+    let pairStart = 0
+    if (startPageLeftRight === 'left') {
+      // 本文1ページ目が左だった場合、最初の見開きは左側だけにページが入る
+      pageList.push(
+        { id: 'blank-head', position: 'right', src: null },
+        { id: 'page-0', position: 'left', src: originPageSrc[0] },
+      )
+      pairStart = 1
     }
-  } else {
-    // 本文1ページ目が右だった場合、最初から2ページペアで処理する
-    for (let i = 0; i < originPageSrc.length; i += 2) {
+    for (let i = pairStart; i < originPageSrc.length; i += 2) {
       if (i >= originPageSrc.length - 1) {
-        // 最後のページが1ページだけだった場合
-        pageList.push({ position: 'right', src: originPageSrc[i] })
+        // 最後のページが1ページだけだった場合、右側だけにページが入る
+        pageList.push(
+          { id: `page-${i}`, position: 'right', src: originPageSrc[i] },
+          { id: 'blank-tail', position: 'left', src: null },
+        )
         break
       }
-      pageList.push({ position: 'pair', src: { left: originPageSrc[i], right: originPageSrc[i + 1] } })
+      pageList.push(
+        { id: `page-${i}`, position: 'right', src: originPageSrc[i] },
+        { id: `page-${i + 1}`, position: 'left', src: originPageSrc[i + 1] },
+      )
     }
   }
 
-  // 裏表紙が指定済みの場合（ない場合スキップ
+  // 裏表紙が指定済みの場合（ない場合スキップ。空白と連続しないよう視覚上の右側に配置
   if (backCoverPageSrc) {
-    pageList.push({ position: 'center', src: backCoverPageSrc })
+    pageList.push(
+      { id: 'back-cover', position: 'right', src: backCoverPageSrc },
+      { id: 'blank-back-cover', position: 'left', src: null },
+    )
   }
 
   return pageList

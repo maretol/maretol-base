@@ -9,6 +9,10 @@
 			"path": "pages"
 		},
 		{
+			"name": "maretol-base admin page",
+			"path": "admin-pages"
+		},
+		{
 			"name": "worker cms-data-fetcher",
 			"path": "cms-data-fetcher"
 		},
@@ -31,6 +35,10 @@
 		{
 			"name": "package cms-cache-key-gen",
 			"path": "packages/cms-cache-key-gen"
+		},
+		{
+			"name": "package md-converter",
+			"path": "packages/md-converter"
 		}
 	],
 	"settings": {

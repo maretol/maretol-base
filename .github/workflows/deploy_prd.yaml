@@ -19,13 +19,14 @@ jobs:
       name: prd
     outputs:
       pages: ${{ steps.filter.outputs.pages }}
+      admin-pages: ${{ steps.filter.outputs.admin-pages }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
       cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
       cms-cache-purger: ${{ steps.filter.outputs.cms-cache-purger }}
       sns-article-publisher: ${{ steps.filter.outputs.sns-article-publisher }}
       workflow: ${{ steps.filter.outputs.workflow }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: path filter
         id: filter
         uses: dorny/paths-filter@v4
@@ -35,18 +36,25 @@ jobs:
               - "pages/**"
               - "packages/api-types/**"
               - "packages/cms-cache-key-gen/**"
+            admin-pages:
+              - "admin-pages/**"
+              - "packages/api-types/**"
             ogp-data-fetcher:
               - "ogp-data-fetcher/**"
               - "packages/api-types/src/ogp_types.ts"
             cms-data-fetcher:
               - "cms-data-fetcher/**"
               - "packages/api-types/src/cms_types.ts"
+              - "packages/api-types/src/cms_db_types.ts"
+              - "packages/md-converter/**"
             cms-cache-purger:
               - "cms-cache-purger/**"
               - "packages/cms-cache-key-gen/**"
+              - "packages/api-types/src/cms_webhook_types.ts"
             sns-article-publisher:
               - "sns-article-publisher/**"
               - "packages/api-types/src/sns_pub.ts"
+              - "packages/api-types/src/cms_webhook_types.ts"
             workflow:
               - ".github/workflows/**"
 
@@ -60,7 +68,7 @@ jobs:
       run:
         working-directory: ./pages
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -85,6 +93,41 @@ jobs:
           CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: echo $CMD_OUTPUT
 
+  deploy-admin-pages:
+    needs: changes
+    if: ${{ needs.changes.outputs.admin-pages == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: prd
+    defaults:
+      run:
+        working-directory: ./admin-pages
+    steps:
+      - uses: actions/checkout@v7
+      - name: setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
+      - name: build
+        working-directory: ./
+        run: npm run build:admin
+      - name: deploy by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./admin-pages
+          command: deploy
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT
+
   deploy-ogp-data-fetcher:
     needs: changes
     if: ${{ needs.changes.outputs.ogp-data-fetcher == 'true' || needs.changes.outputs.workflow == 'true' }}
@@ -95,7 +138,7 @@ jobs:
       run:
         working-directory: ./ogp-data-fetcher
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -124,7 +167,7 @@ jobs:
       run:
         working-directory: ./cms-data-fetcher
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -153,7 +196,7 @@ jobs:
       run:
         working-directory: ./cms-cache-purger
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -182,7 +225,7 @@ jobs:
       run:
         working-directory: ./sns-article-publisher
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - name: setup node
         uses: actions/setup-node@v6
         with:
@@ -205,6 +248,7 @@ jobs:
     needs:
       [
         deploy-pages,
+        deploy-admin-pages,
         deploy-ogp-data-fetcher,
         deploy-cms-data-fetcher,
         deploy-cms-cache-purger,
@@ -221,6 +265,7 @@ jobs:
         if: >-
           ${{
             needs.deploy-pages.result == 'failure' ||
+            needs.deploy-admin-pages.result == 'failure' ||
             needs.deploy-ogp-data-fetcher.result == 'failure' ||
             needs.deploy-cms-data-fetcher.result == 'failure' ||
             needs.deploy-cms-cache-purger.result == 'failure' ||
@@ -228,12 +273,14 @@ jobs:
           }}
         env:
           build_result: ${{ needs.deploy-pages.result }}
+          admin_result: ${{ needs.deploy-admin-pages.result }}
           ogp_result: ${{ needs.deploy-ogp-data-fetcher.result }}
           cms_result: ${{ needs.deploy-cms-data-fetcher.result }}
           cms_cache_result: ${{ needs.deploy-cms-cache-purger.result }}
           sns_result: ${{ needs.deploy-sns-article-publisher.result }}
         run: |
           echo "build result: $build_result"
+          echo "admin result: $admin_result"
           echo "ogp result: $ogp_result"
           echo "cms result: $cms_result"
           echo "cms cache result: $cms_cache_result"

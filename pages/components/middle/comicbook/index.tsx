@@ -1,6 +1,6 @@
 'use client'
 
-import React, { use, useCallback, useMemo, useRef, useState } from 'react'
+import React, { use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Swiper, SwiperClass, SwiperSlide } from 'swiper/react'
 import { Keyboard } from 'swiper/modules'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,7 @@ import ComicSlide from './comic_slide'
 import PageController from './page_controller'
 import NavigationIcons from './navigation_icons'
 import ComicSettingsPopover from './settings_popover'
-import { getPageImageSrc, createSinglePageList, createDoublePageList } from './utils'
+import { getPageImageSrc, createPageList } from './utils'
 import { LAYOUT, SWIPER } from './constants'
 import 'swiper/css'
 
@@ -35,7 +35,11 @@ export default function ComicBook(props: ComicBookProps) {
   const startPage = data.first_page
   const lastPage = data.last_page
   const format = data.format[0]
-  const pageArray = Array.from({ length: lastPage - startPage + 1 }, (_, i) => i + startPage)
+  // メモ化しないと毎レンダーで再生成され、下流のuseMemo（originPageSrc/pageList）が毎回作り直されてしまう
+  const pageArray = useMemo(
+    () => Array.from({ length: lastPage - startPage + 1 }, (_, i) => i + startPage),
+    [startPage, lastPage],
+  )
 
   const coverPageSrc = data.cover ? baseUrl + '/' + data.cover : null
   const backCoverPageSrc = data.back_cover ? baseUrl + '/' + data.back_cover : null
@@ -43,7 +47,7 @@ export default function ComicBook(props: ComicBookProps) {
   // マンガの画像srcはComicImageコンポーネントでCDN経由のURLに変換している
   const originPageSrc = useMemo(
     () => pageArray.map((i) => getPageImageSrc(baseUrl, filename, i, format)),
-    [pageArray, baseUrl, filename, format]
+    [pageArray, baseUrl, filename, format],
   )
 
   const headerImage = getHeaderImageURL()
@@ -56,32 +60,56 @@ export default function ComicBook(props: ComicBookProps) {
   const mode = useViewMode(width, pageOption.mode_static)
   const { zoneFlag, mouseMoveEvent, mouseClickEvent, mouseLeaveEvent } = useZoneDetection(comicDivRef)
 
+  const pageList = useMemo(
+    () =>
+      createPageList({
+        coverPageSrc,
+        backCoverPageSrc,
+        startPageLeftRight,
+        originPageSrc,
+      }),
+    [startPageLeftRight, coverPageSrc, backCoverPageSrc, originPageSrc],
+  )
+
+  // singleモードでは先頭・末尾の空白スライド（見開き整列用）は不要なため除外する
   const singlePageList = useMemo(
-    () =>
-      createSinglePageList({
-        coverPageSrc,
-        backCoverPageSrc,
-        startPageLeftRight,
-        originPageSrc,
-      }),
-    [startPageLeftRight, coverPageSrc, backCoverPageSrc, originPageSrc]
+    () => pageList.filter((page, i) => !(page.src === null && (i === 0 || i === pageList.length - 1))),
+    [pageList],
   )
 
-  const doublePageList = useMemo(
-    () =>
-      createDoublePageList({
-        coverPageSrc,
-        backCoverPageSrc,
-        startPageLeftRight,
-        originPageSrc,
-      }),
-    [startPageLeftRight, coverPageSrc, backCoverPageSrc, originPageSrc]
-  )
+  const displayPageList = mode === 'double' ? pageList : singlePageList
+  const totalPages = displayPageList.length
 
-  const totalPages = useMemo(
-    () => (mode === 'single' ? singlePageList.length : doublePageList.length),
-    [mode, singlePageList.length, doublePageList.length]
-  )
+  // 表示中ページの論理ID。モード切替でスライドリストが差し替わったときの位置復元に使う
+  // 差し替え直後はcurrentPageが旧リストのindexのままなので、復元（下のuseLayoutEffect）より後に更新されるよう通常のuseEffectで持つ
+  const currentPageIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    currentPageIdRef.current = displayPageList[currentPage]?.id ?? currentPageIdRef.current
+  }, [currentPage, displayPageList])
+
+  // モード切替でリストが差し替わるとactiveIndexが別のページを指してしまうため、同じページIDの位置へ即時移動して復元する
+  // モードが実際に変わったときだけ動かす（それ以外のレンダーで動くと通常のページ送りと競合する）
+  const prevModeRef = useRef(mode)
+  useLayoutEffect(() => {
+    if (prevModeRef.current === mode) return
+    if (!swiperInstance || swiperInstance.destroyed) return
+    prevModeRef.current = mode
+    const pageId = currentPageIdRef.current
+    if (pageId === null) return
+
+    let index = displayPageList.findIndex((page) => page.id === pageId)
+    if (index < 0) {
+      // singleモードで除外される先頭・末尾の空白スライドにいた場合は最寄りの端ページへ
+      index = pageList.findIndex((page) => page.id === pageId) <= 0 ? 0 : displayPageList.length - 1
+    }
+    if (mode === 'double') {
+      // 見開きの先頭（偶数index）に揃える
+      index -= index % 2
+    }
+    if (index !== swiperInstance.activeIndex) {
+      swiperInstance.slideTo(index, 0)
+    }
+  }, [mode, swiperInstance, displayPageList, pageList])
 
   const handleNextPage = useCallback(() => {
     if (!swiperInstance) return
@@ -97,7 +125,7 @@ export default function ComicBook(props: ComicBookProps) {
     (e: React.MouseEvent<HTMLDivElement>) => {
       mouseClickEvent(e, handleNextPage, handlePrevPage)
     },
-    [mouseClickEvent, handleNextPage, handlePrevPage]
+    [mouseClickEvent, handleNextPage, handlePrevPage],
   )
 
   return (
@@ -105,10 +133,10 @@ export default function ComicBook(props: ComicBookProps) {
       <div
         className={cn(
           'absolute z-50 top-0 left-0 w-full flex justify-center items-center bg-gray-300',
-          'transition-opacity ease-in-out duration-100 opacity-0 hover:opacity-70'
+          'transition-opacity ease-in-out duration-100 opacity-0 hover:opacity-70',
         )}
       >
-        <div className="pt-10 bg-gray-300 w-full max-w-[1500px]">
+        <div className="pt-10 bg-gray-300 w-full max-w-375">
           <Button variant={'link'} className="p-0" asChild>
             <Link href="/">
               <ClientImage2
@@ -133,6 +161,8 @@ export default function ComicBook(props: ComicBookProps) {
           modules={[Keyboard]}
           dir={'rtl'}
           speed={comicScrollSpeed}
+          slidesPerView={mode === 'double' ? 2 : 1}
+          slidesPerGroup={mode === 'double' ? 2 : 1}
           onSwiper={setSwiperInstance}
           onActiveIndexChange={(swiper) => {
             setCurrentPage(swiper.activeIndex)
@@ -141,22 +171,26 @@ export default function ComicBook(props: ComicBookProps) {
           className="h-full w-full"
           lazyPreloadPrevNext={SWIPER.LAZY_PRELOAD}
         >
-          {mode === 'single' &&
-            singlePageList.map((page, i) => (
-              <SwiperSlide key={i}>
-                <ComicSlide mode="single" page={page} />
-              </SwiperSlide>
-            ))}
-          {mode === 'double' &&
-            doublePageList.map((page, i) => (
-              <SwiperSlide key={i}>
-                <ComicSlide mode="double" page={page} />
-              </SwiperSlide>
-            ))}
-          <NavigationIcons pageOption={pageOption} zoneFlag={zoneFlag} onNextPage={handleNextPage} onPrevPage={handlePrevPage} />
+          {displayPageList.map((page) => (
+            <SwiperSlide key={page.id}>
+              <ComicSlide mode={mode} page={page} />
+            </SwiperSlide>
+          ))}
+          <NavigationIcons
+            pageOption={pageOption}
+            zoneFlag={zoneFlag}
+            onNextPage={handleNextPage}
+            onPrevPage={handlePrevPage}
+          />
         </Swiper>
       </div>
-      <div className={cn('relative bg-gray-700', LAYOUT.FOOTER_HEIGHT, 'w-full text-white text-center flex justify-center items-center')}>
+      <div
+        className={cn(
+          'relative bg-gray-700',
+          LAYOUT.FOOTER_HEIGHT,
+          'w-full text-white text-center flex justify-center items-center',
+        )}
+      >
         <div className="flex justify-center items-center w-[90%]">
           <PageController
             mode={mode}

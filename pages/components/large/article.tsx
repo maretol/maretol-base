@@ -6,8 +6,9 @@ import { Button } from '../ui/button'
 import ShareSection from '../middle/share_section'
 import { BookIcon, HomeIcon } from 'lucide-react'
 import ArticleContent from '../middle/article_content'
-import { Annotation, categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
+import { adjacentContentsResult, Annotation, categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
 import Annotations from '../middle/article_dom/annotations'
+import AdjacentArticleNav from '../middle/adjacent_article_nav'
 
 type ArticleProps = {
   id: string
@@ -24,6 +25,8 @@ type FullArticleProps = ArticleProps & {
   tableOfContents: TableOfContents
   draftKey?: string
   annotations?: Annotation[]
+  // 前後記事ナビ（blogのみ）。未指定なら表示しない
+  adjacent?: adjacentContentsResult
 }
 
 export async function Article({ id, title, updatedAt, parsedContents, categories }: ArticleProps) {
@@ -69,6 +72,7 @@ export async function FullArticle({
   draftKey,
   shareURL,
   annotations,
+  adjacent,
 }: FullArticleProps) {
   return (
     <Card lang="ja" className="w-full bg-gray-100">
@@ -101,10 +105,11 @@ export async function FullArticle({
         <Annotations annotations={annotations ?? []} />
       </CardContent>
       <CardFooter>
-        <div className="w-full">
-          <div className="flex gap-1 items-center justify-end">
+        <div className="w-full space-y-2">
+          <div className="flex gap-2 items-center justify-end">
             <ShareSection shareURL={shareURL} shareTitle={title} contentType="blog" />
           </div>
+          {adjacent && <AdjacentArticleNav adjacent={adjacent} />}
           <div className="flex justify-center mt-2">
             <Button variant="secondary" className="w-96 flex justify-center gap-1" asChild>
               <Link href="/">
