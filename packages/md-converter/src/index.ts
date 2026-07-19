@@ -7,11 +7,13 @@
  * 独自拡張:
  * - 見出し末尾の `@@index_target` : 目次対象の指定。<span class="index"> で包む
  * - コードフェンスの info 文字列 `lang:filename` : <div data-filename="filename"> で包む
+ * - `[[親文字@@ruby::よみ]]` : inline-markup のショートカット。<span class="inline-markup"> で包む
  */
 
 import MarkdownIt from 'markdown-it'
 
 type StateCore = Parameters<Parameters<MarkdownIt['core']['ruler']['push']>[1]>[0]
+type StateInline = Parameters<Parameters<MarkdownIt['inline']['ruler']['push']>[1]>[0]
 
 const INDEX_TARGET_MARKER = '@@index_target'
 
@@ -82,6 +84,36 @@ function cmsHeadingRule(state: StateCore): void {
   }
 }
 
+// inline-markup ショートカット: [[親文字@@ruby::よみ]] を <span class="inline-markup"> に変換する。
+// @@ を含まない [[...]] は通常の文章とみなしリテラルのまま残す。
+// 事前置換の正規表現ではなくインラインルールにすることで、コードスパン・コードフェンス内は
+// markdown-it の解釈順により自動的に保護される
+function cmsInlineShortcutRule(state: StateInline, silent: boolean): boolean {
+  const src = state.src
+  const pos = state.pos
+  if (src.charCodeAt(pos) !== 0x5b /* [ */ || src.charCodeAt(pos + 1) !== 0x5b) {
+    return false
+  }
+  const end = src.indexOf(']]', pos + 2)
+  if (end < 0) {
+    return false
+  }
+  const content = src.slice(pos + 2, end)
+  if (!content.includes('@@') || content.includes('\n')) {
+    return false
+  }
+  if (!silent) {
+    const open = state.push('html_inline', '', 0)
+    open.content = '<span class="inline-markup">'
+    const text = state.push('text', '', 0)
+    text.content = content
+    const close = state.push('html_inline', '', 0)
+    close.content = '</span>'
+  }
+  state.pos = end + 2
+  return true
+}
+
 function createConverter(): MarkdownIt {
   const md = new MarkdownIt({
     html: true, // 生HTMLを許可（インラインは下記で装飾系タグのみに制限）
@@ -108,6 +140,9 @@ function createConverter(): MarkdownIt {
   })
 
   md.core.ruler.push('cms_heading', cmsHeadingRule)
+
+  // [[...]] ショートカットはリンク記法より先に解釈する
+  md.inline.ruler.before('link', 'cms_inline_shortcut', cmsInlineShortcutRule)
 
   // コードフェンス: info 文字列を `lang:filename` として解析し、
   // pages が描画できるトップレベル要素にするため常に <div> で包む

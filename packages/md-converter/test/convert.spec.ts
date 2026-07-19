@@ -88,6 +88,54 @@ describe('インラインHTMLの制御', () => {
   })
 })
 
+describe('inline-markup ショートカット記法', () => {
+  it('[[親文字@@ruby::よみ]] が span.inline-markup に変換される', () => {
+    const html = convertMarkdownToHtml('これは[[約束された勝利の剣@@ruby::エクスカリバー]]です')
+    expect(html).toBe(
+      '<p>これは<span class="inline-markup">約束された勝利の剣@@ruby::エクスカリバー</span>です</p>\n'
+    )
+  })
+
+  it('1行に複数のショートカットを変換できる', () => {
+    const html = convertMarkdownToHtml('[[漢字@@ruby::かんじ]]と[[単語@@ruby::たんご]]')
+    expect(html).toBe(
+      '<p><span class="inline-markup">漢字@@ruby::かんじ</span>と<span class="inline-markup">単語@@ruby::たんご</span></p>\n'
+    )
+  })
+
+  it('注釈記法 [[@@annotation::...]] も変換される', () => {
+    const html = convertMarkdownToHtml('本文[[@@annotation::注釈テキスト]]続き')
+    expect(html).toBe('<p>本文<span class="inline-markup">@@annotation::注釈テキスト</span>続き</p>\n')
+  })
+
+  it('強調の内側でも変換される', () => {
+    const html = convertMarkdownToHtml('**強調内[[漢字@@ruby::かんじ]]**')
+    expect(html).toBe('<p><strong>強調内<span class="inline-markup">漢字@@ruby::かんじ</span></strong></p>\n')
+  })
+
+  it('@@ を含まない [[...]] はリテラルのまま残る', () => {
+    const html = convertMarkdownToHtml('[[ただの二重括弧]]は変換しない')
+    expect(html).toBe('<p>[[ただの二重括弧]]は変換しない</p>\n')
+  })
+
+  it('インラインコード・コードフェンス内は変換されない', () => {
+    expect(convertMarkdownToHtml('`[[code@@ruby::よみ]]`')).toBe('<p><code>[[code@@ruby::よみ]]</code></p>\n')
+    const fence = convertMarkdownToHtml('```\n[[code@@ruby::よみ]]\n```')
+    expect(fence).not.toContain('inline-markup')
+    expect(fence).toContain('[[code@@ruby::よみ]]')
+  })
+
+  it(']] の閉じ忘れはリテラルのまま残る', () => {
+    const html = convertMarkdownToHtml('[[閉じない@@ruby::よみ')
+    expect(html).toBe('<p>[[閉じない@@ruby::よみ</p>\n')
+  })
+
+  it('内部のHTML特殊文字はエスケープされる', () => {
+    const html = convertMarkdownToHtml('[[a<b>@@ruby::x&y]]')
+    expect(html).toBe('<p><span class="inline-markup">a&lt;b&gt;@@ruby::x&amp;y</span></p>\n')
+  })
+})
+
 describe('URL・コマンド行の保持', () => {
   it('単行URLは自動リンクされずプレーンな p のまま', () => {
     const html = convertMarkdownToHtml('https://github.com/maretol/maretol-base')
