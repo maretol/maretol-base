@@ -15,8 +15,6 @@ import {
 import {
   getBandeDessinee,
   getBandeDessinees,
-  getNovel,
-  getNovels,
   getContent,
   getContents,
   getContentsByTag,
@@ -35,6 +33,9 @@ import {
   getBandeDessineesFromD1,
   getBandeDessineeFromD1,
   getBandeDessineeDraftFromKV,
+  getNovelsFromD1,
+  getNovelFromD1,
+  getNovelDraftFromKV,
 } from './d1'
 import {
   getBlogContentsFromD1,
@@ -55,7 +56,6 @@ export interface Env {
   CMS_API_KEY: string
   CMS_API_KEY_BD: string
   CMS_API_KEY_AT: string
-  CMS_API_KEY_NOVEL: string
   // サービスごとの参照先切り替え（段階移行用）。'd1' で D1、それ以外は microCMS を参照する
   ATELIER_SOURCE?: string
   COMIC_SOURCE?: string
@@ -335,13 +335,13 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
   }
 
+  // novel は内製CMS（D1）専用。microCMS時代のサービスが存在しないため参照先切替（*_SOURCE）は持たない
   async fetchNovels(offset?: string, limit?: string): Promise<{ novels: novelResult[]; total: number }> {
-    const apiKey = this.env.CMS_API_KEY_NOVEL
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
 
     try {
-      const contents = await getNovels(apiKey, offsetNum, limitNum)
+      const contents = await getNovelsFromD1(this.env.DB, offsetNum, limitNum)
       contents.novels.forEach((n) => {
         const parsed = parse(n.description)
         n.parsed_description = parsed.contents_array
@@ -357,12 +357,14 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchNovel(contentID: string, draftKey?: string | null): Promise<novelResult> {
-    const apiKey = this.env.CMS_API_KEY_NOVEL
     if (contentID === null) {
       throw new Error('contentID is empty')
     }
     try {
-      const content = await getNovel(apiKey, contentID, draftKey || undefined)
+      // draftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
+      const content =
+        (draftKey ? await getNovelDraftFromKV(this.env.CMS_DRAFT, contentID, draftKey) : null) ??
+        (await getNovelFromD1(this.env.DB, contentID))
       const parsed = parse(content.description)
       content.parsed_description = parsed.contents_array
       content.table_of_contents = parsed.table_of_contents

@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 const SEGMENT_LABELS: Record<string, string> = {
   illust: 'イラスト',
   comic: 'マンガ',
+  novel: '小説',
   blog: 'ブログ',
   cache: 'キャッシュ管理',
   sns: 'SNS投稿',
@@ -20,7 +21,7 @@ const SEGMENT_LABELS: Record<string, string> = {
 
 // 一覧ページとして遷移可能なパス。中間セグメントはここに含まれるときだけリンクにする
 // （/blog/{id} のようなページは存在しないため、コンテンツIDはリンクにしない）
-const LINKABLE_PATHS = new Set(['/illust', '/comic', '/blog', '/blog/info'])
+const LINKABLE_PATHS = new Set(['/illust', '/comic', '/novel', '/blog', '/blog/info'])
 
 export function Breadcrumbs() {
   const pathname = usePathname()

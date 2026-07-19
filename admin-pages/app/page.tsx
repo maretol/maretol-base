@@ -14,6 +14,9 @@ async function getCounts() {
         (SELECT COUNT(*) FROM bande_dessinees) AS comics,
         (SELECT COUNT(*) FROM bande_dessinee_tags) AS comic_tags,
         (SELECT COUNT(*) FROM bande_dessinee_series) AS comic_series,
+        (SELECT COUNT(*) FROM novels) AS novels,
+        (SELECT COUNT(*) FROM novel_tags) AS novel_tags,
+        (SELECT COUNT(*) FROM novel_series) AS novel_series,
         (SELECT COUNT(*) FROM blog_contents) AS blogs,
         (SELECT COUNT(*) FROM blog_categories) AS blog_categories,
         (SELECT COUNT(*) FROM blog_info) AS blog_info`
@@ -23,6 +26,9 @@ async function getCounts() {
       comics: number
       comic_tags: number
       comic_series: number
+      novels: number
+      novel_tags: number
+      novel_series: number
       blogs: number
       blog_categories: number
       blog_info: number
@@ -34,6 +40,9 @@ async function getCounts() {
       comics: row?.comics ?? 0,
       comicTags: row?.comic_tags ?? 0,
       comicSeries: row?.comic_series ?? 0,
+      novels: row?.novels ?? 0,
+      novelTags: row?.novel_tags ?? 0,
+      novelSeries: row?.novel_series ?? 0,
       blogs: row?.blogs ?? 0,
       blogCategories: row?.blog_categories ?? 0,
       blogInfo: row?.blog_info ?? 0,
@@ -62,6 +71,13 @@ export default async function Home() {
           <p className="mt-1 text-3xl font-bold">{counts.ok ? counts.comics : '—'}</p>
           <p className="mt-1 text-xs text-gray-400">
             タグ {counts.ok ? counts.comicTags : '—'} 件 / シリーズ {counts.ok ? counts.comicSeries : '—'} 件
+          </p>
+        </Link>
+        <Link href="/novel" className="rounded-lg border border-gray-200 bg-white p-4 hover:border-gray-400">
+          <p className="text-sm text-gray-500">小説（novel）</p>
+          <p className="mt-1 text-3xl font-bold">{counts.ok ? counts.novels : '—'}</p>
+          <p className="mt-1 text-xs text-gray-400">
+            タグ {counts.ok ? counts.novelTags : '—'} 件 / シリーズ {counts.ok ? counts.novelSeries : '—'} 件
           </p>
         </Link>
         <Link href="/blog" className="rounded-lg border border-gray-200 bg-white p-4 hover:border-gray-400">

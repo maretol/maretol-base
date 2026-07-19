@@ -24,6 +24,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               <Link href="/comic" className="text-gray-600 hover:text-gray-900">
                 マンガ
               </Link>
+              <Link href="/novel" className="text-gray-600 hover:text-gray-900">
+                小説
+              </Link>
               <Link href="/blog" className="text-gray-600 hover:text-gray-900">
                 ブログ
               </Link>

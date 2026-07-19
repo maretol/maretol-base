@@ -1,7 +1,6 @@
 import { createClient, MicroCMSContentId, MicroCMSDate } from 'microcms-js-sdk'
 import {
   bandeDessineeResult,
-  novelResult,
   categoryAPIResult,
   contentsAPIResult,
   staticAPIResult,
@@ -318,72 +317,6 @@ export async function getBandeDessinee(apiKey: string, contentID: string, draftK
   return parseBandeDessineeResult(response.contents[0])
 }
 
-// 小説（novel）の一覧を取得するAPIアクセス
-// serviceDomain / endpoint は仮置き値。確定後にこの2箇所を差し替える。
-export async function getNovels(apiKey: string, offset: number, limit: number) {
-  if (apiKey === undefined) {
-    throw new Error('API_KEY is undefined')
-  }
-
-  const client = createClient({
-    serviceDomain: 'maretol-novel',
-    apiKey: apiKey,
-  })
-
-  const response = await client
-    .getList<novelResult>({
-      endpoint: 'novel',
-      queries: { offset: offset, limit: limit },
-    })
-    .then((res) => {
-      return res
-    })
-    .catch((err) => {
-      console.log(err)
-    })
-
-  if (response === undefined) {
-    throw new Error('api access error')
-  }
-
-  const novels = response.contents.map((n) => {
-    return parseNovelResult(n)
-  })
-  const total = response.totalCount
-
-  return { novels, total }
-}
-
-// 小説（novel）をIDで単独取得するAPIアクセス
-export async function getNovel(apiKey: string, contentID: string, draftKey?: string) {
-  if (apiKey === undefined) {
-    throw new Error('API_KEY is undefined')
-  }
-
-  const client = createClient({
-    serviceDomain: 'maretol-novel',
-    apiKey: apiKey,
-  })
-
-  const response = await client
-    .getList<novelResult>({
-      endpoint: 'novel',
-      queries: { ids: contentID, draftKey: draftKey },
-    })
-    .then((res) => {
-      return res
-    })
-    .catch((err) => {
-      console.log(err)
-    })
-
-  if (response === undefined) {
-    throw new Error('api access error')
-  }
-
-  return parseNovelResult(response.contents[0])
-}
-
 export async function getAteliers(apiKey: string, offset: number, limit: number) {
   if (apiKey === undefined) {
     throw new Error('API_KEY is undefined')
@@ -518,28 +451,6 @@ function parseBandeDessineeResult(result: bandeDessineeResult & MicroCMSContentI
     first_page: result.first_page,
     last_page: result.last_page,
     first_left_right: result.first_left_right,
-    parsed_description: result.parsed_description,
-    table_of_contents: result.table_of_contents,
-  }
-}
-
-function parseNovelResult(result: novelResult & MicroCMSContentId & MicroCMSDate): novelResult {
-  result = result as novelResult
-  return {
-    id: result.id,
-    createdAt: result.createdAt,
-    updatedAt: result.updatedAt,
-    publishedAt: result.publishedAt,
-    title_name: result.title_name,
-    publish_date: result.publish_date,
-    publish_event: result.publish_event,
-    contents_url: result.contents_url,
-    description: result.description,
-    next_id: result.next_id,
-    previous_id: result.previous_id,
-    series: result.series,
-    tag: result.tag,
-    cover: result.cover,
     parsed_description: result.parsed_description,
     table_of_contents: result.table_of_contents,
   }

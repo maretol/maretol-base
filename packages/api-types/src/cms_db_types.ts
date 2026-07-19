@@ -87,6 +87,52 @@ export type bandeDessineeDraftRecord = {
   series: { id: string; series_name: string } | null
 }
 
+export type novelRow = {
+  id: string
+  title_name: string
+  publish_date: string | null
+  publish_event: string | null
+  contents_url: string
+  next_id: string | null
+  previous_id: string | null
+  tag_id: string
+  series_id: string | null
+  cover: string | null
+  description: string
+  description_format: 'html' | 'markdown'
+  status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
+  created_at: string
+  updated_at: string
+  published_at: string | null
+  revised_at: string | null
+}
+
+export type novelTagRow = {
+  id: string
+  tag_name: string
+  created_at: string
+  updated_at: string
+  published_at: string | null
+  revised_at: string | null
+}
+
+export type novelSeriesRow = {
+  id: string
+  series_name: string
+  created_at: string
+  updated_at: string
+  published_at: string | null
+  revised_at: string | null
+}
+
+// キー: draft_novel_{id}
+export type novelDraftRecord = {
+  draftKey: string
+  row: novelRow
+  tag: { id: string; tag_name: string }
+  series: { id: string; series_name: string } | null
+}
+
 export type blogContentRow = {
   id: string
   title: string

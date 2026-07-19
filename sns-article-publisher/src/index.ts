@@ -36,7 +36,7 @@ const TARGET = {
   misskey: true,
 }
 
-type ServiceType = 'blog' | 'illust' | 'comic'
+type ServiceType = 'blog' | 'illust' | 'comic' | 'novel'
 
 type PublishContent = {
   url: string
@@ -132,6 +132,7 @@ async function publish(env: Env, content: PublishContent, service: ServiceType) 
     blog: '投稿しました',
     illust: 'イラストを公開しました',
     comic: 'マンガを公開しました',
+    novel: '小説を公開しました',
   }
   const prefix = postPrefixMap[service]
 
@@ -346,6 +347,15 @@ function getContent(serviceType: ServiceType, newContent: ContentValue): Publish
       title: newContent.title_name,
       message: null,
       ogpImage: ogp,
+    }
+  }
+  if (serviceType === 'novel') {
+    // テキスト小説のため画像は任意の表紙（cover）のみ。未設定なら既定OGPに任せる
+    return {
+      url: `https://www.maretol.xyz/novels/${newContent.id}`,
+      title: newContent.title_name,
+      message: null,
+      ogpImage: newContent.cover,
     }
   }
 
