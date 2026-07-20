@@ -71,7 +71,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
@@ -106,7 +106,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
@@ -141,7 +141,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: pwd
@@ -172,7 +172,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: pwd
@@ -203,7 +203,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: pwd
@@ -234,7 +234,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: deploy by wrangler
@@ -306,7 +306,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: setup node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: npm ci
