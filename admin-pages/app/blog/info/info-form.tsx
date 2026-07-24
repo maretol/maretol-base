@@ -1,6 +1,7 @@
 import type { blogInfoRow } from 'api-types'
 import { createBlogInfoAction, updateBlogInfoAction } from '../actions'
 import { SubmitButton } from '@/components/submit-button'
+import { ContentTextarea } from '@/components/content-textarea'
 
 type Props = {
   mode: 'new' | 'edit'
@@ -62,7 +63,7 @@ export function InfoForm({ mode, info, error, saved }: Props) {
           <p className="mt-1 text-xs text-gray-400">
             形式を変更しても本文は自動変換されません。切り替える場合は書き直しとセットで保存してください
           </p>
-          <textarea
+          <ContentTextarea
             name="main_text"
             defaultValue={info?.main_text ?? ''}
             rows={20}
