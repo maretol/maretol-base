@@ -27,6 +27,7 @@
     "test:cms": "npm run --workspace=cms-data-fetcher test",
     "test:md": "npm run --workspace=md-converter test",
     "test:sns": "npm run --workspace=sns-article-publisher test",
+    "test:page": "npm run --workspace=pages test",
     "test:e2e": "npm run --workspace=e2e test:e2e"
   },
   "author": "maretol",

@@ -1,5 +1,5 @@
 export type SNSTarget = 'twitter' | 'bluesky' | 'misskey' | 'nostr'
-export type ServiceType = 'blog' | 'illust' | 'comic'
+export type ServiceType = 'blog' | 'illust' | 'comic' | 'novel'
 
 export interface UTMParams {
   source: SNSTarget

@@ -1,13 +1,13 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
-import { BookOpenIcon, ImageIcon, Info, MailIcon, NotebookText, RssIcon } from 'lucide-react'
+import { BookOpenIcon, BookTextIcon, ImageIcon, Info, MailIcon, NotebookText, RssIcon } from 'lucide-react'
 
 export default function HeaderButtons() {
   const iconClassName = 'w-4 h-4'
   const buttonClassName = 'w-full gap-1 font-suse font-semibold'
   const subButtonClassName = 'w-12'
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-5 gap-1">
+    <div className="grid grid-cols-2 sm:grid-cols-6 gap-1">
       <Button variant={'outline'} className={buttonClassName} asChild>
         <Link href="/illust">
           <ImageIcon className={iconClassName} />
@@ -18,6 +18,12 @@ export default function HeaderButtons() {
         <Link href="/comics">
           <BookOpenIcon className={iconClassName} />
           Comics
+        </Link>
+      </Button>
+      <Button variant="outline" className={buttonClassName} asChild>
+        <Link href="/novels">
+          <BookTextIcon className={iconClassName} />
+          Novels
         </Link>
       </Button>
       <Button variant="outline" className={buttonClassName} asChild>

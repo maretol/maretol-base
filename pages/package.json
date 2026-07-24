@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "test": "vitest run",
     "pages:build": "opennextjs-cloudflare build",
     "build-and-run-dev": "npm run pages:build && npm run run-dev",
     "run-dev_old": "wrangler pages dev -c wrangler.toml -c ../ogp-data-fetcher/wrangler.toml -c ../cms-data-fetcher/wrangler.toml",

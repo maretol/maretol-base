@@ -11,6 +11,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { SNSPostTextResult, SNSPublishValue } from 'api-types'
 import type { BlogContentInput } from './db_blog'
 import type { BandeDessineeInput } from './db_comic'
+import type { NovelInput } from './db_novel'
 import type { AtelierInput } from './db'
 
 type ContentStatus = 'PUBLISH' | 'DRAFT' | 'CLOSED'
@@ -32,7 +33,7 @@ function isPublishEvent(status: ContentStatus, { type, oldStatus }: NotifyMeta):
   return true
 }
 
-async function publishToSNS(serviceType: 'blog' | 'illust' | 'comic', value: SNSPublishValue): Promise<void> {
+async function publishToSNS(serviceType: 'blog' | 'illust' | 'comic' | 'novel', value: SNSPublishValue): Promise<void> {
   const { env } = await getCloudflareContext({ async: true })
 
   if (env.SNS_NOTIFY_ENABLED !== 'true') {
@@ -97,6 +98,22 @@ export async function notifyAtelierPublishToSNS({
     id: input.id,
     title: input.title,
     src: input.src,
+  })
+}
+
+export async function notifyNovelPublishToSNS({
+  input,
+  type,
+  oldStatus,
+}: NotifyMeta & { input: NovelInput }): Promise<void> {
+  if (!isPublishEvent(input.status, { type, oldStatus })) {
+    return
+  }
+  // OGP画像は任意の表紙（cover）のみ。未設定なら投稿側で既定OGPにフォールバックする
+  await publishToSNS('novel', {
+    id: input.id,
+    title_name: input.title_name,
+    cover: input.cover,
   })
 }
 

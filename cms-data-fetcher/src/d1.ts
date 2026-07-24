@@ -12,6 +12,9 @@ import {
   bandeDessineeResult,
   bandeDessineeRow,
   bandeDessineeDraftRecord,
+  novelResult,
+  novelRow,
+  novelDraftRecord,
 } from 'api-types'
 import { convertMarkdownToHtml } from 'md-converter'
 
@@ -240,6 +243,96 @@ export async function getBandeDessineeDraftFromKV(
   return toBandeDessineeResult(record.row, record.tag, record.series)
 }
 
+// --- novel ---
+
+// JOIN結果の行型（本体 + タグ名 + シリーズ名）
+type NovelJoinRow = novelRow & {
+  tag_name: string
+  series_name: string | null
+}
+
+function toNovelResult(
+  row: novelRow,
+  tag: { id: string; tag_name: string },
+  series: { id: string; series_name: string } | null
+): novelResult {
+  return {
+    id: row.id,
+    title_name: row.title_name,
+    publish_date: row.publish_date ?? undefined,
+    publish_event: row.publish_event ?? undefined,
+    contents_url: row.contents_url,
+    next_id: row.next_id ?? undefined,
+    previous_id: row.previous_id ?? undefined,
+    tag: tag,
+    series: series ?? undefined,
+    cover: row.cover ?? undefined,
+    description: toDeliveryHTML(row.description, row.description_format),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    publishedAt: row.published_at ?? row.created_at,
+  } as novelResult // parsed_description / table_of_contents は index.ts が parse() 結果を代入する
+}
+
+function novelJoinRowToResult(row: NovelJoinRow): novelResult {
+  const { tag_name, series_name, ...body } = row
+  return toNovelResult(
+    body,
+    { id: row.tag_id, tag_name },
+    row.series_id !== null && series_name !== null ? { id: row.series_id, series_name } : null
+  )
+}
+
+const NOVEL_SELECT = `
+  SELECT n.*, t.tag_name, s.series_name
+  FROM novels n
+  JOIN novel_tags t ON t.id = n.tag_id
+  LEFT JOIN novel_series s ON s.id = n.series_id`
+
+export async function getNovelsFromD1(
+  db: D1Database,
+  offset: number,
+  limit: number
+): Promise<{ novels: novelResult[]; total: number }> {
+  const countRow = await db.prepare(`SELECT COUNT(*) AS cnt FROM novels WHERE status = 'PUBLISH'`).first<{ cnt: number }>()
+  const total = countRow?.cnt ?? 0
+
+  const rows = await db
+    .prepare(`${NOVEL_SELECT} WHERE n.status = 'PUBLISH' ORDER BY n.published_at DESC LIMIT ?1 OFFSET ?2`)
+    .bind(limit, offset)
+    .all<NovelJoinRow>()
+
+  return { novels: rows.results.map(novelJoinRowToResult), total }
+}
+
+export async function getNovelFromD1(db: D1Database, contentID: string): Promise<novelResult> {
+  const row = await db
+    .prepare(`${NOVEL_SELECT} WHERE n.id = ?1 AND n.status = 'PUBLISH'`)
+    .bind(contentID)
+    .first<NovelJoinRow>()
+  if (!row) {
+    throw new Error(`novel not found: ${contentID}`)
+  }
+  return novelJoinRowToResult(row)
+}
+
+// KVプレビュー: 管理ページが保存したドラフト（draft_novel_{id}）を参照する
+export async function getNovelDraftFromKV(
+  kv: KVNamespace,
+  contentID: string,
+  draftKey: string
+): Promise<novelResult | null> {
+  const raw = await kv.get(`draft_novel_${contentID}`)
+  if (!raw) {
+    return null
+  }
+  const record = JSON.parse(raw) as novelDraftRecord
+  if (record.draftKey !== draftKey) {
+    return null
+  }
+  return toNovelResult(record.row, record.tag, record.series)
+}
+
 // テスト用に公開する
-export { toAtelierResult, toDeliveryHTML, toBandeDessineeResult }
+export { toAtelierResult, toDeliveryHTML, toBandeDessineeResult, toNovelResult }
 export type { AtelierRow }
