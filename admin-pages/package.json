@@ -20,12 +20,12 @@
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260721.1",
+    "@cloudflare/workers-types": "^5.20260722.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.1.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19",
-    "postcss": "^8.5.21",
+    "postcss": "^8.5.22",
     "tailwindcss": "^4.0.9",
     "typescript": "^6.0.3",
     "wrangler": "^4.113.0"
