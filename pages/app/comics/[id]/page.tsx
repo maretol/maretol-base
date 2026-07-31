@@ -59,7 +59,7 @@ export default async function ComicPage(props: {
   const data = await asyncData
 
   const title = data.title_name
-  const firstPage = data.filename + '_00' + data.first_page + data.format[0]
+  const firstPage = data.filename + '_00' + data.first_page + '.' + data.format[0]
 
   return (
     <div className="p-0 m-0">
