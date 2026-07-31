@@ -65,7 +65,7 @@ export default async function TopPage() {
                   nextId={bande.next_id ?? null}
                   previousId={bande.previous_id ?? null}
                   cover={bande.cover ?? null}
-                  firstPage={bande.filename + '_00' + bande.first_page + bande.format[0]}
+                  firstPage={bande.filename + '_00' + bande.first_page + '.' + bande.format[0]}
                   parsedDescription={bande.parsed_description}
                   tableOfContents={bande.table_of_contents}
                 />
