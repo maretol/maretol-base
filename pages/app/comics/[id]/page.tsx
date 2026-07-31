@@ -25,7 +25,7 @@ export async function generateMetadata(props: {
 
   const title = data.title_name
   // TODO: 1ページ目のファイル指定はもっときれいにする
-  const ogpImageFile = data.cover || data.filename + '_00' + data.first_page + data.format[0]
+  const ogpImageFile = data.cover || data.filename + '_00' + data.first_page + '.' + data.format[0]
   const coverImageURL = contentsBaseUrl + '/' + ogpImageFile
   const ogpImage = getOGPImageURL(coverImageURL)
 
