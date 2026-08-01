@@ -1,6 +1,7 @@
 import { ComicOverview } from '@/components/large/comics'
 import Pagenation from '@/components/middle/pagenation'
 import { getBandeDessinee } from '@/lib/api/workers'
+import { getFirstPage } from '@/lib/comic_util'
 
 export default async function ComicsPageArticles({
   pageNumber,
@@ -32,7 +33,7 @@ export default async function ComicsPageArticles({
           nextId={bandeDessinee.next_id ?? null}
           previousId={bandeDessinee.previous_id ?? null}
           cover={bandeDessinee.cover ?? null}
-          firstPage={bandeDessinee.filename + '_00' + bandeDessinee.first_page + '.' + bandeDessinee.format[0]}
+          firstPage={getFirstPage(bandeDessinee.filename, bandeDessinee.first_page, bandeDessinee.format[0])}
           parsedDescription={bandeDessinee.parsed_description}
           tableOfContents={bandeDessinee.table_of_contents}
         />
