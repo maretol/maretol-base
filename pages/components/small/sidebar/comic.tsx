@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { convertJST } from '@/lib/time'
 import { Button } from '@/components/ui/button'
 import ClientImage2 from '../client_image2'
+import { getFirstPage } from '@/lib/comic_util'
 
 type comic = {
   id: string
@@ -14,7 +15,7 @@ type comic = {
 
 export default async function ComicSidebar({ bandeDessinees }: { bandeDessinees: bandeDessineeResult[] }) {
   const comicsData: comic[] = bandeDessinees.map((comic) => {
-    const coverImageFile = comic.cover || comic.filename + '_00' + comic.first_page + comic.format[0]
+    const coverImageFile = comic.cover || getFirstPage(comic.filename, comic.first_page, comic.format[0])
     const contentsBaseURL = comic.contents_url.replaceAll('/index.json', '')
     const coverImage = contentsBaseURL + '/' + coverImageFile
     return {
