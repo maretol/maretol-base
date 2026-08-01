@@ -6,6 +6,7 @@ import TopPageContentsViewer from '@/components/large/toppage/toppage_contents'
 import TopPageTitle from '@/components/small/toppage_title'
 import { Button } from '@/components/ui/button'
 import { getAteliers, getBandeDessinee, getCMSContents } from '@/lib/api/workers'
+import { getFirstPage } from '@/lib/comic_util'
 import { BookImageIcon, ImageIcon, InfoIcon, ListIcon, MailIcon, NotebookTextIcon } from 'lucide-react'
 import Link from 'next/link'
 
@@ -65,7 +66,7 @@ export default async function TopPage() {
                   nextId={bande.next_id ?? null}
                   previousId={bande.previous_id ?? null}
                   cover={bande.cover ?? null}
-                  firstPage={bande.filename + '_00' + bande.first_page + bande.format[0]}
+                  firstPage={getFirstPage(bande.filename, bande.first_page, bande.format[0])}
                   parsedDescription={bande.parsed_description}
                   tableOfContents={bande.table_of_contents}
                 />

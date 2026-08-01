@@ -9,6 +9,7 @@ import { getOGPImageURL } from '@/lib/image'
 import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { parseDraftKey } from '@/lib/searchParams'
+import { getFirstPage } from '@/lib/comic_util'
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
@@ -25,7 +26,7 @@ export async function generateMetadata(props: {
 
   const title = data.title_name
   // TODO: 1ページ目のファイル指定はもっときれいにする
-  const ogpImageFile = data.cover || data.filename + '_00' + data.first_page + data.format[0]
+  const ogpImageFile = data.cover || getFirstPage(data.filename, data.first_page, data.format[0])
   const coverImageURL = contentsBaseUrl + '/' + ogpImageFile
   const ogpImage = getOGPImageURL(coverImageURL)
 
@@ -59,7 +60,7 @@ export default async function ComicPage(props: {
   const data = await asyncData
 
   const title = data.title_name
-  const firstPage = data.filename + '_00' + data.first_page + data.format[0]
+  const firstPage = getFirstPage(data.filename, data.first_page, data.format[0])
 
   return (
     <div className="p-0 m-0">

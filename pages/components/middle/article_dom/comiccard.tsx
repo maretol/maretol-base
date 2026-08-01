@@ -1,6 +1,7 @@
 import ClientImage2 from '@/components/small/client_image2'
 import { Button } from '@/components/ui/button'
 import { getBandeDessineeByID } from '@/lib/api/workers'
+import { getFirstPage } from '@/lib/comic_util'
 import { getNoImageURL } from '@/lib/image'
 import { convertJST } from '@/lib/time'
 import Link from 'next/link'
@@ -21,7 +22,7 @@ export default async function ComicPageCard({ link }: { link: string }) {
     const configURL = data.contents_url
 
     const baseURL = configURL.replaceAll('index.json', '')
-    const sumnailImage = data.cover || data.filename + '_00' + data.first_page + data.format[0]
+    const sumnailImage = data.cover || getFirstPage(data.filename, data.first_page, data.format[0])
     const coverURL = baseURL + sumnailImage
 
     return (
