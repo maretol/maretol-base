@@ -10,10 +10,7 @@
  * - `[[親文字@@ruby::よみ]]` : inline-markup のショートカット。<span class="inline-markup"> で包む
  */
 
-import MarkdownIt from 'markdown-it'
-
-type StateCore = Parameters<Parameters<MarkdownIt['core']['ruler']['push']>[1]>[0]
-type StateInline = Parameters<Parameters<MarkdownIt['inline']['ruler']['push']>[1]>[0]
+import markdownit, { type MarkdownIt, type StateCore, type StateInline } from 'markdown-it'
 
 const INDEX_TARGET_MARKER = '@@index_target'
 
@@ -115,7 +112,7 @@ function cmsInlineShortcutRule(state: StateInline, silent: boolean): boolean {
 }
 
 function createConverter(): MarkdownIt {
-  const md = new MarkdownIt({
+  const md = markdownit({
     html: true, // 生HTMLを許可（インラインは下記で装飾系タグのみに制限）
     breaks: true, // 単一改行を <br> にする（microCMS の shift+enter 相当）
     linkify: false, // URL自動リンク無効。単行URLはプレーンな <p> のまま出す（p_option 判定互換）
@@ -133,7 +130,7 @@ function createConverter(): MarkdownIt {
       token.content = token.content
         .split('\n')
         .map((line) =>
-          line.trimStart().startsWith('cite::') ? line.replace(/\\/g, '\\\\').replace(/\[/g, '\\[') : line
+          line.trimStart().startsWith('cite::') ? line.replace(/\\/g, '\\\\').replace(/\[/g, '\\[') : line,
         )
         .join('\n')
     }
