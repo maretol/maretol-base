@@ -10,7 +10,7 @@ export default function AdjacentArticleNav({ adjacent }: { adjacent: adjacentCon
     return null
   }
   return (
-    <nav className="mb-4 flex justify-between gap-4" aria-label="前後の記事">
+    <nav className="mb-4 justify-between space-y-2 2xl:justify-between 2xl:flex 2xl:gap-2" aria-label="前後の記事">
       <div className="flex-1 min-w-0">
         {prev && (
           <Button variant="secondary" className="w-full h-auto justify-start gap-2 py-3" asChild>

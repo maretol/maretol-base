@@ -105,12 +105,12 @@ export async function FullArticle({
         <Annotations annotations={annotations ?? []} />
       </CardContent>
       <CardFooter>
-        <div className="w-full space-y-2">
+        <div className="w-full space-y-4">
           <div className="flex gap-2 items-center justify-end">
             <ShareSection shareURL={shareURL} shareTitle={title} contentType="blog" />
           </div>
           {adjacent && <AdjacentArticleNav adjacent={adjacent} />}
-          <div className="flex justify-center mt-2">
+          <div className="flex justify-center">
             <Button variant="secondary" className="w-96 flex justify-center gap-1" asChild>
               <Link href="/">
                 <HomeIcon className="w-5 h-5" />
