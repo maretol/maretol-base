@@ -42,14 +42,17 @@ export default async function ComicList() {
             <th className="p-2">形式</th>
             <th className="p-2">公開日時</th>
             <th className="p-2">更新日時</th>
-            <th className="p-2"></th>
           </tr>
         </thead>
         <tbody>
           {comics.map((c) => (
             <tr key={c.id} className="border-b border-gray-100">
               <td className="p-2 font-mono text-xs">{c.id}</td>
-              <td className="p-2">{c.title_name}</td>
+              <td className="p-2">
+                <Link href={`/comic/${c.id}/edit`} className="text-blue-600 underline">
+                  {c.title_name}
+                </Link>
+              </td>
               <td className="p-2 text-xs">{c.tag_name ?? '-'}</td>
               <td className="p-2 text-xs">{c.series_name ?? '-'}</td>
               <td className="p-2 text-xs">{formatJSTDate(c.publish_date)}</td>
@@ -57,11 +60,6 @@ export default async function ComicList() {
               <td className="p-2 font-mono text-xs">{c.description_format}</td>
               <td className="p-2 text-xs">{formatJST(c.published_at)}</td>
               <td className="p-2 text-xs">{formatJST(c.updated_at)}</td>
-              <td className="p-2">
-                <Link href={`/comic/${c.id}/edit`} className="text-blue-600 underline">
-                  編集
-                </Link>
-              </td>
             </tr>
           ))}
           {comics.length === 0 && (

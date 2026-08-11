@@ -38,7 +38,6 @@ export default async function IllustList() {
             <th className="p-2">形式</th>
             <th className="p-2">公開日時</th>
             <th className="p-2">更新日時</th>
-            <th className="p-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -46,20 +45,24 @@ export default async function IllustList() {
             <tr key={a.id} className="border-b border-gray-100">
               <td className="p-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.src} alt="" className="h-10 w-10 rounded object-cover" style={{ objectPosition: a.object_position }} />
+                <img
+                  src={a.src}
+                  alt=""
+                  className="h-10 w-10 rounded object-cover"
+                  style={{ objectPosition: a.object_position }}
+                />
               </td>
               <td className="p-2 font-mono text-xs">{a.id}</td>
-              <td className="p-2">{a.title}</td>
+              <td className="p-2">
+                <Link href={`/illust/${a.id}/edit`} className="text-blue-600 underline">
+                  {a.title}
+                </Link>
+              </td>
               <td className="p-2 text-xs">{a.tag_names ?? '-'}</td>
               <td className="p-2">{statusLabel[a.status] ?? a.status}</td>
               <td className="p-2 font-mono text-xs">{a.description_format}</td>
               <td className="p-2 text-xs">{formatJST(a.published_at)}</td>
               <td className="p-2 text-xs">{formatJST(a.updated_at)}</td>
-              <td className="p-2">
-                <Link href={`/illust/${a.id}/edit`} className="text-blue-600 underline">
-                  編集
-                </Link>
-              </td>
             </tr>
           ))}
           {ateliers.length === 0 && (
