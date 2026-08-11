@@ -18,7 +18,10 @@ export default async function BlogList() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">ブログ記事一覧</h1>
         <div className="flex gap-2">
-          <Link href="/blog/categories" className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100">
+          <Link
+            href="/blog/categories"
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100"
+          >
             カテゴリ管理
           </Link>
           <Link href="/blog/info" className="rounded-md border border-gray-300 px-4 py-2 text-sm hover:bg-gray-100">
@@ -44,25 +47,23 @@ export default async function BlogList() {
             <th className="p-2">形式</th>
             <th className="p-2">公開日時</th>
             <th className="p-2">更新日時</th>
-            <th className="p-2"></th>
           </tr>
         </thead>
         <tbody>
           {articles.map((a) => (
             <tr key={a.id} className="border-b border-gray-100">
               <td className="p-2 font-mono text-xs">{a.id}</td>
-              <td className="p-2">{a.title}</td>
+              <td className="p-2">
+                <Link href={`/blog/${a.id}/edit`} className="text-blue-600 underline">
+                  {a.title}
+                </Link>
+              </td>
               <td className="p-2 text-xs">{a.category_names ?? '-'}</td>
               <td className="p-2">{statusLabel[a.status] ?? a.status}</td>
               <td className="p-2">{a.is_secret === 1 ? '🔒' : ''}</td>
               <td className="p-2 font-mono text-xs">{a.content_format}</td>
               <td className="p-2 text-xs">{formatJST(a.published_at)}</td>
               <td className="p-2 text-xs">{formatJST(a.updated_at)}</td>
-              <td className="p-2">
-                <Link href={`/blog/${a.id}/edit`} className="text-blue-600 underline">
-                  編集
-                </Link>
-              </td>
             </tr>
           ))}
           {articles.length === 0 && (
