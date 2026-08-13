@@ -13,7 +13,7 @@
     "generate-sql:blog": "tsx scripts/generate_blog_sql.ts"
   },
   "devDependencies": {
-    "tsx": "^4.23.8",
+    "tsx": "^4.23.9",
     "typescript": "^6.0.2",
     "wrangler": "^4.119.0"
   }
