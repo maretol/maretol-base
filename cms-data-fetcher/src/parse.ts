@@ -257,7 +257,7 @@ function isComicPage(hostname: string, pathname: string) {
 }
 
 function isYouTube(hostname: string) {
-  return ['youtu.be', 'www.youtube.com'].includes(hostname)
+  return ['youtu.be', 'youtube.com', 'www.youtube.com'].includes(hostname)
 }
 
 function isTwitter(hostname: string) {
