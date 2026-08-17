@@ -1,6 +1,7 @@
 import { listBlogStatic } from '@/lib/db_blog'
 import { updateBlogStaticAction } from '../actions'
 import { SubmitButton } from '@/components/submit-button'
+import { ContentTextarea } from '@/components/content-textarea'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,7 +28,7 @@ export default async function BlogStatic({ searchParams }: { searchParams: Promi
           >
             <input type="hidden" name="key" value={e.key} />
             <label className="block font-mono text-sm font-medium">{e.key}</label>
-            <textarea
+            <ContentTextarea
               name="value"
               defaultValue={e.value}
               rows={Math.min(6, Math.max(2, e.value.split('\n').length))}
