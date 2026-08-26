@@ -21,7 +21,6 @@ next-env.d.ts
 
 # cloudflare
 .wrangler
-cloudflare-env.d.ts
 
 # openNext
 .open-next

@@ -10,16 +10,18 @@
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest run",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "typecheck": "wrangler types && tsc --noEmit"
   },
   "dependencies": {
-    "@atproto/api": "^0.20.38",
+    "@atproto/api": "^0.20.41",
     "oauth": "^0.10.2"
   },
   "devDependencies": {
     "@types/oauth": "^0.9.6",
     "api-types": "^1.0.0",
-    "nostr-tools": "^2.24.1",
-    "vitest": "^4.1.10"
+    "nostr-tools": "^2.24.2",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   }
 }

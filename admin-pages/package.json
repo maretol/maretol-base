@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "admin:build": "opennextjs-cloudflare build",
+    "admin:build": "npm run cf-typegen --workspace=sns-article-publisher --workspace=admin-pages && opennextjs-cloudflare build",
     "run-dev": "opennextjs-cloudflare build && wrangler dev -c wrangler.toml",
     "deploy-stg": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
     "deploy-prd": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
@@ -15,19 +15,19 @@
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.2",
-    "next": "^16.3.0",
+    "next": "^16.3.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260804.1",
+    "@cloudflare/workers-types": "^5.20260818.1",
     "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.0.9",
-    "typescript": "^6.0.3",
-    "wrangler": "^4.120.0"
+    "typescript": "^7.0.2",
+    "wrangler": "^4.124.0"
   }
 }
