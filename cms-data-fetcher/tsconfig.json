@@ -8,9 +8,7 @@
 		"module": "es2022",
 		"moduleResolution": "Bundler",
 		"paths": {},
-		"types": [
-			"@cloudflare/workers-types",
-		],
+		"types": [],
 		"resolveJsonModule": true,
 		"allowJs": true,
 		"checkJs": false,

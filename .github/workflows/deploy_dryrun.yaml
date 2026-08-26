@@ -144,6 +144,12 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
+      - name: typecheck (wrangler types + tsc)
+        working-directory: ./
+        run: npm run typecheck --workspace=ogp-data-fetcher
       - name: deploy dry run by wrangler
         id: deploy-dry
         uses: cloudflare/wrangler-action@v4
@@ -173,6 +179,12 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
+      - name: typecheck (wrangler types + tsc)
+        working-directory: ./
+        run: npm run typecheck --workspace=cms-data-fetcher
       - name: deploy dry run by wrangler
         id: deploy
         uses: cloudflare/wrangler-action@v4
@@ -202,6 +214,12 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
+      - name: typecheck (wrangler types + tsc)
+        working-directory: ./
+        run: npm run typecheck --workspace=cms-cache-purger
       - name: deploy dry run by wrangler
         id: deploy
         uses: cloudflare/wrangler-action@v4
@@ -231,6 +249,12 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
+      - name: typecheck (wrangler types + tsc)
+        working-directory: ./
+        run: npm run typecheck --workspace=sns-article-publisher
       - name: deploy dry run by wrangler
         id: deploy
         uses: cloudflare/wrangler-action@v4

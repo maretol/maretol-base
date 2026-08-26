@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "admin:build": "opennextjs-cloudflare build",
+    "admin:build": "npm run cf-typegen --workspace=sns-article-publisher --workspace=admin-pages && opennextjs-cloudflare build",
     "run-dev": "opennextjs-cloudflare build && wrangler dev -c wrangler.toml",
     "deploy-stg": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging",
     "deploy-prd": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",

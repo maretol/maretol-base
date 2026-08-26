@@ -10,7 +10,8 @@
     "dev-bg": "wrangler dev > wrangler_dev.log",
     "start": "wrangler dev",
     "test": "vitest",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "typecheck": "wrangler types && tsc --noEmit"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",
