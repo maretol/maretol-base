@@ -14,3 +14,7 @@ dist
 
 tmp/
 cms-db/generated/
+
+# wrangler types で生成する型定義（ビルド/型チェック時に各ワークスペースで生成する）
+worker-configuration.d.ts
+cloudflare-env.d.ts

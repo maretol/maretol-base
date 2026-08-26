@@ -10,7 +10,8 @@
     "dev": "wrangler dev",
     "start": "wrangler dev",
     "test": "vitest run",
-    "cf-typegen": "wrangler types"
+    "cf-typegen": "wrangler types",
+    "typecheck": "wrangler types && tsc --noEmit"
   },
   "dependencies": {
     "@atproto/api": "^0.20.41",
