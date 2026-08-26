@@ -43,6 +43,7 @@ app/blog/test/**
 
 # cloudflare
 .wrangler
+cloudflare-env.d.ts
 
 # openNext
 .open-next
