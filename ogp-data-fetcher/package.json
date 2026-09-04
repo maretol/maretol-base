@@ -15,11 +15,11 @@
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.22.0",
-    "@cloudflare/workers-types": "^5.20260825.1",
+    "@cloudflare/workers-types": "^5.20260828.1",
     "html-rewriter-wasm": "^0.4.1",
     "typescript": "^7.0.2",
     "vitest": "4.1.11",
-    "wrangler": "^4.125.0"
+    "wrangler": "^4.127.1"
   },
   "dependencies": {
     "cms-cache-purger": "^1.0.0",
