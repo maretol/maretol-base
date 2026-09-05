@@ -254,7 +254,8 @@ export async function getStatic(apiKey: string) {
   return response as staticAPIResult
 }
 
-export async function getBandeDessinees(apiKey: string, offset: number, limit: number) {
+// seriesID 指定時はそのシリーズ（コンテンツ参照フィールド series）のマンガのみに絞る
+export async function getBandeDessinees(apiKey: string, offset: number, limit: number, seriesID?: string) {
   if (apiKey === undefined) {
     throw new Error('API_KEY is undefined')
   }
@@ -267,7 +268,7 @@ export async function getBandeDessinees(apiKey: string, offset: number, limit: n
   const response = await client
     .getList<bandeDessineeResult>({
       endpoint: 'bande-dessinee',
-      queries: { offset: offset, limit: limit },
+      queries: seriesID !== undefined ? { offset, limit, filters: `series[equals]${seriesID}` } : { offset, limit },
     })
     .then((res) => {
       return res

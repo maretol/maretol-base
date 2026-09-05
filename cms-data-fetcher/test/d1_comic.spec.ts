@@ -3,7 +3,7 @@
  */
 import { describe, it, expect } from 'vitest'
 import type { bandeDessineeRow, bandeDessineeDraftRecord } from 'api-types'
-import { toBandeDessineeResult, getBandeDessineeDraftFromKV } from '../src/d1'
+import { toBandeDessineeResult, getBandeDessineeDraftFromKV, getBandeDessineesFromD1 } from '../src/d1'
 import { parse } from '../src/parse'
 
 const baseRow: bandeDessineeRow = {
@@ -95,5 +95,90 @@ describe('getBandeDessineeDraftFromKV', () => {
   it('draftKey不一致・不存在はnull', async () => {
     expect(await getBandeDessineeDraftFromKV(kv, 'the_merged_wind_has_come', 'wrong')).toBeNull()
     expect(await getBandeDessineeDraftFromKV(kv, 'no_such', 'comic-draft-key')).toBeNull()
+  })
+})
+
+describe('getBandeDessineesFromD1', () => {
+  // JOIN済み行を模した公開済みマンガ（published_at降順）。2件がシリーズ dojin-republish、1件がシリーズなし
+  const joinRows = [
+    {
+      ...baseRow,
+      id: 'comic_a',
+      series_id: 'dojin-republish',
+      published_at: '2025-03-01T00:00:00.000Z',
+      tag_name: '艦これ',
+      series_name: '同人再録',
+    },
+    {
+      ...baseRow,
+      id: 'comic_b',
+      series_id: null,
+      published_at: '2025-02-01T00:00:00.000Z',
+      tag_name: '艦これ',
+      series_name: null,
+    },
+    {
+      ...baseRow,
+      id: 'comic_c',
+      series_id: 'dojin-republish',
+      published_at: '2025-01-01T00:00:00.000Z',
+      tag_name: '艦これ',
+      series_name: '同人再録',
+    },
+  ]
+
+  // SQL中の ?N プレースホルダを番号で bind 値に対応付け、series_id の絞り込みと LIMIT/OFFSET を再現する簡易D1モック
+  // 位置ではなく番号で解決することで、プレースホルダ番号と bind 順のずれを検出できるようにしている
+  const db = {
+    prepare: (sql: string) => ({
+      bind: (...params: unknown[]) => {
+        const resolvePlaceholder = (pattern: RegExp): unknown => {
+          const found = sql.match(pattern)
+          if (!found) return undefined
+          const index = Number(found[1])
+          if (index < 1 || index > params.length) {
+            throw new Error(`placeholder ?${index} is out of range (bound params: ${params.length})`)
+          }
+          return params[index - 1]
+        }
+        const seriesID = resolvePlaceholder(/b\.series_id = \?(\d+)/)
+        const matched = seriesID !== undefined ? joinRows.filter((r) => r.series_id === seriesID) : joinRows
+        return {
+          first: async () => ({ cnt: matched.length }),
+          all: async () => {
+            const limit = resolvePlaceholder(/LIMIT \?(\d+)/)
+            const offset = resolvePlaceholder(/OFFSET \?(\d+)/)
+            if (typeof limit !== 'number' || typeof offset !== 'number') {
+              throw new Error(`LIMIT/OFFSET must be bound as numbers (got ${String(limit)}, ${String(offset)})`)
+            }
+            return { results: matched.slice(offset, offset + limit) }
+          },
+        }
+      },
+    }),
+  } as unknown as D1Database
+
+  it('シリーズ未指定では公開済み全件を返す', async () => {
+    const result = await getBandeDessineesFromD1(db, 0, 10)
+    expect(result.total).toBe(3)
+    expect(result.bandeDessinees.map((bd) => bd.id)).toEqual(['comic_a', 'comic_b', 'comic_c'])
+  })
+
+  it('シリーズ指定ではそのシリーズのマンガのみを返す（totalも絞り込み後の件数）', async () => {
+    const result = await getBandeDessineesFromD1(db, 0, 10, 'dojin-republish')
+    expect(result.total).toBe(2)
+    expect(result.bandeDessinees.map((bd) => bd.id)).toEqual(['comic_a', 'comic_c'])
+    expect(result.bandeDessinees[0].series).toEqual({ id: 'dojin-republish', series_name: '同人再録' })
+  })
+
+  it('シリーズ指定でもlimit/offsetが効く', async () => {
+    const result = await getBandeDessineesFromD1(db, 1, 1, 'dojin-republish')
+    expect(result.total).toBe(2)
+    expect(result.bandeDessinees.map((bd) => bd.id)).toEqual(['comic_c'])
+  })
+
+  it('存在しないシリーズは空を返す', async () => {
+    const result = await getBandeDessineesFromD1(db, 0, 10, 'no_such_series')
+    expect(result).toEqual({ bandeDessinees: [], total: 0 })
   })
 })

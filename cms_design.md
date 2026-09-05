@@ -188,6 +188,7 @@ CREATE TABLE atelier_tag_relations (
 | `is_secret[not_equals]true` | `WHERE is_secret = 0` |
 | `categories[contains]A[and]categories[contains]B` | relation テーブルを JOIN し `GROUP BY content_id HAVING COUNT(DISTINCT category_id) = 2` |
 | `ids` 指定 | `WHERE id = ?` |
+| `series[equals]X`（マンガのシリーズ絞り込み） | `WHERE series_id = ?`（`/comics?series=X` の一覧） |
 | `fields=id,is_secret,secret_code`（secret_meta） | `SELECT id, is_secret, secret_code` |
 | `draftKey` | D1 ではなく KV（CMS_DRAFT）参照（cms_goal.md 参照） |
 | デフォルトの並び順 | `ORDER BY published_at DESC` |
