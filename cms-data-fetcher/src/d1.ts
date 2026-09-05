@@ -194,19 +194,30 @@ const BANDE_DESSINEE_SELECT = `
   JOIN bande_dessinee_tags t ON t.id = b.tag_id
   LEFT JOIN bande_dessinee_series s ON s.id = b.series_id`
 
+// 一覧取得。seriesID 指定時はそのシリーズの公開済みマンガのみに絞る（total も絞り込み後の件数）
 export async function getBandeDessineesFromD1(
   db: D1Database,
   offset: number,
-  limit: number
+  limit: number,
+  seriesID?: string
 ): Promise<{ bandeDessinees: bandeDessineeResult[]; total: number }> {
+  const where =
+    seriesID !== undefined ? `WHERE b.status = 'PUBLISH' AND b.series_id = ?1` : `WHERE b.status = 'PUBLISH'`
+  const whereParams = seriesID !== undefined ? [seriesID] : []
+  const limitIndex = whereParams.length + 1
+  const offsetIndex = whereParams.length + 2
+
   const countRow = await db
-    .prepare(`SELECT COUNT(*) AS cnt FROM bande_dessinees WHERE status = 'PUBLISH'`)
+    .prepare(`SELECT COUNT(*) AS cnt FROM bande_dessinees b ${where}`)
+    .bind(...whereParams)
     .first<{ cnt: number }>()
   const total = countRow?.cnt ?? 0
 
   const rows = await db
-    .prepare(`${BANDE_DESSINEE_SELECT} WHERE b.status = 'PUBLISH' ORDER BY b.published_at DESC LIMIT ?1 OFFSET ?2`)
-    .bind(limit, offset)
+    .prepare(
+      `${BANDE_DESSINEE_SELECT} ${where} ORDER BY b.published_at DESC LIMIT ?${limitIndex} OFFSET ?${offsetIndex}`
+    )
+    .bind(...whereParams, limit, offset)
     .all<BandeDessineeJoinRow>()
 
   return { bandeDessinees: rows.results.map(joinRowToResult), total }

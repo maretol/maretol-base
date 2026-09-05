@@ -82,6 +82,7 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     const articleID = searchParams.get('article_id')
     const contentID = searchParams.get('content_id')
     const draftKey = searchParams.get('draftKey') || undefined
+    const seriesID = searchParams.get('series_id') || undefined
 
     if (pathname.includes('/cms/get_adjacent_contents')) {
       // 前後記事（一つ前・一つあと）のナビ情報を取得
@@ -125,8 +126,8 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       return Response.json(staticData)
     } else if (pathname.includes('/cms/bande_dessinee')) {
       if (contentID === '' || contentID === null) {
-        // マンガの指定がない場合offsetとlimitで一覧を取得
-        const contents = await this.fetchBandeDessinees(offset, limit)
+        // マンガの指定がない場合offsetとlimitで一覧を取得（series_id指定時はそのシリーズのみ）
+        const contents = await this.fetchBandeDessinees(offset, limit, seriesID)
         return Response.json(contents)
       } else {
         // マンガの指定がある場合そのマンガを取得
@@ -270,19 +271,22 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
   }
 
+  // seriesID 指定時はそのシリーズのマンガのみを返す。RPC経由では未指定を null で受ける
   async fetchBandeDessinees(
     offset?: string,
-    limit?: string
+    limit?: string,
+    seriesID?: string | null
   ): Promise<{ bandeDessinees: bandeDessineeResult[]; total: number }> {
     const apiKey = this.env.CMS_API_KEY_BD
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
+    const parsedSeriesID = seriesID ? seriesID : undefined
 
     try {
       const contents =
         this.env.COMIC_SOURCE === 'd1'
-          ? await getBandeDessineesFromD1(this.env.DB, offsetNum, limitNum)
-          : await getBandeDessinees(apiKey, offsetNum, limitNum)
+          ? await getBandeDessineesFromD1(this.env.DB, offsetNum, limitNum, parsedSeriesID)
+          : await getBandeDessinees(apiKey, offsetNum, limitNum, parsedSeriesID)
       contents.bandeDessinees.forEach((bd) => {
         const parsed = parse(bd.description)
         bd.parsed_description = parsed.contents_array

@@ -4,11 +4,11 @@
   "description": "CMSのWebhookを受け取り影響のあるキャッシュを破棄する処理",
   "main": "index.js",
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20260818.1",
-    "@types/node": "^26.2.0",
+    "@cloudflare/workers-types": "^5.20260825.1",
+    "@types/node": "^26.3.0",
     "cms-cache-key-gen": "^1.0.0",
     "typescript": "^7.0.2",
-    "wrangler": "^4.124.0"
+    "wrangler": "^4.125.0"
   },
   "scripts": {
     "deploy-prd": "wrangler deploy",
