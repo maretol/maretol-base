@@ -19,16 +19,14 @@ export function parsePaginationParams(searchParams: { [key: string]: string | st
  * searchParamsからdraftKeyを取得
  */
 export function parseDraftKey(searchParams: { [key: string]: string | string[] | undefined }): string | undefined {
-  const draftKey = searchParams['draftKey']
-  return typeof draftKey === 'string' ? draftKey : undefined
+  return firstString(searchParams['draftKey'])
 }
 
 /**
  * searchParamsからタグ情報を取得
  */
 export function parseTagParams(searchParams: { [key: string]: string | string[] | undefined }) {
-  const rawTagID = searchParams['tag_id']
-  const tagID = typeof rawTagID === 'string' ? rawTagID : Array.isArray(rawTagID) ? rawTagID[0] : undefined
+  const tagID = firstString(searchParams['tag_id'])
 
   return { tagID }
 }
@@ -38,12 +36,17 @@ export function parseTagParams(searchParams: { [key: string]: string | string[] 
  * ID形式に合わない値は指定なし（全件表示）として扱う
  */
 export function parseSeriesParams(searchParams: { [key: string]: string | string[] | undefined }) {
-  const rawSeriesID = searchParams['series']
-  const candidate =
-    typeof rawSeriesID === 'string' ? rawSeriesID : Array.isArray(rawSeriesID) ? rawSeriesID[0] : undefined
+  const candidate = firstString(searchParams['series'])
   const seriesID = candidate !== undefined && SERIES_ID_PATTERN.test(candidate) ? candidate : undefined
 
   return { seriesID }
+}
+
+/**
+ * クエリ値から文字列を1つ取り出す。同名キーが複数ある場合は先頭を採用する
+ */
+function firstString(value: string | string[] | undefined): string | undefined {
+  return typeof value === 'string' ? value : Array.isArray(value) ? value[0] : undefined
 }
 
 /**

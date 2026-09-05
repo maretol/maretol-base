@@ -127,16 +127,30 @@ describe('getBandeDessineesFromD1', () => {
     },
   ]
 
-  // SQL文字列を見て series_id の絞り込みと LIMIT/OFFSET を再現する簡易D1モック
+  // SQL中の ?N プレースホルダを番号で bind 値に対応付け、series_id の絞り込みと LIMIT/OFFSET を再現する簡易D1モック
+  // 位置ではなく番号で解決することで、プレースホルダ番号と bind 順のずれを検出できるようにしている
   const db = {
     prepare: (sql: string) => ({
       bind: (...params: unknown[]) => {
-        const hasSeries = sql.includes('b.series_id = ?1')
-        const matched = hasSeries ? joinRows.filter((r) => r.series_id === params[0]) : joinRows
+        const resolvePlaceholder = (pattern: RegExp): unknown => {
+          const found = sql.match(pattern)
+          if (!found) return undefined
+          const index = Number(found[1])
+          if (index < 1 || index > params.length) {
+            throw new Error(`placeholder ?${index} is out of range (bound params: ${params.length})`)
+          }
+          return params[index - 1]
+        }
+        const seriesID = resolvePlaceholder(/b\.series_id = \?(\d+)/)
+        const matched = seriesID !== undefined ? joinRows.filter((r) => r.series_id === seriesID) : joinRows
         return {
           first: async () => ({ cnt: matched.length }),
           all: async () => {
-            const [limit, offset] = (hasSeries ? params.slice(1) : params) as [number, number]
+            const limit = resolvePlaceholder(/LIMIT \?(\d+)/)
+            const offset = resolvePlaceholder(/OFFSET \?(\d+)/)
+            if (typeof limit !== 'number' || typeof offset !== 'number') {
+              throw new Error(`LIMIT/OFFSET must be bound as numbers (got ${String(limit)}, ${String(offset)})`)
+            }
             return { results: matched.slice(offset, offset + limit) }
           },
         }

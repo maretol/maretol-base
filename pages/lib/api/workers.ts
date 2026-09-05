@@ -364,8 +364,8 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number, seriesID?
       ? () => createLocalFetcher('/api/cms/bande_dessinees', query, defaultResult)
       : () => env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr, seriesID ?? null),
     defaultResult,
-    // 存在しないシリーズIDによる空結果のキーがKVに溜まらないよう、シリーズ指定時は結果ありのときだけ保存する
-    shouldCache: (res) => seriesID === undefined || res.total > 0,
+    // 存在しないシリーズIDや範囲外ページによる空結果のキーがKVに溜まらないよう、シリーズ指定時は結果ありのときだけ保存する
+    shouldCache: (res) => seriesID === undefined || res.bandeDessinees.length > 0,
   })
 }
 

@@ -4,6 +4,7 @@ import LoadingComicsPage from './loading_article'
 import ComicsPageArticles from './article'
 import { parsePaginationParams, parseSeriesParams } from '@/lib/searchParams'
 import { getBandeDessinee } from '@/lib/api/workers'
+import { getSeriesName } from '@/lib/comic_util'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,7 @@ export async function generateMetadata(props: {
   let title = `Comics : page ${pageNumber} | Maretol Base`
   if (seriesID !== undefined) {
     const { bandeDessinees } = await getBandeDessinee(offset, limit, seriesID)
-    const seriesName = bandeDessinees[0]?.series?.series_name
+    const seriesName = getSeriesName(bandeDessinees)
     if (seriesName) {
       title = `Comics : ${seriesName} : page ${pageNumber} | Maretol Base`
     }
