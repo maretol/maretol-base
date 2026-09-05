@@ -1,5 +1,8 @@
 import { pageLimit } from './static'
 
+// マンガのシリーズIDとして許容する形式（admin-pages のID規則と同じ）
+const SERIES_ID_PATTERN = /^[a-zA-Z0-9_-]+$/
+
 /**
  * searchParamsからページネーション情報を取得
  */
@@ -28,6 +31,19 @@ export function parseTagParams(searchParams: { [key: string]: string | string[] 
   const tagID = typeof rawTagID === 'string' ? rawTagID : Array.isArray(rawTagID) ? rawTagID[0] : undefined
 
   return { tagID }
+}
+
+/**
+ * searchParamsからマンガのシリーズIDを取得
+ * ID形式に合わない値は指定なし（全件表示）として扱う
+ */
+export function parseSeriesParams(searchParams: { [key: string]: string | string[] | undefined }) {
+  const rawSeriesID = searchParams['series']
+  const candidate =
+    typeof rawSeriesID === 'string' ? rawSeriesID : Array.isArray(rawSeriesID) ? rawSeriesID[0] : undefined
+  const seriesID = candidate !== undefined && SERIES_ID_PATTERN.test(candidate) ? candidate : undefined
+
+  return { seriesID }
 }
 
 /**

@@ -14,6 +14,7 @@ import {
   generateAdjacentContentsKey,
   generateBandeDessineeContentKey,
   generateBandeDessineeKey,
+  generateBandeDessineeBySeriesKey,
   generateContentKey,
   generateSecretMetaKey,
   generateContentsKey,
@@ -340,22 +341,31 @@ async function getStaticOrigin() {
   })
 }
 
-// マンガのリスト取徖
-async function getBandeDessineeOrigin(offset?: number, limit?: number) {
+// マンガのリスト取得。seriesID 指定時はそのシリーズのマンガのみ取得する
+async function getBandeDessineeOrigin(offset?: number, limit?: number, seriesID?: string) {
   const { env } = await getCloudflareContext({ async: true })
   const isLocal = getLocalEnv() === 'local'
   const offsetStr = offset?.toString() || '0'
   const limitStr = limit?.toString() || '10'
-  const query = { offset: offsetStr, limit: limitStr }
+  const query: Record<string, string> =
+    seriesID !== undefined
+      ? { offset: offsetStr, limit: limitStr, series_id: seriesID }
+      : { offset: offsetStr, limit: limitStr }
+  const defaultResult = { bandeDessinees: [], total: 0 }
 
   return createCachedAPIFunction<{ bandeDessinees: bandeDessineeResult[]; total: number }>({
-    cacheKey: generateBandeDessineeKey(offsetStr, limitStr),
+    cacheKey:
+      seriesID !== undefined
+        ? generateBandeDessineeBySeriesKey(seriesID, offsetStr, limitStr)
+        : generateBandeDessineeKey(offsetStr, limitStr),
     cacheTTL: CacheTTL.bandeDessinee,
     cacheStore: env.CMS_CACHE,
     fetcher: isLocal
-      ? () => createLocalFetcher('/api/cms/bande_dessinees', query, { bandeDessinees: [], total: 0 })
-      : () => env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr),
-    defaultResult: { bandeDessinees: [], total: 0 },
+      ? () => createLocalFetcher('/api/cms/bande_dessinees', query, defaultResult)
+      : () => env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr, seriesID ?? null),
+    defaultResult,
+    // 存在しないシリーズIDによる空結果のキーがKVに溜まらないよう、シリーズ指定時は結果ありのときだけ保存する
+    shouldCache: (res) => seriesID === undefined || res.total > 0,
   })
 }
 

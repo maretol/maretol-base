@@ -35,6 +35,11 @@ export function generateBandeDessineeKey(offset: string, limit: string) {
   return `bande_dessinee_${offset}_${limit}`
 }
 
+// シリーズ絞り込みのマンガリスト。prefix "bande_dessinee_" を共有し、一覧・単体と同じ一括パージの対象にする
+export function generateBandeDessineeBySeriesKey(seriesID: string, offset: string, limit: string) {
+  return `bande_dessinee_series_${seriesID}_${offset}_${limit}`
+}
+
 export function generateBandeDessineeContentKey(contentID: string) {
   return `bande_dessinee_content_${contentID}`
 }
