@@ -36,6 +36,33 @@ function detectBot(userAgent: string): string | null {
   return null
 }
 
+type GeoInfo = {
+  country: string | undefined
+  region: string | undefined
+  city: string | undefined
+}
+
+function safeDecodeURIComponent(value: string): string {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+// OpenNext (cloudflare-edge wrapper) は request.cf の地域情報を x-open-next-* ヘッダに詰めて middleware に渡す。
+// NextRequest には request.cf が引き継がれず常に undefined になるため、ヘッダから取得する。
+// - x-open-next-region には cf.regionCode (例: 東京都なら "13") が入る
+// - x-open-next-city は percent-encoding されている
+function getGeoFromHeaders(headers: Headers): GeoInfo {
+  const city = headers.get('x-open-next-city')
+  return {
+    country: headers.get('x-open-next-country') ?? undefined,
+    region: headers.get('x-open-next-region') ?? undefined,
+    city: city !== null ? safeDecodeURIComponent(city) : undefined,
+  }
+}
+
 function createLogObject(
   nextURL: NextURL,
   userAgent: string,
@@ -43,7 +70,7 @@ function createLogObject(
   method: string,
   botName: string | null,
   ip: string | null,
-  cf?: CfProperties,
+  geo: GeoInfo,
 ) {
   return {
     type: 'access_log',
@@ -66,9 +93,9 @@ function createLogObject(
 
     // デバイス・地域情報
     user_agent: userAgent,
-    country: cf?.country,
-    region: cf?.region,
-    city: cf?.city,
+    country: geo.country,
+    region: geo.region,
+    city: geo.city,
     connecting_ip: ip,
   }
 }
@@ -90,10 +117,10 @@ export async function middleware(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') || 'unknown'
   const referer = request.headers.get('referer') || 'unknown'
   const botName = detectBot(userAgent)
-  const cf: CfProperties | undefined = request.cf
   const ip = request.headers.get('cf-connecting-ip')
+  const geo = getGeoFromHeaders(request.headers)
 
-  const logObj = createLogObject(nextURL, userAgent, referer, method, botName, ip, cf)
+  const logObj = createLogObject(nextURL, userAgent, referer, method, botName, ip, geo)
   console.log(logObj)
 
   try {
