@@ -9,7 +9,7 @@ import { getOGPImageURL } from '@/lib/image'
 import { Metadata } from 'next'
 import { Suspense } from 'react'
 import { parseDraftKey } from '@/lib/searchParams'
-import { getFirstPage } from '@/lib/comic_util'
+import { comicPath, getFirstPage } from '@/lib/comic_util'
 
 export async function generateMetadata(props: {
   params: Promise<{ id: string }>
@@ -42,7 +42,7 @@ export async function generateMetadata(props: {
     openGraph: {
       ...metadata.openGraph,
       title: title + ' | Maretol Base',
-      url: `${getHostname()}/comics/${id}`,
+      url: getHostname() + comicPath(id),
       images: [ogpImage],
     },
   } as Metadata
