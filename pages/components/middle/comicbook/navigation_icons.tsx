@@ -25,6 +25,8 @@ function NavigationIcons(props: NavigationIconsProps) {
   const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
+      // 押しっぱなしのリピートは無視する（末尾の案内スライドで、案内を見る前に次の話へ遷移してしまうのを防ぐ）
+      if (e.repeat) return
       action()
     }
   }

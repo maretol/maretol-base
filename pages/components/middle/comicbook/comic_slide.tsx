@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { ChevronLeftIcon } from 'lucide-react'
 import ComicImage from '@/components/small/comic_image'
+import SeriesGuideSlide from './series_guide_slide'
 import { PageState } from './types'
 
 type ComicSlideProps = {
@@ -11,8 +12,13 @@ type ComicSlideProps = {
 function ComicSlide(props: ComicSlideProps) {
   const { mode, page } = props
 
+  // 本編の末尾の案内スライド（次の話へ / 現在の最新話）
+  if (page.kind === 'guide') {
+    return <SeriesGuideSlide guide={page.guide} />
+  }
+
   // 空白スライド（見開き整列用）。singleモードでは先頭・末尾の空白は除外済みのため、ここに来るのは中間の空白のみ
-  if (page.src === null) {
+  if (page.kind === 'blank') {
     if (mode === 'double') {
       return <div className="h-full w-full" />
     }
