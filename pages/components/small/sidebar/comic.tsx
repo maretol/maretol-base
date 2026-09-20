@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { convertJST } from '@/lib/time'
 import { Button } from '@/components/ui/button'
 import ClientImage2 from '../client_image2'
-import { getFirstPage } from '@/lib/comic_util'
+import { comicPath, getFirstPage } from '@/lib/comic_util'
 
 type comic = {
   id: string
@@ -51,7 +51,7 @@ export default async function ComicSidebar({ bandeDessinees }: { bandeDessinees:
 function ComicLink({ id, title, publishedAt, coverImage }: comic) {
   return (
     <div className="mb-4 relative w-full">
-      <Link href={`/comics/${id}`} className="hover:underline">
+      <Link href={comicPath(id)} className="hover:underline">
         <div className="bg-gray-200 p-4">
           <ClientImage2
             src={coverImage}

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Swiper, SwiperClass, SwiperSlide } from 'swiper/react'
 import { Keyboard } from 'swiper/modules'
 import { Button } from '@/components/ui/button'
@@ -18,9 +19,22 @@ import ComicSlide from './comic_slide'
 import PageController from './page_controller'
 import NavigationIcons from './navigation_icons'
 import ComicSettingsPopover from './settings_popover'
-import { getPageImageSrc, createPageList } from './utils'
+import { comicPath } from '@/lib/comic_util'
+import { getPageImageSrc, createPageList, appendSeriesGuide } from './utils'
+import { PageTurnOptions, SeriesGuide } from './types'
 import { LAYOUT, SWIPER } from './constants'
 import 'swiper/css'
+
+// dir=rtl のSwiperで「次のページ」方向にあたるキー（KeyboardモジュールのRTL時の判定と同じ）
+const NEXT_PAGE_KEYS = ['ArrowLeft', 'PageUp']
+// 末尾の案内スライド上で「次へ」方向にこの距離（px）以上スワイプしたら次の話へ遷移する（小さなぶれでは遷移しない）
+const NEXT_EPISODE_SWIPE_THRESHOLD = 50
+
+// SwiperのKeyboardモジュールの onlyInViewport 相当。ビューワーの一部でもウィンドウ内に見えていればキー操作を受け付ける
+function isInViewport(el: HTMLElement): boolean {
+  const rect = el.getBoundingClientRect()
+  return rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth
+}
 
 type ComicBookProps = {
   cmsResult: Promise<bandeDessineeResult>
@@ -29,6 +43,7 @@ type ComicBookProps = {
 export default function ComicBook(props: ComicBookProps) {
   const { cmsResult } = props
   const data = use(cmsResult)
+  const router = useRouter()
 
   const baseUrl = data.contents_url.replaceAll('/index.json', '')
   const filename = data.filename
@@ -50,6 +65,15 @@ export default function ComicBook(props: ComicBookProps) {
     [pageArray, baseUrl, filename, format],
   )
 
+  // シリーズ作品のときだけ末尾に案内スライドを出す
+  // next_idは配信側（cms-data-fetcher）で公開済みの巻に限定されているため、ここでは有無だけ見ればよい
+  const seriesId = data.series?.id ?? null
+  const nextId = data.next_id ?? null
+  const seriesGuide = useMemo<SeriesGuide | null>(
+    () => (seriesId === null ? null : { seriesId, nextId }),
+    [seriesId, nextId],
+  )
+
   const headerImage = getHeaderImageURL()
   const [currentPage, setCurrentPage] = useState(0)
   const [swiperInstance, setSwiperInstance] = useState<SwiperClass | null>(null)
@@ -60,7 +84,8 @@ export default function ComicBook(props: ComicBookProps) {
   const mode = useViewMode(width, pageOption.mode_static)
   const { zoneFlag, mouseMoveEvent, mouseClickEvent, mouseLeaveEvent } = useZoneDetection(comicDivRef)
 
-  const pageList = useMemo(
+  // 本編のスライドリスト（表紙・本文・裏表紙と見開き整列用の空白）
+  const bookPageList = useMemo(
     () =>
       createPageList({
         coverPageSrc,
@@ -72,13 +97,19 @@ export default function ComicBook(props: ComicBookProps) {
   )
 
   // singleモードでは先頭・末尾の空白スライド（見開き整列用）は不要なため除外する
-  const singlePageList = useMemo(
-    () => pageList.filter((page, i) => !(page.src === null && (i === 0 || i === pageList.length - 1))),
-    [pageList],
+  const singleBookPageList = useMemo(
+    () => bookPageList.filter((page, i) => !(page.kind === 'blank' && (i === 0 || i === bookPageList.length - 1))),
+    [bookPageList],
   )
 
-  const displayPageList = mode === 'double' ? pageList : singlePageList
-  const totalPages = displayPageList.length
+  const displayBookPageList = mode === 'double' ? bookPageList : singleBookPageList
+  // 実際に表示するスライドリスト。シリーズ作品では本編の末尾に案内スライドが付く
+  const displayPageList = useMemo(
+    () => appendSeriesGuide(displayBookPageList, seriesGuide, mode),
+    [displayBookPageList, seriesGuide, mode],
+  )
+  // ページカウンター・スライダーは本編だけを対象にする（末尾の案内スライドは数えない）
+  const totalPages = displayBookPageList.length
 
   // 表示中ページの論理ID。モード切替でスライドリストが差し替わったときの位置復元に使う
   // 差し替え直後はcurrentPageが旧リストのindexのままなので、復元（下のuseLayoutEffect）より後に更新されるよう通常のuseEffectで持つ
@@ -99,8 +130,8 @@ export default function ComicBook(props: ComicBookProps) {
 
     let index = displayPageList.findIndex((page) => page.id === pageId)
     if (index < 0) {
-      // singleモードで除外される先頭・末尾の空白スライドにいた場合は最寄りの端ページへ
-      index = pageList.findIndex((page) => page.id === pageId) <= 0 ? 0 : displayPageList.length - 1
+      // singleモードで除外される空白スライド（先頭・末尾・案内スライドの対）にいた場合は最寄りの端ページへ
+      index = bookPageList[0]?.id === pageId ? 0 : displayPageList.length - 1
     }
     if (mode === 'double') {
       // 見開きの先頭（偶数index）に揃える
@@ -109,17 +140,51 @@ export default function ComicBook(props: ComicBookProps) {
     if (index !== swiperInstance.activeIndex) {
       swiperInstance.slideTo(index, 0)
     }
-  }, [mode, swiperInstance, displayPageList, pageList])
+  }, [mode, swiperInstance, displayPageList, bookPageList])
 
-  const handleNextPage = useCallback(() => {
-    if (!swiperInstance) return
-    swiperInstance.slideNext(comicScrollSpeed)
-  }, [swiperInstance])
+  // 末尾の案内スライドを表示し切っているか。操作のたびにSwiperの状態から導出する（stateに写すとイベントの発火順に依存する）
+  // isEndはtranslate由来のため、案内への遷移中にドラッグして中途半端な位置で止まった状態（合成transitionendでanimatingは下りる）では偽になる
+  const isGuideShown = useCallback(
+    (swiper: SwiperClass) => !swiper.animating && swiper.isEnd && displayPageList[swiper.activeIndex]?.kind === 'guide',
+    [displayPageList],
+  )
+
+  // 「次へ」操作。案内スライドの表示中なら次の話へ遷移し、それ以外はページを送る
+  // 案内に到達するスライド遷移（comicScrollSpeed）の間は遷移しないため、その間の連打は案内の表示で止まる。遷移完了後の操作は遷移する
+  // repeat（キー押しっぱなしのリピート）は、案内を見る前に次の話へ遷移してしまわないよう案内スライド上では無視する
+  const handleNextPage = useCallback(
+    (options?: PageTurnOptions) => {
+      if (!swiperInstance) return
+      if (isGuideShown(swiperInstance)) {
+        if (nextId !== null && !options?.repeat) router.push(comicPath(nextId))
+        return
+      }
+      swiperInstance.slideNext(comicScrollSpeed)
+    },
+    [swiperInstance, isGuideShown, nextId, router],
+  )
 
   const handlePrevPage = useCallback(() => {
     if (!swiperInstance) return
     swiperInstance.slidePrev(comicScrollSpeed)
   }, [swiperInstance])
+
+  // キーボードのページ送りはSwiperのKeyboardモジュールがdocumentで処理しており、末尾では何も起きない
+  // 案内スライドの表示中に「次へ」方向のキーが押されたときだけここで拾い、他の操作と同じhandleNextPageに寄せる
+  // Keyboardモジュールと同じ条件で無視する: 無効化中（スライダー操作中）・修飾キー付き・入力要素へのキー・ビューワーが画面外
+  useEffect(() => {
+    if (!swiperInstance || nextId === null) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!NEXT_PAGE_KEYS.includes(e.key) || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return
+      if (!swiperInstance.keyboard.enabled || !isGuideShown(swiperInstance)) return
+      if (e.target instanceof HTMLElement && e.target.closest('input, textarea, select, [contenteditable]')) return
+      if (!isInViewport(swiperInstance.el)) return
+      handleNextPage({ repeat: e.repeat })
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [swiperInstance, nextId, isGuideShown, handleNextPage])
 
   const handleMouseClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
@@ -164,8 +229,12 @@ export default function ComicBook(props: ComicBookProps) {
           slidesPerView={mode === 'double' ? 2 : 1}
           slidesPerGroup={mode === 'double' ? 2 : 1}
           onSwiper={setSwiperInstance}
-          onActiveIndexChange={(swiper) => {
-            setCurrentPage(swiper.activeIndex)
+          onActiveIndexChange={(swiper) => setCurrentPage(swiper.activeIndex)}
+          // 案内スライド上で「次へ」方向にスワイプしたときも次の話へ遷移する（末尾ではSwiperはラバーバンドで戻すだけのため）
+          // swipeDirectionはタッチ開始でリセットされ、動きがあったときだけ入る。本編のスライドでは何もしない（Swiper側がページを送る）
+          onTouchEnd={(swiper) => {
+            if (!isGuideShown(swiper) || swiper.swipeDirection !== 'next') return
+            if (Math.abs(swiper.touches.diff) >= NEXT_EPISODE_SWIPE_THRESHOLD) handleNextPage()
           }}
           keyboard={{ enabled: true }}
           className="h-full w-full"
@@ -173,7 +242,7 @@ export default function ComicBook(props: ComicBookProps) {
         >
           {displayPageList.map((page) => (
             <SwiperSlide key={page.id}>
-              <ComicSlide mode={mode} page={page} />
+              {({ isActive }) => <ComicSlide mode={mode} page={page} isActive={isActive} />}
             </SwiperSlide>
           ))}
           <NavigationIcons
