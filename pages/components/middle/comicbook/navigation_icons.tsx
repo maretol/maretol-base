@@ -15,6 +15,13 @@ function NavigationIcons(props: NavigationIconsProps) {
 
   if (pageOption.controller_disabled) return null
 
+  // 親のcomic-zoneにもクリック位置によるページ送り（useZoneDetection）があり、
+  // ボタンは必ずそのゾーン内に置かれるため、バブリングさせると同じ方向へ2回ページ送りされてしまう
+  const handleClick = (e: React.MouseEvent, action: () => void) => {
+    e.stopPropagation()
+    action()
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
@@ -35,7 +42,7 @@ function NavigationIcons(props: NavigationIconsProps) {
           pageOption.controller_visible && 'opacity-100',
           zoneFlag === 'next' && 'opacity-100',
         )}
-        onClick={onNextPage}
+        onClick={(e) => handleClick(e, onNextPage)}
         onKeyDown={(e) => handleKeyDown(e, onNextPage)}
       >
         <ChevronLeftIcon className="h-full w-full" aria-hidden="true" />
@@ -50,7 +57,7 @@ function NavigationIcons(props: NavigationIconsProps) {
           pageOption.controller_visible && 'opacity-100',
           zoneFlag === 'prev' && 'opacity-100',
         )}
-        onClick={onPrevPage}
+        onClick={(e) => handleClick(e, onPrevPage)}
         onKeyDown={(e) => handleKeyDown(e, onPrevPage)}
       >
         <ChevronRightIcon className="h-full w-full" aria-hidden="true" />
