@@ -21,6 +21,9 @@ const INDEX_TARGET_MARKER = '@@index_target'
 const ALLOWED_INLINE_TAGS = ['span', 'br', 'u', 's', 'sub', 'sup', 'ruby', 'rt', 'rp']
 const allowedInlinePattern = new RegExp(`^</?(?:${ALLOWED_INLINE_TAGS.join('|')})(?:\\s[^>]*)?/?>$`, 'i')
 
+// 新しいタブで開かず同一タブのままにするリンク先（ページ内アンカー・mailto・tel）
+const SAME_TAB_HREF_PATTERN = /^(?:#|mailto:|tel:)/i
+
 // FNV-1a 32bit。見出しidを内容から決定的に生成するために使用する
 function fnv1a(input: string): string {
   let hash = 0x811c9dc5
@@ -157,6 +160,17 @@ function createConverter(): MarkdownIt {
   md.renderer.rules.html_inline = (tokens, idx) => {
     const content = tokens[idx].content
     return allowedInlinePattern.test(content) ? content : md.utils.escapeHtml(content)
+  }
+
+  // リンク: 新しいタブで開く（microCMS のリッチエディタが出力していた target="_blank" と同じ挙動）。
+  // ページ内アンカーと mailto: / tel: はページ遷移ではないため同一タブのままにする
+  md.renderer.rules.link_open = (tokens, idx, options, _env, self) => {
+    const token = tokens[idx]
+    if (!SAME_TAB_HREF_PATTERN.test(String(token.attrGet('href') ?? ''))) {
+      token.attrSet('target', '_blank')
+      token.attrSet('rel', 'noopener noreferrer')
+    }
+    return self.renderToken(tokens, idx, options)
   }
 
   return md

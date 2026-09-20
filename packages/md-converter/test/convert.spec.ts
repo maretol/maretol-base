@@ -196,9 +196,24 @@ describe('基本記法', () => {
     expect(html).not.toContain('<a href')
   })
 
-  it('cite::以外の行では通常のMarkdownリンク記法が使える', () => {
+  it('cite::以外の行では通常のMarkdownリンク記法が使え、新しいタブで開くリンクになる', () => {
     const html = convertMarkdownToHtml('これは[リンク](https://example.com)です')
-    expect(html).toBe('<p>これは<a href="https://example.com">リンク</a>です</p>\n')
+    expect(html).toBe(
+      '<p>これは<a href="https://example.com" target="_blank" rel="noopener noreferrer">リンク</a>です</p>\n'
+    )
+  })
+
+  it('サイト内の相対パスのリンクも新しいタブで開くリンクになる', () => {
+    const html = convertMarkdownToHtml('[ブログ](/blog/test)')
+    expect(html).toBe('<p><a href="/blog/test" target="_blank" rel="noopener noreferrer">ブログ</a></p>\n')
+  })
+
+  it('ページ内アンカー・mailto・tel のリンクは同一タブのまま（target を付与しない）', () => {
+    expect(convertMarkdownToHtml('[見出しへ](#h12345678)')).toBe('<p><a href="#h12345678">見出しへ</a></p>\n')
+    expect(convertMarkdownToHtml('[メール](mailto:contact@example.com)')).toBe(
+      '<p><a href="mailto:contact@example.com">メール</a></p>\n'
+    )
+    expect(convertMarkdownToHtml('[電話](tel:0312345678)')).toBe('<p><a href="tel:0312345678">電話</a></p>\n')
   })
 
   it('cite::行にバックスラッシュが含まれてもリンク解釈の抑止をすり抜けない', () => {
