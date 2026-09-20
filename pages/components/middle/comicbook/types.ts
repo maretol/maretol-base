@@ -14,6 +14,12 @@ export type PageState =
   // 本編の末尾に置く案内スライド（次の話へ / 現在の最新話）
   | { kind: 'guide'; id: string; position: 'right'; guide: SeriesGuide }
 
+// ページ送り操作の付随情報
+// repeat: キー押しっぱなしのリピートによる操作。通常のページ送りは連続して進めるが、末尾の案内スライドでは次の話への遷移に使わない
+export type PageTurnOptions = {
+  repeat?: boolean
+}
+
 export type PageOption = {
   mode_static: boolean // モード固定
   controller_visible: boolean // コントローラー表示

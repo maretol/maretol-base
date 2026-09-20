@@ -8,6 +8,7 @@ import { ArrowLeftSquareIcon, ArrowRightSquareIcon, ArrowUpSquareIcon, BookImage
 import ShareSection from '../middle/share_section'
 import { getHostname } from '@/lib/env'
 import ClientImage2 from '../small/client_image2'
+import { comicPath, comicSeriesPath } from '@/lib/comic_util'
 
 type ComicArticleProps = {
   id: string
@@ -42,7 +43,7 @@ export async function ComicOverview(props: ComicArticleProps) {
   // マンガのタイトル
   const title = props.titleName
   // マンガページのリンクURL
-  const linkURL = `/comics/${props.id}`
+  const linkURL = comicPath(props.id)
   // 公開日・イベント情報
   const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : '-'
   const publishEvent = props.publishEvent || '-'
@@ -103,13 +104,13 @@ export async function ComicOverview(props: ComicArticleProps) {
 }
 
 export function ComicDetailPage(props: ComicArticleProps) {
-  const url = getHostname() + '/comics/' + props.id
+  const url = getHostname() + comicPath(props.id)
   const isNextExist = props.nextId !== null
   const isPreviousExist = props.previousId !== null
   const isSereies = props.seriesName !== null
-  const nextLink = isNextExist ? `/comics/${props.nextId}` : ''
-  const previousLink = isPreviousExist ? `/comics/${props.previousId}` : ''
-  const seriesLink = isSereies ? `/comics?series=${props.seriesId}` : ''
+  const nextLink = props.nextId !== null ? comicPath(props.nextId) : ''
+  const previousLink = props.previousId !== null ? comicPath(props.previousId) : ''
+  const seriesLink = props.seriesId !== null ? comicSeriesPath(props.seriesId) : ''
 
   const publishDate = props.publishDate ? convertJSTDate(props.publishDate) : '-'
   const publishEvent = props.publishEvent || '-'

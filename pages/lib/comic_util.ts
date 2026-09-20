@@ -12,4 +12,14 @@ function getSeriesName(bandeDessinees: bandeDessineeResult[]) {
   return bandeDessinees[0]?.series?.series_name
 }
 
-export { getFirstPage, getSeriesName }
+// マンガページのパス。リンクと router.push で共有する
+function comicPath(id: string) {
+  return `/comics/${id}`
+}
+
+// シリーズで絞り込んだマンガ一覧のパス（クエリキーは searchParams.ts の parseSeriesParams と対応）
+function comicSeriesPath(seriesId: string) {
+  return `/comics?series=${seriesId}`
+}
+
+export { getFirstPage, getSeriesName, comicPath, comicSeriesPath }

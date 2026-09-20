@@ -1,13 +1,15 @@
 import { memo } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { PageOption } from './types'
+import { PageOption, PageTurnOptions } from './types'
+
+type PageTurnAction = (options?: PageTurnOptions) => void
 
 type NavigationIconsProps = {
   pageOption: PageOption
   zoneFlag: 'next' | 'prev' | 'none'
-  onNextPage: () => void
-  onPrevPage: () => void
+  onNextPage: PageTurnAction
+  onPrevPage: PageTurnAction
 }
 
 function NavigationIcons(props: NavigationIconsProps) {
@@ -17,17 +19,17 @@ function NavigationIcons(props: NavigationIconsProps) {
 
   // 親のcomic-zoneにもクリック位置によるページ送り（useZoneDetection）があり、
   // ボタンは必ずそのゾーン内に置かれるため、バブリングさせると同じ方向へ2回ページ送りされてしまう
-  const handleClick = (e: React.MouseEvent, action: () => void) => {
+  const handleClick = (e: React.MouseEvent, action: PageTurnAction) => {
     e.stopPropagation()
     action()
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent, action: () => void) => {
+  // Enter/Spaceの押しっぱなしはリピートとして受け手に伝える
+  // （通常のページ送りは従来どおり連続して進み、末尾の案内スライドでは案内を見る前に次の話へ遷移しないよう無視される）
+  const handleKeyDown = (e: React.KeyboardEvent, action: PageTurnAction) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      // 押しっぱなしのリピートは無視する（末尾の案内スライドで、案内を見る前に次の話へ遷移してしまうのを防ぐ）
-      if (e.repeat) return
-      action()
+      action({ repeat: e.repeat })
     }
   }
 
