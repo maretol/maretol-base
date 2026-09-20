@@ -32,6 +32,7 @@ import {
   getBandeDessineesFromD1,
   getBandeDessineeFromD1,
   getBandeDessineeDraftFromKV,
+  hideUnpublishedNeighbors,
 } from './d1'
 import {
   getBlogContentsFromD1,
@@ -60,6 +61,14 @@ export interface Env {
   DB: D1Database
   // KVプレビュー（draftKey互換）のドラフト参照先。管理ページ（admin-pages）が書き込む
   CMS_DRAFT: KVNamespace
+}
+
+// D1参照時のマンガ単体取得。draftKey指定時はKVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
+// 未公開（下書き）の前後の巻へはリンクさせない。ドラフトのプレビューでも公開後と同じ見え方にするため両方に掛ける
+async function fetchBandeDessineeFromD1(env: Env, contentID: string, draftKey?: string): Promise<bandeDessineeResult> {
+  const draft = draftKey ? await getBandeDessineeDraftFromKV(env.CMS_DRAFT, contentID, draftKey) : null
+  const content = draft ?? (await getBandeDessineeFromD1(env.DB, contentID))
+  return await hideUnpublishedNeighbors(env.DB, content)
 }
 
 export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
@@ -307,11 +316,9 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       throw new Error('contentID is empty')
     }
     try {
-      // D1参照時のdraftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
       const content =
         this.env.COMIC_SOURCE === 'd1'
-          ? (draftKey ? await getBandeDessineeDraftFromKV(this.env.CMS_DRAFT, contentID, draftKey) : null) ??
-            (await getBandeDessineeFromD1(this.env.DB, contentID))
+          ? await fetchBandeDessineeFromD1(this.env, contentID, draftKey || undefined)
           : await getBandeDessinee(apiKey, contentID, draftKey || undefined)
       const parsed = parse(content.description)
       content.parsed_description = parsed.contents_array

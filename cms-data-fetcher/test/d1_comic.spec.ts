@@ -3,7 +3,12 @@
  */
 import { describe, it, expect } from 'vitest'
 import type { bandeDessineeRow, bandeDessineeDraftRecord } from 'api-types'
-import { toBandeDessineeResult, getBandeDessineeDraftFromKV, getBandeDessineesFromD1 } from '../src/d1'
+import {
+  toBandeDessineeResult,
+  getBandeDessineeDraftFromKV,
+  getBandeDessineesFromD1,
+  hideUnpublishedNeighbors,
+} from '../src/d1'
 import { parse } from '../src/parse'
 
 const baseRow: bandeDessineeRow = {
@@ -180,5 +185,65 @@ describe('getBandeDessineesFromD1', () => {
   it('存在しないシリーズは空を返す', async () => {
     const result = await getBandeDessineesFromD1(db, 0, 10, 'no_such_series')
     expect(result).toEqual({ bandeDessinees: [], total: 0 })
+  })
+})
+
+describe('hideUnpublishedNeighbors', () => {
+  const tag = { id: 'kancolle', tag_name: '艦これ' }
+  const statuses: Record<string, string> = { comic_pub: 'PUBLISH', comic_draft: 'DRAFT', comic_closed: 'CLOSED' }
+  let queryCount = 0
+
+  // IN句のプレースホルダ数と bind 数の一致を検査し、bind されたIDのうち公開済みのものだけを返す簡易D1モック
+  const db = {
+    prepare: (sql: string) => ({
+      bind: (...params: unknown[]) => ({
+        all: async () => {
+          queryCount += 1
+          if (!sql.includes("status = 'PUBLISH'")) {
+            throw new Error('status filter missing')
+          }
+          const placeholders = sql.match(/IN \(([^)]*)\)/)?.[1].split(',') ?? []
+          if (placeholders.length !== params.length) {
+            throw new Error(`placeholders ${placeholders.length} != bound params ${params.length}`)
+          }
+          return { results: params.filter((id) => statuses[id as string] === 'PUBLISH').map((id) => ({ id })) }
+        },
+      }),
+    }),
+  } as unknown as D1Database
+
+  const toContent = (next_id: string | null, previous_id: string | null) =>
+    toBandeDessineeResult({ ...baseRow, next_id, previous_id }, tag, null)
+
+  it('公開済みの前後の巻はそのまま残す', async () => {
+    const result = await hideUnpublishedNeighbors(db, toContent('comic_pub', 'comic_pub'))
+    expect(result.next_id).toBe('comic_pub')
+    expect(result.previous_id).toBe('comic_pub')
+  })
+
+  it('下書きの次の巻はIDを伏せる（公開済みの前の巻は残す）', async () => {
+    const result = await hideUnpublishedNeighbors(db, toContent('comic_draft', 'comic_pub'))
+    expect(result.next_id).toBeUndefined()
+    expect(result.previous_id).toBe('comic_pub')
+  })
+
+  it('CLOSED・存在しない巻も伏せる', async () => {
+    const result = await hideUnpublishedNeighbors(db, toContent('no_such', 'comic_closed'))
+    expect(result.next_id).toBeUndefined()
+    expect(result.previous_id).toBeUndefined()
+  })
+
+  it('片方だけ設定されていてもプレースホルダ数が合う', async () => {
+    const result = await hideUnpublishedNeighbors(db, toContent(null, 'comic_pub'))
+    expect(result.next_id).toBeUndefined()
+    expect(result.previous_id).toBe('comic_pub')
+  })
+
+  it('前後の巻がなければ問い合わせずにそのまま返す', async () => {
+    queryCount = 0
+    const content = toContent(null, null)
+    const result = await hideUnpublishedNeighbors(db, content)
+    expect(result).toBe(content)
+    expect(queryCount).toBe(0)
   })
 })

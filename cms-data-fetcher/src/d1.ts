@@ -251,6 +251,27 @@ export async function getBandeDessineeDraftFromKV(
   return toBandeDessineeResult(record.row, record.tag, record.series)
 }
 
+// 前後の巻（next_id / previous_id）のうち公開済みのものだけを残す
+// admin側は下書きの保存時にもチェーン（前後の巻の相互リンク）を同期するため、そのままでは未公開の巻のIDが配信され、
+// 「Next episode」のリンク先が404になるうえに未公開のIDが露出してしまう
+export async function hideUnpublishedNeighbors(
+  db: D1Database,
+  content: bandeDessineeResult
+): Promise<bandeDessineeResult> {
+  const neighborIDs = [content.next_id, content.previous_id].filter((id): id is string => id !== undefined)
+  if (neighborIDs.length === 0) {
+    return content
+  }
+  const placeholders = neighborIDs.map((_, i) => `?${i + 1}`).join(', ')
+  const rows = await db
+    .prepare(`SELECT id FROM bande_dessinees WHERE status = 'PUBLISH' AND id IN (${placeholders})`)
+    .bind(...neighborIDs)
+    .all<{ id: string }>()
+  const publishedIDs = new Set(rows.results.map((row) => row.id))
+  const keepIfPublished = (id: string | undefined) => (id !== undefined && publishedIDs.has(id) ? id : undefined)
+  return { ...content, next_id: keepIfPublished(content.next_id), previous_id: keepIfPublished(content.previous_id) }
+}
+
 // テスト用に公開する
 export { toAtelierResult, toDeliveryHTML, toBandeDessineeResult }
 export type { AtelierRow }
