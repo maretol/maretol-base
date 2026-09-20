@@ -144,10 +144,13 @@ export async function getAtelierDraftFromKV(
 
 // --- comic (bande-dessinee) ---
 
-// JOIN結果の行型（本体 + タグ名 + シリーズ名）
+// JOIN結果の行型（本体 + タグ名 + シリーズ名 + 前後の巻の公開判定）
+// next_published / previous_published は EXISTS の結果で 0/1（SQLite）
 type BandeDessineeJoinRow = bandeDessineeRow & {
   tag_name: string
   series_name: string | null
+  next_published: number
+  previous_published: number
 }
 
 function toBandeDessineeResult(
@@ -179,17 +182,23 @@ function toBandeDessineeResult(
   } as bandeDessineeResult // parsed_description / table_of_contents は index.ts が parse() 結果を代入する
 }
 
+// 前後の巻（next_id / previous_id）は公開済みのものだけを残す（未公開の巻は next_published / previous_published が 0）
 function joinRowToResult(row: BandeDessineeJoinRow): bandeDessineeResult {
-  const { tag_name, series_name, ...body } = row
+  const { tag_name, series_name, next_published, previous_published, ...body } = row
   return toBandeDessineeResult(
-    body,
+    { ...body, next_id: next_published ? body.next_id : null, previous_id: previous_published ? body.previous_id : null },
     { id: row.tag_id, tag_name },
     row.series_id !== null && series_name !== null ? { id: row.series_id, series_name } : null
   )
 }
 
+// 前後の巻が公開済みかを同じクエリで判定する
+// admin側は下書きの保存時にもチェーン（前後の巻の相互リンク）を同期するため、そのままでは未公開の巻のIDが配信され、
+// 「Next episode」のリンク先が404になるうえに未公開のIDが露出してしまう
 const BANDE_DESSINEE_SELECT = `
-  SELECT b.*, t.tag_name, s.series_name
+  SELECT b.*, t.tag_name, s.series_name,
+    EXISTS(SELECT 1 FROM bande_dessinees n WHERE n.id = b.next_id AND n.status = 'PUBLISH') AS next_published,
+    EXISTS(SELECT 1 FROM bande_dessinees p WHERE p.id = b.previous_id AND p.status = 'PUBLISH') AS previous_published
   FROM bande_dessinees b
   JOIN bande_dessinee_tags t ON t.id = b.tag_id
   LEFT JOIN bande_dessinee_series s ON s.id = b.series_id`
@@ -251,9 +260,8 @@ export async function getBandeDessineeDraftFromKV(
   return toBandeDessineeResult(record.row, record.tag, record.series)
 }
 
-// 前後の巻（next_id / previous_id）のうち公開済みのものだけを残す
-// admin側は下書きの保存時にもチェーン（前後の巻の相互リンク）を同期するため、そのままでは未公開の巻のIDが配信され、
-// 「Next episode」のリンク先が404になるうえに未公開のIDが露出してしまう
+// KVのドラフト向け: 前後の巻（next_id / previous_id）のうち公開済みのものだけを残す
+// D1から取得した行は BANDE_DESSINEE_SELECT で判定済みだが、ドラフトはadminが保存した行そのままなので別途D1に問い合わせる
 export async function hideUnpublishedNeighbors(
   db: D1Database,
   content: bandeDessineeResult

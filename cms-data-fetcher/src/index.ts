@@ -64,11 +64,14 @@ export interface Env {
 }
 
 // D1参照時のマンガ単体取得。draftKey指定時はKVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
-// 未公開（下書き）の前後の巻へはリンクさせない。ドラフトのプレビューでも公開後と同じ見え方にするため両方に掛ける
+// 未公開（下書き）の前後の巻へはリンクさせない。D1の公開データは取得時に判定済みのため、KVのドラフトにだけ同じ処理を掛ける
+// なお複数の巻を同時に下書きしていると、プレビューでは相手の巻が伏せられる（両方の公開後には「次の話へ」になる）
 async function fetchBandeDessineeFromD1(env: Env, contentID: string, draftKey?: string): Promise<bandeDessineeResult> {
   const draft = draftKey ? await getBandeDessineeDraftFromKV(env.CMS_DRAFT, contentID, draftKey) : null
-  const content = draft ?? (await getBandeDessineeFromD1(env.DB, contentID))
-  return await hideUnpublishedNeighbors(env.DB, content)
+  if (draft !== null) {
+    return await hideUnpublishedNeighbors(env.DB, draft)
+  }
+  return await getBandeDessineeFromD1(env.DB, contentID)
 }
 
 export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
