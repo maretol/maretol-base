@@ -220,6 +220,7 @@ CREATE TABLE atelier_tag_relations (
 - **コードフェンスはファイル名の有無に関わらず常に `<div>` で包む**。pages の renderContent はトップレベル要素として h1-h5 / hr / table / div / ul / ol / blockquote / p のみ対応しており、裸の `<pre>` は renderUnknown に落ちるため
 - 見出し id は `h` + FNV-1a 32bit の16進8桁。同一テキストは常に同じ id、同一記事内の重複時のみサフィックス付きで再ハッシュ
 - 改行は `breaks: true`（単一改行 → `<br>`、空行 → 段落分割。microCMS の shift+enter / enter に相当）
+- **リンク記法は新しいタブで開くリンクとして出力する**（`link_open` のレンダラルールで `target="_blank" rel="noopener noreferrer"` を付与）。microCMS のリッチエディタも http リンクを `target="_blank"` 付きで出力していた。ページ内アンカー（`#...`）と `mailto:` / `tel:` はページ遷移ではないため付与しない（microCMS 出力でも `mailto:` は target なしだった）。pages 側は `inner_html` をそのまま描画するため、変換器の出力属性がそのまま反映される
 
 ### 互換性確認ツール
 

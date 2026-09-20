@@ -147,6 +147,23 @@ describe('Markdown由来コンテンツのParsedContent互換性', () => {
     expect(fromHtml.contents_array[0].text).toContain('cite::[太宰治　走れメロス](https://example.com)')
   })
 
+  it('リンク: 新しいタブで開く指定が inner_html に保持され、p_option は通常の段落のまま', () => {
+    // microCMS由来のHTML（リッチエディタのリンクは target="_blank" 付きで出力されていた）
+    const html =
+      '<p>これは<a href="https://example.com" target="_blank" rel="noopener noreferrer nofollow">リンク</a>です</p>'
+    const md = 'これは[リンク](https://example.com)です'
+
+    const fromHtml = parse(html)
+    const fromMd = parse(convertMarkdownToHtml(md))
+
+    // pages の P コンポーネントは inner_html をそのまま描画するため、属性が落ちないことが必須
+    expect(fromMd.contents_array[0].inner_html).toBe(
+      'これは<a href="https://example.com" target="_blank" rel="noopener noreferrer">リンク</a>です'
+    )
+    expect(fromMd.contents_array[0].text).toBe(fromHtml.contents_array[0].text)
+    expect(fromMd.contents_array[0].p_option).toBe('normal')
+  })
+
   it('総合: 記事相当のMarkdownがトップレベル要素として正しく分解される', () => {
     const md = [
       '/table_of_contents',
