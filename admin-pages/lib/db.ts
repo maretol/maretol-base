@@ -5,6 +5,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { atelierRow, atelierTagRow } from 'api-types'
 import type { ContentFormat } from './content-format'
+import { paginatedQuery, type PageRange, type Paginated } from './db_pagination'
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true })
@@ -17,26 +18,16 @@ export type AtelierListRow = Pick<
   'id' | 'title' | 'src' | 'object_position' | 'status' | 'description_format' | 'published_at' | 'updated_at'
 > & { tag_names: string | null }
 
-export async function listAteliers(page: {
-  limit: number
-  offset: number
-}): Promise<{ items: AtelierListRow[]; total: number }> {
-  const db = await getDB()
-  const [count, list] = await db.batch<{ total: number } | AtelierListRow>([
-    db.prepare(`SELECT COUNT(*) AS total FROM ateliers`),
-    db
-      .prepare(
-        `SELECT a.id, a.title, a.src, a.object_position, a.status, a.description_format, a.published_at, a.updated_at,
-          (SELECT group_concat(t.tag, ', ') FROM atelier_tag_relations r
-            JOIN atelier_tags t ON t.id = r.tag_id WHERE r.atelier_id = a.id) AS tag_names
-         FROM ateliers a ORDER BY a.created_at DESC, a.id DESC LIMIT ?1 OFFSET ?2`
-      )
-      .bind(page.limit, page.offset),
-  ])
-  return {
-    items: list.results as AtelierListRow[],
-    total: (count.results[0] as { total: number } | undefined)?.total ?? 0,
-  }
+export async function listAteliers(page: PageRange): Promise<Paginated<AtelierListRow>> {
+  return paginatedQuery<AtelierListRow>(
+    await getDB(),
+    `SELECT COUNT(*) AS total FROM ateliers`,
+    `SELECT a.id, a.title, a.src, a.object_position, a.status, a.description_format, a.published_at, a.updated_at,
+      (SELECT group_concat(t.tag, ', ') FROM atelier_tag_relations r
+        JOIN atelier_tags t ON t.id = r.tag_id WHERE r.atelier_id = a.id) AS tag_names
+     FROM ateliers a ORDER BY a.created_at DESC, a.id DESC LIMIT ?1 OFFSET ?2`,
+    page
+  )
 }
 
 export async function getAtelier(id: string): Promise<atelierRow | null> {

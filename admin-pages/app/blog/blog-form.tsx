@@ -18,10 +18,9 @@ type Props = {
   allCategories: blogCategoryRow[]
   error?: string
   saved?: boolean
-  listPage?: number
 }
 
-export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error, saved, listPage }: Props) {
+export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error, saved }: Props) {
   const action = mode === 'new' ? createBlogContentAction : updateBlogContentAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewBlogContentAction, {})
@@ -50,8 +49,6 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
 
       <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
         <input type="hidden" name="mode" value={mode} />
-        {/* 戻り先の一覧ページ番号。保存後の redirect に引き継ぐ */}
-        {listPage !== undefined && listPage > 1 && <input type="hidden" name="p" value={listPage} />}
 
         <div>
           <label className="block text-sm font-medium">ID（URLの一部。空欄でランダム生成。作成後変更不可）</label>

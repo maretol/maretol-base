@@ -5,6 +5,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { blogContentRow, blogCategoryRow, blogInfoRow } from 'api-types'
 import type { ContentFormat } from './content-format'
+import { paginatedQuery, type PageRange, type Paginated } from './db_pagination'
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true })
@@ -19,26 +20,16 @@ export type BlogContentListRow = Pick<
   'id' | 'title' | 'status' | 'is_secret' | 'content_format' | 'published_at' | 'updated_at'
 > & { category_names: string | null }
 
-export async function listBlogContents(page: {
-  limit: number
-  offset: number
-}): Promise<{ items: BlogContentListRow[]; total: number }> {
-  const db = await getDB()
-  const [count, list] = await db.batch<{ total: number } | BlogContentListRow>([
-    db.prepare(`SELECT COUNT(*) AS total FROM blog_contents`),
-    db
-      .prepare(
-        `SELECT c.id, c.title, c.status, c.is_secret, c.content_format, c.published_at, c.updated_at,
-          (SELECT group_concat(bc.name, ', ') FROM blog_content_categories r
-            JOIN blog_categories bc ON bc.id = r.category_id WHERE r.content_id = c.id) AS category_names
-         FROM blog_contents c ORDER BY c.created_at DESC, c.id DESC LIMIT ?1 OFFSET ?2`
-      )
-      .bind(page.limit, page.offset),
-  ])
-  return {
-    items: list.results as BlogContentListRow[],
-    total: (count.results[0] as { total: number } | undefined)?.total ?? 0,
-  }
+export async function listBlogContents(page: PageRange): Promise<Paginated<BlogContentListRow>> {
+  return paginatedQuery<BlogContentListRow>(
+    await getDB(),
+    `SELECT COUNT(*) AS total FROM blog_contents`,
+    `SELECT c.id, c.title, c.status, c.is_secret, c.content_format, c.published_at, c.updated_at,
+      (SELECT group_concat(bc.name, ', ') FROM blog_content_categories r
+        JOIN blog_categories bc ON bc.id = r.category_id WHERE r.content_id = c.id) AS category_names
+     FROM blog_contents c ORDER BY c.created_at DESC, c.id DESC LIMIT ?1 OFFSET ?2`,
+    page
+  )
 }
 
 export async function getBlogContent(id: string): Promise<blogContentRow | null> {

@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { listBandeDessinees } from '@/lib/db_comic'
-import { PAGE_SIZE, parsePageParam, withPage } from '@/lib/pagination'
+import { loadListPage } from '@/lib/list-page'
 import { Pagination } from '@/components/pagination'
+import { RememberListPage } from '@/components/list-page-memory'
 import { formatJST, formatJSTDate } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -14,21 +14,7 @@ const statusLabel: Record<string, string> = {
 }
 
 export default async function ComicList({ searchParams }: { searchParams: Promise<{ p?: string | string[] }> }) {
-  const page = parsePageParam((await searchParams).p)
-  if (page === null) {
-    redirect('/comic')
-  }
-
-  const { items: comics, total } = await listBandeDessinees({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE })
-  const totalPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  // 範囲外のページ指定は最終ページへ寄せる
-  if (page > totalPage) {
-    redirect(withPage('/comic', totalPage))
-  }
-
-  const pagination = (
-    <Pagination path="/comic" currentPage={page} totalPage={totalPage} total={total} pageSize={PAGE_SIZE} />
-  )
+  const { items: comics, pagination } = await loadListPage('/comic', searchParams, listBandeDessinees)
 
   return (
     <div className="space-y-4">
@@ -47,7 +33,8 @@ export default async function ComicList({ searchParams }: { searchParams: Promis
         </div>
       </div>
 
-      {pagination}
+      <RememberListPage path={pagination.path} page={pagination.currentPage} />
+      <Pagination {...pagination} />
 
       <table className="w-full border-collapse bg-white text-sm">
         <thead>
@@ -68,7 +55,7 @@ export default async function ComicList({ searchParams }: { searchParams: Promis
             <tr key={c.id} className="border-b border-gray-100">
               <td className="p-2 font-mono text-xs">{c.id}</td>
               <td className="p-2">
-                <Link href={withPage(`/comic/${c.id}/edit`, page)} className="text-blue-600 underline">
+                <Link href={`/comic/${c.id}/edit`} className="text-blue-600 underline">
                   {c.title_name}
                 </Link>
               </td>
@@ -91,7 +78,7 @@ export default async function ComicList({ searchParams }: { searchParams: Promis
         </tbody>
       </table>
 
-      {pagination}
+      <Pagination {...pagination} label="ページネーション（下部）" />
     </div>
   )
 }

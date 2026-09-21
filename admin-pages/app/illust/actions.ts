@@ -9,7 +9,6 @@ import { saveAtelierDraft } from '@/lib/draft'
 import { notifyAtelierPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
-import { pageQuerySuffix } from '@/lib/pagination'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
@@ -67,7 +66,7 @@ export async function createAtelierAction(formData: FormData): Promise<void> {
 export async function updateAtelierAction(formData: FormData): Promise<void> {
   const { input, error } = parseAtelierForm(formData)
   if (error) {
-    redirect(`/illust/${input.id}/edit?error=${encodeURIComponent(error)}${pageQuerySuffix(formData)}`)
+    redirect(`/illust/${input.id}/edit?error=${encodeURIComponent(error)}`)
   }
 
   // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
@@ -80,7 +79,7 @@ export async function updateAtelierAction(formData: FormData): Promise<void> {
 
   revalidatePath('/illust')
   // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(`/illust/${input.id}/edit?saved=1${pageQuerySuffix(formData)}`)
+  redirect(`/illust/${input.id}/edit?saved=1`)
 }
 
 // 編集中の内容をKVに保存し、pages本体のプレビューURLを返す（D1には書き込まない）

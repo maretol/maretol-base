@@ -1,5 +1,4 @@
 import type { Metadata } from 'next'
-import { Suspense } from 'react'
 import Link from 'next/link'
 import { Breadcrumbs } from '@/components/breadcrumbs'
 import './globals.css'
@@ -38,10 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </div>
         </header>
         <main className="mx-auto max-w-[1600px] px-4 py-6">
-          {/* Breadcrumbs は useSearchParams を使うため Suspense で包む */}
-          <Suspense fallback={null}>
-            <Breadcrumbs />
-          </Suspense>
+          <Breadcrumbs />
           {children}
         </main>
       </body>

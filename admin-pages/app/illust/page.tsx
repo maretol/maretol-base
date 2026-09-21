@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import { listAteliers } from '@/lib/db'
-import { PAGE_SIZE, parsePageParam, withPage } from '@/lib/pagination'
+import { loadListPage } from '@/lib/list-page'
 import { Pagination } from '@/components/pagination'
+import { RememberListPage } from '@/components/list-page-memory'
 import { formatJST } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -14,21 +14,7 @@ const statusLabel: Record<string, string> = {
 }
 
 export default async function IllustList({ searchParams }: { searchParams: Promise<{ p?: string | string[] }> }) {
-  const page = parsePageParam((await searchParams).p)
-  if (page === null) {
-    redirect('/illust')
-  }
-
-  const { items: ateliers, total } = await listAteliers({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE })
-  const totalPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  // 範囲外のページ指定は最終ページへ寄せる
-  if (page > totalPage) {
-    redirect(withPage('/illust', totalPage))
-  }
-
-  const pagination = (
-    <Pagination path="/illust" currentPage={page} totalPage={totalPage} total={total} pageSize={PAGE_SIZE} />
-  )
+  const { items: ateliers, pagination } = await loadListPage('/illust', searchParams, listAteliers)
 
   return (
     <div className="space-y-4">
@@ -44,7 +30,8 @@ export default async function IllustList({ searchParams }: { searchParams: Promi
         </div>
       </div>
 
-      {pagination}
+      <RememberListPage path={pagination.path} page={pagination.currentPage} />
+      <Pagination {...pagination} />
 
       <table className="w-full border-collapse bg-white text-sm">
         <thead>
@@ -73,7 +60,7 @@ export default async function IllustList({ searchParams }: { searchParams: Promi
               </td>
               <td className="p-2 font-mono text-xs">{a.id}</td>
               <td className="p-2">
-                <Link href={withPage(`/illust/${a.id}/edit`, page)} className="text-blue-600 underline">
+                <Link href={`/illust/${a.id}/edit`} className="text-blue-600 underline">
                   {a.title}
                 </Link>
               </td>
@@ -94,7 +81,7 @@ export default async function IllustList({ searchParams }: { searchParams: Promi
         </tbody>
       </table>
 
-      {pagination}
+      <Pagination {...pagination} label="ページネーション（下部）" />
     </div>
   )
 }

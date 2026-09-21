@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { parsePageParam, withPage } from '@/lib/pagination'
+import { usePathname } from 'next/navigation'
+import { withPage } from '@/lib/pagination'
+import { useRememberedListPage } from '@/components/list-page-memory'
 
 const SEGMENT_LABELS: Record<string, string> = {
   illust: 'イラスト',
@@ -23,13 +24,14 @@ const SEGMENT_LABELS: Record<string, string> = {
 // （/blog/{id} のようなページは存在しないため、コンテンツIDはリンクにしない）
 const LINKABLE_PATHS = new Set(['/illust', '/comic', '/blog', '/blog/info'])
 
-// ページネーションのある一覧。編集画面の `p`（戻り先の一覧ページ番号）をリンクに引き継ぐ
+// ページネーションのある一覧。配下のページからは、最後に見ていたページへ戻す
 const PAGINATED_PATHS = new Set(['/illust', '/comic', '/blog'])
 
 export function Breadcrumbs() {
   const pathname = usePathname()
-  const listPage = parsePageParam(useSearchParams().get('p') ?? undefined) ?? 1
   const segments = pathname.split('/').filter(Boolean)
+  const listPath = `/${segments[0]}`
+  const listPage = useRememberedListPage(PAGINATED_PATHS.has(listPath) ? listPath : null)
   if (segments.length === 0) {
     return null
   }

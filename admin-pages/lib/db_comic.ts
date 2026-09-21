@@ -5,6 +5,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { bandeDessineeRow, bandeDessineeTagRow, bandeDessineeSeriesRow } from 'api-types'
 import type { ContentFormat } from './content-format'
+import { paginatedQuery, type PageRange, type Paginated } from './db_pagination'
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true })
@@ -17,28 +18,18 @@ export type BandeDessineeListRow = Pick<
   'id' | 'title_name' | 'publish_date' | 'status' | 'description_format' | 'published_at' | 'updated_at'
 > & { tag_name: string | null; series_name: string | null }
 
-export async function listBandeDessinees(page: {
-  limit: number
-  offset: number
-}): Promise<{ items: BandeDessineeListRow[]; total: number }> {
-  const db = await getDB()
-  const [count, list] = await db.batch<{ total: number } | BandeDessineeListRow>([
-    db.prepare(`SELECT COUNT(*) AS total FROM bande_dessinees`),
-    db
-      .prepare(
-        `SELECT b.id, b.title_name, b.publish_date, b.status, b.description_format, b.published_at, b.updated_at,
-          t.tag_name AS tag_name, s.series_name AS series_name
-         FROM bande_dessinees b
-         LEFT JOIN bande_dessinee_tags t ON t.id = b.tag_id
-         LEFT JOIN bande_dessinee_series s ON s.id = b.series_id
-         ORDER BY b.created_at DESC, b.id DESC LIMIT ?1 OFFSET ?2`
-      )
-      .bind(page.limit, page.offset),
-  ])
-  return {
-    items: list.results as BandeDessineeListRow[],
-    total: (count.results[0] as { total: number } | undefined)?.total ?? 0,
-  }
+export async function listBandeDessinees(page: PageRange): Promise<Paginated<BandeDessineeListRow>> {
+  return paginatedQuery<BandeDessineeListRow>(
+    await getDB(),
+    `SELECT COUNT(*) AS total FROM bande_dessinees`,
+    `SELECT b.id, b.title_name, b.publish_date, b.status, b.description_format, b.published_at, b.updated_at,
+      t.tag_name AS tag_name, s.series_name AS series_name
+     FROM bande_dessinees b
+     LEFT JOIN bande_dessinee_tags t ON t.id = b.tag_id
+     LEFT JOIN bande_dessinee_series s ON s.id = b.series_id
+     ORDER BY b.created_at DESC, b.id DESC LIMIT ?1 OFFSET ?2`,
+    page
+  )
 }
 
 export async function getBandeDessinee(id: string): Promise<bandeDessineeRow | null> {
