@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from '../ui/button'
-import { getPageItems, PageItem } from '@/lib/pagenation'
+import { getPageItems, getPageSlots, PageItem } from '@/lib/pagenation'
 import { cn } from '@/lib/utils'
 
 // 現在のページの前後に表示する件数。狭い画面は最大7枠、sm 以上は最大9枠に収める
@@ -21,11 +21,6 @@ export default function Pagenation({
   if (queryWithoutPage === undefined) {
     queryWithoutPage = {}
   }
-
-  const narrowItems = getPageItems(currentPage, totalPage, SIBLING_COUNT_NARROW)
-  const wideItems = getPageItems(currentPage, totalPage, SIBLING_COUNT_WIDE)
-  // 省略の出方が同じなら出し分けは不要
-  const isSame = narrowItems.length === wideItems.length && narrowItems.every((item, i) => item === wideItems[i])
 
   const renderItems = (items: PageItem[], className?: string) => (
     <div className={cn('flex gap-1 sm:gap-2', className)}>
@@ -55,13 +50,14 @@ export default function Pagenation({
     </div>
   )
 
-  if (isSame) {
-    return renderItems(wideItems)
+  // 狭い画面でも省略が要らないページ数なら出し分けは不要
+  if (totalPage <= getPageSlots(SIBLING_COUNT_NARROW)) {
+    return renderItems(getPageItems(currentPage, totalPage, SIBLING_COUNT_NARROW))
   }
   return (
     <>
-      {renderItems(narrowItems, 'sm:hidden')}
-      {renderItems(wideItems, 'hidden sm:flex')}
+      {renderItems(getPageItems(currentPage, totalPage, SIBLING_COUNT_NARROW), 'sm:hidden')}
+      {renderItems(getPageItems(currentPage, totalPage, SIBLING_COUNT_WIDE), 'hidden sm:flex')}
     </>
   )
 }
