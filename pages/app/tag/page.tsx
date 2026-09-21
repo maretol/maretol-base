@@ -4,9 +4,8 @@ import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
-import { permanentRedirect } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { fetchListPage } from '@/lib/api/list_page'
-import { generateContentsWithTagsTotalKey } from 'cms-cache-key-gen'
 import { getHrefWithoutPage, parsePaginationParams, parseTagParams } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
@@ -60,13 +59,16 @@ export default async function TagPage(props: {
     ...(tagName ? { tag_name: tagName } : {}),
   }
 
-  const tagIDs = tagID ? [tagID] : []
-  const [tags, { contents, total }] = await Promise.all([
-    getTags(),
-    fetchListPage(generateContentsWithTagsTotalKey(tagIDs), pageNumber, limit, () =>
-      getCMSContentsWithTags(tagIDs, offset, limit),
-    ),
-  ])
+  // タグの一覧にない tag_id は0件と分かっているので、D1 へ問い合わせない。tag_id は自由に指定できるため（issue #1291）
+  // タグの一覧が空のときは取得に失敗しているので、判定せずに問い合わせる
+  const tags = await getTags()
+  const isKnownTag = !!tagID && (tags.length === 0 || tags.some((tag) => tag.id === tagID))
+  if (!isKnownTag && pageNumber > 1) {
+    notFound()
+  }
+  const { contents, total } = isKnownTag
+    ? await fetchListPage(pageNumber, limit, () => getCMSContentsWithTags([tagID], offset, limit))
+    : { contents: [], total: 0 }
 
   return (
     <div>

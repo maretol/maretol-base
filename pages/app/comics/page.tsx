@@ -5,7 +5,6 @@ import { getHrefWithoutPage, parsePaginationParams, parseSeriesParams } from '@/
 import { getBandeDessinee } from '@/lib/api/workers'
 import { getSeriesName } from '@/lib/comic_util'
 import { fetchListPage } from '@/lib/api/list_page'
-import { generateBandeDessineeTotalKey } from 'cms-cache-key-gen'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,9 +23,7 @@ export async function generateMetadata(props: {
   // シリーズ指定時はシリーズ名をタイトルに含める。取得はReact cacheでページ本体と共有される
   let title = `Comics : page ${pageNumber} | Maretol Base`
   if (seriesID !== undefined) {
-    const { bandeDessinees } = await fetchListPage(generateBandeDessineeTotalKey(seriesID), pageNumber, limit, () =>
-      getBandeDessinee(offset, limit, seriesID),
-    )
+    const { bandeDessinees } = await fetchListPage(pageNumber, limit, () => getBandeDessinee(offset, limit, seriesID))
     const seriesName = getSeriesName(bandeDessinees)
     if (seriesName) {
       title = `Comics : ${seriesName} : page ${pageNumber} | Maretol Base`
@@ -50,11 +47,8 @@ export default async function ComicsPage(props: {
   const { pageNumber, offset, limit } = pagination
 
   // 範囲外のページを HTTP ステータスも含めて 404 で返すため、Suspense を挟まずに取得する（issue #1283）
-  const { bandeDessinees, total } = await fetchListPage(
-    generateBandeDessineeTotalKey(seriesID),
-    pageNumber,
-    limit,
-    () => getBandeDessinee(offset, limit, seriesID),
+  const { bandeDessinees, total } = await fetchListPage(pageNumber, limit, () =>
+    getBandeDessinee(offset, limit, seriesID),
   )
 
   return (

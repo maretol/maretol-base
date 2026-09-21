@@ -8,7 +8,6 @@ import { getHostname } from '@/lib/env'
 import { Metadata } from 'next'
 import ClientIllustPage from './client_page'
 import { fetchListPage } from '@/lib/api/list_page'
-import { generateAtelierTotalKey } from 'cms-cache-key-gen'
 import { getHrefWithoutPage, parsePaginationParams } from '@/lib/searchParams'
 
 export const dynamic = 'force-dynamic'
@@ -25,7 +24,7 @@ export async function generateMetadata({
     return {}
   }
   const { pageNumber, offset, limit } = pagination
-  const ateliers = await fetchListPage(generateAtelierTotalKey(), pageNumber, limit, () => getAteliers(offset, limit))
+  const ateliers = await fetchListPage(pageNumber, limit, () => getAteliers(offset, limit))
   const firstAtelier = ateliers.ateliers.at(0)
   // 0件のときはサムネイルを引けない
   if (firstAtelier === undefined) {
@@ -66,9 +65,7 @@ export default async function IllustPage(props: {
   const { pageNumber, offset, limit } = pagination
 
   // 範囲外のページを HTTP ステータスも含めて 404 で返すため、Suspense を挟まずに取得する（issue #1283）
-  const { ateliers, total } = await fetchListPage(generateAtelierTotalKey(), pageNumber, limit, () =>
-    getAteliers(offset, limit),
-  )
+  const { ateliers, total } = await fetchListPage(pageNumber, limit, () => getAteliers(offset, limit))
 
   return (
     <div className="">

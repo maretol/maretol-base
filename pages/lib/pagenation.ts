@@ -51,12 +51,18 @@ function getPageHref(path: string, queryWithoutPage: { [key: string]: string }, 
 }
 
 /**
- * 総ページ数を超えるページ番号かどうか（issue #1283）
- * 0件のときも1ページ目は範囲内とし、空の一覧として表示する
+ * 総ページ数。0件のときも1ページとし、空の一覧として表示する
  */
-function isPageOutOfRange(pageNumber: number, total: number, limit: number): boolean {
-  return pageNumber > Math.max(Math.ceil(total / limit), 1)
+function getTotalPage(total: number, limit: number): number {
+  return Math.max(Math.ceil(total / limit), 1)
 }
 
-export { getPageItems, getPageSlots, getPageHref, isPageOutOfRange }
+/**
+ * 総ページ数を超えるページ番号かどうか（issue #1283）
+ */
+function isPageOutOfRange(pageNumber: number, total: number, limit: number): boolean {
+  return pageNumber > getTotalPage(total, limit)
+}
+
+export { getPageItems, getPageSlots, getPageHref, getTotalPage, isPageOutOfRange }
 export type { PageItem }
