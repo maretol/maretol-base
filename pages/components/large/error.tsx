@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 import Tags from '../middle/tags'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { Button } from '../ui/button'
 import { convertJST, getCurrentTime } from '@/lib/time'
 import FooterButtons from '../small/footer'
@@ -36,10 +36,10 @@ export function ErrorPageArticle({ title }: { title: string }) {
       <CardFooter>
         <div className="flex justify-center mt-2 w-full">
           <Button variant="secondary" className="w-96 flex justify-center items-end gap-1" asChild>
-            <Link href="/">
+            <AppLink href="/">
               <HomeIcon />
               <h2>Home</h2>
-            </Link>
+            </AppLink>
           </Button>
         </div>
       </CardFooter>
@@ -61,7 +61,7 @@ export function ErrorPageComic({ title }: { title: string }) {
         >
           <div className="pt-10 bg-gray-300 w-full max-w-[1500px]">
             <Button variant={'link'} className="p-0" asChild>
-              <Link href="/">
+              <AppLink href="/">
                 <ClientImage2
                   src={headerImage}
                   width={400}
@@ -69,7 +69,7 @@ export function ErrorPageComic({ title }: { title: string }) {
                   alt="Maretol Base"
                   className="w-full h-auto object-contain"
                 />
-              </Link>
+              </AppLink>
             </Button>
           </div>
         </div>
@@ -125,16 +125,16 @@ export function ErrorPageComic({ title }: { title: string }) {
               </div>
               <div className="space-x-4 flex justify-center">
                 <Button className="w-48 gap-1" asChild>
-                  <Link href="/comics">
+                  <AppLink href="/comics">
                     <BookImageIcon className="w-4 h-4" />
                     Comics Page Top
-                  </Link>
+                  </AppLink>
                 </Button>
                 <Button className="w-48 gap-1" asChild>
-                  <Link href="/">
+                  <AppLink href="/">
                     <HomeIcon className="w-4 h-4" />
                     Page Home
-                  </Link>
+                  </AppLink>
                 </Button>
               </div>
             </CardContent>

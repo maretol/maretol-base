@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { BookOpenIcon, HomeIcon, ImageIcon, InfoIcon, MailIcon, NotebookTextIcon } from 'lucide-react'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import React from 'react'
 
 type PagesPath = '/' | '/blog/' | '/illust/' | '/comics/' | '/about/' | '/contact/'
@@ -86,9 +86,9 @@ export default async function MySiteCard({ text }: { text: string }) {
           <p className="text-xs text-gray-500 ml-1">{detail.description}</p>
         </div>
         <Button asChild className="h-8">
-          <Link href={detail.path} className="">
+          <AppLink href={detail.path} className="">
             Go to page
-          </Link>
+          </AppLink>
         </Button>
       </div>
     </div>

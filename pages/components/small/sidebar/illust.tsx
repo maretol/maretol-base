@@ -1,7 +1,7 @@
 import { atelierResult } from 'api-types'
 import SidebarContentFrame from '../sidebar_content'
 import ClientImage2 from '../client_image2'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { convertJST } from '@/lib/time'
@@ -43,9 +43,9 @@ export default async function IllustSidebar({ atelier }: { atelier: atelierResul
           />
         ))}
         <Button variant="secondary" className="w-full mt-2" asChild>
-          <Link href="/illust" className="text-gray-500">
+          <AppLink href="/illust" className="text-gray-500">
             <p className="font-bold">See latest illustrations</p>
-          </Link>
+          </AppLink>
         </Button>
       </div>
     </SidebarContentFrame>
@@ -55,7 +55,7 @@ export default async function IllustSidebar({ atelier }: { atelier: atelierResul
 function IllustLink({ id, title, imageSrc, publishedAt, objectPosition }: illust) {
   return (
     <div className="mb-4 relative w-full">
-      <Link href={`/illust/detail/${id}`} className="hover:underline">
+      <AppLink href={`/illust/detail/${id}`} className="hover:underline">
         <div className="bg-gray-200 p-4">
           <ClientImage2
             src={imageSrc}
@@ -70,7 +70,7 @@ function IllustLink({ id, title, imageSrc, publishedAt, objectPosition }: illust
           <p className="text-gray-200 font-semibold">{title}</p>
           <p className="text-gray-300">{convertJST(publishedAt)}</p>
         </div>
-      </Link>
+      </AppLink>
     </div>
   )
 }

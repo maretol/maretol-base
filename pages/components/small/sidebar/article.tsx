@@ -1,6 +1,6 @@
 import { contentsAPIResult } from 'api-types'
 import SidebarContentFrame from '../sidebar_content'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { convertJST } from '@/lib/time'
 
 type articles = {
@@ -38,10 +38,10 @@ export default async function ArticlesSidebar({ articles }: { articles: contents
 function ArticleLink({ id, title, publishedAt }: articles) {
   return (
     <div className="mb-4">
-      <Link href={`/blog/${id}`} className="hover:underline">
+      <AppLink href={`/blog/${id}`} className="hover:underline">
         <p className="">{title}</p>
         <p className="text-gray-500">{convertJST(publishedAt)}</p>
-      </Link>
+      </AppLink>
     </div>
   )
 }

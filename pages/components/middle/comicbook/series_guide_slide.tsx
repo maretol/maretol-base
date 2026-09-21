@@ -1,5 +1,5 @@
 import { memo } from 'react'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { ChevronLeftIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { comicPath, comicSeriesPath } from '@/lib/comic_util'
@@ -28,18 +28,18 @@ function SeriesGuideSlide(props: SeriesGuideSlideProps) {
           <p className="text-lg">次の話へ</p>
           <p className="text-sm text-gray-400">もう一度ページを送ると次の話に移動します</p>
           <Button variant="secondary" className="w-48" asChild>
-            <Link href={comicPath(guide.nextId)} onClick={stopPropagation}>
+            <AppLink href={comicPath(guide.nextId)} onClick={stopPropagation}>
               次の話を読む
-            </Link>
+            </AppLink>
           </Button>
         </>
       ) : (
         <p className="text-lg">現在の最新話です</p>
       )}
       <Button variant="link" className="text-gray-300" asChild>
-        <Link href={comicSeriesPath(guide.seriesId)} onClick={stopPropagation}>
+        <AppLink href={comicSeriesPath(guide.seriesId)} onClick={stopPropagation}>
           シリーズ一覧へ
-        </Link>
+        </AppLink>
       </Button>
     </div>
   )

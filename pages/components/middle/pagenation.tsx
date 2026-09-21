@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { Button } from '../ui/button'
 import { getPageHref, getPageItems, getPageSlots, PageItem } from '@/lib/pagenation'
 import { cn } from '@/lib/utils'
@@ -32,9 +32,9 @@ export default function Pagenation({
         }
         return (
           <Button key={item} variant={currentPage === item ? 'default' : 'secondary'} className="p-2 w-10" asChild>
-            <Link href={getPageHref(path, query, item)} aria-current={currentPage === item ? 'page' : undefined}>
+            <AppLink href={getPageHref(path, query, item)} aria-current={currentPage === item ? 'page' : undefined}>
               {item}
-            </Link>
+            </AppLink>
           </Button>
         )
       })}

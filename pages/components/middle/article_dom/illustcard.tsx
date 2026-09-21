@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { getAtelierByID } from '@/lib/api/workers'
 import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 
 export default async function IllustCard({ link, draftKey }: { link: string; draftKey?: string }) {
   const linkURL = new URL(link)
@@ -36,9 +36,9 @@ export default async function IllustCard({ link, draftKey }: { link: string; dra
             </div>
             <div className="w-full">
               <Button className="w-full h-8" asChild>
-                <Link href={drawerLink} scroll={false}>
+                <AppLink href={drawerLink} scroll={false}>
                   View illust
-                </Link>
+                </AppLink>
               </Button>
             </div>
           </div>

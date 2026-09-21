@@ -1,13 +1,14 @@
 'use client'
 
-import React, { use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import React, { use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Swiper, SwiperClass, SwiperSlide } from 'swiper/react'
 import { Keyboard } from 'swiper/modules'
 import { Button } from '@/components/ui/button'
 import { getHeaderImageURL } from '@/lib/image'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
+import { NavigationProgressBar } from '@/components/small/navigation_progress'
 import { bandeDessineeResult } from 'api-types'
 import useWindowSize from '@/lib/hook/use_window_size'
 import ClientImage2 from '@/components/small/client_image2'
@@ -44,6 +45,8 @@ export default function ComicBook(props: ComicBookProps) {
   const { cmsResult } = props
   const data = use(cmsResult)
   const router = useRouter()
+  // router.push は useLinkStatus で拾えないため、transition の pending でインジケーターを出す
+  const [isNavigating, startNavigation] = useTransition()
 
   const baseUrl = data.contents_url.replaceAll('/index.json', '')
   const filename = data.filename
@@ -156,7 +159,7 @@ export default function ComicBook(props: ComicBookProps) {
     (options?: PageTurnOptions) => {
       if (!swiperInstance) return
       if (isGuideShown(swiperInstance)) {
-        if (nextId !== null && !options?.repeat) router.push(comicPath(nextId))
+        if (nextId !== null && !options?.repeat) startNavigation(() => router.push(comicPath(nextId)))
         return
       }
       swiperInstance.slideNext(comicScrollSpeed)
@@ -195,6 +198,7 @@ export default function ComicBook(props: ComicBookProps) {
 
   return (
     <div className={cn(LAYOUT.MAIN_HEIGHT, 'w-full bg-gray-700')} tabIndex={0}>
+      <NavigationProgressBar pending={isNavigating} />
       <div
         className={cn(
           'absolute z-50 top-0 left-0 w-full flex justify-center items-center bg-gray-300',
@@ -203,7 +207,7 @@ export default function ComicBook(props: ComicBookProps) {
       >
         <div className="pt-10 bg-gray-300 w-full max-w-375">
           <Button variant={'link'} className="p-0" asChild>
-            <Link href="/">
+            <AppLink href="/">
               <ClientImage2
                 src={headerImage}
                 width={300}
@@ -211,7 +215,7 @@ export default function ComicBook(props: ComicBookProps) {
                 alt="Maretol Base"
                 className="w-full h-auto object-contain"
               />
-            </Link>
+            </AppLink>
           </Button>
         </div>
       </div>

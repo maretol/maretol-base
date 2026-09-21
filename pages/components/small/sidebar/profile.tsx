@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AppLink from '../app_link'
 import SidebarContentFrame from '../sidebar_content'
 
 export default async function Profile({ rawText }: { rawText: string }) {
@@ -46,15 +47,15 @@ export default async function Profile({ rawText }: { rawText: string }) {
           {line.map((word, j) => {
             if (word === '/contact') {
               return (
-                <Link key={j} href="/contact" className="hover:underline">
+                <AppLink key={j} href="/contact" className="hover:underline">
                   {word}
-                </Link>
+                </AppLink>
               )
             } else if (word.startsWith('/about')) {
               return (
-                <Link key={j} href="/about" className="hover:underline">
+                <AppLink key={j} href="/about" className="hover:underline">
                   {word}
-                </Link>
+                </AppLink>
               )
             } else {
               return <span key={j}> {word} </span>
