@@ -4,8 +4,9 @@ import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
-import { notFound, permanentRedirect } from 'next/navigation'
-import { isPageOutOfRange } from '@/lib/pagenation'
+import { permanentRedirect } from 'next/navigation'
+import { fetchListPage } from '@/lib/api/list_page'
+import { generateContentsWithTagsTotalKey } from 'cms-cache-key-gen'
 import { getHrefWithoutPage, parsePaginationParams, parseTagParams } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
@@ -60,10 +61,12 @@ export default async function TagPage(props: {
   }
 
   const tagIDs = tagID ? [tagID] : []
-  const [tags, { contents, total }] = await Promise.all([getTags(), getCMSContentsWithTags(tagIDs, offset, limit)])
-  if (isPageOutOfRange(pageNumber, total, limit)) {
-    notFound()
-  }
+  const [tags, { contents, total }] = await Promise.all([
+    getTags(),
+    fetchListPage(generateContentsWithTagsTotalKey(tagIDs), pageNumber, limit, () =>
+      getCMSContentsWithTags(tagIDs, offset, limit),
+    ),
+  ])
 
   return (
     <div>

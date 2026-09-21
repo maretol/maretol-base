@@ -97,6 +97,34 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
   }
 }
 
+// 一覧の総件数だけを持つ KV エントリの読み書き（issue #1291）
+// 範囲外のページ番号を D1 へ問い合わせる前に弾くために使う。呼び出しは lib/api/list_page.ts の fetchListPage にまとめている
+// キーは一覧と同じ prefix なので、記事の保存時のパージで一緒に消える。TTL はパージを通らない変更（D1 の直接編集など）への保険
+const LIST_TOTAL_TTL = 1 * HOUR
+
+async function getCachedListTotalOrigin(totalKey: string): Promise<number | undefined> {
+  if (!isKVCacheEnabled()) return undefined
+  try {
+    const { env } = await getCloudflareContext({ async: true })
+    const cache = await env.CMS_CACHE.get(totalKey)
+    const total = cache === null ? NaN : Number(cache)
+    return Number.isInteger(total) && total > 0 ? total : undefined
+  } catch (e) {
+    console.error(`[lib/api/workers.ts] Cache get error for key ${totalKey}:`, e)
+    return undefined
+  }
+}
+
+async function saveListTotalOrigin(totalKey: string, total: number): Promise<void> {
+  if (!isKVCacheEnabled()) return
+  try {
+    const { env } = await getCloudflareContext({ async: true })
+    await env.CMS_CACHE.put(totalKey, total.toString(), { expirationTtl: dev ? 60 : LIST_TOTAL_TTL })
+  } catch (e) {
+    console.error(`[lib/api/workers.ts] Cache put error for key ${totalKey}:`, e)
+  }
+}
+
 // ローカル環境用のfetcher生成関数
 async function createLocalFetcher<TResult>(
   path: string,
@@ -128,6 +156,9 @@ const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
 const getAteliers = cache(getAteliersOrigin)
 const getAtelierByID = cache(getAtelierByIDOrigin)
+// generateMetadata とページ本体の両方から呼ばれても、KV の読み書きは1リクエストに1回で済ませる
+const getCachedListTotal = cache(getCachedListTotalOrigin)
+const saveListTotal = cache(saveListTotalOrigin)
 
 // OGPデータの取得
 async function getOGPDataOrigin(targetURL: string) {
@@ -458,4 +489,6 @@ export {
   getBandeDessineeByID,
   getAteliers,
   getAtelierByID,
+  getCachedListTotal,
+  saveListTotal,
 }
