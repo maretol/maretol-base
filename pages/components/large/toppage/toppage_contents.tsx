@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { Button } from '../../ui/button'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { RefObject, useCallback, useRef } from 'react'
 import { ChevronLeftIcon, ChevronRight } from 'lucide-react'
 
@@ -47,7 +47,7 @@ export default function TopPageContentsViewer({
         <div className={cn('md:snap-start snap-center snap-always', 'w-48 mb-4 mr-48', 'flex-none')}>
           <div className="h-full flex items-center justify-center">
             <Button asChild variant="outline" className="h-full w-full bg-gray-100 hover:bg-white font-suse">
-              <Link href={moreLink}>{moreButtonText}</Link>
+              <AppLink href={moreLink}>{moreButtonText}</AppLink>
             </Button>
           </div>
         </div>

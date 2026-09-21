@@ -1,6 +1,6 @@
 import { categoryAPIResult } from 'api-types'
 import { Button } from '../ui/button'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 
 export default function Tags({ tags }: { tags: categoryAPIResult[] }) {
   return (
@@ -9,7 +9,7 @@ export default function Tags({ tags }: { tags: categoryAPIResult[] }) {
       {tags.map((tag) => {
         return (
           <Button key={tag.id} variant="secondary" className="p-2 h-6" asChild>
-            <Link
+            <AppLink
               key={tag.id}
               href={{
                 pathname: '/tag',
@@ -17,7 +17,7 @@ export default function Tags({ tags }: { tags: categoryAPIResult[] }) {
               }}
             >
               {tag.name}
-            </Link>
+            </AppLink>
           </Button>
         )
       })}

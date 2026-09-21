@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { getInfo } from '@/lib/api/workers'
 import { convertJST } from '@/lib/time'
 import { HammerIcon } from 'lucide-react'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 
 export default async function ArtifactCard({ link }: { link: string }) {
   const linkURL = new URL(link)
@@ -13,7 +13,7 @@ export default async function ArtifactCard({ link }: { link: string }) {
   return (
     <div className="flex max-w-xl">
       <Button variant={'outline'} className="no-underline bg-gray-300 h-full w-full" asChild>
-        <Link href={linkPath}>
+        <AppLink href={linkPath}>
           <HammerIcon className="w-8 h-8 mr-2" />
           <div className="w-full flex flex-row space-x-2">
             <div className="w-full flex flex-col self-end">
@@ -21,7 +21,7 @@ export default async function ArtifactCard({ link }: { link: string }) {
               <p className="text-gray-500 text-xs text-wrap line-clamp-2">{convertJST(artifact.publishedAt)}</p>
             </div>
           </div>
-        </Link>
+        </AppLink>
       </Button>
     </div>
   )

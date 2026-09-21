@@ -2,6 +2,7 @@ import Image from 'next/image'
 import fetchCiteImage from '@/lib/api/cite_image'
 import { getNoImageURL } from '@/lib/image'
 import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 
 interface CiteImageProps {
   url: string
@@ -36,9 +37,9 @@ export default async function CiteImage({ url, source, caption, sourceTitle, art
   return (
     <div className="bg-gray-200 p-3 rounded-lg border-l-8 border-l-gray-500 w-fit max-w-xl" id={base64src}>
       {isDataUrl ? (
-        <Link href={`/blog/${articleID}/image/${base64src}`} className="x-blog-image" scroll={false}>
+        <AppLink href={`/blog/${articleID}/image/${base64src}`} className="x-blog-image" scroll={false}>
           {imageElement}
-        </Link>
+        </AppLink>
       ) : (
         imageElement
       )}

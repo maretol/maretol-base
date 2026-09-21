@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button'
 import { getCMSContent } from '@/lib/api/workers'
 import { convertJST } from '@/lib/time'
 import { LockIcon, NotebookText } from 'lucide-react'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 
 export default async function BlogCard({ link }: { link: string }) {
   const linkURL = new URL(link)
@@ -25,7 +25,7 @@ export default async function BlogCard({ link }: { link: string }) {
             </div>
             <div>
               <Button className="h-8" asChild>
-                <Link href={linkPath}>Read this</Link>
+                <AppLink href={linkPath}>Read this</AppLink>
               </Button>
             </div>
           </div>
@@ -62,7 +62,7 @@ export default async function BlogCard({ link }: { link: string }) {
                 </div>
               </div>
               <Button className="w-full h-8" asChild>
-                <Link href={linkPath}>Read this</Link>
+                <AppLink href={linkPath}>Read this</AppLink>
               </Button>
             </div>
           </div>
@@ -83,7 +83,7 @@ export default async function BlogCard({ link }: { link: string }) {
           </div>
           <div>
             <Button className="h-8" asChild>
-              <Link href={linkPath}>Read this</Link>
+              <AppLink href={linkPath}>Read this</AppLink>
             </Button>
           </div>
         </div>

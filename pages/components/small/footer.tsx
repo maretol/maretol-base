@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AppLink from './app_link'
 import { Button } from '../ui/button'
 import { ArrowBigUpIcon, HomeIcon } from 'lucide-react'
 
@@ -8,10 +9,10 @@ export default function FooterButtons() {
   return (
     <div className="flex sm:flex-row flex-col justify-center items-center mb-4">
       <Button variant="default" className={buttonClassName} asChild>
-        <Link href="/">
+        <AppLink href="/">
           <HomeIcon className={iconClassName} />
           Back to the Home
-        </Link>
+        </AppLink>
       </Button>
       <Button variant="secondary" className={buttonClassName} asChild>
         <Link href="#top" scroll={true} replace={true}>

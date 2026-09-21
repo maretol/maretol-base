@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitleH1 } from '../ui/card'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { convertJST } from '@/lib/time'
 import Tags from '../middle/tags'
 import { Button } from '../ui/button'
@@ -34,9 +34,9 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
     <Card key={id} lang="ja" className="bg-gray-100">
       <CardHeader>
         <CardTitleH1 lang="ja">
-          <Link href={`/blog/${id}`} className="hover:underline">
+          <AppLink href={`/blog/${id}`} className="hover:underline">
             {title}
-          </Link>
+          </AppLink>
         </CardTitleH1>
         <CardDescription>{convertJST(updatedAt)}</CardDescription>
         <CardContent className="pl-0 pb-0">
@@ -50,10 +50,10 @@ export async function Article({ id, title, updatedAt, parsedContents, categories
       </CardContent>
       <CardFooter>
         <Button className="w-full gap-1 font-suse" asChild>
-          <Link href={`/blog/${id}`}>
+          <AppLink href={`/blog/${id}`}>
             <BookIcon className="w-4 h-4" />
             Read more...
-          </Link>
+          </AppLink>
         </Button>
       </CardFooter>
     </Card>
@@ -112,10 +112,10 @@ export async function FullArticle({
           {adjacent && <AdjacentArticleNav adjacent={adjacent} />}
           <div className="flex justify-center">
             <Button variant="secondary" className="w-96 flex justify-center gap-1" asChild>
-              <Link href="/">
+              <AppLink href="/">
                 <HomeIcon className="w-5 h-5" />
                 <h2 className="text-xl font-suse">Home</h2>
-              </Link>
+              </AppLink>
             </Button>
           </div>
         </div>

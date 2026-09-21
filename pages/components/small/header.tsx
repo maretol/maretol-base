@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import AppLink from './app_link'
 import { Button } from '../ui/button'
 import { BookOpenIcon, ImageIcon, Info, MailIcon, NotebookText, RssIcon } from 'lucide-react'
 
@@ -9,33 +10,33 @@ export default function HeaderButtons() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-5 gap-1">
       <Button variant={'outline'} className={buttonClassName} asChild>
-        <Link href="/illust">
+        <AppLink href="/illust">
           <ImageIcon className={iconClassName} />
           Illustrations
-        </Link>
+        </AppLink>
       </Button>
       <Button variant="outline" className={buttonClassName} asChild>
-        <Link href="/comics">
+        <AppLink href="/comics">
           <BookOpenIcon className={iconClassName} />
           Comics
-        </Link>
+        </AppLink>
       </Button>
       <Button variant="outline" className={buttonClassName} asChild>
-        <Link href="/blog">
+        <AppLink href="/blog">
           <NotebookText className={iconClassName} />
           Blog
-        </Link>
+        </AppLink>
       </Button>
       <div className="flex flex-between gap-1 sm:col-span-2">
         <Button variant="outline" className={subButtonClassName} asChild>
-          <Link href="/about">
+          <AppLink href="/about">
             <Info className={iconClassName} />
-          </Link>
+          </AppLink>
         </Button>
         <Button variant="outline" className={subButtonClassName} asChild>
-          <Link href="/contact">
+          <AppLink href="/contact">
             <MailIcon className={iconClassName} />
-          </Link>
+          </AppLink>
         </Button>
         <Button variant="outline" className={subButtonClassName} asChild>
           <Link href="/rss/feed.rdf">
