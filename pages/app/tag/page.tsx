@@ -46,10 +46,15 @@ export default async function TagPage(props: {
   searchParams: Promise<{ [key: string]: string[] | string | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const { tagID } = parseTagParams(searchParams)
+  const { tagID, tagName } = parseTagParams(searchParams)
+  // p 以外のクエリは受け取ったまま引き継ぐ。tag_name は検索に使わないが、落とすと使っていないことが URL から分かってしまう
+  const queryWithoutPage = {
+    ...(tagID ? { tag_id: tagID } : {}),
+    ...(tagName ? { tag_name: tagName } : {}),
+  }
   const pagination = parsePaginationParams(searchParams)
   if (pagination === null) {
-    redirect(getPageHref('/tag', tagID ? { tag_id: tagID } : {}, 1))
+    redirect(getPageHref('/tag', queryWithoutPage, 1))
   }
   const { pageNumber, offset, limit } = pagination
 
@@ -95,7 +100,7 @@ export default async function TagPage(props: {
             <div className="flex justify-center">
               <Pagenation
                 path="/tag"
-                queryWithoutPage={tagID ? { tag_id: tagID } : {}}
+                queryWithoutPage={queryWithoutPage}
                 currentPage={pageNumber}
                 totalPage={Math.ceil(total / limit)}
               />

@@ -30,11 +30,13 @@ export function parseDraftKey(searchParams: { [key: string]: string | string[] |
 
 /**
  * searchParamsからタグ情報を取得
+ * tagName は記事内のタグのリンクが付ける表示用の値で、検索には使わない。URL を引き継ぐときのためだけに返す
  */
 export function parseTagParams(searchParams: { [key: string]: string | string[] | undefined }) {
   const tagID = firstString(searchParams['tag_id'])
+  const tagName = firstString(searchParams['tag_name'])
 
-  return { tagID }
+  return { tagID, tagName }
 }
 
 /**
