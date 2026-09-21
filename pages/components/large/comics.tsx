@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitleH1
 import { convertJST, convertJSTDate } from '@/lib/time'
 import ArticleContent from '../middle/article_content'
 import { Button } from '../ui/button'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { ArrowLeftSquareIcon, ArrowRightSquareIcon, ArrowUpSquareIcon, BookImageIcon, HomeIcon } from 'lucide-react'
 import ShareSection from '../middle/share_section'
 import { getHostname } from '@/lib/env'
@@ -62,9 +62,9 @@ export async function ComicOverview(props: ComicArticleProps) {
         <div className="w-full">
           <CardHeader className="pt-2">
             <CardTitleH1>
-              <Link href={linkURL} className="hover:underline">
+              <AppLink href={linkURL} className="hover:underline">
                 {title}
-              </Link>
+              </AppLink>
             </CardTitleH1>
             <CardDescription>
               <>
@@ -93,10 +93,10 @@ export async function ComicOverview(props: ComicArticleProps) {
       </div>
       <CardFooter>
         <Button variant="default" className="w-full gap-1 font-suse" asChild>
-          <Link href={linkURL}>
+          <AppLink href={linkURL}>
             <BookImageIcon className="w-4 h-4" />
             Read This
-          </Link>
+          </AppLink>
         </Button>
       </CardFooter>
     </Card>
@@ -127,10 +127,10 @@ export function ComicDetailPage(props: ComicArticleProps) {
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
             <Button disabled={!isNextExist} variant="secondary" className="w-80 gap-1 font-suse" asChild={isNextExist}>
-              <Link href={nextLink} className="flex items-center justify-center gap-1">
+              <AppLink href={nextLink} className="flex items-center justify-center gap-1">
                 <ArrowLeftSquareIcon className="w-4 h-4" />
                 Next episode
-              </Link>
+              </AppLink>
             </Button>
             <Button
               disabled={!isPreviousExist}
@@ -138,18 +138,18 @@ export function ComicDetailPage(props: ComicArticleProps) {
               className="w-80 gap-1 font-suse"
               asChild={isPreviousExist}
             >
-              <Link href={previousLink} className="flex items-center justify-center gap-1">
+              <AppLink href={previousLink} className="flex items-center justify-center gap-1">
                 Previous episode
                 <ArrowRightSquareIcon className="w-4 h-4" />
-              </Link>
+              </AppLink>
             </Button>
           </div>
           <div className="w-full font-semibold flex justify-center items-center gap-10">
             <Button disabled={!isSereies} variant="secondary" className="w-80 gap-1 font-suse" asChild={isSereies}>
-              <Link href={seriesLink} className="flex items-center justify-center gap-1">
+              <AppLink href={seriesLink} className="flex items-center justify-center gap-1">
                 <ArrowUpSquareIcon className="w-4 h-4" />
                 This series
-              </Link>
+              </AppLink>
             </Button>
           </div>
         </div>
@@ -173,16 +173,16 @@ export function ComicDetailPage(props: ComicArticleProps) {
         </div>
         <div className="space-x-4 flex justify-center">
           <Button className="w-48 gap-1 font-suse" asChild>
-            <Link href="/comics">
+            <AppLink href="/comics">
               <BookImageIcon className="w-4 h-4" />
               Comics Page Top
-            </Link>
+            </AppLink>
           </Button>
           <Button className="w-48 gap-1 font-suse" asChild>
-            <Link href="/">
+            <AppLink href="/">
               <HomeIcon className="w-4 h-4" />
               Page Home
-            </Link>
+            </AppLink>
           </Button>
         </div>
       </CardContent>

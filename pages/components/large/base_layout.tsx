@@ -3,7 +3,7 @@
 //   画面中央にコンテンツを表示する
 //   ヘッダーと画像、フッターを表示する
 
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { Button } from '../ui/button'
 import HeaderButtons from '../small/header'
 import FooterButtons from '../small/footer'
@@ -21,7 +21,7 @@ export default function BaseLayout({ children }: { children: React.ReactNode }) 
         <div className="my-10">
           <div className="mb-2 pt-2">
             <Button variant={'link'} className="p-0" asChild>
-              <Link href="/">
+              <AppLink href="/">
                 <ClientImage2
                   src={headerImage}
                   width={400}
@@ -29,7 +29,7 @@ export default function BaseLayout({ children }: { children: React.ReactNode }) 
                   className="w-125 object-contain"
                   alt="Maretol Base"
                 />
-              </Link>
+              </AppLink>
             </Button>
           </div>
           <HeaderButtons />

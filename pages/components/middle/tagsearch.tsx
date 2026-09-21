@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { Button } from '../ui/button'
 import { categoryAPIResult } from 'api-types'
 
@@ -17,18 +17,18 @@ export default function TagSelector({
           <div key={`tag-${i}`}>
             {isSelected ? (
               <Button variant="secondary" asChild>
-                <Link href={{ pathname: '/tag' }}>{t.name}</Link>
+                <AppLink href={{ pathname: '/tag' }}>{t.name}</AppLink>
               </Button>
             ) : (
               <Button variant="default" asChild>
-                <Link
+                <AppLink
                   href={{
                     pathname: '/tag',
                     query: { tag_id: t.id },
                   }}
                 >
                   {t.name}
-                </Link>
+                </AppLink>
               </Button>
             )}
           </div>

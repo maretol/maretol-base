@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { getBandeDessinee } from '@/lib/api/workers'
 import { getFirstPage, getSeriesName } from '@/lib/comic_util'
 import { BookImageIcon } from 'lucide-react'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 
 export default async function ComicsPageArticles({
   pageNumber,
@@ -28,10 +28,10 @@ export default async function ComicsPageArticles({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 className="text-xl font-bold">シリーズ : {seriesName}</h2>
           <Button variant="secondary" className="gap-1 font-suse" asChild>
-            <Link href="/comics">
+            <AppLink href="/comics">
               <BookImageIcon className="w-4 h-4" />
               All Comics
-            </Link>
+            </AppLink>
           </Button>
         </div>
       )}

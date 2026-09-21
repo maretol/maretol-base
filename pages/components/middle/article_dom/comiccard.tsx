@@ -4,7 +4,7 @@ import { getBandeDessineeByID } from '@/lib/api/workers'
 import { getFirstPage } from '@/lib/comic_util'
 import { getNoImageURL } from '@/lib/image'
 import { convertJST } from '@/lib/time'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 
 export default async function ComicPageCard({ link }: { link: string }) {
   const linkURL = new URL(link)
@@ -51,7 +51,7 @@ export default async function ComicPageCard({ link }: { link: string }) {
               </div>
               <div className="h-full flex flex-row items-end justify-end">
                 <Button className="w-full h-8 rounded-md flex items-center justify-center font-semibold" asChild>
-                  <Link href={linkPath}>Read this</Link>
+                  <AppLink href={linkPath}>Read this</AppLink>
                 </Button>
               </div>
             </div>

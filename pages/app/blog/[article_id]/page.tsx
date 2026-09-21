@@ -4,9 +4,8 @@ import { contentsAPIResult } from 'api-types'
 import { getHostname } from '@/lib/env'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import BlogPageArticle from './article'
-import { Suspense } from 'react'
-import LoadingBlogPage from './loading_article'
 import { parseDraftKey } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
@@ -19,6 +18,10 @@ export async function generateMetadata(props: {
   const draftKey = parseDraftKey(searchParams)
 
   const content: contentsAPIResult = await getCMSContent(articleID, draftKey)
+  // 記事が存在しないときはページ本体が 404 にする
+  if (!content?.id) {
+    return {}
+  }
 
   // 限定公開記事は本文をメタに出さず、検索インデックスも避ける（draftKey ではバイパスさせない）
   const isSecretLocked = content.is_secret === true
@@ -70,9 +73,12 @@ export default async function BlogArticlePage(props: {
   const path = `/blog/${articleID}`
   const url = `${host}${path}`
 
-  return (
-    <Suspense fallback={<LoadingBlogPage />}>
-      <BlogPageArticle articleID={articleID} draftKey={draftKey} url={url} />
-    </Suspense>
-  )
+  // 存在しない記事は HTTP ステータスも含めて 404 で返す。Suspense を挟まないのでストリーミング開始前に判定できる
+  const content = await getCMSContent(articleID, draftKey)
+  if (!content?.id) {
+    notFound()
+  }
+
+  // 一瞬で終わる遷移でスケルトンがちらつくため Suspense は挟まない。遷移中の表示は AppLink のインジケーターが担う（issue #1284）
+  return <BlogPageArticle articleID={articleID} draftKey={draftKey} url={url} />
 }
