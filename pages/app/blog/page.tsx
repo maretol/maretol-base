@@ -1,8 +1,8 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import BlogPageArticles from './article'
 import { getCMSContents } from '@/lib/api/workers'
 import { isPageOutOfRange } from '@/lib/pagenation'
-import { parsePaginationParams } from '@/lib/searchParams'
+import { getHrefWithoutPage, parsePaginationParams } from '@/lib/searchParams'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,7 @@ export default async function Mainpage(props: {
   const searchParams = await props.searchParams
   const pagination = parsePaginationParams(searchParams)
   if (pagination === null) {
-    redirect('/blog')
+    permanentRedirect(getHrefWithoutPage('/blog', searchParams))
   }
   const { pageNumber, offset, limit } = pagination
 

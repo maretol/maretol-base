@@ -1,10 +1,10 @@
 import BaseLayout from '@/components/large/base_layout'
-import { notFound, redirect } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import ComicsPageArticles from './article'
-import { parsePaginationParams, parseSeriesParams } from '@/lib/searchParams'
+import { getHrefWithoutPage, parsePaginationParams, parseSeriesParams } from '@/lib/searchParams'
 import { getBandeDessinee } from '@/lib/api/workers'
 import { getSeriesName } from '@/lib/comic_util'
-import { getPageHref, isPageOutOfRange } from '@/lib/pagenation'
+import { isPageOutOfRange } from '@/lib/pagenation'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,7 +42,7 @@ export default async function ComicsPage(props: {
   const { seriesID } = parseSeriesParams(searchParams)
   const pagination = parsePaginationParams(searchParams)
   if (pagination === null) {
-    redirect(getPageHref('/comics', seriesID !== undefined ? { series: seriesID } : {}, 1))
+    permanentRedirect(getHrefWithoutPage('/comics', searchParams))
   }
   const { pageNumber, offset, limit } = pagination
 

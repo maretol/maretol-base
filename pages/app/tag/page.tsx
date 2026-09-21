@@ -4,9 +4,9 @@ import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
-import { notFound, redirect } from 'next/navigation'
-import { getPageHref, isPageOutOfRange } from '@/lib/pagenation'
-import { parsePaginationParams, parseTagParams } from '@/lib/searchParams'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { isPageOutOfRange } from '@/lib/pagenation'
+import { getHrefWithoutPage, parsePaginationParams, parseTagParams } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -47,21 +47,20 @@ export default async function TagPage(props: {
 }) {
   const searchParams = await props.searchParams
   const { tagID, tagName } = parseTagParams(searchParams)
-  // p 以外のクエリは受け取ったまま引き継ぐ。tag_name は検索に使わないが、落とすと使っていないことが URL から分かってしまう
+  const pagination = parsePaginationParams(searchParams)
+  if (pagination === null) {
+    permanentRedirect(getHrefWithoutPage('/tag', searchParams))
+  }
+  const { pageNumber, offset, limit } = pagination
+
+  // ページネーションのリンクに引き継ぐクエリ。tag_name は検索に使わないが、落とすと使っていないことが URL から分かってしまう
   const queryWithoutPage = {
     ...(tagID ? { tag_id: tagID } : {}),
     ...(tagName ? { tag_name: tagName } : {}),
   }
-  const pagination = parsePaginationParams(searchParams)
-  if (pagination === null) {
-    redirect(getPageHref('/tag', queryWithoutPage, 1))
-  }
-  const { pageNumber, offset, limit } = pagination
-
-  const tags = await getTags()
 
   const tagIDs = tagID ? [tagID] : []
-  const { contents, total } = await getCMSContentsWithTags(tagIDs, offset, limit)
+  const [tags, { contents, total }] = await Promise.all([getTags(), getCMSContentsWithTags(tagIDs, offset, limit)])
   if (isPageOutOfRange(pageNumber, total, limit)) {
     notFound()
   }

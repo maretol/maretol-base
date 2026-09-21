@@ -8,7 +8,7 @@ const PAGE_PATTERN = /^[1-9]\d{0,8}$/
 
 /**
  * searchParamsからページネーション情報を取得（issue #1283）
- * p が未指定なら1ページ目。次の場合は null を返すので、呼び出し側で p なしの一覧へ redirect する
+ * p が未指定なら1ページ目。次の場合は null を返すので、呼び出し側で p を外した URL（getHrefWithoutPage）へ redirect する
  * - 正の整数以外（小数、0、負数、`1e1` のような別表記、空文字、複数指定など）
  * - `p=1`（1ページ目は p を省略した URL に統一する）
  */
@@ -22,6 +22,22 @@ export function parsePaginationParams(searchParams: { [key: string]: string | st
 }
 
 /**
+ * 受け取ったクエリから p だけを取り除いた URL を返す。p が不正なときの redirect 先に使う
+ * p 以外は値も順序もそのまま引き継ぐ（`illust_id` や `draftKey`、計測用のパラメータなどを落とさないため）
+ */
+export function getHrefWithoutPage(path: string, searchParams: { [key: string]: string | string[] | undefined }) {
+  const params = new URLSearchParams()
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (key === 'p' || value === undefined) continue
+    for (const v of Array.isArray(value) ? value : [value]) {
+      params.append(key, v)
+    }
+  }
+  const query = params.toString()
+  return query ? `${path}?${query}` : path
+}
+
+/**
  * searchParamsからdraftKeyを取得
  */
 export function parseDraftKey(searchParams: { [key: string]: string | string[] | undefined }): string | undefined {
@@ -30,7 +46,7 @@ export function parseDraftKey(searchParams: { [key: string]: string | string[] |
 
 /**
  * searchParamsからタグ情報を取得
- * tagName は記事内のタグのリンクが付ける表示用の値で、検索には使わない。URL を引き継ぐときのためだけに返す
+ * tagName は記事内のタグのリンクが付ける表示用の値で、検索には使わない。ページネーションのリンクに引き継ぐためだけに返す
  */
 export function parseTagParams(searchParams: { [key: string]: string | string[] | undefined }) {
   const tagID = firstString(searchParams['tag_id'])

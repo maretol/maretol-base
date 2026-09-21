@@ -1,6 +1,6 @@
 import IllustSamples from './illust_samples'
 import { Suspense } from 'react'
-import { notFound, redirect } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import { getAteliers } from '@/lib/api/workers'
 import { metadata } from '../layout'
 import { getOGPImageURL } from '@/lib/image'
@@ -8,7 +8,7 @@ import { getHostname } from '@/lib/env'
 import { Metadata } from 'next'
 import ClientIllustPage from './client_page'
 import { isPageOutOfRange } from '@/lib/pagenation'
-import { parsePaginationParams } from '@/lib/searchParams'
+import { getHrefWithoutPage, parsePaginationParams } from '@/lib/searchParams'
 
 export const dynamic = 'force-dynamic'
 
@@ -60,7 +60,7 @@ export default async function IllustPage(props: {
   const searchParams = await props.searchParams
   const pagination = parsePaginationParams(searchParams)
   if (pagination === null) {
-    redirect('/illust')
+    permanentRedirect(getHrefWithoutPage('/illust', searchParams))
   }
   const { pageNumber, offset, limit } = pagination
 
