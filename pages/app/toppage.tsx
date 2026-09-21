@@ -11,9 +11,12 @@ import { BookImageIcon, ImageIcon, InfoIcon, ListIcon, MailIcon, NotebookTextIco
 import AppLink from '@/components/small/app_link'
 
 export default async function TopPage() {
-  const blogs = await getCMSContents(0, 5)
-  const ateliers = await getAteliers(0, 5)
-  const bandeDessinees = await getBandeDessinee(0, 5)
+  // Suspense を外して取得待ちがそのまま TTFB に乗るようになったので、独立した3つの取得は並列にする（issue #1284）
+  const [blogs, ateliers, bandeDessinees] = await Promise.all([
+    getCMSContents(0, 5),
+    getAteliers(0, 5),
+    getBandeDessinee(0, 5),
+  ])
 
   return (
     <div className="space-y-12">
