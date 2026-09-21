@@ -5,27 +5,31 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { bandeDessineeRow, bandeDessineeTagRow, bandeDessineeSeriesRow } from 'api-types'
 import type { ContentFormat } from './content-format'
+import { paginatedQuery, type PageRange, type Paginated } from './db_pagination'
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true })
   return env.DB
 }
 
-// 一覧表示用: タグ名・シリーズ名を付加した行
-export type BandeDessineeListRow = bandeDessineeRow & { tag_name: string | null; series_name: string | null }
+// 一覧表示用: 表示に使うカラムのみ（本文は読まない）＋タグ名・シリーズ名を付加した行
+export type BandeDessineeListRow = Pick<
+  bandeDessineeRow,
+  'id' | 'title_name' | 'publish_date' | 'status' | 'description_format' | 'published_at' | 'updated_at'
+> & { tag_name: string | null; series_name: string | null }
 
-export async function listBandeDessinees(): Promise<BandeDessineeListRow[]> {
-  const db = await getDB()
-  const result = await db
-    .prepare(
-      `SELECT b.*, t.tag_name AS tag_name, s.series_name AS series_name
-       FROM bande_dessinees b
-       LEFT JOIN bande_dessinee_tags t ON t.id = b.tag_id
-       LEFT JOIN bande_dessinee_series s ON s.id = b.series_id
-       ORDER BY b.created_at DESC`
-    )
-    .all<BandeDessineeListRow>()
-  return result.results
+export async function listBandeDessinees(page: PageRange): Promise<Paginated<BandeDessineeListRow>> {
+  return paginatedQuery<BandeDessineeListRow>(
+    await getDB(),
+    `SELECT COUNT(*) AS total FROM bande_dessinees`,
+    `SELECT b.id, b.title_name, b.publish_date, b.status, b.description_format, b.published_at, b.updated_at,
+      t.tag_name AS tag_name, s.series_name AS series_name
+     FROM bande_dessinees b
+     LEFT JOIN bande_dessinee_tags t ON t.id = b.tag_id
+     LEFT JOIN bande_dessinee_series s ON s.id = b.series_id
+     ORDER BY b.created_at DESC, b.id DESC LIMIT ?1 OFFSET ?2`,
+    page
+  )
 }
 
 export async function getBandeDessinee(id: string): Promise<bandeDessineeRow | null> {
