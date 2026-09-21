@@ -1,5 +1,8 @@
 import Link from 'next/link'
 import { listBandeDessinees } from '@/lib/db_comic'
+import { loadListPage } from '@/lib/list-page'
+import { Pagination } from '@/components/pagination'
+import { RememberListPage } from '@/components/list-page-memory'
 import { formatJST, formatJSTDate } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -10,8 +13,8 @@ const statusLabel: Record<string, string> = {
   CLOSED: '非公開',
 }
 
-export default async function ComicList() {
-  const comics = await listBandeDessinees()
+export default async function ComicList({ searchParams }: { searchParams: Promise<{ p?: string | string[] }> }) {
+  const { items: comics, pagination } = await loadListPage('/comic', searchParams, listBandeDessinees)
 
   return (
     <div className="space-y-4">
@@ -29,6 +32,9 @@ export default async function ComicList() {
           </Link>
         </div>
       </div>
+
+      <RememberListPage path={pagination.path} page={pagination.currentPage} />
+      <Pagination {...pagination} />
 
       <table className="w-full border-collapse bg-white text-sm">
         <thead>
@@ -71,6 +77,8 @@ export default async function ComicList() {
           )}
         </tbody>
       </table>
+
+      <Pagination {...pagination} label="ページネーション（下部）" />
     </div>
   )
 }

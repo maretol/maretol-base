@@ -5,6 +5,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { blogContentRow, blogCategoryRow, blogInfoRow } from 'api-types'
 import type { ContentFormat } from './content-format'
+import { paginatedQuery, type PageRange, type Paginated } from './db_pagination'
 
 async function getDB(): Promise<D1Database> {
   const { env } = await getCloudflareContext({ async: true })
@@ -13,20 +14,22 @@ async function getDB(): Promise<D1Database> {
 
 // --- 記事（contents） ---
 
-// 一覧表示用: カテゴリ名を連結して付加した行
-export type BlogContentListRow = blogContentRow & { category_names: string | null }
+// 一覧表示用: 表示に使うカラムのみ（本文は読まない）＋カテゴリ名を連結して付加した行
+export type BlogContentListRow = Pick<
+  blogContentRow,
+  'id' | 'title' | 'status' | 'is_secret' | 'content_format' | 'published_at' | 'updated_at'
+> & { category_names: string | null }
 
-export async function listBlogContents(): Promise<BlogContentListRow[]> {
-  const db = await getDB()
-  const result = await db
-    .prepare(
-      `SELECT c.*,
-        (SELECT group_concat(bc.name, ', ') FROM blog_content_categories r
-          JOIN blog_categories bc ON bc.id = r.category_id WHERE r.content_id = c.id) AS category_names
-       FROM blog_contents c ORDER BY c.created_at DESC`
-    )
-    .all<BlogContentListRow>()
-  return result.results
+export async function listBlogContents(page: PageRange): Promise<Paginated<BlogContentListRow>> {
+  return paginatedQuery<BlogContentListRow>(
+    await getDB(),
+    `SELECT COUNT(*) AS total FROM blog_contents`,
+    `SELECT c.id, c.title, c.status, c.is_secret, c.content_format, c.published_at, c.updated_at,
+      (SELECT group_concat(bc.name, ', ') FROM blog_content_categories r
+        JOIN blog_categories bc ON bc.id = r.category_id WHERE r.content_id = c.id) AS category_names
+     FROM blog_contents c ORDER BY c.created_at DESC, c.id DESC LIMIT ?1 OFFSET ?2`,
+    page
+  )
 }
 
 export async function getBlogContent(id: string): Promise<blogContentRow | null> {

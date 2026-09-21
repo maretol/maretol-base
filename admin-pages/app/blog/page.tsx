@@ -1,5 +1,8 @@
 import Link from 'next/link'
 import { listBlogContents } from '@/lib/db_blog'
+import { loadListPage } from '@/lib/list-page'
+import { Pagination } from '@/components/pagination'
+import { RememberListPage } from '@/components/list-page-memory'
 import { formatJST } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -10,8 +13,8 @@ const statusLabel: Record<string, string> = {
   CLOSED: '非公開',
 }
 
-export default async function BlogList() {
-  const articles = await listBlogContents()
+export default async function BlogList({ searchParams }: { searchParams: Promise<{ p?: string | string[] }> }) {
+  const { items: articles, pagination } = await loadListPage('/blog', searchParams, listBlogContents)
 
   return (
     <div className="space-y-4">
@@ -35,6 +38,9 @@ export default async function BlogList() {
           </Link>
         </div>
       </div>
+
+      <RememberListPage path={pagination.path} page={pagination.currentPage} />
+      <Pagination {...pagination} />
 
       <table className="w-full border-collapse bg-white text-sm">
         <thead>
@@ -75,6 +81,8 @@ export default async function BlogList() {
           )}
         </tbody>
       </table>
+
+      <Pagination {...pagination} label="ページネーション（下部）" />
     </div>
   )
 }

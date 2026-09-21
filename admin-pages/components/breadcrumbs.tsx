@@ -2,6 +2,8 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { withPage } from '@/lib/pagination'
+import { useRememberedListPage } from '@/components/list-page-memory'
 
 const SEGMENT_LABELS: Record<string, string> = {
   illust: 'イラスト',
@@ -22,9 +24,14 @@ const SEGMENT_LABELS: Record<string, string> = {
 // （/blog/{id} のようなページは存在しないため、コンテンツIDはリンクにしない）
 const LINKABLE_PATHS = new Set(['/illust', '/comic', '/blog', '/blog/info'])
 
+// ページネーションのある一覧。配下のページからは、最後に見ていたページへ戻す
+const PAGINATED_PATHS = new Set(['/illust', '/comic', '/blog'])
+
 export function Breadcrumbs() {
   const pathname = usePathname()
   const segments = pathname.split('/').filter(Boolean)
+  const listPath = `/${segments[0]}`
+  const listPage = useRememberedListPage(PAGINATED_PATHS.has(listPath) ? listPath : null)
   if (segments.length === 0) {
     return null
   }
@@ -45,7 +52,10 @@ export function Breadcrumbs() {
         <span key={item.href} className="flex items-center gap-1">
           <span aria-hidden="true">/</span>
           {!item.isLast && LINKABLE_PATHS.has(item.href) ? (
-            <Link href={item.href} className="hover:text-gray-900 hover:underline">
+            <Link
+              href={PAGINATED_PATHS.has(item.href) ? withPage(item.href, listPage) : item.href}
+              className="hover:text-gray-900 hover:underline"
+            >
               {item.label ?? item.segment}
             </Link>
           ) : item.label ? (

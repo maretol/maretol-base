@@ -1,5 +1,8 @@
 import Link from 'next/link'
 import { listAteliers } from '@/lib/db'
+import { loadListPage } from '@/lib/list-page'
+import { Pagination } from '@/components/pagination'
+import { RememberListPage } from '@/components/list-page-memory'
 import { formatJST } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -10,8 +13,8 @@ const statusLabel: Record<string, string> = {
   CLOSED: '非公開',
 }
 
-export default async function IllustList() {
-  const ateliers = await listAteliers()
+export default async function IllustList({ searchParams }: { searchParams: Promise<{ p?: string | string[] }> }) {
+  const { items: ateliers, pagination } = await loadListPage('/illust', searchParams, listAteliers)
 
   return (
     <div className="space-y-4">
@@ -26,6 +29,9 @@ export default async function IllustList() {
           </Link>
         </div>
       </div>
+
+      <RememberListPage path={pagination.path} page={pagination.currentPage} />
+      <Pagination {...pagination} />
 
       <table className="w-full border-collapse bg-white text-sm">
         <thead>
@@ -74,6 +80,8 @@ export default async function IllustList() {
           )}
         </tbody>
       </table>
+
+      <Pagination {...pagination} label="ページネーション（下部）" />
     </div>
   )
 }

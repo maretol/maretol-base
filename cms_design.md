@@ -49,6 +49,8 @@ CREATE TABLE blog_contents (
 
 -- 一覧クエリ（status='PUBLISH' AND is_secret=0 ORDER BY published_at DESC）用
 CREATE INDEX idx_blog_contents_list ON blog_contents (status, is_secret, published_at DESC);
+-- admin 一覧（ORDER BY created_at DESC, id DESC + LIMIT/OFFSET）用
+CREATE INDEX idx_blog_contents_admin_list ON blog_contents (created_at DESC, id DESC);
 
 CREATE TABLE blog_categories (
   id           TEXT PRIMARY KEY,
@@ -140,6 +142,8 @@ CREATE TABLE bande_dessinees (
 );
 
 CREATE INDEX idx_bande_dessinees_list ON bande_dessinees (status, published_at DESC);
+-- admin 一覧（ORDER BY created_at DESC, id DESC + LIMIT/OFFSET）用
+CREATE INDEX idx_bande_dessinees_admin_list ON bande_dessinees (created_at DESC, id DESC);
 ```
 
 ### illust（maretol-illust 相当）
@@ -171,6 +175,8 @@ CREATE TABLE ateliers (
 );
 
 CREATE INDEX idx_ateliers_list ON ateliers (status, published_at DESC);
+-- admin 一覧（ORDER BY created_at DESC, id DESC + LIMIT/OFFSET）用
+CREATE INDEX idx_ateliers_admin_list ON ateliers (created_at DESC, id DESC);
 
 CREATE TABLE atelier_tag_relations (
   atelier_id TEXT NOT NULL REFERENCES ateliers(id) ON DELETE CASCADE,
