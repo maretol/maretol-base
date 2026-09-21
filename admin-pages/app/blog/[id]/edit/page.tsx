@@ -3,6 +3,7 @@ import { getBlogContent, getBlogContentCategoryIDs, listBlogCategories } from '@
 import { BlogForm } from '../../blog-form'
 import { purgeBlogContentCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
+import { parsePageParam } from '@/lib/pagination'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,10 +12,12 @@ export default async function EditBlogContent({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string }>
+  searchParams: Promise<{ error?: string; saved?: string; p?: string | string[] }>
 }) {
   const { id } = await params
-  const { error, saved } = await searchParams
+  const { error, saved, p } = await searchParams
+  // 戻り先の一覧ページ番号（不正な値は無視する）
+  const listPage = parsePageParam(p) ?? undefined
 
   const article = await getBlogContent(id)
   if (!article) {
@@ -38,6 +41,7 @@ export default async function EditBlogContent({
         allCategories={allCategories}
         error={error}
         saved={saved === '1'}
+        listPage={listPage}
       />
     </div>
   )

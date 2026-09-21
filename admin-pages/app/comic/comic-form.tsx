@@ -16,6 +16,7 @@ type Props = {
   error?: string
   saved?: boolean
   info?: string
+  listPage?: number
 }
 
 // ISO 8601 UTC の日時を date input 用の JST 日付（YYYY-MM-DD）に変換する
@@ -25,7 +26,7 @@ function toJSTDateValue(iso: string | null | undefined): string {
   return jst.toISOString().slice(0, 10)
 }
 
-export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, saved, info }: Props) {
+export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, saved, info, listPage }: Props) {
   const action = mode === 'new' ? createBandeDessineeAction : updateBandeDessineeAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewBandeDessineeAction, {})
@@ -58,6 +59,8 @@ export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, s
 
       <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
         <input type="hidden" name="mode" value={mode} />
+        {/* 戻り先の一覧ページ番号。保存後の redirect に引き継ぐ */}
+        {listPage !== undefined && listPage > 1 && <input type="hidden" name="p" value={listPage} />}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>

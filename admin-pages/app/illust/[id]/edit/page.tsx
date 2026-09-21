@@ -3,6 +3,7 @@ import { getAtelier, getAtelierTagIDs, listTags } from '@/lib/db'
 import { AtelierForm } from '../../atelier-form'
 import { purgeAtelierCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
+import { parsePageParam } from '@/lib/pagination'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,10 +12,12 @@ export default async function EditIllust({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string }>
+  searchParams: Promise<{ error?: string; saved?: string; p?: string | string[] }>
 }) {
   const { id } = await params
-  const { error, saved } = await searchParams
+  const { error, saved, p } = await searchParams
+  // 戻り先の一覧ページ番号（不正な値は無視する）
+  const listPage = parsePageParam(p) ?? undefined
 
   const atelier = await getAtelier(id)
   if (!atelier) {
@@ -38,6 +41,7 @@ export default async function EditIllust({
         allTags={allTags}
         error={error}
         saved={saved === '1'}
+        listPage={listPage}
       />
     </div>
   )

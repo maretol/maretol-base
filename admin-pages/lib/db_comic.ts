@@ -11,21 +11,34 @@ async function getDB(): Promise<D1Database> {
   return env.DB
 }
 
-// 一覧表示用: タグ名・シリーズ名を付加した行
-export type BandeDessineeListRow = bandeDessineeRow & { tag_name: string | null; series_name: string | null }
+// 一覧表示用: 表示に使うカラムのみ（本文は読まない）＋タグ名・シリーズ名を付加した行
+export type BandeDessineeListRow = Pick<
+  bandeDessineeRow,
+  'id' | 'title_name' | 'publish_date' | 'status' | 'description_format' | 'published_at' | 'updated_at'
+> & { tag_name: string | null; series_name: string | null }
 
-export async function listBandeDessinees(): Promise<BandeDessineeListRow[]> {
+export async function listBandeDessinees(page: {
+  limit: number
+  offset: number
+}): Promise<{ items: BandeDessineeListRow[]; total: number }> {
   const db = await getDB()
-  const result = await db
-    .prepare(
-      `SELECT b.*, t.tag_name AS tag_name, s.series_name AS series_name
-       FROM bande_dessinees b
-       LEFT JOIN bande_dessinee_tags t ON t.id = b.tag_id
-       LEFT JOIN bande_dessinee_series s ON s.id = b.series_id
-       ORDER BY b.created_at DESC`
-    )
-    .all<BandeDessineeListRow>()
-  return result.results
+  const [count, list] = await db.batch<{ total: number } | BandeDessineeListRow>([
+    db.prepare(`SELECT COUNT(*) AS total FROM bande_dessinees`),
+    db
+      .prepare(
+        `SELECT b.id, b.title_name, b.publish_date, b.status, b.description_format, b.published_at, b.updated_at,
+          t.tag_name AS tag_name, s.series_name AS series_name
+         FROM bande_dessinees b
+         LEFT JOIN bande_dessinee_tags t ON t.id = b.tag_id
+         LEFT JOIN bande_dessinee_series s ON s.id = b.series_id
+         ORDER BY b.created_at DESC, b.id DESC LIMIT ?1 OFFSET ?2`
+      )
+      .bind(page.limit, page.offset),
+  ])
+  return {
+    items: list.results as BandeDessineeListRow[],
+    total: (count.results[0] as { total: number } | undefined)?.total ?? 0,
+  }
 }
 
 export async function getBandeDessinee(id: string): Promise<bandeDessineeRow | null> {

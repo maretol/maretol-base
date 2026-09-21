@@ -1,5 +1,8 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { listBlogContents } from '@/lib/db_blog'
+import { PAGE_SIZE, parsePageParam, withPage } from '@/lib/pagination'
+import { Pagination } from '@/components/pagination'
 import { formatJST } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
@@ -10,8 +13,22 @@ const statusLabel: Record<string, string> = {
   CLOSED: '非公開',
 }
 
-export default async function BlogList() {
-  const articles = await listBlogContents()
+export default async function BlogList({ searchParams }: { searchParams: Promise<{ p?: string | string[] }> }) {
+  const page = parsePageParam((await searchParams).p)
+  if (page === null) {
+    redirect('/blog')
+  }
+
+  const { items: articles, total } = await listBlogContents({ limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE })
+  const totalPage = Math.max(1, Math.ceil(total / PAGE_SIZE))
+  // 範囲外のページ指定は最終ページへ寄せる
+  if (page > totalPage) {
+    redirect(withPage('/blog', totalPage))
+  }
+
+  const pagination = (
+    <Pagination path="/blog" currentPage={page} totalPage={totalPage} total={total} pageSize={PAGE_SIZE} />
+  )
 
   return (
     <div className="space-y-4">
@@ -36,6 +53,8 @@ export default async function BlogList() {
         </div>
       </div>
 
+      {pagination}
+
       <table className="w-full border-collapse bg-white text-sm">
         <thead>
           <tr className="border-b border-gray-200 text-left text-gray-500">
@@ -54,7 +73,7 @@ export default async function BlogList() {
             <tr key={a.id} className="border-b border-gray-100">
               <td className="p-2 font-mono text-xs">{a.id}</td>
               <td className="p-2">
-                <Link href={`/blog/${a.id}/edit`} className="text-blue-600 underline">
+                <Link href={withPage(`/blog/${a.id}/edit`, page)} className="text-blue-600 underline">
                   {a.title}
                 </Link>
               </td>
@@ -75,6 +94,8 @@ export default async function BlogList() {
           )}
         </tbody>
       </table>
+
+      {pagination}
     </div>
   )
 }

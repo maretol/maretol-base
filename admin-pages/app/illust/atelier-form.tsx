@@ -13,11 +13,12 @@ type Props = {
   allTags: atelierTagRow[]
   error?: string
   saved?: boolean
+  listPage?: number
 }
 
 const positions = ['center', 'top', 'bottom', 'left', 'right']
 
-export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error, saved }: Props) {
+export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error, saved, listPage }: Props) {
   const action = mode === 'new' ? createAtelierAction : updateAtelierAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewAtelierAction, {})
@@ -40,6 +41,8 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error
 
       <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
         <input type="hidden" name="mode" value={mode} />
+        {/* 戻り先の一覧ページ番号。保存後の redirect に引き継ぐ */}
+        {listPage !== undefined && listPage > 1 && <input type="hidden" name="p" value={listPage} />}
 
         <div>
           <label className="block text-sm font-medium">

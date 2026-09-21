@@ -11,20 +11,32 @@ async function getDB(): Promise<D1Database> {
   return env.DB
 }
 
-// 一覧表示用: タグ名を連結して付加した行
-export type AtelierListRow = atelierRow & { tag_names: string | null }
+// 一覧表示用: 表示に使うカラムのみ（本文は読まない）＋タグ名を連結して付加した行
+export type AtelierListRow = Pick<
+  atelierRow,
+  'id' | 'title' | 'src' | 'object_position' | 'status' | 'description_format' | 'published_at' | 'updated_at'
+> & { tag_names: string | null }
 
-export async function listAteliers(): Promise<AtelierListRow[]> {
+export async function listAteliers(page: {
+  limit: number
+  offset: number
+}): Promise<{ items: AtelierListRow[]; total: number }> {
   const db = await getDB()
-  const result = await db
-    .prepare(
-      `SELECT a.*,
-        (SELECT group_concat(t.tag, ', ') FROM atelier_tag_relations r
-          JOIN atelier_tags t ON t.id = r.tag_id WHERE r.atelier_id = a.id) AS tag_names
-       FROM ateliers a ORDER BY a.created_at DESC`
-    )
-    .all<AtelierListRow>()
-  return result.results
+  const [count, list] = await db.batch<{ total: number } | AtelierListRow>([
+    db.prepare(`SELECT COUNT(*) AS total FROM ateliers`),
+    db
+      .prepare(
+        `SELECT a.id, a.title, a.src, a.object_position, a.status, a.description_format, a.published_at, a.updated_at,
+          (SELECT group_concat(t.tag, ', ') FROM atelier_tag_relations r
+            JOIN atelier_tags t ON t.id = r.tag_id WHERE r.atelier_id = a.id) AS tag_names
+         FROM ateliers a ORDER BY a.created_at DESC, a.id DESC LIMIT ?1 OFFSET ?2`
+      )
+      .bind(page.limit, page.offset),
+  ])
+  return {
+    items: list.results as AtelierListRow[],
+    total: (count.results[0] as { total: number } | undefined)?.total ?? 0,
+  }
 }
 
 export async function getAtelier(id: string): Promise<atelierRow | null> {

@@ -3,6 +3,7 @@ import { getBandeDessinee, listComicTags, listComicSeries, listBandeDessineeRefs
 import { ComicForm } from '../../comic-form'
 import { purgeBandeDessineeCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
+import { parsePageParam } from '@/lib/pagination'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,10 +12,12 @@ export default async function EditComic({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string; info?: string }>
+  searchParams: Promise<{ error?: string; saved?: string; info?: string; p?: string | string[] }>
 }) {
   const { id } = await params
-  const { error, saved, info } = await searchParams
+  const { error, saved, info, p } = await searchParams
+  // 戻り先の一覧ページ番号（不正な値は無視する）
+  const listPage = parsePageParam(p) ?? undefined
 
   const comic = await getBandeDessinee(id)
   if (!comic) {
@@ -44,6 +47,7 @@ export default async function EditComic({
         error={error}
         saved={saved === '1'}
         info={info}
+        listPage={listPage}
       />
     </div>
   )

@@ -19,6 +19,7 @@ import { saveBandeDessineeDraft } from '@/lib/draft_comic'
 import { notifyComicPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
+import { pageQuerySuffix } from '@/lib/pagination'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
@@ -194,12 +195,12 @@ export async function createBandeDessineeAction(formData: FormData): Promise<voi
 export async function updateBandeDessineeAction(formData: FormData): Promise<void> {
   const { input, error } = parseComicForm(formData)
   if (error) {
-    redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(error)}`)
+    redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(error)}${pageQuerySuffix(formData)}`)
   }
 
   const { neighbors, error: chainError } = await validateChain(input)
   if (chainError) {
-    redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(chainError)}`)
+    redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(chainError)}${pageQuerySuffix(formData)}`)
   }
 
   // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
@@ -214,7 +215,7 @@ export async function updateBandeDessineeAction(formData: FormData): Promise<voi
 
   revalidatePath('/comic')
   // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(`/comic/${input.id}/edit?saved=1${chainInfoParam(syncMessages)}`)
+  redirect(`/comic/${input.id}/edit?saved=1${chainInfoParam(syncMessages)}${pageQuerySuffix(formData)}`)
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）

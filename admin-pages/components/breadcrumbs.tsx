@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { parsePageParam, withPage } from '@/lib/pagination'
 
 const SEGMENT_LABELS: Record<string, string> = {
   illust: 'イラスト',
@@ -22,8 +23,12 @@ const SEGMENT_LABELS: Record<string, string> = {
 // （/blog/{id} のようなページは存在しないため、コンテンツIDはリンクにしない）
 const LINKABLE_PATHS = new Set(['/illust', '/comic', '/blog', '/blog/info'])
 
+// ページネーションのある一覧。編集画面の `p`（戻り先の一覧ページ番号）をリンクに引き継ぐ
+const PAGINATED_PATHS = new Set(['/illust', '/comic', '/blog'])
+
 export function Breadcrumbs() {
   const pathname = usePathname()
+  const listPage = parsePageParam(useSearchParams().get('p') ?? undefined) ?? 1
   const segments = pathname.split('/').filter(Boolean)
   if (segments.length === 0) {
     return null
@@ -45,7 +50,10 @@ export function Breadcrumbs() {
         <span key={item.href} className="flex items-center gap-1">
           <span aria-hidden="true">/</span>
           {!item.isLast && LINKABLE_PATHS.has(item.href) ? (
-            <Link href={item.href} className="hover:text-gray-900 hover:underline">
+            <Link
+              href={PAGINATED_PATHS.has(item.href) ? withPage(item.href, listPage) : item.href}
+              className="hover:text-gray-900 hover:underline"
+            >
               {item.label ?? item.segment}
             </Link>
           ) : item.label ? (
