@@ -24,8 +24,13 @@ import {
   generateTagsKey,
   generateAtelierKey,
   generateAtelierContentKey,
+  generateContentsTotalKey,
+  generateContentsWithTagsTotalKey,
+  generateBandeDessineeTotalKey,
+  generateAtelierTotalKey,
 } from 'cms-cache-key-gen'
 import { cache } from 'react'
+import { getTotalPage } from '../pagenation'
 import { DAY, HOUR } from '../static'
 
 // const revalidateTime = 0 // 無効にする。どうやらnext.jsのバグを踏んでいるっぽい
@@ -55,10 +60,19 @@ interface CacheConfig {
   skipCache?: boolean
 }
 
+// 一覧の総件数による範囲判定の設定（issue #1291）
+interface ListTotalConfig {
+  totalKey: string
+  offset: number
+  limit: number
+}
+
 interface APIConfig<TResult> extends CacheConfig {
   fetcher: () => Promise<TResult>
   defaultResult: TResult
   shouldCache?: (result: TResult) => boolean
+  // 一覧の取得で指定する。2ページ目以降は、KV に持つ総件数で範囲外と分かれば fetcher を呼ばない
+  listTotal?: TResult extends { total: number } ? ListTotalConfig : never
 }
 
 // キャッシュ付きAPI関数（環境非依存）
@@ -69,6 +83,21 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
     if (cache) {
       const data = JSON.parse(cache) as TResult
       return data
+    }
+  }
+
+  // 一覧の2ページ目以降は、D1 へ問い合わせる前に KV の総件数で範囲を判定する（issue #1291）
+  // 0件の結果はキャッシュしないので、この判定がないと範囲外のリクエストが毎回 D1 まで届く
+  // 一覧のキャッシュに当たったリクエストは範囲内と分かっているので、ここまで来ない。総件数を読むのはキャッシュミスのときだけ
+  const listTotal: ListTotalConfig | undefined = config.listTotal
+  const pageNumber = listTotal ? Math.floor(listTotal.offset / listTotal.limit) + 1 : 1
+  let cachedTotal: number | undefined
+  if (listTotal && pageNumber > 1) {
+    cachedTotal = await getCachedListTotal(config.cacheStore, listTotal.totalKey)
+    // KV の総件数は、パージと書き込みが競合すると古い値のまま残ることがある
+    // 記事が増えて新しくできる「最終ページの次」まで範囲外にしないよう、そのページだけは D1 で確かめる。値が古ければ下の保存で直る
+    if (cachedTotal !== undefined && pageNumber > getTotalPage(cachedTotal, listTotal.limit) + 1) {
+      return { ...config.defaultResult, total: cachedTotal }
     }
   }
 
@@ -90,10 +119,49 @@ async function createCachedAPIFunction<TResult>(config: APIConfig<TResult>): Pro
       }
     }
 
+    // 取得に失敗すると total は既定値の 0 になる。それを保存すると全ページが範囲外になるので、1件以上のときだけ保存する
+    if (listTotal && pageNumber > 1) {
+      const total = (res as { total: number }).total
+      if (total > 0 && total !== cachedTotal) {
+        await saveListTotal(config.cacheStore, listTotal.totalKey, total)
+      }
+    }
+
     return res as TResult
   } catch (e) {
     console.error('[lib/api/workers.ts] API call error:', e)
     return config.defaultResult
+  }
+}
+
+// 一覧の総件数だけを持つ KV エントリの読み書き（issue #1291）。createCachedAPIFunction の listTotal から使う
+// キーは一覧と同じ prefix なので、記事の保存時のパージで一緒に消える。TTL はパージを通らない変更（D1 の直接編集など）への保険
+const LIST_TOTAL_TTL = 1 * HOUR
+
+async function getCachedListTotal(cacheStore: KVNamespace, totalKey: string): Promise<number | undefined> {
+  if (!isKVCacheEnabled()) return undefined
+  try {
+    const cache = await cacheStore.get(totalKey)
+    const total = cache === null ? NaN : Number(cache)
+    return Number.isInteger(total) && total > 0 ? total : undefined
+  } catch (e) {
+    console.error(`[lib/api/workers.ts] Cache get error for key ${totalKey}:`, e)
+    return undefined
+  }
+}
+
+// 書き込みの完了はレスポンスに必要ないので、waitUntil に渡して待たない
+async function saveListTotal(cacheStore: KVNamespace, totalKey: string, total: number): Promise<void> {
+  if (!isKVCacheEnabled()) return
+  try {
+    const { ctx } = await getCloudflareContext({ async: true })
+    ctx.waitUntil(
+      cacheStore.put(totalKey, total.toString(), { expirationTtl: dev ? 60 : LIST_TOTAL_TTL }).catch((e) => {
+        console.error(`[lib/api/workers.ts] Cache put error for key ${totalKey}:`, e)
+      }),
+    )
+  } catch (e) {
+    console.error(`[lib/api/workers.ts] Cache put error for key ${totalKey}:`, e)
   }
 }
 
@@ -128,6 +196,7 @@ const getBandeDessinee = cache(getBandeDessineeOrigin)
 const getBandeDessineeByID = cache(getBandeDessineeByIDOrigin)
 const getAteliers = cache(getAteliersOrigin)
 const getAtelierByID = cache(getAtelierByIDOrigin)
+// generateMetadata とページ本体の両方から呼ばれても、KV の読み書きは1リクエストに1回で済ませる
 
 // OGPデータの取得
 async function getOGPDataOrigin(targetURL: string) {
@@ -205,6 +274,9 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
       ? () => createLocalFetcher('/api/cms/get_contents', { offset: offsetStr, limit: limitStr }, defaultResult)
       : () => env.CMS_RPC.fetchContents(offsetStr, limitStr),
     defaultResult,
+    // 範囲外ページによる空結果のキーがKVに溜まらないよう、結果ありのときだけ保存する
+    shouldCache: (res) => res.contents.length > 0,
+    listTotal: { totalKey: generateContentsTotalKey(), offset: offset ?? 0, limit: limit ?? 10 },
   })
 }
 
@@ -291,6 +363,7 @@ async function getCMSContentsWithTagsOrigin(tagIDs: string[], offset?: number, l
       : () => env.CMS_RPC.fetchContentsByTag(tagIDs, offsetStr, limitStr),
     defaultResult,
     skipCache: true,
+    listTotal: { totalKey: generateContentsWithTagsTotalKey(tagIDs), offset: offset ?? 0, limit: limit ?? 10 },
   })
 }
 
@@ -364,8 +437,9 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number, seriesID?
       ? () => createLocalFetcher('/api/cms/bande_dessinees', query, defaultResult)
       : () => env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr, seriesID ?? null),
     defaultResult,
-    // 存在しないシリーズIDや範囲外ページによる空結果のキーがKVに溜まらないよう、シリーズ指定時は結果ありのときだけ保存する
-    shouldCache: (res) => seriesID === undefined || res.bandeDessinees.length > 0,
+    // 存在しないシリーズIDや範囲外ページによる空結果のキーがKVに溜まらないよう、結果ありのときだけ保存する
+    shouldCache: (res) => res.bandeDessinees.length > 0,
+    listTotal: { totalKey: generateBandeDessineeTotalKey(seriesID), offset: offset ?? 0, limit: limit ?? 10 },
   })
 }
 
@@ -404,6 +478,9 @@ async function getAteliersOrigin(offset?: number, limit?: number) {
       ? () => createLocalFetcher('/api/cms/ateliers', query, { ateliers: [], total: 0 })
       : () => env.CMS_RPC.fetchAteliers(offsetStr, limitStr),
     defaultResult: { ateliers: [], total: 0 },
+    // 範囲外ページによる空結果のキーがKVに溜まらないよう、結果ありのときだけ保存する
+    shouldCache: (res) => res.ateliers.length > 0,
+    listTotal: { totalKey: generateAtelierTotalKey(), offset: offset ?? 0, limit: limit ?? 10 },
   })
 }
 

@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button'
 import { getAteliers, getBandeDessinee, getCMSContents } from '@/lib/api/workers'
 import { getFirstPage } from '@/lib/comic_util'
 import { BookImageIcon, ImageIcon, InfoIcon, ListIcon, MailIcon, NotebookTextIcon } from 'lucide-react'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 
 export default async function TopPage() {
-  const blogs = await getCMSContents(0, 5)
-  const ateliers = await getAteliers(0, 5)
-  const bandeDessinees = await getBandeDessinee(0, 5)
+  // Suspense を外して取得待ちがそのまま TTFB に乗るようになったので、独立した3つの取得は並列にする（issue #1284）
+  const [blogs, ateliers, bandeDessinees] = await Promise.all([
+    getCMSContents(0, 5),
+    getAteliers(0, 5),
+    getBandeDessinee(0, 5),
+  ])
 
   return (
     <div className="space-y-12">
@@ -93,7 +96,7 @@ export default async function TopPage() {
           ))}
           <div className="w-full">
             <Button asChild variant="outline" className="w-full bg-gray-100 hover:bg-white font-suse">
-              <Link href="/blog">See all blog articles</Link>
+              <AppLink href="/blog">See all blog articles</AppLink>
             </Button>
           </div>
         </div>
@@ -106,24 +109,24 @@ export default async function TopPage() {
           </div>
           <div className="flex md:flex-row flex-col gap-4 justify-center items-center">
             <Button asChild variant="outline" className="w-full max-w-96">
-              <Link href="/about">
+              <AppLink href="/about">
                 <div className="flex items-center gap-2">
                   <InfoIcon className="h-6 w-6" />{' '}
                   <p>
                     <span className="alphabet">About :</span> このサイトについて
                   </p>
                 </div>
-              </Link>
+              </AppLink>
             </Button>
             <Button asChild variant="outline" className="w-full max-w-96">
-              <Link href="/contact">
+              <AppLink href="/contact">
                 <div className="flex items-center gap-2">
                   <MailIcon className="h-6 w-6" />{' '}
                   <p>
                     <span className="alphabet">Contact :</span> 連絡はこちら
                   </p>
                 </div>
-              </Link>
+              </AppLink>
             </Button>
           </div>
         </div>

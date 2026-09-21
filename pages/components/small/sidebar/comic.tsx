@@ -1,6 +1,6 @@
 import { bandeDessineeResult } from 'api-types'
 import SidebarContentFrame from '../sidebar_content'
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import { convertJST } from '@/lib/time'
 import { Button } from '@/components/ui/button'
 import ClientImage2 from '../client_image2'
@@ -39,9 +39,9 @@ export default async function ComicSidebar({ bandeDessinees }: { bandeDessinees:
           />
         ))}
         <Button variant="secondary" className="w-full mt-2" asChild>
-          <Link href="/comics" className="text-gray-500">
+          <AppLink href="/comics" className="text-gray-500">
             <p className="font-bold">See latest comics</p>
-          </Link>
+          </AppLink>
         </Button>
       </div>
     </SidebarContentFrame>
@@ -51,7 +51,7 @@ export default async function ComicSidebar({ bandeDessinees }: { bandeDessinees:
 function ComicLink({ id, title, publishedAt, coverImage }: comic) {
   return (
     <div className="mb-4 relative w-full">
-      <Link href={comicPath(id)} className="hover:underline">
+      <AppLink href={comicPath(id)} className="hover:underline">
         <div className="bg-gray-200 p-4">
           <ClientImage2
             src={coverImage}
@@ -66,7 +66,7 @@ function ComicLink({ id, title, publishedAt, coverImage }: comic) {
           <p className="text-gray-200 font-semibold">{title}</p>
           <p className="text-gray-300">{convertJST(publishedAt)}</p>
         </div>
-      </Link>
+      </AppLink>
     </div>
   )
 }

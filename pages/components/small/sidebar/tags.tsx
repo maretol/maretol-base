@@ -3,8 +3,9 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { categoryAPIResult } from 'api-types'
 import SidebarContentFrame from '../sidebar_content'
-import { useCallback } from 'react'
+import { useCallback, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { NavigationProgressBar } from '../navigation_progress'
 
 type tag = {
   name: string
@@ -13,6 +14,8 @@ type tag = {
 
 export default function TagSidebar({ tags }: { tags: categoryAPIResult[] }) {
   const router = useRouter()
+  // router.push は useLinkStatus で拾えないため、transition の pending でインジケーターを出す
+  const [isPending, startTransition] = useTransition()
 
   const tagData: tag[] = tags.map((tag) => ({
     name: tag.name,
@@ -21,13 +24,16 @@ export default function TagSidebar({ tags }: { tags: categoryAPIResult[] }) {
 
   const selectCallback = useCallback(
     (value: string) => {
-      router.push(`/tag?tag_id=${value}`)
+      startTransition(() => {
+        router.push(`/tag?tag_id=${value}`)
+      })
     },
     [router]
   )
 
   return (
     <SidebarContentFrame title="Tags">
+      <NavigationProgressBar pending={isPending} />
       <Select onValueChange={selectCallback}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="タグ一覧" />

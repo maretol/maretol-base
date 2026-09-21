@@ -218,3 +218,49 @@ code {
   border-image-slice: 1;
   @apply border-b-4 to-60% border-blue-900;
 }
+
+/* ページ遷移中のインジケーター（components/small/navigation_progress.tsx） */
+.navigation-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  pointer-events: none;
+  /* 一瞬で終わる遷移でちらつかないよう、透明で始めて遅延後に表示する */
+  opacity: 0;
+  animation: navigation-progress-appear 200ms ease 150ms forwards;
+}
+
+.navigation-progress-bar {
+  width: 40%;
+  height: 100%;
+  background: rgb(37 99 235);
+  animation: navigation-progress-slide 1.2s ease-in-out 150ms infinite;
+  transform: translateX(-100%);
+}
+
+@keyframes navigation-progress-appear {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes navigation-progress-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation-progress-bar {
+    width: 100%;
+    transform: none;
+    animation: none;
+  }
+}

@@ -1,13 +1,14 @@
 import IllustSamples from './illust_samples'
 import { Suspense } from 'react'
+import { permanentRedirect } from 'next/navigation'
 import { getAteliers } from '@/lib/api/workers'
 import { metadata } from '../layout'
 import { getOGPImageURL } from '@/lib/image'
 import { getHostname } from '@/lib/env'
 import { Metadata } from 'next'
-import LoadingIllustPage from './loading_illust'
 import ClientIllustPage from './client_page'
-import { parsePaginationParams } from '@/lib/searchParams'
+import { fetchListPage } from '@/lib/api/list_page'
+import { getHrefWithoutPage, parsePaginationParams } from '@/lib/searchParams'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,9 +18,18 @@ export async function generateMetadata({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const params = await searchParams
-  const { pageNumber, offset, limit } = parsePaginationParams(params)
-  const ateliers = await getAteliers(offset, limit)
-  const firstAtelier = ateliers.ateliers[0]
+  const pagination = parsePaginationParams(params)
+  // p が不正なときはページ本体が redirect する
+  if (pagination === null) {
+    return {}
+  }
+  const { pageNumber, offset, limit } = pagination
+  const ateliers = await fetchListPage(pageNumber, limit, () => getAteliers(offset, limit))
+  const firstAtelier = ateliers.ateliers.at(0)
+  // 0件のときはサムネイルを引けない
+  if (firstAtelier === undefined) {
+    return {}
+  }
 
   const thumbnail = getOGPImageURL(firstAtelier.src)
 
@@ -48,13 +58,18 @@ export default async function IllustPage(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+  const pagination = parsePaginationParams(searchParams)
+  if (pagination === null) {
+    permanentRedirect(getHrefWithoutPage('/illust', searchParams))
+  }
+  const { pageNumber, offset, limit } = pagination
+
+  // 範囲外のページを HTTP ステータスも含めて 404 で返すため、Suspense を挟まずに取得する（issue #1283）
+  const { ateliers, total } = await fetchListPage(pageNumber, limit, () => getAteliers(offset, limit))
 
   return (
     <div className="">
-      <Suspense fallback={<LoadingIllustPage />}>
-        <IllustSamples pageNumber={pageNumber} offset={offset} limit={limit} />
-      </Suspense>
+      <IllustSamples ateliers={ateliers} total={total} pageNumber={pageNumber} limit={limit} />
       <Suspense fallback={null}>
         <ClientIllustPage />
       </Suspense>

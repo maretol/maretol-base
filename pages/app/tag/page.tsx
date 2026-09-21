@@ -4,7 +4,9 @@ import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
-import { parsePaginationParams, parseTagParams } from '@/lib/searchParams'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { fetchListPage } from '@/lib/api/list_page'
+import { getHrefWithoutPage, parsePaginationParams, parseTagParams } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -44,13 +46,29 @@ export default async function TagPage(props: {
   searchParams: Promise<{ [key: string]: string[] | string | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const { tagID } = parseTagParams(searchParams)
-  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+  const { tagID, tagName } = parseTagParams(searchParams)
+  const pagination = parsePaginationParams(searchParams)
+  if (pagination === null) {
+    permanentRedirect(getHrefWithoutPage('/tag', searchParams))
+  }
+  const { pageNumber, offset, limit } = pagination
 
+  // ページネーションのリンクに引き継ぐクエリ。tag_name は検索に使わないが、落とすと使っていないことが URL から分かってしまう
+  const queryWithoutPage = {
+    ...(tagID ? { tag_id: tagID } : {}),
+    ...(tagName ? { tag_name: tagName } : {}),
+  }
+
+  // タグの一覧にない tag_id は0件と分かっているので、D1 へ問い合わせない。tag_id は自由に指定できるため（issue #1291）
+  // タグの一覧が空のときは取得に失敗しているので、判定せずに問い合わせる
   const tags = await getTags()
-
-  const tagIDs = tagID ? [tagID] : []
-  const { contents, total } = await getCMSContentsWithTags(tagIDs, offset, limit)
+  const isKnownTag = !!tagID && (tags.length === 0 || tags.some((tag) => tag.id === tagID))
+  if (!isKnownTag && pageNumber > 1) {
+    notFound()
+  }
+  const { contents, total } = isKnownTag
+    ? await fetchListPage(pageNumber, limit, () => getCMSContentsWithTags([tagID], offset, limit))
+    : { contents: [], total: 0 }
 
   return (
     <div>
@@ -86,7 +104,7 @@ export default async function TagPage(props: {
             <div className="flex justify-center">
               <Pagenation
                 path="/tag"
-                queryWithoutPage={tagID ? { tag_id: tagID } : {}}
+                queryWithoutPage={queryWithoutPage}
                 currentPage={pageNumber}
                 totalPage={Math.ceil(total / limit)}
               />

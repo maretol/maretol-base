@@ -1,10 +1,10 @@
 import BaseLayout from '@/components/large/base_layout'
-import { Suspense } from 'react'
-import LoadingComicsPage from './loading_article'
+import { permanentRedirect } from 'next/navigation'
 import ComicsPageArticles from './article'
-import { parsePaginationParams, parseSeriesParams } from '@/lib/searchParams'
+import { getHrefWithoutPage, parsePaginationParams, parseSeriesParams } from '@/lib/searchParams'
 import { getBandeDessinee } from '@/lib/api/workers'
 import { getSeriesName } from '@/lib/comic_util'
+import { fetchListPage } from '@/lib/api/list_page'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,13 +12,18 @@ export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+  const pagination = parsePaginationParams(searchParams)
+  // p が不正なときはページ本体が redirect する
+  if (pagination === null) {
+    return {}
+  }
+  const { pageNumber, offset, limit } = pagination
   const { seriesID } = parseSeriesParams(searchParams)
 
   // シリーズ指定時はシリーズ名をタイトルに含める。取得はReact cacheでページ本体と共有される
   let title = `Comics : page ${pageNumber} | Maretol Base`
   if (seriesID !== undefined) {
-    const { bandeDessinees } = await getBandeDessinee(offset, limit, seriesID)
+    const { bandeDessinees } = await fetchListPage(pageNumber, limit, () => getBandeDessinee(offset, limit, seriesID))
     const seriesName = getSeriesName(bandeDessinees)
     if (seriesName) {
       title = `Comics : ${seriesName} : page ${pageNumber} | Maretol Base`
@@ -35,13 +40,26 @@ export default async function ComicsPage(props: {
 }) {
   const searchParams = await props.searchParams
   const { seriesID } = parseSeriesParams(searchParams)
-  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+  const pagination = parsePaginationParams(searchParams)
+  if (pagination === null) {
+    permanentRedirect(getHrefWithoutPage('/comics', searchParams))
+  }
+  const { pageNumber, offset, limit } = pagination
+
+  // 範囲外のページを HTTP ステータスも含めて 404 で返すため、Suspense を挟まずに取得する（issue #1283）
+  const { bandeDessinees, total } = await fetchListPage(pageNumber, limit, () =>
+    getBandeDessinee(offset, limit, seriesID),
+  )
 
   return (
     <BaseLayout>
-      <Suspense fallback={<LoadingComicsPage />}>
-        <ComicsPageArticles pageNumber={pageNumber} offset={offset} limit={limit} seriesID={seriesID} />
-      </Suspense>
+      <ComicsPageArticles
+        bandeDessinees={bandeDessinees}
+        total={total}
+        pageNumber={pageNumber}
+        limit={limit}
+        seriesID={seriesID}
+      />
     </BaseLayout>
   )
 }

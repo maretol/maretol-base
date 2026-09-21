@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import AppLink from '@/components/small/app_link'
 import fetchBlurredImageAndMetadata from '@/lib/api/image'
 import { cn } from '@/lib/utils'
 import ClientImage2 from '@/components/small/client_image2'
@@ -28,7 +28,7 @@ export default async function ContentImage({
     return (
       // ここに画像のモーダルを実装する
       <div className="w-fit" id={base64src}>
-        <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
+        <AppLink href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
             alt=""
@@ -37,7 +37,7 @@ export default async function ContentImage({
             blurData={blurData}
             className="w-full h-auto object-contain shadow-xl inner-image rounded-2xl"
           />
-        </Link>
+        </AppLink>
         <div className="mt-3 space-y-1">
           {title && (
             <div className="flex justify-center">
@@ -58,7 +58,7 @@ export default async function ContentImage({
   } else if (tag === 'content_photo') {
     return (
       <div className={cn('bg-indigo-200 p-2 rounded-xs w-full max-w-xl')} id={base64src}>
-        <Link href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
+        <AppLink href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
             alt=""
@@ -67,7 +67,7 @@ export default async function ContentImage({
             blurData={blurData}
             className="w-full h-auto shadow-xl object-contain inner-image rounded-2xl"
           />
-        </Link>
+        </AppLink>
         <div className="mt-3 space-y-1">
           {caption && (
             <div className="flex justify-center">
