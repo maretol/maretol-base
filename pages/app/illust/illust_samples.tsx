@@ -1,17 +1,18 @@
 import { IllustSampleArticle } from '@/components/large/illust_article'
 import Pagenation from '@/components/middle/pagenation'
-import { getAteliers } from '@/lib/api/workers'
+import { atelierResult } from 'api-types'
 
-export default async function IllustSamples({
+export default function IllustSamples({
+  ateliers,
+  total,
   pageNumber,
-  offset,
   limit,
 }: {
+  ateliers: atelierResult[]
+  total: number
   pageNumber: number
-  offset: number
   limit: number
 }) {
-  const { ateliers, total } = await getAteliers(offset, limit)
   return (
     <div className="flex flex-col justify-center gap-24">
       {ateliers.map((atelier) => (

@@ -1,6 +1,6 @@
 import AppLink from '@/components/small/app_link'
 import { Button } from '../ui/button'
-import { getPageItems, getPageSlots, PageItem } from '@/lib/pagenation'
+import { getPageHref, getPageItems, getPageSlots, PageItem } from '@/lib/pagenation'
 import { cn } from '@/lib/utils'
 
 // 現在のページの前後に表示する件数。狭い画面は最大7枠、sm 以上は最大9枠に収める
@@ -14,13 +14,11 @@ export default function Pagenation({
   totalPage,
 }: {
   path: string
-  queryWithoutPage?: { [key: string]: string | string[] } | undefined
+  queryWithoutPage?: { [key: string]: string } | undefined
   currentPage: number
   totalPage: number
 }) {
-  if (queryWithoutPage === undefined) {
-    queryWithoutPage = {}
-  }
+  const query = queryWithoutPage ?? {}
 
   const renderItems = (items: PageItem[], className?: string) => (
     <div className={cn('flex gap-1 sm:gap-2', className)}>
@@ -32,16 +30,9 @@ export default function Pagenation({
             </span>
           )
         }
-        const newQuery = { ...queryWithoutPage, p: item.toString() }
         return (
           <Button key={item} variant={currentPage === item ? 'default' : 'secondary'} className="p-2 w-10" asChild>
-            <AppLink
-              href={{
-                pathname: path,
-                query: newQuery,
-              }}
-              aria-current={currentPage === item ? 'page' : undefined}
-            >
+            <AppLink href={getPageHref(path, query, item)} aria-current={currentPage === item ? 'page' : undefined}>
               {item}
             </AppLink>
           </Button>

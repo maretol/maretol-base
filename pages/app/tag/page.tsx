@@ -4,7 +4,9 @@ import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
-import { parsePaginationParams, parseTagParams } from '@/lib/searchParams'
+import { notFound, permanentRedirect } from 'next/navigation'
+import { isPageOutOfRange } from '@/lib/pagenation'
+import { getHrefWithoutPage, parsePaginationParams, parseTagParams } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -44,13 +46,24 @@ export default async function TagPage(props: {
   searchParams: Promise<{ [key: string]: string[] | string | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const { tagID } = parseTagParams(searchParams)
-  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+  const { tagID, tagName } = parseTagParams(searchParams)
+  const pagination = parsePaginationParams(searchParams)
+  if (pagination === null) {
+    permanentRedirect(getHrefWithoutPage('/tag', searchParams))
+  }
+  const { pageNumber, offset, limit } = pagination
 
-  const tags = await getTags()
+  // ページネーションのリンクに引き継ぐクエリ。tag_name は検索に使わないが、落とすと使っていないことが URL から分かってしまう
+  const queryWithoutPage = {
+    ...(tagID ? { tag_id: tagID } : {}),
+    ...(tagName ? { tag_name: tagName } : {}),
+  }
 
   const tagIDs = tagID ? [tagID] : []
-  const { contents, total } = await getCMSContentsWithTags(tagIDs, offset, limit)
+  const [tags, { contents, total }] = await Promise.all([getTags(), getCMSContentsWithTags(tagIDs, offset, limit)])
+  if (isPageOutOfRange(pageNumber, total, limit)) {
+    notFound()
+  }
 
   return (
     <div>
@@ -86,7 +99,7 @@ export default async function TagPage(props: {
             <div className="flex justify-center">
               <Pagenation
                 path="/tag"
-                queryWithoutPage={tagID ? { tag_id: tagID } : {}}
+                queryWithoutPage={queryWithoutPage}
                 currentPage={pageNumber}
                 totalPage={Math.ceil(total / limit)}
               />

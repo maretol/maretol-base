@@ -205,6 +205,8 @@ async function getCMSContentsOrigin(offset?: number, limit?: number) {
       ? () => createLocalFetcher('/api/cms/get_contents', { offset: offsetStr, limit: limitStr }, defaultResult)
       : () => env.CMS_RPC.fetchContents(offsetStr, limitStr),
     defaultResult,
+    // 範囲外ページによる空結果のキーがKVに溜まらないよう、結果ありのときだけ保存する
+    shouldCache: (res) => res.contents.length > 0,
   })
 }
 
@@ -364,8 +366,8 @@ async function getBandeDessineeOrigin(offset?: number, limit?: number, seriesID?
       ? () => createLocalFetcher('/api/cms/bande_dessinees', query, defaultResult)
       : () => env.CMS_RPC.fetchBandeDessinees(offsetStr, limitStr, seriesID ?? null),
     defaultResult,
-    // 存在しないシリーズIDや範囲外ページによる空結果のキーがKVに溜まらないよう、シリーズ指定時は結果ありのときだけ保存する
-    shouldCache: (res) => seriesID === undefined || res.bandeDessinees.length > 0,
+    // 存在しないシリーズIDや範囲外ページによる空結果のキーがKVに溜まらないよう、結果ありのときだけ保存する
+    shouldCache: (res) => res.bandeDessinees.length > 0,
   })
 }
 
@@ -404,6 +406,8 @@ async function getAteliersOrigin(offset?: number, limit?: number) {
       ? () => createLocalFetcher('/api/cms/ateliers', query, { ateliers: [], total: 0 })
       : () => env.CMS_RPC.fetchAteliers(offsetStr, limitStr),
     defaultResult: { ateliers: [], total: 0 },
+    // 範囲外ページによる空結果のキーがKVに溜まらないよう、結果ありのときだけ保存する
+    shouldCache: (res) => res.ateliers.length > 0,
   })
 }
 
