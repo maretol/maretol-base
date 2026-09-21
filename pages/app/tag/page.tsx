@@ -4,6 +4,8 @@ import { metadata } from '../layout'
 import { getHostname } from '@/lib/env'
 import TagSelector from '@/components/middle/tagsearch'
 import Pagenation from '@/components/middle/pagenation'
+import { notFound, redirect } from 'next/navigation'
+import { getPageHref, isPageOutOfRange } from '@/lib/pagenation'
 import { parsePaginationParams, parseTagParams } from '@/lib/searchParams'
 
 export async function generateMetadata(props: {
@@ -45,12 +47,19 @@ export default async function TagPage(props: {
 }) {
   const searchParams = await props.searchParams
   const { tagID } = parseTagParams(searchParams)
-  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+  const pagination = parsePaginationParams(searchParams)
+  if (pagination === null) {
+    redirect(getPageHref('/tag', tagID ? { tag_id: tagID } : {}, 1))
+  }
+  const { pageNumber, offset, limit } = pagination
 
   const tags = await getTags()
 
   const tagIDs = tagID ? [tagID] : []
   const { contents, total } = await getCMSContentsWithTags(tagIDs, offset, limit)
+  if (isPageOutOfRange(pageNumber, total, limit)) {
+    notFound()
+  }
 
   return (
     <div>

@@ -38,5 +38,25 @@ function getPageItems(currentPage: number, totalPage: number, siblingCount: numb
   return items
 }
 
-export { getPageItems, getPageSlots }
+/**
+ * 一覧ページの URL を返す。1ページ目は p を省略する（issue #1283）
+ */
+function getPageHref(path: string, queryWithoutPage: { [key: string]: string }, page: number): string {
+  const params = new URLSearchParams(queryWithoutPage)
+  if (page > 1) {
+    params.set('p', page.toString())
+  }
+  const query = params.toString()
+  return query ? `${path}?${query}` : path
+}
+
+/**
+ * 総ページ数を超えるページ番号かどうか（issue #1283）
+ * 0件のときも1ページ目は範囲内とし、空の一覧として表示する
+ */
+function isPageOutOfRange(pageNumber: number, total: number, limit: number): boolean {
+  return pageNumber > Math.max(Math.ceil(total / limit), 1)
+}
+
+export { getPageItems, getPageSlots, getPageHref, isPageOutOfRange }
 export type { PageItem }

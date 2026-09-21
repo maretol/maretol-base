@@ -3,12 +3,18 @@ import { pageLimit } from './static'
 // マンガのシリーズIDとして許容する形式（admin-pages のID規則と同じ）
 const SERIES_ID_PATTERN = /^[a-zA-Z0-9_-]+$/
 
+// ページ番号として許容する形式（admin-pages/lib/pagination.ts と同じ）。桁あふれを避けるため9桁までに制限する
+const PAGE_PATTERN = /^[1-9]\d{0,8}$/
+
 /**
- * searchParamsからページネーション情報を取得
+ * searchParamsからページネーション情報を取得（issue #1283）
+ * p が未指定なら1ページ目。次の場合は null を返すので、呼び出し側で p なしの一覧へ redirect する
+ * - 正の整数以外（小数、0、負数、`1e1` のような別表記、空文字、複数指定など）
+ * - `p=1`（1ページ目は p を省略した URL に統一する）
  */
 export function parsePaginationParams(searchParams: { [key: string]: string | string[] | undefined }) {
-  const page = searchParams['p']
-  const pageNumber = isValidPage(page) ? Number(page) : 1
+  const pageNumber = parsePageParam(searchParams['p'])
+  if (pageNumber === null) return null
   const offset = (pageNumber - 1) * pageLimit
   const limit = pageLimit
 
@@ -50,10 +56,10 @@ function firstString(value: string | string[] | undefined): string | undefined {
 }
 
 /**
- * ページ番号として有効かチェック
+ * p の値をページ番号に変換する。未指定は1、受け付けない値は null
  */
-function isValidPage(page: string | string[] | undefined): boolean {
-  if (page === undefined) return false
-  if (typeof page === 'string') return !isNaN(Number(page))
-  return false
+function parsePageParam(page: string | string[] | undefined): number | null {
+  if (page === undefined) return 1
+  if (typeof page !== 'string' || !PAGE_PATTERN.test(page) || page === '1') return null
+  return Number(page)
 }

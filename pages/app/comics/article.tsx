@@ -1,23 +1,24 @@
 import { ComicOverview } from '@/components/large/comics'
 import Pagenation from '@/components/middle/pagenation'
 import { Button } from '@/components/ui/button'
-import { getBandeDessinee } from '@/lib/api/workers'
 import { getFirstPage, getSeriesName } from '@/lib/comic_util'
+import { bandeDessineeResult } from 'api-types'
 import { BookImageIcon } from 'lucide-react'
 import Link from 'next/link'
 
-export default async function ComicsPageArticles({
+export default function ComicsPageArticles({
+  bandeDessinees,
+  total,
   pageNumber,
-  offset,
   limit,
   seriesID,
 }: {
+  bandeDessinees: bandeDessineeResult[]
+  total: number
   pageNumber: number
-  offset: number
   limit: number
   seriesID?: string
 }) {
-  const { bandeDessinees, total } = await getBandeDessinee(offset, limit, seriesID)
   const isSeriesFiltered = seriesID !== undefined
   // シリーズ指定時の見出し用。結果が空のときは名前が引けないのでIDで代替する
   const seriesName = getSeriesName(bandeDessinees) ?? seriesID

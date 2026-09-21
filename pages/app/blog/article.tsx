@@ -1,17 +1,18 @@
 import { Article } from '@/components/large/article'
 import Pagenation from '@/components/middle/pagenation'
-import { getCMSContents } from '@/lib/api/workers'
+import { contentsAPIResult } from 'api-types'
 
-export default async function BlogPageArticles({
+export default function BlogPageArticles({
+  contents,
+  total,
   pageNumber,
-  offset,
   limit,
 }: {
+  contents: contentsAPIResult[]
+  total: number
   pageNumber: number
-  offset: number
   limit: number
 }) {
-  const { contents, total } = await getCMSContents(offset, limit)
   return (
     <div className="flex flex-col justify-center gap-10">
       {contents.map((content) => (

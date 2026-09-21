@@ -1,10 +1,10 @@
 import BaseLayout from '@/components/large/base_layout'
-import { Suspense } from 'react'
-import LoadingComicsPage from './loading_article'
+import { notFound, redirect } from 'next/navigation'
 import ComicsPageArticles from './article'
 import { parsePaginationParams, parseSeriesParams } from '@/lib/searchParams'
 import { getBandeDessinee } from '@/lib/api/workers'
 import { getSeriesName } from '@/lib/comic_util'
+import { getPageHref, isPageOutOfRange } from '@/lib/pagenation'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,12 @@ export async function generateMetadata(props: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
   const searchParams = await props.searchParams
-  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+  const pagination = parsePaginationParams(searchParams)
+  // p が不正なときはページ本体が redirect する
+  if (pagination === null) {
+    return {}
+  }
+  const { pageNumber, offset, limit } = pagination
   const { seriesID } = parseSeriesParams(searchParams)
 
   // シリーズ指定時はシリーズ名をタイトルに含める。取得はReact cacheでページ本体と共有される
@@ -35,13 +40,27 @@ export default async function ComicsPage(props: {
 }) {
   const searchParams = await props.searchParams
   const { seriesID } = parseSeriesParams(searchParams)
-  const { pageNumber, offset, limit } = parsePaginationParams(searchParams)
+  const pagination = parsePaginationParams(searchParams)
+  if (pagination === null) {
+    redirect(getPageHref('/comics', seriesID !== undefined ? { series: seriesID } : {}, 1))
+  }
+  const { pageNumber, offset, limit } = pagination
+
+  // 範囲外のページを HTTP ステータスも含めて 404 で返すため、Suspense を挟まずに取得する（issue #1283）
+  const { bandeDessinees, total } = await getBandeDessinee(offset, limit, seriesID)
+  if (isPageOutOfRange(pageNumber, total, limit)) {
+    notFound()
+  }
 
   return (
     <BaseLayout>
-      <Suspense fallback={<LoadingComicsPage />}>
-        <ComicsPageArticles pageNumber={pageNumber} offset={offset} limit={limit} seriesID={seriesID} />
-      </Suspense>
+      <ComicsPageArticles
+        bandeDessinees={bandeDessinees}
+        total={total}
+        pageNumber={pageNumber}
+        limit={limit}
+        seriesID={seriesID}
+      />
     </BaseLayout>
   )
 }
