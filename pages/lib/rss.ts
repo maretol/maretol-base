@@ -15,13 +15,29 @@ export function escapeCdata(text: string) {
   return text.replace(/]]>/g, ']]]]><![CDATA[>')
 }
 
+// 終了タグを持たない要素
+const voidElements = [
+  'area',
+  'base',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'source',
+  'track',
+  'wbr',
+]
+
 // サイト側では p_option ごとに専用コンポーネント(リンクカード・埋め込み等)で描画しているが、
-// フィードリーダー向けには素の HTML に落とす。埋め込み系は元 URL へのリンクにする
-export function convertParsedContentToHtml(contents: ParsedContent[]) {
-  return contents
-    .map((content) => convertBlockToHtml(content))
-    .filter((html) => html !== null)
-    .join('\n')
+// フィードリーダー向けには素の HTML に落とす。埋め込み系は元 URL へのリンクにする。
+// サイト上でも描画されないブロック(null)は数に入れず、表示されるブロックの先頭 limit 件を返す
+export function convertParsedContentToHtml(contents: ParsedContent[], limit?: number) {
+  const blocks = contents.map((content) => convertBlockToHtml(content)).filter((html) => html !== null)
+  return (limit === undefined ? blocks : blocks.slice(0, limit)).join('\n')
 }
 
 function convertBlockToHtml(content: ParsedContent): string | null {
@@ -34,13 +50,15 @@ function convertBlockToHtml(content: ParsedContent): string | null {
     // 見出しは目次用の <span class="index"> を含むので text から組み立てる
     return `<${tag}>${escapeXml(content.text)}</${tag}>`
   }
-  if (tag === 'hr') {
-    return '<hr>'
+  if (voidElements.includes(tag)) {
+    return `<${tag}>`
   }
-  if (['ul', 'ol', 'blockquote', 'table', 'div', 'pre'].includes(tag)) {
-    return `<${tag}>${content.inner_html ?? ''}</${tag}>`
-  }
-  return `<${tag}>${content.inner_html ?? escapeXml(content.text)}</${tag}>`
+  return `<${tag}>${content.inner_html || escapeXml(content.text)}</${tag}>`
+}
+
+// サイト上でしか描画できないコンテンツの代わりに置くプレースホルダー
+function siteOnlyPlaceholder(label: string) {
+  return `<p>(${escapeXml(label)}: サイトでのみ表示)</p>`
 }
 
 function convertParagraphToHtml(content: ParsedContent): string | null {
@@ -51,10 +69,13 @@ function convertParagraphToHtml(content: ParsedContent): string | null {
     case 'normal':
       return `<p>${content.inner_html || escapeXml(content.text)}</p>`
     case 'image':
-    case 'photo':
       return convertImageToHtml(content.text, subTexts.title, subTexts.caption)
+    case 'photo':
+      // サイト側(image.tsx の content_photo)は caption のみ表示し、title は出さない
+      return convertImageToHtml(content.text, undefined, subTexts.caption)
     case 'cite_image': {
-      // 引用画像は外部ホストの画像を直接埋め込まず、引用元へのリンクにする
+      // サイト側(renderCiteImage)と同じく url と source が揃っていなければ非表示にする。
+      // 引用画像は外部ホストの画像を直接埋め込まず、引用元(source)へのリンクにする
       if (!subTexts.url || !subTexts.source) return null
       return convertLinkToHtml(subTexts.source, subTexts.source_title || subTexts.source)
     }
@@ -74,15 +95,18 @@ function convertParagraphToHtml(content: ParsedContent): string | null {
     case 'empty':
     case 'br':
       return '<br>'
-    // 目次・ブロック制御・Google Maps 埋め込みはフィードでは表現しない
+    // 目次・Google Maps 埋め込みはフィードでは表現できないので、存在が分かるプレースホルダーにする
     case 'table_of_contents':
+      return siteOnlyPlaceholder('目次')
+    case 'gmaps':
+      return siteOnlyPlaceholder('Google マップ')
+    // ブロック制御はサイト側でも描画されない
     case 'block_start':
     case 'block_end':
-    case 'gmaps':
       return null
     default:
-      // 未知のコマンド(/xxx)は本文として出さない
-      return null
+      // 未知のコマンド(/xxx)はサイト側(renderParagraph)と同じく通常段落として出す
+      return `<p>${content.inner_html || escapeXml(content.text)}</p>`
   }
 }
 

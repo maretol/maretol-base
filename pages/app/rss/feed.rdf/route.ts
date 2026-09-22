@@ -7,6 +7,11 @@ export const dynamic = 'force-dynamic'
 // description に含める本文ブロック数(記事冒頭のみを載せる)
 const descriptionBlockCount = 10
 
+// RSS 2.0 の pubDate / lastBuildDate は RFC 822 形式
+function formatRssDate(date: Date) {
+  return date.toUTCString()
+}
+
 export async function GET() {
   const rdfTemplate = `<?xml version="1.0" encoding="UTF-8"?>`
   const host = getHostname()
@@ -16,7 +21,7 @@ export async function GET() {
   const { contents: articles } = await getCMSContents(offset, limit)
 
   const items = articles.map((article) => {
-    const description = convertParsedContentToHtml(article.parsed_content.slice(0, descriptionBlockCount))
+    const description = convertParsedContentToHtml(article.parsed_content, descriptionBlockCount)
     return convertToRssItem(article.title, article.id, article.publishedAt, description)
   })
 
@@ -30,10 +35,10 @@ export async function GET() {
       <title>Maretol Base</title>
       <link>${escapeXml(host)}</link>
       <description>maretolの個人サイトです</description>
-      <lastBuildDate>${lastBuildDate.toISOString()}</lastBuildDate>
+      <lastBuildDate>${formatRssDate(lastBuildDate)}</lastBuildDate>
       <copyright>© ${lastBuildDate.getFullYear()} Maretol</copyright>
       <generator>Maretol Base</generator>
-      <pubDate>${new Date().toISOString()}</pubDate>
+      <pubDate>${formatRssDate(new Date())}</pubDate>
       <ttl>60</ttl>
       ${items.join('')}
     </channel>
@@ -55,6 +60,6 @@ function convertToRssItem(title: string, id: string, publishedAt: string, descri
         <title>${escapeXml(title)}</title>
         <link>${escapeXml(`${host}/blog/${id}`)}</link>
         <description><![CDATA[${escapeCdata(descriptionHtml)}]]></description>
-        <pubDate>${new Date(publishedAt).toISOString()}</pubDate>
+        <pubDate>${formatRssDate(new Date(publishedAt))}</pubDate>
       </item>`
 }
