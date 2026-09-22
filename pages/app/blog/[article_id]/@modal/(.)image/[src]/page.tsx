@@ -20,20 +20,23 @@ export default async function ImageModal(props: {
   }
 
   // src はパスから来るので、記事の画像（通常・写真・引用）として実在する URL のときだけ扱う
-  // これがないと任意の URL を取得して KV に保存するプロキシ、または画像変換の踏み台になる（issue #1296）
+  // これがないと任意の URL を取得して KV に保存するプロキシになる（issue #1296）
   const content = await getCMSContent(articleID, draftKey)
-  if (!content?.id || !isImageOfArticle(content.parsed_content, imageSrc)) {
+  const image = content?.id ? findArticleImage(content.parsed_content, imageSrc) : null
+  if (image === null) {
     return null
   }
 
-  // 外部画像（自サイトのドメイン以外）の場合はサーバー側で取得した data URL を渡す
+  // 引用画像は外部サイトの画像なので、サーバー側で取得した data URL をモーダルに渡す
+  // 通常画像・写真は自サイト（R2）の画像なので、クライアント側で画像変換を通して表示する
+  const isExternalImage = image.p_option === 'cite_image'
   let imageData: string | null = null
-  if (isExternalImageURL(imageSrc)) {
+  if (isExternalImage) {
     const result = await fetchCiteImage(imageSrc)
     imageData = result.success ? result.data : null
   }
 
-  return <Modal imageSrc={imageSrc} imageData={imageData} />
+  return <Modal imageSrc={imageSrc} imageData={imageData} isExternalImage={isExternalImage} />
 }
 
 // image.tsx / cite_image.tsx が btoa で作る base64url（パディングなし）を元の URL に戻す
@@ -53,9 +56,10 @@ function decodeImageSrc(src: string): string | null {
   return Buffer.from(base64, 'base64').toString('latin1')
 }
 
-// 記事内で画像として使われている URL か。通常画像・写真は text、引用画像は sub_texts.url に入っている
-function isImageOfArticle(parsedContent: ParsedContent[], url: string): boolean {
-  return parsedContent.some((c) => {
+// 記事内で画像として使われている URL に対応する parsed_content の項目を返す
+// 通常画像・写真は text、引用画像は sub_texts.url に URL が入っている
+function findArticleImage(parsedContent: ParsedContent[], url: string): ParsedContent | null {
+  const image = parsedContent.find((c) => {
     if (c.p_option === 'image' || c.p_option === 'photo') {
       return c.text === url
     }
@@ -64,19 +68,5 @@ function isImageOfArticle(parsedContent: ParsedContent[], url: string): boolean 
     }
     return false
   })
-}
-
-// 自サイト（maretol.xyz とそのサブドメイン）以外を外部とみなす。部分文字列ではなくホスト名で判定する
-function isExternalImageURL(src: string): boolean {
-  let url: URL
-  try {
-    url = new URL(src)
-  } catch {
-    return false
-  }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
-    return false
-  }
-  const host = url.hostname
-  return host !== 'maretol.xyz' && !host.endsWith('.maretol.xyz')
+  return image ?? null
 }

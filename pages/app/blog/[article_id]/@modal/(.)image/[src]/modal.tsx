@@ -5,8 +5,19 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import Image from 'next/image'
+import { getNoImageURL } from '@/lib/image'
 
-export default function Modal({ imageSrc, imageData }: { imageSrc: string; imageData?: string | null }) {
+// isExternalImage: 引用画像（外部サイトの画像）。サーバー側で取得した imageData（data URL）を表示する
+// 自サイトの画像はクライアント側で画像変換を通して表示する
+export default function Modal({
+  imageSrc,
+  imageData,
+  isExternalImage,
+}: {
+  imageSrc: string
+  imageData?: string | null
+  isExternalImage: boolean
+}) {
   const router = useRouter()
   const [open, setOpen] = useState(true)
   const handleOpenChange = useCallback(
@@ -16,16 +27,12 @@ export default function Modal({ imageSrc, imageData }: { imageSrc: string; image
       }
       setOpen(open)
     },
-    [router]
+    [router],
   )
 
   const handleClose = useCallback(() => {
     router.back()
   }, [router])
-
-  // 外部画像（http/https始まりかつ自サイトでない）かどうか判定
-  const isExternalImage =
-    imageSrc.startsWith('http') && !imageSrc.includes('maretol.xyz') && !imageSrc.includes('r2.maretol.xyz')
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange} modal>
@@ -40,9 +47,10 @@ export default function Modal({ imageSrc, imageData }: { imageSrc: string; image
             }
           }}
         >
-          {isExternalImage && imageData ? (
+          {isExternalImage ? (
             <Image
-              src={imageData}
+              // 取得に失敗していたらフォールバック画像を出す
+              src={imageData || getNoImageURL()}
               alt=""
               width={3000}
               height={3000}
