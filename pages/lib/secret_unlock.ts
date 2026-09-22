@@ -7,6 +7,7 @@
 import { cookies } from 'next/headers'
 import { getSecretArticleCookieKey } from './env'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { bufferToHex } from './hex'
 
 const COOKIE_PREFIX = 'secret_unlock_'
 const MAX_AGE = 60 * 60 * 24 * 30 // 30日
@@ -22,12 +23,6 @@ async function getSigningKey(): Promise<string> {
     throw new Error('SECRET_ARTICLE_COOKIE_KEY is not set')
   }
   return key
-}
-
-function bufferToHex(buf: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buf))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('')
 }
 
 async function sign(articleID: string, secretCode: string): Promise<string> {

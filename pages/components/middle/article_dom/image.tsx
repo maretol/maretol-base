@@ -8,16 +8,20 @@ export default async function ContentImage({
   src,
   subText,
   articleID,
+  draftKey,
 }: {
   tag: string
   src: string
   subText: { [key: string]: string } | null
   articleID: string
+  draftKey?: string
 }) {
   // originのsrcをbase64URLencodingに変換する
   const base64src = btoa(src).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
   const caption = subText?.caption
   const title = subText?.title
+  // モーダル側も記事を引いて URL を照合するので、下書きプレビューでは draftKey を引き継ぐ
+  const modalHref = getImageModalHref(articleID, base64src, draftKey)
 
   const blurImage = await fetchBlurredImageAndMetadata(src)
   const blurData = blurImage?.imageBase64
@@ -28,7 +32,7 @@ export default async function ContentImage({
     return (
       // ここに画像のモーダルを実装する
       <div className="w-fit" id={base64src}>
-        <AppLink href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
+        <AppLink href={modalHref} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
             alt=""
@@ -58,7 +62,7 @@ export default async function ContentImage({
   } else if (tag === 'content_photo') {
     return (
       <div className={cn('bg-indigo-200 p-2 rounded-xs w-full max-w-xl')} id={base64src}>
-        <AppLink href={`/blog/${articleID}/image/${base64src}`} passHref className="x-blog-image" scroll={false}>
+        <AppLink href={modalHref} passHref className="x-blog-image" scroll={false}>
           <ClientImage2
             src={src}
             alt=""
@@ -81,4 +85,10 @@ export default async function ContentImage({
     // 本来ないはずだけどなにか来たとき
     return <p>{src}</p>
   }
+}
+
+// 画像モーダルのリンク。下書きプレビュー中は draftKey を付けて、モーダル側が下書きの記事を引けるようにする
+export function getImageModalHref(articleID: string, base64src: string, draftKey?: string): string {
+  const path = `/blog/${articleID}/image/${base64src}`
+  return draftKey ? `${path}?draftKey=${encodeURIComponent(draftKey)}` : path
 }

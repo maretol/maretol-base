@@ -19,17 +19,16 @@ export default async function ImageModal(props: {
     return null
   }
 
-  // 外部画像（http/https始まりかつ自サイトでない）の場合はキャッシュからデータを取得
-  const isExternalImage =
-    imageSrc.startsWith('http') && !imageSrc.includes('maretol.xyz') && !imageSrc.includes('r2.maretol.xyz')
+  // src はパスから来るので、記事の画像（通常・写真・引用）として実在する URL のときだけ扱う
+  // これがないと任意の URL を取得して KV に保存するプロキシ、または画像変換の踏み台になる（issue #1296）
+  const content = await getCMSContent(articleID, draftKey)
+  if (!content?.id || !isImageOfArticle(content.parsed_content, imageSrc)) {
+    return null
+  }
+
+  // 外部画像（自サイトのドメイン以外）の場合はサーバー側で取得した data URL を渡す
   let imageData: string | null = null
-  if (isExternalImage) {
-    // src はパスから来るので、記事に /cite_image として実在する URL のときだけサーバー側で取得する
-    // これがないと任意の URL を取得して KV に保存するプロキシになる（issue #1296）
-    const content = await getCMSContent(articleID, draftKey)
-    if (!content?.id || !isCiteImageOfArticle(content.parsed_content, imageSrc)) {
-      return null
-    }
+  if (isExternalImageURL(imageSrc)) {
     const result = await fetchCiteImage(imageSrc)
     imageData = result.success ? result.data : null
   }
@@ -38,6 +37,7 @@ export default async function ImageModal(props: {
 }
 
 // image.tsx / cite_image.tsx が btoa で作る base64url（パディングなし）を元の URL に戻す
+// btoa は Latin-1 のバイト列を出すので、その逆変換も latin1 でデコードする
 function decodeImageSrc(src: string): string | null {
   // Next が params をデコード済みなので通常はそのままだが、`%` を含む不正な値で URIError にならないようにする
   let raw = src
@@ -50,9 +50,33 @@ function decodeImageSrc(src: string): string | null {
     return null
   }
   const base64 = raw.replace(/-/g, '+').replace(/_/g, '/')
-  return Buffer.from(base64, 'base64').toString('utf-8')
+  return Buffer.from(base64, 'base64').toString('latin1')
 }
 
-function isCiteImageOfArticle(parsedContent: ParsedContent[], url: string) {
-  return parsedContent.some((c) => c.p_option === 'cite_image' && c.sub_texts?.url === url)
+// 記事内で画像として使われている URL か。通常画像・写真は text、引用画像は sub_texts.url に入っている
+function isImageOfArticle(parsedContent: ParsedContent[], url: string): boolean {
+  return parsedContent.some((c) => {
+    if (c.p_option === 'image' || c.p_option === 'photo') {
+      return c.text === url
+    }
+    if (c.p_option === 'cite_image') {
+      return c.sub_texts?.url === url
+    }
+    return false
+  })
+}
+
+// 自サイト（maretol.xyz とそのサブドメイン）以外を外部とみなす。部分文字列ではなくホスト名で判定する
+function isExternalImageURL(src: string): boolean {
+  let url: URL
+  try {
+    url = new URL(src)
+  } catch {
+    return false
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    return false
+  }
+  const host = url.hostname
+  return host !== 'maretol.xyz' && !host.endsWith('.maretol.xyz')
 }
