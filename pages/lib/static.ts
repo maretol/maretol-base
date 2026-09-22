@@ -3,8 +3,15 @@
 // 1ページあたりの表示数
 export const pageLimit = 10
 
-// iframe内部のsandbox属性のデフォルト値
-// allow-scripts, allow-same-origin の併用は外部コンテンツのため併用しても問題ない
+// 外部コンテンツ(YouTube / Google Maps / Tweet など)を src で読み込む iframe の sandbox 属性
+// - allow-scripts: 埋め込みプレイヤー等が JS で動くため必須
+// - allow-same-origin: 埋め込み先が自身のオリジン(youtube.com 等)で動くために必要。
+//   これがないと opaque origin になり、埋め込み側の XHR が CORS で弾かれたり storage が使えず描画が壊れる
+//   (YouTube: 真っ黒のまま、Tweet: 空白になることを確認済み)
+// - allow-popups / allow-popups-to-escape-sandbox: 「YouTube で見る」「地図を開く」などの別タブ遷移を
+//   sandbox を引き継がずに開くために必要
+// 注意: この値は src が別オリジンの iframe 専用。srcDoc の iframe は親と同一オリジンになるため、
+// allow-scripts と allow-same-origin を併用すると sandbox が実質無効になる。srcDoc では使わないこと
 export const outerContentIframeSandbox = 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin'
 
 // 通常ブログ等での画像編集オプション

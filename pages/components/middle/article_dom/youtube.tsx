@@ -11,9 +11,9 @@ export default function YouTubeArea({ videoURL }: { videoURL: string }) {
     <div className="py-6 mx-3">
       <iframe
         src={`https://www.youtube.com/embed/${videoID}`}
-        sandbox={outerContentIframeSandbox + ' allow-presentation'} // allow-presentation を追加して全画面表示を許可
+        sandbox={outerContentIframeSandbox}
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
+        allowFullScreen // 全画面表示は sandbox ではなく allowFullScreen で許可する
         width={isShort ? 315 : 560}
         height={isShort ? 560 : 315}
       ></iframe>

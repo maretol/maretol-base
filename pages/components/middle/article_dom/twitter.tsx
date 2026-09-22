@@ -1,53 +1,43 @@
 import { outerContentIframeSandbox } from '@/lib/static'
-import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { cache } from 'react'
-import { isKVCacheEnabled } from '@/lib/env'
 
-export default async function TwitterArea({ twitterURL }: { twitterURL: string }) {
-  const sandbox = outerContentIframeSandbox + ' allow-presentation'
-  try {
-    const twitterPublishJSON = await fetchTweet(twitterURL)
+// Tweet の埋め込みは platform.twitter.com の埋め込みページを src で直接読み込む
+// oEmbed の HTML を srcDoc で流し込む形だと iframe が自サイトと同一オリジンになり、
+// 外部スクリプト(widgets.js)に allow-same-origin で親の DOM や storage へのアクセスを許してしまう
+// 埋め込みページは自身のオリジン(platform.twitter.com)から cdn.syndication.twimg.com を
+// XHR で叩くため、opaque origin では CORS で弾かれる。よって src 形式 + allow-same-origin が必要
+const tweetEmbedBaseURL = 'https://platform.twitter.com/embed/Tweet.html'
 
-    if (!twitterPublishJSON || !twitterPublishJSON.html || !twitterPublishJSON.width) {
-      return <p>Error: fetching tweet is error.</p>
-    }
-
-    const twitterHTML = twitterPublishJSON.html
-    const width = twitterPublishJSON.width
-
-    return <iframe srcDoc={twitterHTML} sandbox={sandbox} allowFullScreen width={width} height={400}></iframe>
-  } catch (error) {
-    console.error('[components/middle/article_dom/twitter.tsx] Error fetching tweet:', error)
-    return <p>Error: fetching tweet is error.</p>
+export default function TwitterArea({ twitterURL }: { twitterURL: string }) {
+  const tweetID = getTweetID(twitterURL)
+  if (!tweetID) {
+    return <p>Twitterの埋め込みがありましたがURLが不正なようです</p>
   }
+
+  const embedURL = new URL(tweetEmbedBaseURL)
+  embedURL.searchParams.set('id', tweetID)
+  embedURL.searchParams.set('dnt', 'true') // Do Not Track
+  embedURL.searchParams.set('lang', 'ja')
+
+  // allowFullScreen は Tweet 内の動画を全画面再生するために必要
+  return (
+    <iframe
+      src={embedURL.toString()}
+      sandbox={outerContentIframeSandbox}
+      allowFullScreen
+      width={550}
+      height={400}
+    ></iframe>
+  )
 }
 
-const fetchTweet = cache(fetchTweetOrigin)
-
-async function fetchTweetOrigin(tweetURL: string) {
-  const { env } = await getCloudflareContext({ async: true })
-  const tweetKey = 'tweet_' + tweetURL
-  if (isKVCacheEnabled()) {
-    const cache = await env.OGP_FETCHER_CACHE.get(tweetKey)
-    if (cache) {
-      const tweetData = (await JSON.parse(cache)) as { html: string; width: number }
-      return tweetData
-    }
+// https://twitter.com/{user}/status/{id} や https://x.com/{user}/status/{id} 形式のURLから Tweet ID を取り出す
+function getTweetID(twitterURL: string): string | null {
+  let url: URL
+  try {
+    url = new URL(twitterURL)
+  } catch {
+    return null
   }
-
-  const tweetPublishURL = `https://publish.twitter.com/oembed?url=${tweetURL}`
-  const tweetPublish = await fetch(tweetPublishURL)
-  if (!tweetPublish.ok) {
-    throw new Error(`Failed to fetch Twitter embed: ${tweetPublish.status} ${tweetPublish.statusText}`)
-  }
-  const tweetPublishJSON = await tweetPublish.json<{ html: string; width: number }>()
-  if (isKVCacheEnabled()) {
-    try {
-      await env.OGP_FETCHER_CACHE.put(tweetKey, JSON.stringify(tweetPublishJSON), { expirationTtl: 60 * 60 * 24 }) // Cache for 24 hours
-    } catch (e) {
-      // キャッシュ保存に失敗した場合でもAPIの結果は返すためのラッパー
-      console.error(`[components/middle/article_dom/twitter.tsx] Cache put error for key ${tweetKey}:`, e)
-    }
-  }
-  return tweetPublishJSON
+  const matched = url.pathname.match(/^\/(?:[A-Za-z0-9_]+|i\/web)\/status(?:es)?\/(\d+)/)
+  return matched ? matched[1] : null
 }
