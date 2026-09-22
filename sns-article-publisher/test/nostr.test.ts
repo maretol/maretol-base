@@ -10,10 +10,12 @@ function fakePool(promises: Promise<string>[]) {
   return { publish: vi.fn(() => promises) }
 }
 
-// setTimeout 経由で解決/拒否させ、他リレーの結果待ちが打ち切られないことを検証する
-const later = <T>(fn: () => T, ms: number) =>
-  new Promise<T>((resolve, reject) =>
+// setTimeout 経由で解決/拒否させ、確定したかどうかをフラグで観測できるようにする
+function later<T>(fn: () => T, ms: number) {
+  const state = { settled: false }
+  const promise = new Promise<T>((resolve, reject) =>
     setTimeout(() => {
+      state.settled = true
       try {
         resolve(fn())
       } catch (e) {
@@ -21,32 +23,41 @@ const later = <T>(fn: () => T, ms: number) =>
       }
     }, ms)
   )
+  return { promise, state }
+}
 
 describe('publishToRelays', () => {
-  test('1 リレーが先に失敗しても残りのリレーの結果を待って成功扱いにする', async () => {
-    const promises = [
-      later(() => {
-        throw new Error('connection refused')
-      }, 5),
-      later(() => '', 30),
-      later(() => '', 50),
-    ]
-    const pool = fakePool(promises)
+  test('1 リレーが先に失敗しても残りのリレーの確定を待ってから成功扱いで戻る', async () => {
+    const a = later(() => {
+      throw new Error('connection refused')
+    }, 5)
+    const b = later(() => '', 30)
+    const c = later(() => '', 50)
+    const pool = fakePool([a.promise, b.promise, c.promise])
 
     await expect(publishToRelays(pool, relays, event)).resolves.toBeUndefined()
-    // allSettled なので全 Promise が確定してから戻る
-    await expect(promises[1]).resolves.toBe('')
-    await expect(promises[2]).resolves.toBe('')
+    // Promise.all だと a の reject 時点で戻ってしまい b, c は未確定のままになる
+    expect(b.state.settled).toBe(true)
+    expect(c.state.settled).toBe(true)
     expect(pool.publish).toHaveBeenCalledWith(relays, event)
   })
 
-  test('全リレーが失敗したら throw する', async () => {
+  test('全リレーが失敗したらリレーごとの理由を含めて throw する', async () => {
     const pool = fakePool([
       Promise.reject(new Error('publish timed out')),
       Promise.reject(new Error('connection refused')),
       Promise.reject('blocked: rate limited'),
     ])
 
-    await expect(publishToRelays(pool, relays, event)).rejects.toThrow('Failed to publish to all 3 nostr relays')
+    await expect(publishToRelays(pool, relays, event)).rejects.toThrow(
+      'Failed to publish to all 3 nostr relays (wss://a.example: publish timed out, wss://b.example: connection refused, wss://c.example: blocked: rate limited)'
+    )
+  })
+
+  test('リレーが空なら publish せずに throw する', async () => {
+    const pool = fakePool([])
+
+    await expect(publishToRelays(pool, [], event)).rejects.toThrow('No nostr relays configured')
+    expect(pool.publish).not.toHaveBeenCalled()
   })
 })
