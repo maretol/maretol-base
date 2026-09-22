@@ -3,6 +3,7 @@ import fetchCiteImage from '@/lib/api/cite_image'
 import { getNoImageURL } from '@/lib/image'
 import Link from 'next/link'
 import AppLink from '@/components/small/app_link'
+import { getImageModalHref } from './image'
 
 interface CiteImageProps {
   url: string
@@ -10,9 +11,10 @@ interface CiteImageProps {
   caption?: string
   sourceTitle?: string
   articleID: string
+  draftKey?: string
 }
 
-export default async function CiteImage({ url, source, caption, sourceTitle, articleID }: CiteImageProps) {
+export default async function CiteImage({ url, source, caption, sourceTitle, articleID, draftKey }: CiteImageProps) {
   const result = await fetchCiteImage(url)
 
   const imageSrc = result.success && result.data ? result.data : getNoImageURL()
@@ -37,7 +39,7 @@ export default async function CiteImage({ url, source, caption, sourceTitle, art
   return (
     <div className="bg-gray-200 p-3 rounded-lg border-l-8 border-l-gray-500 w-fit max-w-xl" id={base64src}>
       {isDataUrl ? (
-        <AppLink href={`/blog/${articleID}/image/${base64src}`} className="x-blog-image" scroll={false}>
+        <AppLink href={getImageModalHref(articleID, base64src, draftKey)} className="x-blog-image" scroll={false}>
           {imageElement}
         </AppLink>
       ) : (

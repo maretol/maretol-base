@@ -69,6 +69,7 @@ function renderImage(content: ParsedContent, context: RenderContext): JSX.Elemen
         src={content.text}
         subText={content.sub_texts ?? null}
         articleID={context.articleID}
+        draftKey={context.draftKey}
       />
     </div>
   )
@@ -82,6 +83,7 @@ function renderPhoto(content: ParsedContent, context: RenderContext): JSX.Elemen
         src={content.text}
         subText={content.sub_texts ?? null}
         articleID={context.articleID}
+        draftKey={context.draftKey}
       />
     </div>
   )
@@ -198,7 +200,14 @@ function renderCiteImage(content: ParsedContent, context: RenderContext): JSX.El
 
   return (
     <div key={context.index} className="py-4">
-      <CiteImage url={url} source={source} caption={caption} sourceTitle={sourceTitle} articleID={context.articleID} />
+      <CiteImage
+        url={url}
+        source={source}
+        caption={caption}
+        sourceTitle={sourceTitle}
+        articleID={context.articleID}
+        draftKey={context.draftKey}
+      />
     </div>
   )
 }
