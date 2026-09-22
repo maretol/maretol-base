@@ -1,7 +1,11 @@
 import { getCMSContents } from '@/lib/api/workers'
 import { getHostname } from '@/lib/env'
+import { convertParsedContentToHtml, escapeCdata, escapeXml } from '@/lib/rss'
 
 export const dynamic = 'force-dynamic'
+
+// description に含める本文ブロック数(記事冒頭のみを載せる)
+const descriptionBlockCount = 10
 
 export async function GET() {
   const rdfTemplate = `<?xml version="1.0" encoding="UTF-8"?>`
@@ -12,12 +16,8 @@ export async function GET() {
   const { contents: articles } = await getCMSContents(offset, limit)
 
   const items = articles.map((article) => {
-    const content = article.parsed_content
-    const contentSentence = content
-      .slice(0, 10)
-      .map((c) => c.text)
-      .join(' ')
-    return convertToRssItem(article.title, article.id, article.publishedAt, contentSentence)
+    const description = convertParsedContentToHtml(article.parsed_content.slice(0, descriptionBlockCount))
+    return convertToRssItem(article.title, article.id, article.publishedAt, description)
   })
 
   // getCMSContents が失敗すると contents は空配列になるので、先頭要素がない場合は現在時刻を使う
@@ -47,29 +47,14 @@ export async function GET() {
   })
 }
 
-function convertToRssItem(title: string, id: string, publishedAt: string, content: string) {
+function convertToRssItem(title: string, id: string, publishedAt: string, descriptionHtml: string) {
   const host = getHostname()
 
   return `
       <item>
         <title>${escapeXml(title)}</title>
         <link>${escapeXml(`${host}/blog/${id}`)}</link>
-        <description><![CDATA[${escapeCdata(content)}]]></description>
+        <description><![CDATA[${escapeCdata(descriptionHtml)}]]></description>
         <pubDate>${new Date(publishedAt).toISOString()}</pubDate>
       </item>`
-}
-
-// XML のテキストノードとして安全な形にする
-function escapeXml(text: string) {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;')
-}
-
-// CDATA セクション内に終端記号 "]]>" が現れると壊れるので、セクションを分割して逃がす
-function escapeCdata(text: string) {
-  return text.replace(/]]>/g, ']]]]><![CDATA[>')
 }
