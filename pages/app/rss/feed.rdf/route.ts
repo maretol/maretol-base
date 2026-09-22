@@ -20,14 +20,15 @@ export async function GET() {
     return convertToRssItem(article.title, article.id, article.publishedAt, contentSentence)
   })
 
-  const lastBuildDate = new Date(articles[0].publishedAt)
+  // getCMSContents が失敗すると contents は空配列になるので、先頭要素がない場合は現在時刻を使う
+  const lastBuildDate = new Date(articles[0]?.publishedAt ?? Date.now())
 
   const rssTemplate = `${rdfTemplate}
-  <rss xmlns:media="https://" version="2.0" xml:lang="ja">
+  <rss version="2.0" xml:lang="ja">
     <channel>
       <language>ja</language>
       <title>Maretol Base</title>
-      <link>${host}</link>
+      <link>${escapeXml(host)}</link>
       <description>maretolの個人サイトです</description>
       <lastBuildDate>${lastBuildDate.toISOString()}</lastBuildDate>
       <copyright>© ${lastBuildDate.getFullYear()} Maretol</copyright>
@@ -39,7 +40,10 @@ export async function GET() {
   </rss>`
 
   return new Response(rssTemplate, {
-    headers: { content_type: 'application/rss+xml' },
+    headers: {
+      'Content-Type': 'application/rss+xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600',
+    },
   })
 }
 
@@ -48,9 +52,24 @@ function convertToRssItem(title: string, id: string, publishedAt: string, conten
 
   return `
       <item>
-        <title>${title}</title>
-        <link>${host}/blog/${id}</link>
-        <description><![CDATA[${content}]]></description>
+        <title>${escapeXml(title)}</title>
+        <link>${escapeXml(`${host}/blog/${id}`)}</link>
+        <description><![CDATA[${escapeCdata(content)}]]></description>
         <pubDate>${new Date(publishedAt).toISOString()}</pubDate>
       </item>`
+}
+
+// XML のテキストノードとして安全な形にする
+function escapeXml(text: string) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
+// CDATA セクション内に終端記号 "]]>" が現れると壊れるので、セクションを分割して逃がす
+function escapeCdata(text: string) {
+  return text.replace(/]]>/g, ']]]]><![CDATA[>')
 }
