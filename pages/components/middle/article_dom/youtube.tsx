@@ -5,7 +5,7 @@ export default function YouTubeArea({ videoURL }: { videoURL: string }) {
   const isShort = youtubeURL.pathname.startsWith('/shorts/')
   const videoID = getVideoID(youtubeURL)
   if (!videoID) {
-    return <p>YouTubeの埋め込みがありましたがURLが不正ですなようです</p>
+    return <p>YouTubeの埋め込みがありましたがURLが不正なようです</p>
   }
   return (
     <div className="py-6 mx-3">
