@@ -57,6 +57,7 @@ maretol-base/
 - **変換タイミングは配信時（決定済み）**: 現行の cms-data-fetcher が HTML を ParsedContent に変換しているのと同様に、cms-data-fetcher が D1 から取得した Markdown を pages に返すタイミングで ParsedContent に変換する
   - 実装は「Markdown → 互換 HTML → 既存 parse()」のパイプラインとし、ParsedContent 生成を HTML 記事と完全に共有する
   - 変換器のバグ修正・記法拡張は再コンパイル不要で全記事に即時反映される。変換コストは pages 側の KV キャッシュ（CMS_CACHE）で吸収する
+  - ※ pages の Astro 移行（issue #1336）後は、変換コストを HTML のエッジキャッシュで吸収する。配信時変換の決定は変えない。詳細は astro_design.md
 
 #### Markdown 記法（決定済み）
 
@@ -108,6 +109,7 @@ Markdown から現行互換 HTML への変換器を用意する。独自拡張�
 
 - キャッシュパージは内製CMS側に統合する。記事の公開・更新時に CMS 自身が KV（CMS_CACHE）をパージし、cms-cache-purger は移行完了後に廃止する
   - パージ対象キーの生成は既存の `packages/cms-cache-key-gen` を再利用する
+  - ※ pages の Astro 移行（issue #1336）で、KV（CMS_CACHE）のパージは Workers Cache のタグパージに置き換える。保存操作とタグの対応は astro_design.md を正とする
 - SNS 自動投稿（sns-article-publisher）は維持する。新規記事公開時に CMS から通知を送る
   - 通知形式（現行の WebhookPayload 互換で送るか、簡素化するか）は設計フェーズで決定する
 
