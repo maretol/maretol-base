@@ -8,15 +8,15 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 コードには触れない
 
-- [ ] astro_design.md の起草
-- [ ] astro_milestones.md（本書）の作成
-- [ ] cms_goal.md に「公開側のキャッシュとパージは astro_design.md を参照」の注記
-- [ ] M1〜M7 の sub-issue を作り、#1336 に紐付ける
-- [ ] 既存 issue（#1273 #1291 #1297 #1299 #1300 #1301 #1303 #1305 #1306 #1310 #1069 #1284 #1251）の振り分け issue を作る
+- [x] astro_design.md の起草
+- [x] astro_milestones.md（本書）の作成
+- [x] cms_goal.md に「公開側のキャッシュとパージは astro_design.md を参照」の注記
+- [x] M1〜M7 の sub-issue を作り、#1336 に紐付ける（#1341〜#1347）
+- [x] 既存 issue（#1273 #1291 #1297 #1299 #1300 #1301 #1303 #1305 #1306 #1310 #1069 #1284 #1251）の振り分け issue を作る（#1348）
 
 **成果物**: 設計文書、sub-issue 一式
 
-## M1. Workers Cache のパージ経路の検証
+## M1. Workers Cache のパージ経路の検証（#1341）
 
 設計全体が依存する前提を、最小の Worker 2 本で先に確かめる。Astro の学習コストと切り離すため、ここでは Astro を使わない。検証用 Worker は終わったら削除する
 
@@ -33,7 +33,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 通らなかった場合は astro_design.md の決定 1 を見直し、M2 に進む前に判断する
 
-## M2. pages-astro の雛形 + 記事詳細を 1 ページ通す
+## M2. pages-astro の雛形 + 記事詳細を 1 ページ通す（#1342）
 
 最小の縦切り。Astro 側の未確定事項をここで潰す
 
@@ -48,7 +48,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 **成果物**: staging で記事 1 本が表示され、2 回目以降はキャッシュヒットし、admin で保存すると数秒で反映される状態
 
-## M3. ブログ系の移植
+## M3. ブログ系の移植（#1343）
 
 - [ ] ブロックコンポーネントを全種類そろえる（画像・photo・引用・コード・目次・注釈・埋め込み・リンクカード）
 - [ ] 画像寸法と blur（`IMAGE_CACHE`。KV 障害時も描画を続ける）、画像 URL ユーティリティ
@@ -64,7 +64,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 **成果物**: staging でブログ系が現行と同等に動く
 
-## M4. 作品系の移植
+## M4. 作品系の移植（#1344）
 
 - [ ] イラスト一覧・詳細、drawer、`/illust?illust_id=` 互換リダイレクト
 - [ ] 漫画一覧・詳細
@@ -73,7 +73,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 **成果物**: staging で作品系が現行と同等に動く
 
-## M5. 横断機能と検証
+## M5. 横断機能と検証（#1345）
 
 - [ ] Axiom アクセスログの移植、Clarity / Cloudflare beacon
 - [ ] head（OGP メタ・canonical・favicon）、セキュリティヘッダ
@@ -83,7 +83,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 **成果物**: 切替可能と判断できる状態
 
-## M6. 切替
+## M6. 切替（#1346）
 
 - [ ] `maretol-base-v4` を本番にデプロイし workers.dev で確認
 - [ ] admin-pages 本番に Service Binding を追加（KV と Workers Cache の両方をパージ）。`PAGES_HOST` の確認
@@ -94,7 +94,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 **成果物**: 本番が Astro で動いている状態
 
-## M7. 撤去
+## M7. 撤去（#1347）
 
 - [ ] `pages/` と Worker `maretol-base-v3` / `maretol-base-v3-stg` の削除
 - [ ] KV `CMS_CACHE`、admin の KV パージ、`packages/cms-cache-key-gen`、`cms-cache-purger` の削除
