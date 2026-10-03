@@ -37,36 +37,39 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 最小の縦切り。Astro 側の未確定事項をここで潰す
 
-- [ ] `pages-astro/` ワークスペース新設（Astro 7、`@astrojs/cloudflare`、React、Tailwind）。root の workspaces とスクリプトへ追加
-- [ ] wrangler 設定（`maretol-base-v4` / `maretol-base-v4-stg`、各バインディング、`[cache]`、`compatibility_flags`）
-- [ ] `src/fetch.ts`: `cf()` → キャッシュヘッダ付与 → ページ描画。M1 で決めた形のパージ入口
-- [ ] `/blog/[article_id]` の描画（記事 1 本が正しく出る範囲のブロックコンポーネント）
-- [ ] admin-pages（staging）に Service Binding を追加し、保存時に KV パージに加えて Workers Cache パージを呼ぶ（バインディングが無い環境では何もしない）
-- [ ] CI: `pages-astro` の型チェック、development への push で staging にデプロイするジョブ
-- [ ] 確認: `astro dev` でバインディングが動くこと / パージ入口を default entrypoint に置けること / Live Content Collections の採否 / React Island のバンドルサイズ
-- [ ] drawer・モーダルの実現方式の調査と決定（Island + history API / ClientRouter / 通常遷移）
+- [x] `pages-astro/` ワークスペース新設（Astro 7、`@astrojs/cloudflare`、React、Tailwind）。root の workspaces とスクリプトへ追加
+- [x] wrangler 設定（`maretol-base-v4` / `maretol-base-v4-stg`、各バインディング、`[cache]`、`compatibility_flags`）
+- [x] Worker のエントリ（`src/worker.ts`）: `cf()` → キャッシュヘッダ → ページ描画。パージ入口は default entrypoint の RPC メソッド（`src/fetch.ts` は `ExecutionContext` を受け取れないため使わない）
+- [x] `/blog/[article_id]` の描画（記事 1 本が正しく出る範囲のブロックコンポーネント）
+- [x] admin-pages（staging）に Service Binding を追加し、保存時に KV パージに加えて Workers Cache パージを呼ぶ（バインディングが無い環境では何もしない）
+- [x] CI: `pages-astro` の型チェック、development への push で staging にデプロイするジョブ
+- [x] 確認: `astro dev` でバインディングが動くこと / パージ入口を default entrypoint に置けること / Live Content Collections の採否 / React Island のバンドルサイズ（astro_design.md 10 章）
+- [x] drawer・モーダルの実現方式の調査（astro_design.md 10 章）
+- [x] drawer・モーダルの実現方式の決定（どちらも Island + History API。astro_design.md 決定 13）
+- [ ] staging での確認（キャッシュヒット、admin の保存から反映までの時間）
 
 **成果物**: staging で記事 1 本が表示され、2 回目以降はキャッシュヒットし、admin で保存すると数秒で反映される状態
 
 ## M3. ブログ系の移植（#1343）
 
-- [ ] ブロックコンポーネントを全種類そろえる（画像・photo・引用・コード・目次・注釈・埋め込み・リンクカード）
-- [ ] 画像寸法と blur（`IMAGE_CACHE`。KV 障害時も描画を続ける）、画像 URL ユーティリティ
-- [ ] リンクカード（`OGP_RPC`）、引用画像プロキシ。外部取得のタイムアウトと負キャッシュ
+- [ ] ブロックコンポーネントの残り（ブログカード・イラストカード・漫画カード・artifact・my_site・引用画像・nofetch_url・YouTube・Tweet・Google Maps・Amazon）
+- [ ] 引用画像プロキシ。外部取得（リンクカードを含む）のタイムアウトと負キャッシュ
+- [ ] 描画時の取得（リンクカード・画像の寸法）に失敗したページを長くキャッシュしない
+- [ ] サイドバー、500 ページ
 - [ ] トップ、ブログ一覧（`p` の検証・リダイレクト・範囲外 404、ページネーション）、タグ一覧（複数タグ）
-- [ ] 前後記事、記事画像モーダル
-- [ ] about / contact / secret、404
+- [ ] 記事画像モーダル（Island + History API。`/blog/{id}/image/{base64url}` と、直接開いた場合の `/blog/{id}#{base64url}` への移動を維持）
+- [ ] about / contact / secret
 - [ ] RSS、sitemap、robots、`/.well-known/nostr.json`、`/artifacts/post-for-nostter`
 - [ ] 限定公開記事（ゲート、unlock の POST、Rate Limiting、unlock 後の遷移）
 - [ ] `draftKey` プレビュー
 - [ ] クエリの正規化
-- [ ] `Cache-Tag` の付与と、admin のブログ・タグ・info・static 保存からのパージ
+- [ ] `Cache-Tag` の付与と、admin のタグ・info・static 保存からのパージ（ブログ記事の保存は M2 で対応済み）
 
 **成果物**: staging でブログ系が現行と同等に動く
 
 ## M4. 作品系の移植（#1344）
 
-- [ ] イラスト一覧・詳細、drawer、`/illust?illust_id=` 互換リダイレクト
+- [ ] イラスト一覧・詳細、drawer（Island + History API。`/illust/detail/{id}` を維持）、`/illust?illust_id=` 互換リダイレクト
 - [ ] 漫画一覧・詳細
 - [ ] 漫画ビューワの Island（見開き・右綴じ・キーボード・スワイプ・マウスゾーン・シリーズ案内・設定保存、固定幅 srcset・順次先読み・`onerror` リトライ）
 - [ ] admin の漫画・イラスト保存からのパージ
