@@ -104,15 +104,27 @@ Workers Cache のパージには次の制約がある
 - 他の Worker のキャッシュはパージできない
 - パージの対象は `purge()` を呼んだ entrypoint のキャッシュに限られる
 
-そのため admin-pages から `pages-astro` へ Service Binding を張り、`pages-astro` の default entrypoint（閲覧者のリクエストを処理するのと同じ entrypoint）にパージ処理を持たせる。入口の形（RPC メソッドか内部ルートか）と、Astro のビルド成果物でそれを default entrypoint に置けるかは M1・M2 で確定する
+そのため admin-pages から `pages-astro` へ Service Binding を張り、`pages-astro` の default entrypoint（閲覧者のリクエストを処理するのと同じ entrypoint）にパージ処理を持たせる。M1 でこの経路が成立することを確認した（9 章）
+
+入口の形は**内部ルート + `ctx.props` による認可**を第一候補とする
+
+- `pages-astro` の fetch.ts に `POST /__purge`（仮）を置き、`ctx.props.role === 'purger'` のときだけ `cache.purge({ tags })` を実行する。それ以外は 403
+- admin-pages 側の Service Binding に `props = { role = "purger" }` を付ける。公開リクエストの `ctx.props` は空なので、共有シークレットなしで区別できる
+- default export を素の fetch ハンドラ（Hono アプリ）のままにできる。RPC メソッド方式も M1 で成立しているので、Astro のビルド成果物の都合で内部ルートが置けない場合の代替にする（M2 で確認）
+
+運用上の決まり
 
 - Service Binding は環境ごとに分ける（`admin-pages-stg` → `maretol-base-v4-stg`、`admin-pages` → `maretol-base-v4`）
 - 切替（M6）までは admin が KV パージと Workers Cache パージの両方を呼ぶ。Service Binding が無い環境では Workers Cache パージを飛ばす
+- **保存 1 回につきパージ呼び出しは 1 回**にし、必要なタグをまとめて渡す。パージにはレート制限がある（連続で約 25 回、以後は毎分 5 回程度。9 章）
+- `purge()` は制限に達しても例外を投げず `success: false` を返す。戻り値を必ず確認する
 - パージの失敗は保存の失敗にしない（現行の KV パージと同じ扱い）。失敗時は admin に表示し、手動パージで回復できるようにする
 
 ### 4.5 クエリの扱い
 
-キャッシュのキーは URL なので、任意のクエリで別エントリになる。fetch.ts でルートごとに許可するクエリ（`p`、`tag_id`、`draftKey`、`illust_id` など）を決め、それ以外が付いていたら落とした URL へリダイレクトする
+キャッシュのキーはパスとクエリ文字列で、ホスト名は含まれない。任意のクエリで別エントリになり、`?a=1&b=2` と `?b=2&a=1` のような順序違いも別エントリになる。fetch.ts でルートごとに許可するクエリ（`p`、`tag_id`、`draftKey`、`illust_id` など）と並び順を決め、それ以外が付いていたり順序が違ったりしたら正規化した URL へリダイレクトする
+
+リクエストの `Cookie` はキーに含まれない。Cookie の有無で内容が変わるページ（限定公開記事）は、未解錠の表示も含めて必ず `private, no-store` にする
 
 ## 5. `pages-astro` の構成
 
@@ -179,12 +191,37 @@ pages-astro/
 
 | 項目 | 時期 |
 |---|---|
-| Service Binding 経由のパージが届くか。default / named entrypoint の差。反映までの時間。タグ数とレート制限 | M1 |
-| ヘッダ 2 本立て、`Set-Cookie`・Cookie・クエリの扱い | M1 |
-| Astro のビルド成果物でパージ入口を default entrypoint に置けるか | M2 |
+| Service Binding 経由のパージが届くか。default / named entrypoint の差。反映までの時間。タグ数とレート制限 | M1（確認済み。9 章） |
+| ヘッダ 2 本立て、`Set-Cookie`・Cookie・クエリの扱い | M1（確認済み。9 章） |
+| Astro のビルド成果物でパージ入口（内部ルート）を default entrypoint に置けるか。fetch.ts から `ctx.props` を読めるか | M2 |
 | `astro dev` でのバインディング（D1 は不要、RPC・KV・Images・Secrets Store） | M2 |
 | Live Content Collections の採否 | M2 |
 | drawer・モーダルの実現方式 | M2 |
 | React Island のバンドルサイズ | M2 |
 
-M1 でパージが成立しなかった場合は決定 1 を見直す（Cache API + ゾーンのパージ API、または短い TTL）
+M1 でパージが成立したため、決定 1（Workers Cache のみ）はそのまま進める
+
+## 9. M1 の検証結果（2026-10-04）
+
+検証用 Worker 2 本（キャッシュされる側 A、Service Binding で A を呼ぶ B）を workers.dev に置いて確認した。wrangler 4.124.0、`compatibility_date = 2026-10-02`。計測は日本国内の 1 拠点からのみ
+
+| 項目 | 結果 |
+|---|---|
+| ヒット時の Worker 起動 | 起動しない。1 回目 `MISS`、2 回目以降 `HIT` で、描画ごとに変わる id が同じ値のまま返る。HEAD も同じエントリを使う |
+| ヘッダ 2 本立て | 想定どおり。エッジは `Cloudflare-CDN-Cache-Control` に従って保持し、クライアントには `Cache-Control: public, max-age=0, must-revalidate` だけが届く。`Cloudflare-CDN-Cache-Control` と `Cache-Tag` はクライアントに出ない |
+| エッジ用ヘッダなしで `max-age=0` のみ | 毎回 `EXPIRED` になり再描画される。キャッシュしたいページには必ずエッジ用ヘッダを付ける |
+| `Set-Cookie` 付きレスポンス | `BYPASS`。保存されない |
+| `private, no-store` | `BYPASS`。保存されない |
+| `Cookie` 付きリクエスト | Cookie なしと同じエントリが返る（キーに含まれない） |
+| クエリ | クエリ違いは別エントリ。順序違い（`?a=1&b=2` と `?b=2&a=1`）も別エントリ |
+| default entrypoint の RPC メソッドからのパージ | 効く。反映まで 0.1〜0.4 秒 |
+| default entrypoint の内部ルートからのパージ | 効く。反映まで 0.3〜2 秒 |
+| props 付き binding からのパージ | 効く。props なしの公開リクエストのキャッシュも消える（パージは `ctx.props` をまたぐ） |
+| named entrypoint からのパージ | `success: true` が返るが、default entrypoint のキャッシュは消えない |
+| 無関係なタグのページ | 残る |
+| 粗いタグ（`list:blog`） | 同じタグを持つ複数ページがまとめて消える |
+| 1 回のパージのタグ数 | 100 個まで成功を確認 |
+| レート制限 | 短時間に 27 回前後で `success: false`（code 1134）。バケット約 25・毎分 5 回程度の補充と整合する。上限の単位（Worker ごとかアカウントごとか）は未確認 |
+| Service Binding 越しの GET | props なしの binding は公開側と同じエントリを共有する。props 付き binding と named entrypoint は別エントリになる |
+| 内部ルートの認可 | 公開側から `POST /__purge` を叩くと 403。props 付き binding からは通る |
+| デプロイでの切り替わり | 再デプロイ後の初回は `MISS` で新しい id になり、以降 `HIT`。デプロイ時の全パージは不要 |

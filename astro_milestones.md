@@ -16,18 +16,18 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 **成果物**: 設計文書、sub-issue 一式
 
-## M1. Workers Cache のパージ経路の検証（#1341）
+## M1. Workers Cache のパージ経路の検証（#1341） ✅（2026-10-04 完了）
 
 設計全体が依存する前提を、最小の Worker 2 本で先に確かめる。Astro の学習コストと切り離すため、ここでは Astro を使わない。検証用 Worker は終わったら削除する
 
-- [ ] 検証用 Worker A（`[cache] enabled = true`、`Cache-Tag` 付きの HTML を返す、パージ用の入口を持つ）と Worker B（Service Binding で A を呼ぶ）を workers.dev に置く
-- [ ] ヒット時に A が起動しないこと（ログが出ない、`Cf-Cache-Status: HIT`）
-- [ ] B から A を呼んで `cache.purge({ tags })` が効くこと。default entrypoint で受けた場合と named entrypoint で受けた場合の差
-- [ ] パージから反映までの時間（要件は数秒以内）
-- [ ] `Cloudflare-CDN-Cache-Control` と `Cache-Control` の 2 本立て
-- [ ] `Set-Cookie` 付きレスポンス・`Cookie` 付きリクエスト・クエリ違いの扱い
-- [ ] 1 回のパージに載せられるタグ数とレート制限
-- [ ] デプロイでキャッシュが切り替わること
+- [x] 検証用 Worker A（`[cache] enabled = true`、`Cache-Tag` 付きの HTML を返す、パージ用の入口を持つ）と Worker B（Service Binding で A を呼ぶ）を workers.dev に置く
+- [x] ヒット時に A が起動しないこと（ログが出ない、`Cf-Cache-Status: HIT`）
+- [x] B から A を呼んで `cache.purge({ tags })` が効くこと。default entrypoint で受けた場合と named entrypoint で受けた場合の差
+- [x] パージから反映までの時間（要件は数秒以内）
+- [x] `Cloudflare-CDN-Cache-Control` と `Cache-Control` の 2 本立て
+- [x] `Set-Cookie` 付きレスポンス・`Cookie` 付きリクエスト・クエリ違いの扱い
+- [x] 1 回のパージに載せられるタグ数とレート制限
+- [x] デプロイでキャッシュが切り替わること
 
 **成果物**: 検証結果を astro_design.md に追記。パージ入口の形（RPC メソッド / 内部ルート）の確定
 
