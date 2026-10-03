@@ -9,6 +9,8 @@ interface CloudflareEnv {
   CMS_DRAFT: KVNamespace
   // SNS自動投稿Worker（sns-article-publisher）への Service Binding（RPC呼び出し）
   SNS_PUBLISHER: Service<SNSArticlePublisher>
+  // 公開サイト（Astro 版）の Workers Cache をパージするための Service Binding（RPC呼び出し）。未設定の環境ではパージしない
+  PAGES_PURGE?: import('cache-tags').PurgeRPC
   // pages 本体のホスト（プレビューURL生成用）
   PAGES_HOST: string
   // SNS自動投稿の通知を送るか（'true' で有効。本番のみ）

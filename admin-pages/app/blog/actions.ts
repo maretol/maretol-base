@@ -70,6 +70,11 @@ function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: s
   return { input }
 }
 
+// 保存後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、編集画面で知らせる
+function savedURL(articleID: string, purged: boolean): string {
+  return `/blog/${articleID}/edit?saved=1${purged ? '' : '&purge_failed=1'}`
+}
+
 export async function createBlogContentAction(formData: FormData): Promise<void> {
   const { input, error } = parseBlogForm(formData)
   if (error) {
@@ -80,12 +85,12 @@ export async function createBlogContentAction(formData: FormData): Promise<void>
   }
 
   await createBlogContent(input)
-  await purgeBlogContentCache(input.id)
+  const purged = await purgeBlogContentCache(input.id)
   await notifyBlogPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/blog')
   // 保存後は一覧へ戻らず、作成した記事の編集画面へ遷移する（連続編集のため）
-  redirect(`/blog/${input.id}/edit?saved=1`)
+  redirect(savedURL(input.id, purged))
 }
 
 export async function updateBlogContentAction(formData: FormData): Promise<void> {
@@ -99,12 +104,12 @@ export async function updateBlogContentAction(formData: FormData): Promise<void>
   const oldStatus = current?.status
 
   await updateBlogContent(input)
-  await purgeBlogContentCache(input.id)
+  const purged = await purgeBlogContentCache(input.id)
   await notifyBlogPublishToSNS({ input, type: 'edit', oldStatus })
 
   revalidatePath('/blog')
   // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(`/blog/${input.id}/edit?saved=1`)
+  redirect(savedURL(input.id, purged))
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
@@ -134,7 +139,9 @@ export async function purgeBlogContentCacheAction(
     return { error: 'IDが不正です' }
   }
   try {
-    await purgeBlogContentCache(id)
+    if (!(await purgeBlogContentCache(id))) {
+      return { error: '公開サイトのキャッシュ削除に失敗しました。時間をおいて再度実行してください' }
+    }
     return { done: 'この記事のキャッシュを削除しました（一覧・記事単体）' }
   } catch {
     return { error: 'キャッシュ削除に失敗しました' }
