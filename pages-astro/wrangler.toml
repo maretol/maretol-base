@@ -1,0 +1,87 @@
+#:schema ../node_modules/wrangler/config-schema.json
+# 公開サイト（Astro 版）。設計は astro_design.md、作業の区切りは astro_milestones.md を参照
+# 環境はビルド時に決まる（CLOUDFLARE_ENV=staging astro build → wrangler deploy）。wrangler deploy -e は効かない
+name = "maretol-base-v4"
+main = "./src/worker.ts"
+compatibility_date = "2026-10-01"
+compatibility_flags = [ "nodejs_compat", "global_fetch_strictly_public" ]
+
+# 切替（M6）までは workers.dev のみ。切替時に www.maretol.xyz の custom domain を付ける
+workers_dev = true
+
+services = [
+    { binding = "CMS_RPC", service = "cms-data-fetcher" },
+    { binding = "OGP_RPC", service = "ogp-data-fetcher" },
+]
+kv_namespaces = [
+    { binding = "OGP_FETCHER_CACHE", id = "e04820b5b32b4a8f9b45ecef847bcbb0" },
+    { binding = "IMAGE_CACHE", id = "e5a68d1f3fca4af2975762a3ce235475" }
+]
+secrets_store_secrets = [
+    { binding = "CLARITY_ID", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "CLARITY_ID" },
+    { binding = "AXIOM_ENDPOINT", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "AXIOM_ENDPOINT" },
+    { binding = "AXIOM_APITOKEN", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "AXIOM_APITOKEN" },
+    { binding = "SECRET_ARTICLE_COOKIE_KEY", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "SECRET_ARTICLE_COOKIE_KEY" }
+]
+# 記事本文の画像の寸法と blur を作るために原本を読む。remote = true はローカル開発でも実バケットを読むための指定で、デプロイ時の挙動には影響しない
+r2_buckets = [
+    { binding = "IMAGES", bucket_name = "images", remote = true },
+    { binding = "BANDE_DESSINEE", bucket_name = "bande-dessinee", remote = true },
+    { binding = "PHOTO", bucket_name = "photo", remote = true },
+    { binding = "SCREENSHOTS", bucket_name = "screenshots", remote = true },
+    { binding = "STATIC", bucket_name = "static", remote = true }
+]
+images = { binding = "IMAGE_TRANSFORMATION", remote = true }
+
+# Workers Cache。ヒット時は Worker が起動しない。パージは src/worker.ts の POST /__purge
+[cache]
+enabled = true
+
+[assets]
+binding = "ASSETS"
+
+[observability]
+enabled = true
+
+[vars]
+HOST = "https://www.maretol.xyz"
+ENV = "PRD"
+
+[env.staging]
+name = "maretol-base-v4-stg"
+workers_dev = true
+services = [
+    { binding = "CMS_RPC", service = "cms-data-fetcher-stg" },
+    { binding = "OGP_RPC", service = "ogp-data-fetcher-stg" },
+]
+kv_namespaces = [
+    { binding = "OGP_FETCHER_CACHE", id = "e04820b5b32b4a8f9b45ecef847bcbb0" },
+    { binding = "IMAGE_CACHE", id = "e5a68d1f3fca4af2975762a3ce235475" }
+]
+secrets_store_secrets = [
+    { binding = "CLARITY_ID", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "CLARITY_ID" },
+    { binding = "AXIOM_ENDPOINT", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "AXIOM_ENDPOINT" },
+    { binding = "AXIOM_APITOKEN", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "AXIOM_APITOKEN" },
+    { binding = "SECRET_ARTICLE_COOKIE_KEY", store_id = "da1dbdf4b4e24ed3b82c0d8e117f09d4", secret_name = "SECRET_ARTICLE_COOKIE_KEY" }
+]
+r2_buckets = [
+    { binding = "IMAGES", bucket_name = "images" },
+    { binding = "BANDE_DESSINEE", bucket_name = "bande-dessinee" },
+    { binding = "PHOTO", bucket_name = "photo" },
+    { binding = "SCREENSHOTS", bucket_name = "screenshots" },
+    { binding = "STATIC", bucket_name = "static" }
+]
+images = { binding = "IMAGE_TRANSFORMATION" }
+
+[env.staging.cache]
+enabled = true
+
+[env.staging.assets]
+binding = "ASSETS"
+
+[env.staging.observability]
+enabled = true
+
+[env.staging.vars]
+HOST = "https://maretol-base-v4-stg.maretol-ruha.workers.dev"
+ENV = "STG"

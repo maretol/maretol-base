@@ -1,0 +1,35 @@
+---
+import { BookOpenIcon, ImageIcon, InfoIcon, MailIcon, NotebookTextIcon, RssIcon } from '@lucide/astro'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+const iconClassName = 'w-4 h-4'
+const buttonClassName = cn(buttonVariants({ variant: 'outline' }), 'w-full gap-1 font-suse font-semibold')
+const subButtonClassName = cn(buttonVariants({ variant: 'outline' }), 'w-12')
+---
+
+<div class="grid grid-cols-2 sm:grid-cols-5 gap-1">
+  <a href="/illust" class={buttonClassName}>
+    <ImageIcon class={iconClassName} />
+    Illustrations
+  </a>
+  <a href="/comics" class={buttonClassName}>
+    <BookOpenIcon class={iconClassName} />
+    Comics
+  </a>
+  <a href="/blog" class={buttonClassName}>
+    <NotebookTextIcon class={iconClassName} />
+    Blog
+  </a>
+  <div class="flex flex-between gap-1 sm:col-span-2">
+    <a href="/about" class={subButtonClassName} aria-label="About">
+      <InfoIcon class={iconClassName} />
+    </a>
+    <a href="/contact" class={subButtonClassName} aria-label="Contact">
+      <MailIcon class={iconClassName} />
+    </a>
+    <a href="/rss/feed.rdf" class={subButtonClassName} aria-label="RSS">
+      <RssIcon class={iconClassName} />
+    </a>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+---
+import { parseBlockquoteCite } from '@/lib/blockquote'
+
+type Props = { innerHTML: string; text: string }
+
+const { innerHTML, citeText, citeURL } = parseBlockquoteCite(Astro.props.innerHTML, Astro.props.text)
+---
+
+<div class="py-3">
+  <blockquote
+    lang="ja"
+    cite={citeURL ?? undefined}
+    class="bg-gray-200 text-gray-700 p-6 rounded-lg border-l-8 border-l-gray-500"
+  >
+    <div set:html={innerHTML} />
+    <div class="w-full text-right">
+      <cite class="text-sm text-gray-500 text-left">
+        {citeURL ? <a href={citeURL}>{citeText}</a> : citeText}
+      </cite>
+    </div>
+  </blockquote>
+</div>

@@ -1,0 +1,20 @@
+---
+import type { categoryAPIResult } from 'api-types'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+type Props = { tags: categoryAPIResult[] }
+
+const tagHref = (tag: categoryAPIResult) => `/tag?${new URLSearchParams({ tag_id: tag.id, tag_name: tag.name })}`
+---
+
+<div class="p-0 flex gap-2 items-center">
+  Tag :
+  {
+    Astro.props.tags.map((tag) => (
+      <a href={tagHref(tag)} class={cn(buttonVariants({ variant: 'secondary' }), 'p-2 h-6')}>
+        {tag.name}
+      </a>
+    ))
+  }
+</div>
