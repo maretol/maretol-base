@@ -20,6 +20,7 @@ jobs:
       name: stg
     outputs:
       pages: ${{ steps.filter.outputs.pages }}
+      pages-astro: ${{ steps.filter.outputs.pages-astro }}
       admin-pages: ${{ steps.filter.outputs.admin-pages }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
       cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
@@ -37,9 +38,14 @@ jobs:
               - "pages/**"
               - "packages/api-types/**"
               - "packages/cms-cache-key-gen/**"
+            pages-astro:
+              - "pages-astro/**"
+              - "packages/api-types/**"
+              - "packages/cache-tags/**"
             admin-pages:
               - "admin-pages/**"
               - "packages/api-types/**"
+              - "packages/cache-tags/**"
             ogp-data-fetcher:
               - "ogp-data-fetcher/**"
               - "packages/api-types/src/ogp_types.ts"
@@ -89,6 +95,45 @@ jobs:
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
           workingDirectory: ./pages
           command: deploy -e staging --config wrangler.toml --dry-run
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy-dry.outputs.command-output }}
+        run: echo $CMD_OUTPUT
+
+  build-and-deploy-dry-pages-astro:
+    needs: changes
+    if: ${{ needs.changes.outputs.pages-astro == 'true' || needs.changes.outputs.workflow == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    defaults:
+      run:
+        working-directory: ./pages-astro
+    steps:
+      - uses: actions/checkout@v7
+      - name: setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
+      - name: type check
+        working-directory: ./
+        run: npm run check:astro
+      # 環境はビルド時に決まる（CLOUDFLARE_ENV=staging）。wrangler deploy は生成された設定を使うので -e は付けない
+      - name: build
+        working-directory: ./
+        run: npm run build-stg:astro
+      - name: deploy dry run by wrangler
+        id: deploy-dry
+        uses: cloudflare/wrangler-action@v4
+        with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./pages-astro
+          command: deploy --dry-run
       - name: show done command
         env:
           CMD_OUTPUT: ${{ steps.deploy-dry.outputs.command-output }}
@@ -273,6 +318,7 @@ jobs:
     needs:
       [
         build-and-deploy-dry-pages,
+        build-and-deploy-dry-pages-astro,
         build-and-deploy-dry-admin-pages,
         deploy-dry-ogp-data-fetcher,
         deploy-dry-cms-data-fetcher,
@@ -290,6 +336,7 @@ jobs:
         if: >-
           ${{
             needs.build-and-deploy-dry-pages.result == 'failure' ||
+            needs.build-and-deploy-dry-pages-astro.result == 'failure' ||
             needs.build-and-deploy-dry-admin-pages.result == 'failure' ||
             needs.deploy-dry-ogp-data-fetcher.result == 'failure' ||
             needs.deploy-dry-cms-data-fetcher.result == 'failure' ||
@@ -298,6 +345,7 @@ jobs:
           }}
         env:
           pages_result: ${{ needs.build-and-deploy-dry-pages.result }}
+          pages_astro_result: ${{ needs.build-and-deploy-dry-pages-astro.result }}
           admin_pages_result: ${{ needs.build-and-deploy-dry-admin-pages.result }}
           ogp_data_fetcher_result: ${{ needs.deploy-dry-ogp-data-fetcher.result }}
           cms_data_fetcher_result: ${{ needs.deploy-dry-cms-data-fetcher.result }}
@@ -305,6 +353,7 @@ jobs:
           sns_article_publisher_result: ${{ needs.deploy-dry-sns-article-publisher.result }}
         run: |
           echo "pages result: $pages_result"
+          echo "pages astro result: $pages_astro_result"
           echo "admin pages result: $admin_pages_result"
           echo "ogp data fetcher result: $ogp_data_fetcher_result"
           echo "cms data fetcher result: $cms_data_fetcher_result"
