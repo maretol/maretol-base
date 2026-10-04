@@ -1,6 +1,7 @@
 ---
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { getOGPData } from '@/lib/api/ogp'
+import { markDegraded } from '@/lib/degraded'
 import { getNoImageURL } from '@/lib/image'
 
 type Props = { link: string }
@@ -15,27 +16,24 @@ let url = link
 let site = ''
 let imageAlt = ''
 
-try {
-  const result = await getOGPData(link)
-  if (result.success) {
-    imageAlt = result.og_title
-    description = result.og_description
-    image = result.og_image !== '' ? result.og_image : null
-    url = result.og_url !== '' ? result.og_url : link
-    title = result.og_title !== '' ? result.og_title : 'No Page Title'
-    site = result.og_site_name !== '' ? result.og_site_name : title
-  } else {
-    title = 'Missing data fetching'
-    imageAlt = title
-    description = errorDescription
-    site = title
+const result = await getOGPData(link)
+if (result?.success) {
+  imageAlt = result.og_title
+  description = result.og_description
+  image = result.og_image !== '' ? result.og_image : null
+  url = result.og_url !== '' ? result.og_url : link
+  title = result.og_title !== '' ? result.og_title : 'No Page Title'
+  site = result.og_site_name !== '' ? result.og_site_name : title
+} else {
+  // result が null なのは取得できなかったとき（リンク先の障害・タイムアウト）。時間をおけば直る可能性があるので記録する。
+  // success: false はリンク先に OGP が無い場合で、取り直しても変わらない
+  if (result === null) {
+    markDegraded(Astro.locals, `link card: ${link}`)
   }
-} catch (e) {
-  console.error('[components/blocks/LinkCard.astro] OGP fetch error:', e)
-  title = 'Title was not readable.'
-  site = title
+  title = 'Missing data fetching'
+  imageAlt = title
   description = errorDescription
-  url = ''
+  site = title
 }
 ---
 

@@ -24,5 +24,7 @@ declare namespace App {
       tags?: string[]
       noStore?: boolean
     }
+    // 描画中にデータ取得に失敗した部品の記録（src/lib/degraded.ts）。1 件でもあるとページを長くキャッシュしない
+    degraded?: string[]
   }
 }

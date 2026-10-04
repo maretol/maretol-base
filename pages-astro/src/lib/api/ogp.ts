@@ -3,28 +3,55 @@ import type { OGPResult } from 'api-types'
 
 // OGP データを保持する秒数
 const OGP_CACHE_TTL = 3 * 24 * 60 * 60
+// 取得失敗を保持する秒数。リンク先が落ちている・応答しない間、描画のたびに取りに行かないための短い保持
+const FAILURE_CACHE_TTL = 10 * 60
+// 取得の待ち時間。リンク先が応答しないときに記事全体の描画を止めないための上限
+const FETCH_TIMEOUT_MS = 5 * 1000
 
-// リンクカード用の OGP データ。KV の読み書きに失敗しても取得は続ける
-export async function getOGPData(targetURL: string): Promise<OGPResult> {
+// 取得失敗の記録。現行サイト（pages）も同じ KV を OGPResult として読むので、OGPResult として読める形にしておく
+type CachedOGP = Partial<OGPResult> & { success: boolean; fetch_failed?: boolean }
+
+// リンクカード用の OGP データ。取得できなかったとき（例外・タイムアウト）は null。
+// リンク先に OGP が無いだけの場合は success: false の結果が返る
+export async function getOGPData(targetURL: string): Promise<OGPResult | null> {
+  // KV の読み書きに失敗しても取得は続ける
   try {
     const cached = await env.OGP_FETCHER_CACHE.get(targetURL)
     if (cached) {
-      return JSON.parse(cached) as OGPResult
+      const data = JSON.parse(cached) as CachedOGP
+      return data.fetch_failed ? null : (data as OGPResult)
     }
   } catch (e) {
     console.error(`[lib/api/ogp.ts] Cache get error for key ${targetURL}:`, e)
   }
 
+  let result: OGPResult | null = null
   try {
-    const res = (await env.OGP_RPC.fetchOGPData(targetURL)) as OGPResult
-    try {
-      await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl: OGP_CACHE_TTL })
-    } catch (e) {
-      console.error(`[lib/api/ogp.ts] Cache put error for key ${targetURL}:`, e)
-    }
-    return res
+    result = (await withTimeout(env.OGP_RPC.fetchOGPData(targetURL), FETCH_TIMEOUT_MS)) as OGPResult
   } catch (e) {
-    console.error('[lib/api/ogp.ts] OGP fetch error:', e)
-    return { success: false } as OGPResult
+    console.error(`[lib/api/ogp.ts] OGP fetch error for ${targetURL}:`, e)
+  }
+
+  const value: CachedOGP = result ?? { success: false, fetch_failed: true }
+  try {
+    await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(value), {
+      expirationTtl: result ? OGP_CACHE_TTL : FAILURE_CACHE_TTL,
+    })
+  } catch (e) {
+    console.error(`[lib/api/ogp.ts] Cache put error for key ${targetURL}:`, e)
+  }
+  return result
+}
+
+// RPC は途中で打ち切れないので、待つのをやめるだけにする（呼び出し自体は fetcher 側で続く）
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`timeout after ${ms}ms`)), ms)
+  })
+  try {
+    return await Promise.race([promise, timeout])
+  } finally {
+    clearTimeout(timer)
   }
 }
