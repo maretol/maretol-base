@@ -7,9 +7,9 @@ export const dynamic = 'force-dynamic'
 export default async function CacheManagement({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; done?: string }>
+  searchParams: Promise<{ error?: string; done?: string; purge_failed?: string }>
 }) {
-  const { error, done } = await searchParams
+  const { error, done, purge_failed: purgeFailed } = await searchParams
   const stats = await getCacheStats()
   const groups = Object.entries(CACHE_GROUPS) as [CacheGroupKey, (typeof CACHE_GROUPS)[CacheGroupKey]][]
 
@@ -21,12 +21,20 @@ export default async function CacheManagement({
           コンテンツの保存時は自動でパージされます。ここは D1
           を直接編集した後や表示の不整合時などに手動でパージするための画面です
         </p>
+        <p className="mt-1 text-sm text-gray-500">
+          KV（CMS_CACHE）と併せて、Astro 版の公開サイトのキャッシュも「公開サイトのタグ」の単位でパージします
+        </p>
       </div>
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {done && (
+      {done && purgeFailed !== '1' && (
         <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">
           パージしました: {done === 'all' ? 'すべて' : (CACHE_GROUPS[done as CacheGroupKey]?.label ?? done)}
+        </p>
+      )}
+      {purgeFailed === '1' && (
+        <p className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+          KV はパージしましたが、公開サイト（Astro 版）のキャッシュ削除に失敗しました。時間をおいて再度実行してください
         </p>
       )}
 
@@ -35,6 +43,7 @@ export default async function CacheManagement({
           <tr className="border-b border-gray-200 text-left text-gray-500">
             <th className="p-2">グループ</th>
             <th className="p-2">対象キー</th>
+            <th className="p-2">公開サイトのタグ</th>
             <th className="p-2">キャッシュ済み件数</th>
             <th className="p-2"></th>
           </tr>
@@ -46,6 +55,7 @@ export default async function CacheManagement({
               <td className="p-2 font-mono text-xs">
                 {[...def.prefixes.map((p) => `${p}*`), ...def.keys].join(', ')}
               </td>
+              <td className="p-2 font-mono text-xs">{def.edgeTags.join(', ')}</td>
               <td className="p-2">{stats[key]}</td>
               <td className="p-2">
                 <form action={purgeCacheGroupAction}>
@@ -65,7 +75,7 @@ export default async function CacheManagement({
           すべてパージ
         </SubmitButton>
         <p className="mt-1 text-xs text-gray-400">
-          全キャッシュを削除します。直後のアクセスはD1への取得が発生しますが表示への影響はありません
+          全キャッシュを削除します（公開サイトは全ページ）。直後のアクセスはD1への取得が発生しますが表示への影響はありません
         </p>
       </form>
     </div>

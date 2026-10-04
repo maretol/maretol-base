@@ -26,4 +26,6 @@ export type SNSPostActionState = {
 export type AddCategoryState = {
   categories: { id: string; name: string }[]
   error?: string
+  // 追加はできたが、公開サイトのキャッシュ削除に失敗した
+  warning?: string
 }

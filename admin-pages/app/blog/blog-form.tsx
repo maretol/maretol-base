@@ -136,6 +136,7 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
               {addingCategory ? '追加中...' : 'カテゴリ追加'}
             </button>
             {added.error && <span className="text-xs text-red-700">{added.error}</span>}
+            {added.warning && <span className="text-xs text-yellow-800">{added.warning}</span>}
           </div>
           <p className="mt-1 text-xs text-gray-400">
             IDの指定や表示順の変更は{' '}

@@ -10,15 +10,20 @@ export async function purgeCacheGroupAction(formData: FormData): Promise<void> {
     redirect(`/cache?error=${encodeURIComponent('不正なグループ指定です')}`)
   }
 
-  await purgeCacheGroup(group as CacheGroupKey)
+  const purged = await purgeCacheGroup(group as CacheGroupKey)
 
   revalidatePath('/cache')
-  redirect(`/cache?done=${encodeURIComponent(group)}`)
+  redirect(doneURL(group, purged))
 }
 
 export async function purgeAllCacheAction(): Promise<void> {
-  await purgeAllCMSCache()
+  const purged = await purgeAllCMSCache()
 
   revalidatePath('/cache')
-  redirect(`/cache?done=${encodeURIComponent('all')}`)
+  redirect(doneURL('all', purged))
+}
+
+// パージ後の遷移先。公開サイト（Astro 版）のキャッシュ削除に失敗した場合は画面で知らせる
+function doneURL(done: string, purged: boolean): string {
+  return `/cache?done=${encodeURIComponent(done)}${purged ? '' : '&purge_failed=1'}`
 }
