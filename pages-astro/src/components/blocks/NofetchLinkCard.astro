@@ -1,0 +1,37 @@
+---
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { getNoImageURL } from '@/lib/image'
+
+// リンク先の情報を取りに行かないリンクカード。タイトルと説明は記事側で指定する
+type Props = { url?: string; title?: string; description?: string }
+
+const { url } = Astro.props
+const hasURL = url !== undefined && url !== ''
+const title = hasURL ? Astro.props.title || 'No Title' : 'リンク指定のURLがありません'
+const description = hasURL
+  ? Astro.props.description || 'No Description'
+  : 'リンクカードを表示するには、URLを指定してください。'
+---
+
+<div class="max-w-2xl no-underline border-2 border-gray-300 rounded-[9px]">
+  <a
+    href={hasURL ? url : '#'}
+    target={hasURL ? '_blank' : undefined}
+    rel={hasURL ? 'noopener noreferrer' : undefined}
+    class="no-underline hover:underline"
+  >
+    <div class="flex flex-row h-24">
+      <div class="row-span-3 w-36 h-24">
+        <CdnImage src={getNoImageURL()} alt="No Image" width={50} height={50} class="object-contain w-36 h-24" />
+      </div>
+      <div class="col-span-2 w-96 flex-auto ml-2 mr-1">
+        <p class="text-lg line-clamp-1 font-semibold pt-1">{title}</p>
+        <p class="text-sm line-clamp-3">{description}</p>
+      </div>
+    </div>
+    <div class="p-1 bg-gray-300 rounded-b-[6px]">
+      <p class="no-underline text-sm line-clamp-1">{title}</p>
+      <p class="no-underline text-sm line-clamp-1">{hasURL ? url : '---URL is not specified---'}</p>
+    </div>
+  </a>
+</div>

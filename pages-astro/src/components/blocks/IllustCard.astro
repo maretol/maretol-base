@@ -1,0 +1,77 @@
+---
+import type { atelierResult } from 'api-types'
+import { ImageIcon } from '@lucide/astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getAtelierByID } from '@/lib/api/cms'
+import { markDegraded } from '@/lib/degraded'
+import { convertJST } from '@/lib/time'
+import { cn } from '@/lib/utils'
+
+// 自サイトのイラストへのカード
+type Props = { link: string; draftKey?: string }
+
+const { link, draftKey } = Astro.props
+
+// 画像のどこを切り出して見せるか。class を文字列で持つ（Tailwind が検出できるように）
+const objectPositionClass: Record<string, string> = {
+  left: 'object-left',
+  right: 'object-right',
+  top: 'object-top',
+  bottom: 'object-bottom',
+  center: 'object-center',
+}
+
+let illust: atelierResult | null = null
+let detailLink = ''
+try {
+  const illustID = new URL(link).pathname.split('/')[3]
+  detailLink = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${encodeURIComponent(draftKey)}` : '')
+  illust = await getAtelierByID(illustID, draftKey)
+} catch (e) {
+  // fetcher は「存在しない」とそれ以外の失敗を区別しないので、どちらも不完全な表示として扱う
+  console.error('[components/blocks/IllustCard.astro] Illust fetch error:', e)
+  markDegraded(Astro.locals, `illust card: ${link}`)
+}
+---
+
+<div class="max-w-2xl">
+  <div class="bg-gray-300 h-full w-full px-4 py-2 rounded-md font-semibold">
+    {
+      illust ? (
+        <div class="flex flex-row space-x-4">
+          <CdnImage
+            src={illust.src}
+            alt={illust.title}
+            width={400}
+            height={400}
+            format="auto"
+            class={cn(
+              'w-2/3 h-56 object-full rounded-sm',
+              objectPositionClass[illust.object_position] ?? 'object-center',
+            )}
+          />
+          <div class="w-1/3 flex flex-col justify-between items-start">
+            <div class="w-full">
+              <p class="text-xl font-semibold">{illust.title}</p>
+              <p class="text-gray-500 text-xs text-wrap line-clamp-2">{convertJST(illust.publishedAt)}</p>
+            </div>
+            <div class="w-full">
+              <a href={detailLink} class={cn(buttonVariants(), 'w-full h-8')}>
+                View illust
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div class="flex items-center gap-2">
+          <ImageIcon class="w-6 h-6 shrink-0" />
+          <div class="w-full flex flex-col self-end">
+            <p class="text-md text-wrap line-clamp-2">エラー：見つかりませんでした</p>
+            <p class="text-gray-500 text-xs font-normal">公開が停止されたか、リンクのURLを間違えたようです</p>
+          </div>
+        </div>
+      )
+    }
+  </div>
+</div>

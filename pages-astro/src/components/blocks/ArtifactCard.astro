@@ -1,0 +1,37 @@
+---
+import type { infoAPIResult } from 'api-types'
+import { HammerIcon } from '@lucide/astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getInfo } from '@/lib/api/cms'
+import { markDegraded } from '@/lib/degraded'
+import { convertJST } from '@/lib/time'
+import { cn } from '@/lib/utils'
+
+// 自サイトの制作物ページ（info）へのカード
+type Props = { link: string }
+
+const { link } = Astro.props
+
+let linkPath = ''
+let artifact: infoAPIResult | undefined
+try {
+  linkPath = new URL(link).pathname
+  const info = await getInfo()
+  artifact = info.find((c) => c.page_pathname === linkPath)
+} catch (e) {
+  console.error('[components/blocks/ArtifactCard.astro] Info fetch error:', e)
+  markDegraded(Astro.locals, `artifact card: ${link}`)
+}
+---
+
+<div class="flex max-w-xl">
+  <a href={linkPath} class={cn(buttonVariants({ variant: 'outline' }), 'no-underline bg-gray-300 h-full w-full')}>
+    <HammerIcon class="w-8 h-8 mr-2" />
+    <div class="w-full flex flex-row space-x-2">
+      <div class="w-full flex flex-col self-end">
+        <p class="text-md text-wrap line-clamp-2">{artifact?.title || 'タイトル未定義'}</p>
+        {artifact && <p class="text-gray-500 text-xs text-wrap line-clamp-2">{convertJST(artifact.publishedAt)}</p>}
+      </div>
+    </div>
+  </a>
+</div>

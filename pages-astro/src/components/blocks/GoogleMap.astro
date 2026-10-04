@@ -1,0 +1,30 @@
+---
+import { outerContentIframeSandbox } from '@/lib/embed'
+
+// Google Maps の「地図を埋め込む」で得られる iframe をそのまま使う
+type Props = { subtexts?: { [key: string]: string } }
+
+const { subtexts } = Astro.props
+const iframe = subtexts?.iframe
+// iframe の src が Google Maps の埋め込みであることを確認する
+const supported = iframe?.indexOf('<iframe src="https://www.google.com/maps/embed?') === 0
+// iframe に sandbox 属性を足す
+const sandboxedIframe = iframe?.replace(/<iframe /, `<iframe sandbox="${outerContentIframeSandbox}" `)
+---
+
+{
+  !subtexts ? (
+    <div class="py-6">
+      <p>地図情報がありません</p>
+    </div>
+  ) : supported ? (
+    <div class="py-6 w-full">
+      {/* 記事本文と同じく、著者が書いた内容をそのまま出す */}
+      <div class="max-w-xl w-full h-auto p-2 rounded-xs bg-indigo-200" set:html={sandboxedIframe} />
+    </div>
+  ) : (
+    <div class="py-6">
+      <p>現在その地図情報の埋め込みには対応していません</p>
+    </div>
+  )
+}

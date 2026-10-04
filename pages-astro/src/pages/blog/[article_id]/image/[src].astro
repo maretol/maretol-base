@@ -1,0 +1,16 @@
+---
+// 記事画像モーダルの URL（/blog/{id}/image/{base64url}）を直接開いたとき。
+// 記事の中でのクリックは islands/ImageModal.tsx がモーダルを開くので、ここに来るのは
+// 再読み込み、共有されたリンク、JS が動かない場合。画像単独のページは持たず、記事の該当画像の位置へ移動する
+const articleID = Astro.params.article_id!
+const src = Astro.params.src!
+
+// base64url 以外は画像の URL として成立しない
+if (!/^[A-Za-z0-9_-]+$/.test(src)) {
+  return Astro.rewrite('/404')
+}
+
+const draftKey = Astro.url.searchParams.get('draftKey')
+const query = draftKey ? `?draftKey=${encodeURIComponent(draftKey)}` : ''
+return Astro.redirect(`/blog/${encodeURIComponent(articleID)}${query}#${src}`, 302)
+---

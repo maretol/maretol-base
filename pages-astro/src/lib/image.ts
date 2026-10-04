@@ -73,3 +73,10 @@ export function getImageSources(
 export function toBase64URL(src: string): string {
   return btoa(src).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
 }
+
+// 記事画像モーダルの URL。直接開くと記事の該当画像の位置へ移動する（pages/blog/[article_id]/image/[src].astro）。
+// 下書きプレビュー中は draftKey を引き継ぐ
+export function getImageModalHref(articleID: string, base64src: string, draftKey?: string): string {
+  const path = `/blog/${articleID}/image/${base64src}`
+  return draftKey ? `${path}?draftKey=${encodeURIComponent(draftKey)}` : path
+}
