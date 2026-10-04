@@ -33,7 +33,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 通らなかった場合は astro_design.md の決定 1 を見直し、M2 に進む前に判断する
 
-## M2. pages-astro の雛形 + 記事詳細を 1 ページ通す（#1342）
+## M2. pages-astro の雛形 + 記事詳細を 1 ページ通す（#1342） ✅（2026-10-04 完了）
 
 最小の縦切り。Astro 側の未確定事項をここで潰す
 
@@ -46,7 +46,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 - [x] 確認: `astro dev` でバインディングが動くこと / パージ入口を default entrypoint に置けること / Live Content Collections の採否 / React Island のバンドルサイズ（astro_design.md 10 章）
 - [x] drawer・モーダルの実現方式の調査（astro_design.md 10 章）
 - [x] drawer・モーダルの実現方式の決定（どちらも Island + History API。astro_design.md 決定 13）
-- [ ] staging での確認（キャッシュヒット、admin の保存から反映までの時間）
+- [x] staging での確認（キャッシュヒット、admin からのパージが約 1 秒で反映。astro_design.md 10 章）
 
 **成果物**: staging で記事 1 本が表示され、2 回目以降はキャッシュヒットし、admin で保存すると数秒で反映される状態
 

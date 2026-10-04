@@ -241,7 +241,7 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 | Live Content Collections の採否 | M2（使わない。5 章） |
 | React Island のバンドルサイズ | M2（確認済み。10 章） |
 | drawer・モーダルの実現方式 | M2（Island + History API で確定。決定 13、10 章） |
-| staging で、保存から反映までが数秒で済むか。静的アセットを持つ Worker でもヒット・パージが M1 と同じに働くか | M2（staging へのデプロイ後に確認） |
+| staging で、保存から反映までが数秒で済むか。静的アセットを持つ Worker でもヒット・パージが M1 と同じに働くか | M2（確認済み。10 章） |
 
 M1 でパージが成立したため、決定 1（Workers Cache のみ）はそのまま進める
 
@@ -272,7 +272,9 @@ M1 でパージが成立したため、決定 1（Workers Cache のみ）はそ�
 
 ## 10. M2 の確認結果（2026-10-04）
 
-`pages-astro` の雛形と記事詳細 1 ページを作り、ローカル（`astro dev`、`astro preview`、`wrangler dev`）で確認した。staging での確認はデプロイ後に行う
+`pages-astro` の雛形と記事詳細 1 ページを作り、ローカル（`astro dev`、`astro preview`、`wrangler dev`）と staging で確認した
+
+### ローカル
 
 | 項目 | 結果 |
 |---|---|
@@ -286,6 +288,24 @@ M1 でパージが成立したため、決定 1（Workers Cache のみ）はそ�
 | 画像の派生 | 記事 1 本の写真 2 枚で、表示サイズは現行と同じ 560px 幅のまま、要求する派生が `w=1920` から `w=640` になった |
 
 M2 で移植したブロックは、見出し・段落・リスト・表・コード・引用・区切り線・画像・写真・リンクカード・空行・目次・注釈。それ以外の `p_option`（ブログカード、イラスト・漫画カード、YouTube、Tweet など）は通常の段落として出る（M3）。限定公開記事は 404（`no-store`）にしている（M3 でゲートを移植）
+
+### staging
+
+`maretol-base-v4-stg`（workers.dev）と `admin-pages-stg` で確認した。静的アセットを持つ Worker でも、ヒットとパージは M1 と同じに働く
+
+| 項目 | 結果 |
+|---|---|
+| 記事詳細 | 1 回目 `MISS`、2 回目以降 `HIT`。ヒット時の応答は約 50ms、キャッシュを通らないとき（`draftKey` 付き）は約 120〜160ms |
+| 404 | 存在しない記事・未定義のルートとも `HIT` になり、60 秒後に `EXPIRED` で取り直す |
+| キャッシュしないもの | `draftKey` 付きは `BYPASS`（`private, no-store`） |
+| Cookie | Cookie 付きのリクエストでも `HIT`（キーに入らない） |
+| 静的アセット | `robots.txt`・`favicon.ico` は `REVALIDATED`（アセット配信側が処理し、Worker のキャッシュヘッダは関係しない） |
+| admin からのパージ | 記事編集画面の「キャッシュ削除」（`ASTRO_PAGES.purgeTags()`）で、`HIT` が続いていた記事が約 1 秒後に `MISS` になり、`age` が数え直しになった。admin 側の結果も成功 |
+| パージなしの場合 | 1 秒間隔で 35 回続けて `HIT`（自然に `MISS` になることはなかった） |
+
+確認の方法: 記事の URL を 1 秒間隔で取得して `cf-cache-status` と `age` を記録し、その間に admin で操作する。staging の admin は本番と同じ D1・KV を使うので、内容を変えずに済む「キャッシュ削除」（D1 に書き込まない）で発火させる。保存操作も同じ `purgeBlogContentCache()` を通る
+
+`admin-pages-stg` は development への push ではデプロイされない（`deploy_stg.yaml` は main 宛ての PR で動く）。admin 側の変更を staging で確認するときは `npm run deploy-stg:admin` を実行する
 
 ### drawer・モーダルの調査
 
