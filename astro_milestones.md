@@ -52,12 +52,13 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 ## M3. ブログ系の移植（#1343）
 
-- [ ] ブロックコンポーネントの残り（ブログカード・イラストカード・漫画カード・artifact・my_site・引用画像・nofetch_url・YouTube・Tweet・Google Maps・Amazon）
-- [ ] 引用画像プロキシ。外部取得（リンクカードを含む）のタイムアウトと負キャッシュ
-- [ ] 描画時の取得（リンクカード・画像の寸法）に失敗したページを長くキャッシュしない
-- [ ] サイドバー、500 ページ
+- [x] ブロックコンポーネントの残り（ブログカード・イラストカード・漫画カード・artifact・my_site・引用画像・nofetch_url・YouTube・Tweet・Google Maps・Amazon）
+- [x] 引用画像の取得（現行どおり data URL で埋め込む）。外部取得（リンクカードを含む）のタイムアウトと負キャッシュ
+- [x] 描画時の取得（前後記事・リンクカード・画像の寸法・引用画像・各カード）に失敗したページを長くキャッシュしない（10 分）。描画中の例外は 500 にする
+- [x] 500 ページ
+- [ ] サイドバー
 - [ ] トップ、ブログ一覧（`p` の検証・リダイレクト・範囲外 404、ページネーション）、タグ一覧（複数タグ）
-- [ ] 記事画像モーダル（Island + History API。`/blog/{id}/image/{base64url}` と、直接開いた場合の `/blog/{id}#{base64url}` への移動を維持）
+- [x] 記事画像モーダル（Island + History API。`/blog/{id}/image/{base64url}` と、直接開いた場合の `/blog/{id}#{base64url}` への移動を維持）
 - [ ] about / contact / secret
 - [ ] RSS、sitemap、robots、`/.well-known/nostr.json`、`/artifacts/post-for-nostter`
 - [ ] 限定公開記事（ゲート、unlock の POST、Rate Limiting、unlock 後の遷移）

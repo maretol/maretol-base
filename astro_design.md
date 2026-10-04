@@ -63,10 +63,11 @@ admin-pages ──▶ D1 に保存
 `src/mw/cache.ts` のミドルウェアは安全側の既定値を担う。`cachePage()` を呼んでいないレスポンス、`draftKey` 付きのリクエスト、GET / HEAD 以外、500 番台はすべて `private, no-store` にする。Workers Cache は `Cache-Control` の無い 200 を既定で 2 時間キャッシュするため、明示したページだけがキャッシュされる形にしている
 
 - エッジは `Cloudflare-CDN-Cache-Control` を優先するので、ブラウザには保持させずエッジだけ長く持たせられる
-- キャッシュしないもの: 限定公開記事の本体、`draftKey` 付きリクエスト、POST、`/blog/test`、500 番台
+- キャッシュしないもの: 限定公開記事の本体、`draftKey` 付きリクエスト、POST、500 番台
 - 404 はエッジに 60 秒だけキャッシュする（存在しない URL への連続アクセスで毎回 D1 まで届くのを防ぐ）。記事詳細の 404 には `post:{id}` を付け、その記事が公開されたときのパージで一緒に消えるようにする
 - データ取得の失敗（D1 の一時的な障害など）は 404 にせず 500 で返す。404 にするとエッジにキャッシュされてしまうため。fetcher が返す「存在しない」は例外メッセージ（`... not found: {id}`）で見分ける
-- 取得に失敗した部品を含む不完全なページは長くキャッシュしない。前後記事の取得に失敗した記事詳細は `no-store` にしている。リンクカードや画像の寸法の取得失敗も同じ扱いにする（M3）
+- 取得に失敗した部品を含む不完全なページは 10 分だけキャッシュする（一時的な失敗による表示が 30 日残らないようにする）。対象は、前後記事、リンクカードの OGP、画像の寸法、引用画像、イラスト・漫画・制作物のカード。部品は失敗を `Astro.locals.degraded` に記録し（`src/lib/degraded.ts`）、ミドルウェアが保持期間を縮める
+- HTML は本文を最後まで描画してから返す（ストリーミングしない）。キャッシュのヘッダはページの frontmatter で決まるが、部品の描画は本文のストリームを読み進めるまで終わらない。ストリームのまま返すと、途中で例外が起きて切れた 200 や、取得に失敗した部品を含むページがそのままキャッシュされる。描画の途中で例外が起きた場合は 500 ページを返す
 - `Set-Cookie` を返すレスポンスは保存されない。キャッシュするページでは Cookie を発行しない（Astro のセッション機能は使わない）
 - デプロイするとキャッシュは Worker バージョン単位で切り替わるため、デプロイ時の全パージは不要
 
@@ -86,6 +87,8 @@ admin-pages ──▶ D1 に保存
 | `comic:{id}` / `series:{id}` | 漫画詳細 |
 | `list:illust` | イラストの一覧 |
 | `illust:{id}` | イラスト詳細 |
+
+本文にカードを埋め込んだ記事詳細には、参照先のタグも付ける（`src/lib/content_tags.ts`）。イラストカードは `illust:{id}`、漫画カードは `comic:{id}`、制作物カードは `info`。ブログカードは記事詳細が持つ `list:blog` で足りる
 
 ### 4.3 保存操作とパージするタグ
 
@@ -149,12 +152,13 @@ pages-astro/
    ├─ pages/
    │  ├─ index.astro
    │  ├─ blog/index.astro, blog/[article_id].astro
+   │  ├─ blog/[article_id]/image/[src].astro   # 画像モーダルの URL を直接開いたときのリダイレクト
    │  ├─ tag.astro
    │  ├─ comics/index.astro, comics/[id].astro
    │  ├─ illust/index.astro, illust/detail/[id].astro
    │  ├─ about.astro, contact.astro, secret.astro
    │  ├─ rss/feed.rdf.ts, sitemap.xml.ts
-   │  ├─ 404.astro
+   │  ├─ 404.astro, 500.astro
    │  └─ .well-known/nostr.json.ts        # prerender
    ├─ components/
    │  ├─ blocks/            # ParsedContent のブロック → Astro コンポーネント
@@ -165,7 +169,7 @@ pages-astro/
 packages/cache-tags/        # Cache-Tag の文字列と、保存操作ごとのパージ対象
 ```
 
-M2 時点で存在するのは記事詳細（`blog/[article_id].astro`）と `404.astro` だけで、残りは M3 以降で足す
+いま存在するのは記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、`404.astro`、`500.astro` で、残りは M3 以降で足す
 
 ### Worker のエントリ（src/worker.ts）
 
@@ -179,7 +183,7 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 2. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
 3. クエリの正規化（M3）
 4. 限定公開記事のゲート（署名 Cookie の検証。該当レスポンスを `private, no-store` にする。M3）
-5. キャッシュヘッダの既定値（`src/mw/cache.ts`）
+5. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
 6. Astro の `middleware()` / `pages()`
 
 ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）
@@ -199,6 +203,8 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 - 2x の候補が 1x と同じ URL になっても srcset からは省かない。省くと画面の密度ごとの表示サイズが現行と変わる
 - 漫画ビューワは固定幅 2〜3 種の srcset、1〜2 本ずつの順次先読み、`onerror` でのリトライ（最後は原本 URL）を持つ（M4）
 - 記事本文画像の寸法と blur は現行どおり R2 + Images binding で作り、`IMAGE_CACHE` に 7 日保持する。KV の読み書きに失敗しても描画は続ける（#1300）
+- 引用画像（外部サイトの画像）は現行どおりサーバー側で取得し、data URL で HTML に埋め込む（`src/lib/api/cite_image.ts`）。待ち時間は 5 秒、成功は `IMAGE_CACHE` に 7 日、失敗は 10 分保持する。キャッシュの形式は現行と同じ
+- リンクカードの OGP は、取得の待ち時間を 5 秒にし、失敗を `OGP_FETCHER_CACHE` に 10 分保持する（`src/lib/api/ogp.ts`）。現行サイトも同じ KV を読むので、失敗の記録は `OGPResult` として読める形（`success: false`）にしている
 
 ### スタイルと UI 部品
 
@@ -328,5 +334,11 @@ Astro には intercepting route / parallel route に相当する仕組みが無�
 - イラスト drawer（M4）: リンク先は現行と同じ `/illust/detail/{id}`。Island がクリックを横取りして drawer を開く。直接開いた場合は単独の詳細ページ
 - 戻るで閉じる。閉じる操作は `history.back()` に揃え、履歴に余分なエントリを残さない
 
-M2 の時点では画像のリンク先を仮に原寸の画像にしてある。M3 でモーダルを移植するときに `/blog/{id}/image/{base64url}` へ戻す。ページ内アンカーの `id`（`base64url`）は M2 で付けてある
+記事画像モーダルは M3 で実装した（`src/components/islands/ImageModal.tsx`、Radix Dialog）
+
+- 画像のリンク（`a.x-blog-image`）のクリックを document で受け、`pushState` で URL を変えて開く。履歴の state には画像のアンカー id を入れ、進むボタンで開き直せるようにする
+- 閉じる操作（閉じるボタン・Esc・画像の外側のクリック）は `history.back()` を呼び、`popstate` で実際に閉じる
+- Island は画像のある記事にだけ載せ、`client:idle` で読み込む。読み込み前のクリックや直接開いた場合は、`blog/[article_id]/image/[src].astro` が `/blog/{id}#{base64url}` へ 302 で戻す（`draftKey` は引き継ぐ）
+- 自サイトの画像は幅 1920px（2x は 3840px、原本の幅まで）の派生を表示する。引用画像は記事に埋め込まれている data URL をそのまま表示する
+- 現行サイトと同じ記事で、モーダル内の画像と閉じるボタンの位置・大きさが一致することを確認した
 
