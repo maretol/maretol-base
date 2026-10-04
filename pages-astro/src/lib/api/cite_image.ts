@@ -12,6 +12,8 @@ const CACHE_KEY_PREFIX = 'cite:'
 const IMAGE_CACHE_TTL = 7 * 24 * 60 * 60
 // 取得失敗を表すキャッシュ値の prefix。data URL と区別できればよいので理由を続けて入れる
 const FAILURE_VALUE_PREFIX = 'error:'
+// 取り直しても直らない失敗のキャッシュ値の prefix。現行サイト（pages）も同じ KV を読むので、FAILURE_VALUE_PREFIX で始まる形にしておく
+const PERMANENT_FAILURE_VALUE_PREFIX = `${FAILURE_VALUE_PREFIX}permanent:`
 // 取得失敗を保持する秒数。引用元が落ちている・応答しない間、描画のたびに取りに行かないための短い保持
 const FAILURE_CACHE_TTL = 10 * 60
 // 外部への fetch の待ち時間。引用元が応答しないときに記事全体の描画を止めないための上限
@@ -21,16 +23,24 @@ const FETCH_TIMEOUT_MS = 5 * 1000
 // これを超える画像は取得を打ち切って失敗扱いにする。KV の値の上限（25MiB）には data URL にしても十分収まる
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024
 
-// 取得できたら data URL、できなかったら null
-export async function fetchCiteImage(url: string): Promise<string | null> {
+// 取得の結果。失敗のうち permanent は、取り直しても直らないもの（引用元が画像を消した・拒否している、未対応の形式、大きすぎる画像など）。
+// それ以外の失敗（タイムアウト、引用元の一時的な障害など）は、時間をおけば直る可能性がある
+export type CiteImageResult = { ok: true; dataURL: string } | { ok: false; permanent: boolean }
+
+type DownloadFailure = { reason: string; permanent: boolean }
+
+export async function fetchCiteImage(url: string): Promise<CiteImageResult> {
   // KV のキーは 512B までなので、URL そのものではなくハッシュをキーにする
   const cacheKey = CACHE_KEY_PREFIX + (await sha256Hex(url))
 
   try {
     const cached = await env.IMAGE_CACHE.get(cacheKey)
     if (cached) {
+      if (!cached.startsWith(FAILURE_VALUE_PREFIX)) {
+        return { ok: true, dataURL: cached }
+      }
       // 直近で失敗しているときは、負キャッシュの間は取りに行かない
-      return cached.startsWith(FAILURE_VALUE_PREFIX) ? null : cached
+      return { ok: false, permanent: cached.startsWith(PERMANENT_FAILURE_VALUE_PREFIX) }
     }
   } catch (e) {
     console.error(`[lib/api/cite_image.ts] Cache get error for ${url}:`, e)
@@ -39,43 +49,50 @@ export async function fetchCiteImage(url: string): Promise<string | null> {
   const downloaded = await downloadImage(url)
   if ('dataURL' in downloaded) {
     saveCache(cacheKey, downloaded.dataURL, IMAGE_CACHE_TTL)
-    return downloaded.dataURL
+    return { ok: true, dataURL: downloaded.dataURL }
   }
   // 失敗の理由は負キャッシュの値に残す
-  console.error(`[lib/api/cite_image.ts] Image fetch failed for ${url}: ${downloaded.failure}`)
-  saveCache(cacheKey, FAILURE_VALUE_PREFIX + downloaded.failure, FAILURE_CACHE_TTL)
-  return null
+  console.error(`[lib/api/cite_image.ts] Image fetch failed for ${url}: ${downloaded.reason}`)
+  const prefix = downloaded.permanent ? PERMANENT_FAILURE_VALUE_PREFIX : FAILURE_VALUE_PREFIX
+  saveCache(cacheKey, prefix + downloaded.reason, FAILURE_CACHE_TTL)
+  return { ok: false, permanent: downloaded.permanent }
 }
 
-// 画像を取得して data URL にする。取得できなかったときは理由を返す
-async function downloadImage(url: string): Promise<{ dataURL: string } | { failure: string }> {
+// 画像を取得して data URL にする。取得できなかったときは、理由と、取り直しても直らない失敗かどうかを返す
+async function downloadImage(url: string): Promise<{ dataURL: string } | DownloadFailure> {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
     const contentType = response.headers.get('content-type')
     const contentLength = Number(response.headers.get('content-length'))
     if (!response.ok) {
-      return { failure: `status ${response.status}` }
+      return { reason: `status ${response.status}`, permanent: isPermanentStatus(response.status) }
     }
     if (!contentType || !SUPPORTED_FORMATS.some((format) => contentType.startsWith(format))) {
-      return { failure: `unsupported content-type ${contentType}` }
+      return { reason: `unsupported content-type ${contentType}`, permanent: true }
     }
     if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
       // Content-Length が分かるときは本文を読む前に弾く
-      return { failure: `too large ${contentLength} bytes` }
+      return { reason: `too large ${contentLength} bytes`, permanent: true }
     }
     // Content-Length がない・偽っているケースに備えて、読みながら上限を超えた時点で打ち切る
     const bytes = await readBodyWithLimit(response, MAX_IMAGE_BYTES)
     if (bytes === null) {
-      return { failure: `exceeded ${MAX_IMAGE_BYTES} bytes while reading` }
+      return { reason: `exceeded ${MAX_IMAGE_BYTES} bytes while reading`, permanent: true }
     }
     if (bytes.byteLength === 0) {
-      return { failure: 'empty body' }
+      return { reason: 'empty body', permanent: true }
     }
     return { dataURL: `data:${contentType};base64,${bytes.toString('base64')}` }
   } catch (e) {
-    // タイムアウト（TimeoutError）や接続失敗もここに来る
-    return { failure: e instanceof Error ? `${e.name}: ${e.message}` : String(e) }
+    // タイムアウト（TimeoutError）や接続失敗もここに来る。時間をおけば直る可能性がある
+    return { reason: e instanceof Error ? `${e.name}: ${e.message}` : String(e), permanent: false }
   }
+}
+
+// 4xx は、引用元が画像を消した・拒否している場合で、取り直しても直らない。
+// 408（タイムアウト）と 429（リクエスト過多）は 4xx でも一時的なもの。5xx は引用元の一時的な障害として扱う
+function isPermanentStatus(status: number): boolean {
+  return status >= 400 && status < 500 && status !== 408 && status !== 429
 }
 
 // KV への保存。書き込みの完了はレスポンスに必要ないので待たない。保存に失敗しても取得結果はそのまま返す

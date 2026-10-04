@@ -16,8 +16,11 @@ type Props = {
 
 const { url, source, caption, sourceTitle, articleID, draftKey } = Astro.props
 
-const dataURL = await fetchCiteImage(url)
-if (dataURL === null) {
+const image = await fetchCiteImage(url)
+const dataURL = image.ok ? image.dataURL : null
+// 時間をおけば直る可能性のある失敗（タイムアウトなど）だけ、不完全なページとして記録する。
+// 引用元が画像を消した・拒否しているなど、取り直しても直らない失敗は、代わりの表示のまま通常どおりキャッシュさせる
+if (!image.ok && !image.permanent) {
   markDegraded(Astro.locals, `cite image: ${url}`)
 }
 // ページ内アンカーの id。モーダルの URL と 1 対 1 で対応する
