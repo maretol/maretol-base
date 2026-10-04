@@ -154,12 +154,13 @@ pages-astro/
 ├─ tailwind.config.ts       # 現行 pages の設定を引き継ぐ（global.css の @config から読む）
 └─ src/
    ├─ worker.ts             # Worker のエントリ（wrangler の main）。Hono + RPC メソッド
-   ├─ mw/                   # cache / purge（M3 以降: log / secret / query）
+   ├─ mw/                   # cache / purge（M3 以降: log / query）
    ├─ lib/                  # RPC 呼び出し、キャッシュヘッダ、画像 URL、OGP、ページ番号
    ├─ pages/
    │  ├─ index.astro
    │  ├─ blog/index.astro, blog/[article_id].astro
    │  ├─ blog/[article_id]/image/[src].astro   # 画像モーダルの URL を直接開いたときのリダイレクト
+   │  ├─ blog/[article_id]/unlock.ts           # 限定公開記事の解錠（POST）
    │  ├─ tag.astro
    │  ├─ comics/index.astro, comics/[id].astro
    │  ├─ illust/index.astro, illust/detail/[id].astro
@@ -178,7 +179,7 @@ pages-astro/
 packages/cache-tags/        # Cache-Tag の文字列と、保存操作ごとのパージ対象
 ```
 
-いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、固定ページ（`about.astro`、`contact.astro`、`secret.astro`、`artifacts/post-for-nostter.astro`）、フィード（`rss/feed.rdf.ts`、`sitemap.xml.ts`）、`400.astro`、`404.astro`、`500.astro` で、残りは M3 以降で足す
+いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、限定公開記事の解錠（`blog/[article_id]/unlock.ts`）、固定ページ（`about.astro`、`contact.astro`、`secret.astro`、`artifacts/post-for-nostter.astro`）、フィード（`rss/feed.rdf.ts`、`sitemap.xml.ts`）、`400.astro`、`404.astro`、`500.astro` で、残りは M3 以降で足す
 
 ### Worker のエントリ（src/worker.ts）
 
@@ -191,7 +192,7 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 1. `cf()`（静的アセットの配信、`locals.cfContext` などの設定。Astro の他のハンドラより前に置く）
 2. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
 3. クエリの正規化（M3）
-4. 限定公開記事のゲート（署名 Cookie の検証。該当レスポンスを `private, no-store` にする。M3）
+4. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
 5. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
 6. Astro の `middleware()` / `pages()`
 
@@ -249,9 +250,13 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 
 ## 6. 限定公開記事
 
-- 現行の `pages/lib/secret_unlock.ts`（HMAC-SHA256 署名 Cookie `secret_unlock_{id}`、HttpOnly / Secure / path 限定 / 30 日、定数時間比較）をそのまま移植する
-- unlock は POST エンドポイントにし、Workers の Rate Limiting バインディングで IP ごとに制限する（colo 単位の近似である点は許容）
-- 記事本体のレスポンスは `private, no-store`。一覧には従来どおり出さない
+- 現行の `pages/lib/secret_unlock.ts`（HMAC-SHA256 署名 Cookie `secret_unlock_{id}`、HttpOnly / Secure / path 限定 / 30 日、定数時間比較）をそのまま移植する（`src/lib/secret_unlock.ts`）。署名の方式と鍵（Secrets Store の `SECRET_ARTICLE_COOKIE_KEY`）が現行と同じなので、現行サイトで発行した Cookie は Astro 版でもそのまま有効
+- ゲートは記事詳細のページ（`blog/[article_id].astro`）で判定する。限定公開記事は、解錠の Cookie が有効なときだけ本文を描画し、それ以外は題名と入力フォームだけを出す（`SecretGate.astro`）。下書きプレビューでも同じく閲覧コードを求める
+- unlock は POST エンドポイント（`/blog/{id}/unlock`）にし、Workers の Rate Limiting バインディング（`SECRET_UNLOCK_RATE_LIMIT`）で IP ごとに 60 秒で 5 回までに制限する（colo 単位の近似である点は許容）。超えたら 429 を返す
+- 入力フォームは React の Island（`SecretGateForm.tsx`、`client:load`）。結果を JSON で受け取り、解錠できたらページを読み込み直す。JS が動く前に送信された場合は通常のフォーム送信として受け、303 で記事へ戻す
+- 別オリジンからのフォーム送信は、Astro の既定の確認（`security.checkOrigin`）で 403 になる
+- 記事本体のレスポンスは `private, no-store`（解錠する前の表示も含む）。メタ情報には本文とサムネイルを出さず、`noindex` にする（解錠の状態にかかわらず）。一覧には従来どおり出さない
+- 署名の鍵を読めないときは解錠できない（500）。既定の鍵に置き換えるのは開発サーバー（`astro dev`）だけ
 - 受容リスク: `secret_code` は D1 に平文で保存し、admin の編集フォームにも表示する
 
 ## 7. 切替と撤去

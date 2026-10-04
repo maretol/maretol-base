@@ -62,8 +62,8 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 - [x] 記事画像モーダル（Island + History API。`/blog/{id}/image/{base64url}` と、直接開いた場合の `/blog/{id}#{base64url}` への移動を維持）
 - [x] about / contact / secret
 - [x] RSS、sitemap、robots、`/.well-known/nostr.json`、`/artifacts/post-for-nostter`
-- [ ] 限定公開記事（ゲート、unlock の POST、Rate Limiting、unlock 後の遷移）
-- [ ] `draftKey` プレビュー
+- [x] 限定公開記事（ゲート、unlock の POST、Rate Limiting、unlock 後の遷移）
+- [x] `draftKey` プレビュー（ブログ記事。未公開の記事は正しい `draftKey` のときだけ表示し、キャッシュしない）
 - [ ] クエリの正規化
 - [ ] `Cache-Tag` の付与と、admin のタグ・info・static 保存からのパージ（ブログ記事の保存は M2 で対応済み）。次の 2 つを含む
   - info の保存で、固定ページ（about / contact / secret / `artifacts/post-for-nostter`）と制作物カードを含む記事がパージされることの確認
