@@ -65,6 +65,7 @@ admin-pages ──▶ D1 に保存
 
 - エッジは `Cloudflare-CDN-Cache-Control` を優先するので、ブラウザには保持させずエッジだけ長く持たせられる
 - キャッシュしないもの: 限定公開記事の本体、`draftKey` 付きリクエスト、POST、500 番台
+- 一覧（ブログ一覧・タグ一覧）のページ番号 `p` は、不正な値と `p=1` を、`p` を外した URL へ 308 でリダイレクトする（`src/lib/pagination.ts`）。総ページ数を超える `p` は 404 にする。この 404 には `list:blog` を付け、記事が増えたときに一緒に消えるようにする
 - 404 はエッジに 60 秒だけキャッシュする（存在しない URL への連続アクセスで毎回 D1 まで届くのを防ぐ）。記事詳細の 404 には `post:{id}` を付け、その記事が公開されたときのパージで一緒に消えるようにする
 - データ取得の失敗（D1 の一時的な障害など）は 404 にせず 500 で返す。404 にするとエッジにキャッシュされてしまうため。fetcher が返す「存在しない」は例外メッセージ（`... not found: {id}`）で見分ける
 - 取得に失敗した部品を含む不完全なページは 10 分だけキャッシュする（一時的な失敗による表示が 30 日残らないようにする）。対象は、前後記事、画像の寸法、引用画像の一時的な失敗（タイムアウト、引用元の 5xx など）。引用画像でも、引用元の 4xx、未対応の形式、3MB を超える画像は、取り直しても直らないので対象にしない（代わりの表示のまま通常どおりキャッシュする）。部品は失敗を `Astro.locals.degraded` に記録し（`src/lib/degraded.ts`）、ミドルウェアが保持期間を縮める。リンクカードは記事とは別のリクエスト（Server Island）で描画するので、リンク先の状態は記事のキャッシュに影響しない（5 章）。自サイトのコンテンツへのカード（ブログ・イラスト・漫画・制作物）が取得できない場合も対象にしない。コンテンツはすべて自分で管理していて、存在しないものを指すことは基本的にないので、取得できないものは公開後に非公開・削除されたとみなし、代わりの表示（「公開後に非公開になった可能性があります」）のまま通常どおりキャッシュする。再び公開されたときは、ページに付けた参照先のタグ（4.3）のパージで消える
@@ -82,12 +83,16 @@ admin-pages ──▶ D1 に保存
 | `blog` | ブログ系の全ページ（トップ・一覧・タグ一覧・記事詳細・RSS・sitemap） |
 | `list:blog` | 記事の一覧を含むページ（トップ・一覧・タグ一覧・RSS・sitemap）と、前後記事を表示する記事詳細 |
 | `post:{id}` | 記事詳細 |
-| `tag:{tag_id}` | タグ一覧（複数タグの組み合わせは構成タグをすべて付ける） |
+| `tag:{tag_id}` | タグ一覧（現行と同じく、タグは 1 つだけ指定できる） |
 | `info` | about / contact / secret |
-| `list:comics` | 漫画の一覧と、シリーズ案内を表示する漫画詳細 |
+| `list:comics` | 漫画の一覧と、シリーズ案内を表示する漫画詳細。トップと、サイドバーを持つページ |
 | `comic:{id}` / `series:{id}` | 漫画詳細 |
-| `list:illust` | イラストの一覧 |
+| `list:illust` | イラストの一覧。トップと、サイドバーを持つページ |
 | `illust:{id}` | イラスト詳細 |
+
+サイドバーを持つページ（ブログ一覧・タグ一覧・記事詳細など、`BlogLayout` を使うページ）は、サイドバーが最新の記事・漫画・イラストとタグの一覧を出すので、`blog` / `list:blog` / `list:comics` / `list:illust` をまとめて持つ（`src/lib/cache.ts` の `sidebarTags`）。漫画やイラストを保存すると、サイドバーを持つページもパージされる。トップページも同じ 4 つを持つ（3 種類の一覧を出すため）。404 と 500 のページはサイドバーを出さない（存在しない URL への連続アクセスで、サイドバーのための取得が増えないようにする）
+
+一覧に出す記事の抜粋にカードが含まれる場合は、その参照先のタグも付ける。タグ一覧の `tag:{tag_id}` は、タグの一覧にある ID のときだけ付ける（クエリの値をそのままヘッダへ入れない）
 
 本文にカードを埋め込んだ記事詳細には、参照先のタグも付ける（`src/lib/content_tags.ts`）。イラストカードは `illust:{id}`、漫画カードは `comic:{id}`、制作物カードは `info`。ブログカードは記事詳細が持つ `list:blog` で足りる
 
@@ -149,7 +154,7 @@ pages-astro/
 └─ src/
    ├─ worker.ts             # Worker のエントリ（wrangler の main）。Hono + RPC メソッド
    ├─ mw/                   # cache / purge（M3 以降: log / secret / query）
-   ├─ lib/                  # RPC 呼び出し、キャッシュヘッダ、画像 URL、OGP
+   ├─ lib/                  # RPC 呼び出し、キャッシュヘッダ、画像 URL、OGP、ページ番号
    ├─ pages/
    │  ├─ index.astro
    │  ├─ blog/index.astro, blog/[article_id].astro
@@ -164,8 +169,9 @@ pages-astro/
    ├─ components/
    │  ├─ blocks/            # ParsedContent のブロック → Astro コンポーネント
    │  ├─ article/ shell/ ui/
+   │  ├─ top/ illust/ comic/   # トップページの一覧、イラスト・漫画のカード
    │  └─ islands/           # React: 漫画ビューワ・drawer・モーダル・設定 UI
-   ├─ layouts/
+   ├─ layouts/              # BaseLayout（html / head）→ SiteLayout（ヘッダー・フッター）→ BlogLayout（サイドバー）
    └─ styles/global.css
 packages/cache-tags/        # Cache-Tag の文字列と、保存操作ごとのパージ対象
 ```
@@ -195,6 +201,8 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 `cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。info の一覧だけは、取得中の Promise を `Astro.locals` に置き、1 回の描画の中で共有する（制作物カードが複数あると、カードごとに全件の取得とパースが走るため。リクエストをまたぐキャッシュは持たない）。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
 
+サイドバー（`src/components/shell/sidebar/BlogSidebar.astro`）は、固定文言・最新の漫画・イラスト・記事・タグの 5 つを自分で取得する。取得できなかった区画は出さずに不完全なページとして記録し（10 分キャッシュ）、本文は表示する。サイドバーはページの HTML に含める（Server Island にはしない。JS が無くても最新の一覧へのリンクが出ることと、取得が自サイトの中で完結して速いことから）
+
 RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.d.ts` と `ogp-data-fetcher/types.d.ts` を参照し、`Cloudflare.Env` とグローバルの `Env` の `CMS_RPC` / `OGP_RPC` を `Service<…>` として宣言する（`wrangler types` は Service Binding を `Fetcher` としか出力しない。pages / admin-pages の `env.d.ts` と同じやり方で、キャストは使わない）
 
 絶対 URL（OGP・canonical・RSS など）は環境ごとの `HOST`（wrangler.toml の vars）から作る（`src/lib/site.ts`）。astro.config.ts の `site` は設定しない。ビルド時に決まる値なので、本番の URL を書くと staging でも `Astro.site` が本番を指す
@@ -219,6 +227,8 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 - shadcn 由来の Button / Card は React コンポーネントにせず、class の定義（`src/components/ui/button.ts`、`card.ts`）を `.astro` と Island の両方から使う。`.astro` から React の `asChild` は使えないため
 - アイコンは `.astro` では `@lucide/astro`、Island では `lucide-react`
 - Island には class をサーバー側で組み立てて props で渡す（tailwind-merge などをクライアントへ持ち込まない）
+- サイドバーのタグの選択は React の Island（`src/components/islands/TagSelect.tsx`、Radix Select、`client:idle`）。class は現行サイトの shadcn/ui の Select を結合済みの文字列で持つ。トップページの横スクロールの左右ボタンは、Island にせず `<script>` で動かす
+- ヘッダーのロゴ画像の `width` / `height` は原本（1104×210）の比率に合わせる。本文とサイドバーの列の幅は、合わせてちょうど 100% になる値（`calc(80% - 12.8px)` と `calc(20% - 3.2px)`、間隔 16px）で明示する。どちらも、初回訪問時のレイアウトのずれを避けるため（#1355）。最終的な大きさは現行サイトと同じ
 
 ### ビルド・デプロイ・ローカル開発
 
