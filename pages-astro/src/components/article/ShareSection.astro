@@ -1,0 +1,55 @@
+---
+import { faBluesky, faTwitter } from '@fortawesome/free-brands-svg-icons'
+import ShareCopyButton from '@/components/islands/ShareCopyButton'
+import { buttonVariants } from '@/components/ui/button'
+import { addUtmParams, type ContentType } from '@/lib/utm'
+import { cn } from '@/lib/utils'
+
+type Props = { shareURL: string; shareTitle: string; contentType?: ContentType }
+
+const { shareURL, shareTitle, contentType = 'page' } = Astro.props
+const text = `${shareTitle} | Maretol Base`
+const withUtm = (source: 'twitter' | 'bluesky') =>
+  addUtmParams(shareURL, { source, medium: 'social', campaign: 'share_button', content: contentType })
+
+const links = [
+  {
+    label: 'Twitter で共有',
+    icon: faTwitter,
+    href: `https://twitter.com/intent/tweet?${new URLSearchParams({ url: withUtm('twitter'), text })}`,
+  },
+  {
+    label: 'Bluesky で共有',
+    icon: faBluesky,
+    href: `https://bsky.app/intent/compose?${new URLSearchParams({ text: `${text}\n${withUtm('bluesky')}` })}`,
+  },
+]
+const buttonClassName = cn(buttonVariants({ variant: 'secondary' }), 'p-3')
+---
+
+{
+  links.map(({ label, icon, href }) => {
+    // FontAwesome のアイコン定義は [幅, 高さ, 合字, unicode, パス]
+    const [width, height, , , path] = icon.icon
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" class={buttonClassName} aria-label={label}>
+        <svg
+          class="h-6"
+          viewBox={`0 0 ${width} ${height}`}
+          fill="currentColor"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path d={Array.isArray(path) ? path.join(' ') : path} />
+        </svg>
+      </a>
+    )
+  })
+}
+<ShareCopyButton
+  client:visible
+  url={shareURL}
+  title={shareTitle}
+  contentType={contentType}
+  className={cn(buttonClassName, 'cursor-pointer')}
+/>

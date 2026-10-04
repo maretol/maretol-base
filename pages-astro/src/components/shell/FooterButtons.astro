@@ -1,0 +1,19 @@
+---
+import { ArrowBigUpIcon, HouseIcon } from '@lucide/astro'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+const buttonClassName = 'w-48 gap-1 font-suse'
+const iconClassName = 'w-4 h-4'
+---
+
+<div class="flex sm:flex-row flex-col justify-center items-center mb-4">
+  <a href="/" class={cn(buttonVariants({ variant: 'default' }), buttonClassName)}>
+    <HouseIcon class={iconClassName} />
+    Back to the Home
+  </a>
+  <a href="#top" class={cn(buttonVariants({ variant: 'secondary' }), buttonClassName)}>
+    <ArrowBigUpIcon class={iconClassName} />
+    Jump to the Top
+  </a>
+</div>

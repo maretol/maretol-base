@@ -4,6 +4,8 @@
  * illust のキー（atelier_ プレフィックス: 一覧・単体とも）を一括削除する
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { purgeTags } from 'cache-tags'
+import { purgeEdgeCache } from './edge_cache'
 
 const ATELIER_PREFIX = 'atelier_'
 const BANDE_DESSINEE_PREFIX = 'bande_dessinee_'
@@ -19,9 +21,12 @@ export async function purgeBandeDessineeCache(): Promise<void> {
 }
 
 // blog記事の保存時: 一覧（contents_* / contents_with_tags_*）と単体（content_{id}）を削除する
-export async function purgeBlogContentCache(articleID: string): Promise<void> {
+// Astro 版の公開サイト（Workers Cache）も併せてパージする。戻り値はそちらのパージができたか
+// （KV は現行サイト用で、Astro 版へ切り替えたあと撤去する。astro_milestones.md の M7）
+export async function purgeBlogContentCache(articleID: string): Promise<boolean> {
   const { env } = await getCloudflareContext({ async: true })
   await Promise.all([deleteByPrefix(env.CMS_CACHE, 'contents_'), env.CMS_CACHE.delete(`content_${articleID}`)])
+  return purgeEdgeCache(purgeTags.blogContent(articleID))
 }
 
 // カテゴリ・固定ページ・静的文言の保存時: 対応する固定キーを削除する

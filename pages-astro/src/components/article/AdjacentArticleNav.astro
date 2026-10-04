@@ -1,0 +1,46 @@
+---
+import type { adjacentContentsResult } from 'api-types'
+import { ChevronLeftIcon, ChevronRightIcon } from '@lucide/astro'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+// 記事下部の前後記事ナビ。prev = 一つ前（古い方）、next = 一つあと（新しい方）
+type Props = { adjacent: adjacentContentsResult }
+
+const { prev, next } = Astro.props.adjacent
+---
+
+{
+  (prev !== null || next !== null) && (
+    <nav class="mb-4 justify-between space-y-2 2xl:justify-between 2xl:flex 2xl:gap-2" aria-label="前後の記事">
+      <div class="flex-1 min-w-0">
+        {prev && (
+          <a
+            href={`/blog/${prev.id}`}
+            class={cn(buttonVariants({ variant: 'secondary' }), 'w-full h-auto justify-start gap-2 py-3')}
+          >
+            <ChevronLeftIcon class="w-5 h-5 shrink-0" />
+            <span class="min-w-0 text-left">
+              <span class="block text-xs text-gray-500">Prev article</span>
+              <span class="block truncate">{prev.title}</span>
+            </span>
+          </a>
+        )}
+      </div>
+      <div class="flex-1 min-w-0">
+        {next && (
+          <a
+            href={`/blog/${next.id}`}
+            class={cn(buttonVariants({ variant: 'secondary' }), 'w-full h-auto justify-end gap-2 py-3')}
+          >
+            <span class="min-w-0 text-right">
+              <span class="block text-xs text-gray-500">Next article</span>
+              <span class="block truncate">{next.title}</span>
+            </span>
+            <ChevronRightIcon class="w-5 h-5 shrink-0" />
+          </a>
+        )}
+      </div>
+    </nav>
+  )
+}

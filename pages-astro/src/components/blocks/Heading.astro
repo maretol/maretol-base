@@ -1,0 +1,43 @@
+---
+// CMS データの h1, h2... は、記事タイトルを h1 とする都合でそれぞれ一つずつ下の階層に置換する
+type Props = { tag: string; text: string; attrs?: { [key: string]: string } }
+
+const { tag, text, attrs } = Astro.props
+const id = attrs?.id ? attrs.id : undefined
+---
+
+{
+  tag === 'h1' ? (
+    <div class="pt-8 pb-3 space-y-0 -ml-2">
+      <h2 lang="ja" id={id} class="text-2xl font-bold pl-2 pb-1 content-h2">
+        {text}
+      </h2>
+    </div>
+  ) : tag === 'h2' ? (
+    <div class="pt-8 pb-3 space-y-0 -ml-1">
+      <h3 lang="ja" id={id} class="text-xl font-bold border-blue-900 pl-3 border-l-4">
+        {text}
+      </h3>
+    </div>
+  ) : tag === 'h3' ? (
+    <div class="flex flex-row items-center pt-4 pb-3 space-x-2 -ml-2">
+      <div class="w-2 h-2 rounded-full bg-blue-900 inline-block" />
+      <h4 lang="ja" id={id} class="text-lg font-bold">
+        {text}
+      </h4>
+    </div>
+  ) : tag === 'h4' ? (
+    <div class="flex flex-row items-center pt-4 pb-3 space-x-2 -ml-2">
+      <div class="w-2 h-1 rounded-full bg-blue-900 inline-block" />
+      <h5 lang="ja" id={id} class="font-bold">
+        {text}
+      </h5>
+    </div>
+  ) : tag === 'h5' ? (
+    <h6 lang="ja" id={id} class="pt-2 pb-3">
+      {text}
+    </h6>
+  ) : (
+    <p lang="ja">{text}</p>
+  )
+}

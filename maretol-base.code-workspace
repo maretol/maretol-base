@@ -9,6 +9,10 @@
 			"path": "pages"
 		},
 		{
+			"name": "maretol-base page astro",
+			"path": "pages-astro"
+		},
+		{
 			"name": "maretol-base admin page",
 			"path": "admin-pages"
 		},

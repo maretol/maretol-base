@@ -11,10 +11,10 @@ export default async function EditBlogContent({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string }>
+  searchParams: Promise<{ error?: string; saved?: string; purge_failed?: string }>
 }) {
   const { id } = await params
-  const { error, saved } = await searchParams
+  const { error, saved, purge_failed: purgeFailed } = await searchParams
 
   const article = await getBlogContent(id)
   if (!article) {
@@ -38,6 +38,7 @@ export default async function EditBlogContent({
         allCategories={allCategories}
         error={error}
         saved={saved === '1'}
+        purgeFailed={purgeFailed === '1'}
       />
     </div>
   )

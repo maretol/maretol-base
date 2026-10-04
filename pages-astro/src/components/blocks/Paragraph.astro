@@ -1,0 +1,8 @@
+---
+type Props = { innerHTML: string; attrs?: { [name: string]: string } }
+
+const { innerHTML, attrs } = Astro.props
+const textAlign = attrs?.['style']?.match(/text-align: (left|center|right)/)?.[1] ?? 'left'
+---
+
+<p lang="ja" style={`text-align:${textAlign}`} class="leading-8 my-2" set:html={innerHTML} />

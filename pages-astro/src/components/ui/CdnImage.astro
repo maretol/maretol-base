@@ -1,0 +1,54 @@
+---
+import { cn } from '@/lib/utils'
+import { getImageSources, type ImageFormat } from '@/lib/image'
+
+// /cdn-cgi/image/ 経由の画像。表示幅に対する 1x / 2x の派生だけを要求する
+type Props = {
+  src: string
+  alt: string
+  width?: number
+  height?: number
+  quality?: number
+  format?: ImageFormat
+  // 表示幅の上限（CSS px）。固定幅の枠に入る画像で指定する
+  maxDisplayWidth?: number
+  // 原本の幅が分かっているとき
+  sourceWidth?: number
+  // blur プレースホルダ（data URL）。読み込みが終わるまで背景に表示する
+  blurData?: string
+  loading?: 'lazy' | 'eager'
+  class?: string
+}
+
+const {
+  src,
+  alt,
+  width = 1000,
+  height = 1000,
+  quality,
+  format,
+  maxDisplayWidth,
+  sourceWidth,
+  blurData,
+  loading = 'lazy',
+  class: className,
+} = Astro.props
+
+const sources = getImageSources(src, width, { quality, format, maxDisplayWidth, sourceWidth })
+const style = blurData
+  ? `color:transparent;background-size:cover;background-position:50% 50%;background-repeat:no-repeat;background-image:url("${blurData}")`
+  : 'color:transparent'
+---
+
+<img
+  src={sources.src}
+  srcset={sources.srcset}
+  alt={alt}
+  width={width}
+  height={height}
+  loading={loading}
+  decoding="async"
+  class={cn('object-cover object-top w-full h-auto', className)}
+  style={style}
+  onload={blurData ? "this.style.backgroundImage='none'" : undefined}
+/>

@@ -1,0 +1,84 @@
+---
+import type { adjacentContentsResult, Annotation, categoryAPIResult, ParsedContent, TableOfContents } from 'api-types'
+import { HouseIcon } from '@lucide/astro'
+import ArticleContent from './ArticleContent.astro'
+import Annotations from './Annotations.astro'
+import Tags from './Tags.astro'
+import ShareSection from './ShareSection.astro'
+import AdjacentArticleNav from './AdjacentArticleNav.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { card } from '@/components/ui/card'
+import { convertJST } from '@/lib/time'
+import { cn } from '@/lib/utils'
+
+type Props = {
+  title: string
+  publishedAt: string
+  updatedAt: string
+  categories: categoryAPIResult[]
+  parsedContents: ParsedContent[]
+  tableOfContents: TableOfContents
+  type: 'blog' | 'info'
+  shareURL: string
+  annotations?: Annotation[]
+  // 前後記事ナビ（blog のみ）。未指定なら表示しない
+  adjacent?: adjacentContentsResult
+}
+
+const {
+  title,
+  publishedAt,
+  updatedAt,
+  categories,
+  parsedContents,
+  tableOfContents,
+  type,
+  shareURL,
+  annotations,
+  adjacent,
+} = Astro.props
+---
+
+<div lang="ja" class={cn(card.root, 'w-full bg-gray-100')}>
+  <div class={card.header}>
+    <h1 lang="ja" class={card.title}>{title}</h1>
+    <p class={card.description}>
+      {
+        type === 'blog' ? (
+          <>
+            作成日{convertJST(publishedAt)} <br />
+            最終更新{convertJST(updatedAt)}
+          </>
+        ) : (
+          <>最終更新日{convertJST(updatedAt)}</>
+        )
+      }
+    </p>
+    {
+      type === 'blog' && (
+        <div class={cn(card.content, 'pl-0 pb-0')}>
+          <Tags tags={categories} />
+        </div>
+      )
+    }
+  </div>
+  <hr class="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
+  <div class={cn(card.content, 'mb-8')}>
+    <ArticleContent contents={parsedContents} tableOfContents={tableOfContents} />
+    <Annotations annotations={annotations ?? []} />
+  </div>
+  <div class={card.footer}>
+    <div class="w-full space-y-4">
+      <div class="flex gap-2 items-center justify-end">
+        <ShareSection shareURL={shareURL} shareTitle={title} contentType="blog" />
+      </div>
+      {adjacent && <AdjacentArticleNav adjacent={adjacent} />}
+      <div class="flex justify-center">
+        <a href="/" class={cn(buttonVariants({ variant: 'secondary' }), 'w-96 flex justify-center gap-1')}>
+          <HouseIcon class="w-5 h-5" />
+          <h2 class="text-xl font-suse">Home</h2>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
