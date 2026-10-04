@@ -14,8 +14,7 @@ User-agent: Amazonbot
 Disallow: /
 
 User-agent: *
-Disallow: /_next/
-Disallow: /api/
+Disallow: /_server-islands/
 # 複数タグの組み合わせ検索をブロック
 Disallow: /tag?*tag_id=*&tag_id=*
 Disallow: /tag?*tag_name=*&tag_name=*

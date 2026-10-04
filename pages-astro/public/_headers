@@ -1,0 +1,5 @@
+# NIP-05（Nostr の識別子の確認）。別オリジンのクライアントから読めるようにする
+/.well-known/nostr.json
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET, OPTIONS
+  Access-Control-Max-Age: 86400

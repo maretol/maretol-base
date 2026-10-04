@@ -25,7 +25,7 @@ CMS 側（admin-pages / cms-data-fetcher / D1）の設計は cms_goal.md・cms_d
 | 6 | 並行運用 | 新ワークスペース `pages-astro/`・新 Worker `maretol-base-v4` を staging で作り込み、custom domain を付け替えて一括切替 | パス単位の段階切替はパージ経路が 2 系統になり、route の共存確認も要る |
 | 7 | KV | `CMS_CACHE` のみ撤去。`IMAGE_CACHE` / `OGP_FETCHER_CACHE` / `CMS_DRAFT` は残す | 残す 3 つは結果整合性で困らない用途 |
 | 8 | 限定公開記事 | キャッシュしない。unlock にレート制限を付ける。`secret_code` はハッシュ化しない | Workers Cache は Cookie でキーを分けられない。admin で既存コードを確認できる運用を優先 |
-| 9 | prerender | `/.well-known/nostr.json`・robots など本当に静的なものだけ | about / contact / secret は D1 由来で CMS から更新される |
+| 9 | prerender | `/.well-known/nostr.json`・robots など本当に静的なものだけ（どちらも `public/` の静的ファイルにした） | about / contact / secret は D1 由来で CMS から更新される |
 | 10 | アクセスログ | Axiom へのログは描画時（ミス時）のみになることを受容。アクセス解析は Cloudflare beacon / Clarity / Cloudflare Analytics で見る | ヒット時は Worker が起動しない。ログはエラーと異常アクセスの監視用に残す |
 | 11 | エッジ TTL | 30 日 | パージで更新するので、長さはパージ漏れ時の上限としてしか効かない |
 | 12 | 進め方 | development へ小分け PR。`pages-astro` は development への push で staging にデプロイする | 切替まで本番に影響しない |
@@ -85,7 +85,7 @@ admin-pages ──▶ D1 に保存
 | `list:blog` | 記事の一覧を含むページ（トップ・一覧・タグ一覧・RSS・sitemap）と、前後記事を表示する記事詳細 |
 | `post:{id}` | 記事詳細 |
 | `tag:{tag_id}` | タグ一覧（現行と同じく、タグは 1 つだけ指定できる） |
-| `info` | about / contact / secret |
+| `info` | about / contact / secret / `artifacts/post-for-nostter`（info の内容を表示するページ）。制作物カードを含む記事詳細 |
 | `list:comics` | 漫画の一覧と、シリーズ案内を表示する漫画詳細。トップと、サイドバーを持つページ |
 | `comic:{id}` / `series:{id}` | 漫画詳細 |
 | `list:illust` | イラストの一覧。トップと、サイドバーを持つページ |
@@ -95,7 +95,7 @@ admin-pages ──▶ D1 に保存
 
 一覧に出す記事の抜粋にカードが含まれる場合は、その参照先のタグも付ける。タグ一覧の `tag:{tag_id}` は、タグの一覧にある ID にだけ付ける（一覧に無い値は 400 にするので、クエリの値がそのままヘッダへ入ることはない）
 
-本文にカードを埋め込んだ記事詳細には、参照先のタグも付ける（`src/lib/content_tags.ts`）。イラストカードは `illust:{id}`、漫画カードは `comic:{id}`、制作物カードは `info`。ブログカードは記事詳細が持つ `list:blog` で足りる
+本文にカードを埋め込んだ記事詳細には、参照先のタグも付ける（`src/lib/content_tags.ts`）。イラストカードは `illust:{id}`、漫画カードは `comic:{id}`、制作物カードは `info`、ブログカードは `list:blog`。固定ページ（`/secret` など）の本文にブログカードがある場合も、同じ仕組みで `list:blog` が付き、記事の保存でパージされる
 
 ### 4.3 保存操作とパージするタグ
 
@@ -165,8 +165,9 @@ pages-astro/
    │  ├─ illust/index.astro, illust/detail/[id].astro
    │  ├─ about.astro, contact.astro, secret.astro
    │  ├─ rss/feed.rdf.ts, sitemap.xml.ts
+   │  ├─ artifacts/post-for-nostter.astro
    │  ├─ 400.astro, 404.astro, 500.astro
-   │  └─ .well-known/nostr.json.ts        # prerender
+   │  └─ （.well-known/nostr.json と robots.txt は public/ の静的ファイル）
    ├─ components/
    │  ├─ blocks/            # ParsedContent のブロック → Astro コンポーネント
    │  ├─ article/ shell/ ui/
@@ -177,7 +178,7 @@ pages-astro/
 packages/cache-tags/        # Cache-Tag の文字列と、保存操作ごとのパージ対象
 ```
 
-いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、`400.astro`、`404.astro`、`500.astro` で、残りは M3 以降で足す
+いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、固定ページ（`about.astro`、`contact.astro`、`secret.astro`、`artifacts/post-for-nostter.astro`）、フィード（`rss/feed.rdf.ts`、`sitemap.xml.ts`）、`400.astro`、`404.astro`、`500.astro` で、残りは M3 以降で足す
 
 ### Worker のエントリ（src/worker.ts）
 
@@ -197,6 +198,13 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）
 
 アクセスログとは別に、5 で検出した不完全なページ（どの部品の取得に失敗したか）と描画中の例外も Axiom へ送る。キャッシュを短くしたことに気づけるようにするため。送信の仕組みはアクセスログと共用する（M5）
+
+### 固定ページとフィード
+
+- about / contact / secret / `artifacts/post-for-nostter` は、CMS の info をパスで探して表示する（`getInfoPage()`）。取得からキャッシュの指定までは 4 ページ共通で、`src/lib/info_page.ts` の `loadInfoPage()` にまとめている。該当する info が無ければ 404 にし、`info` のタグを付けて、公開されたときに一緒に消えるようにする。`artifacts/post-for-nostter` だけサイドバーを出す（現行と同じ）
+- RSS（`/rss/feed.rdf`）は、最新 20 件の記事の冒頭 10 ブロックを載せる。本文の組み立て（`src/lib/rss.ts`）は現行サイトと同じで、出力も一致する。エッジには `blog` / `list:blog` のタグで 30 日キャッシュし、記事の保存でパージする。フィードリーダーには保持させない（ほかのページと同じ `max-age=0, must-revalidate`。現行サイトは `max-age=3600` を返している）。記事の取得に失敗したときは 500 にする（空のフィードをキャッシュさせない）
+- sitemap（`/sitemap.xml`）は、現行と同じく入口になる 7 ページだけを載せる。`lastmod` は描画した時刻で、記事の保存でパージされたときに新しくなる
+- `robots.txt` と `/.well-known/nostr.json` は `public/` の静的ファイル。`nostr.json` の CORS のヘッダは `public/_headers` で付ける。`robots.txt` は、現行の `/_next/` と `/api/` の Disallow を外し、`/_server-islands/` だけを Disallow にする（CSS や JS のある `/_astro/` はクローラに見せる）
 
 ### データ取得
 

@@ -3,8 +3,7 @@ import { cacheTag } from 'cache-tags'
 import { getSampleBlocks } from '@/lib/sample'
 
 // 本文に埋め込んだカードが参照するコンテンツの Cache-Tag。
-// 参照先が更新されたときに、カードを含むページもパージされるようにする。
-// ブログカードは記事詳細が持つ list:blog で足りるので、ここでは扱わない
+// 参照先が更新されたときに、カードを含むページもパージされるようにする
 export function getEmbedTags(contents: ParsedContent[]): string[] {
   const tags = new Set<string>()
   for (const content of contents) {
@@ -21,6 +20,10 @@ export function getEmbedTags(contents: ParsedContent[]): string[] {
       if (id) tags.add(cacheTag.comic(id))
     } else if (content.p_option === 'artifact') {
       tags.add(cacheTag.info)
+    } else if (content.p_option === 'blog') {
+      // ブログカードは記事の題名などを出すので、記事の保存でパージされる list:blog を付ける。
+      // 記事詳細や一覧はもともと持っているが、固定ページ（/secret など）は持たない
+      tags.add(cacheTag.blogList)
     }
   }
   return [...tags]

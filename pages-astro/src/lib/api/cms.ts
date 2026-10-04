@@ -105,6 +105,13 @@ export function getInfo(locals: App.Locals): Promise<infoAPIResult[]> {
   return (locals.info ??= fetchInfo())
 }
 
+// 固定ページ（about / contact など）の info。パスで探し、無ければ null
+export async function getInfoPage(locals: App.Locals, pathname: string): Promise<infoAPIResult | null> {
+  const info = await getInfo(locals)
+  // page_pathname は先頭のスラッシュが無い形でも登録されている
+  return info.find((c) => c.page_pathname === pathname || c.page_pathname === pathname.slice(1)) ?? null
+}
+
 async function fetchInfo(): Promise<infoAPIResult[]> {
   return (await env.CMS_RPC.fetchInfo()) as infoAPIResult[]
 }
