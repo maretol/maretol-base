@@ -60,8 +60,8 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 - [x] サイドバー
 - [x] トップ、ブログ一覧（`p` の検証・リダイレクト・範囲外 404、ページネーション）、タグ一覧（現行と同じく、タグは `tag_id` で 1 つ指定する）
 - [x] 記事画像モーダル（Island + History API。`/blog/{id}/image/{base64url}` と、直接開いた場合の `/blog/{id}#{base64url}` への移動を維持）
-- [ ] about / contact / secret
-- [ ] RSS、sitemap、robots、`/.well-known/nostr.json`、`/artifacts/post-for-nostter`
+- [x] about / contact / secret
+- [x] RSS、sitemap、robots、`/.well-known/nostr.json`、`/artifacts/post-for-nostter`
 - [ ] 限定公開記事（ゲート、unlock の POST、Rate Limiting、unlock 後の遷移）
 - [ ] `draftKey` プレビュー
 - [ ] クエリの正規化
