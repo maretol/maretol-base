@@ -1,0 +1,60 @@
+name: deploy staging (pages-astro)
+
+# Astro 版の公開サイト（pages-astro）は development へのマージで staging にデプロイする。
+# 切替（astro_milestones.md の M6）まで本番に影響しないので、main 宛て PR を待たずに staging で確認できるようにする
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - "pages-astro/**"
+      - "packages/api-types/**"
+      - "packages/cache-tags/**"
+      - ".github/workflows/deploy_stg_astro.yaml"
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: 22.17.0
+  WRANGLER_VERSION: '4'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-pages-astro:
+    runs-on: ubuntu-latest
+    environment:
+      name: stg
+    defaults:
+      run:
+        working-directory: ./pages-astro
+    steps:
+      - uses: actions/checkout@v7
+      - name: setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm ci
+        working-directory: ./
+        run: npm ci
+      - name: type check
+        working-directory: ./
+        run: npm run check:astro
+      # 環境はビルド時に決まる（CLOUDFLARE_ENV=staging）。wrangler deploy は生成された設定を使うので -e は付けない
+      - name: build
+        working-directory: ./
+        run: npm run build-stg:astro
+      - name: deploy by wrangler
+        id: deploy
+        uses: cloudflare/wrangler-action@v4
+        with:
+          wranglerVersion: ${{ env.WRANGLER_VERSION }}
+          apiToken: ${{ secrets.CF_API_TOKEN }}
+          accountId: ${{ secrets.CF_ACCOUNT_ID }}
+          workingDirectory: ./pages-astro
+          command: deploy
+      - name: show done command
+        env:
+          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
+        run: echo $CMD_OUTPUT

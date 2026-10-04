@@ -1,0 +1,42 @@
+{
+  "name": "pages-astro",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cf-typegen": "wrangler types",
+    "dev": "npm run cf-typegen && astro dev",
+    "build": "npm run cf-typegen && astro build",
+    "build-stg": "npm run cf-typegen && CLOUDFLARE_ENV=staging astro build",
+    "preview": "astro preview",
+    "check": "npm run cf-typegen && astro check",
+    "deploy-stg": "npm run build-stg && wrangler deploy",
+    "deploy-prd": "npm run build && wrangler deploy"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.3.3",
+    "@astrojs/react": "^7.0.0",
+    "@fontsource-variable/m-plus-1": "^5.3.0",
+    "@fontsource-variable/suse": "^5.3.0",
+    "@fortawesome/free-brands-svg-icons": "^7.3.1",
+    "@lucide/astro": "^1.51.0",
+    "astro": "^7.3.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "hono": "^4.13.12",
+    "lucide-react": "^1.45.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.0.9",
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^6.0.3",
+    "wrangler": "^4.127.1"
+  }
+}

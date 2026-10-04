@@ -1,0 +1,62 @@
+---
+import type { ParsedContent, TableOfContents as TOC } from 'api-types'
+import Heading from './Heading.astro'
+import Paragraph from './Paragraph.astro'
+import Blockquote from './Blockquote.astro'
+import ContentImage from './ContentImage.astro'
+import LinkCard from './LinkCard.astro'
+import TableOfContents from './TableOfContents.astro'
+
+// parsed_content の 1 要素を、タグと p_option に応じたコンポーネントで描画する
+type Props = { content: ParsedContent; tableOfContents?: TOC }
+
+const { content, tableOfContents } = Astro.props
+const tag = content.tag_name
+const html = content.inner_html || ''
+
+// p はオプションで分岐する。ここに無いオプションは通常の段落として出す
+const pOption = tag === 'p' ? (content.p_option ?? 'normal') : null
+---
+
+{
+  /h[1-5]/.test(tag) ? (
+    <Heading tag={tag} text={content.text} attrs={content.attributes} />
+  ) : tag === 'hr' ? (
+    <hr class="border-t-2 border-gray-300 my-8" />
+  ) : tag === 'table' ? (
+    html && (
+      <div class="my-4 overflow-x-auto">
+        <table lang="ja" set:html={html} />
+      </div>
+    )
+  ) : tag === 'div' ? (
+    html && <div class={content.attributes?.['class']} set:html={html} />
+  ) : tag === 'ul' ? (
+    <ul lang="ja" class="py-4" set:html={html} />
+  ) : tag === 'ol' ? (
+    <ol lang="ja" class="py-4" set:html={html} />
+  ) : tag === 'blockquote' ? (
+    <Blockquote innerHTML={html} text={content.text} />
+  ) : tag !== 'p' ? (
+    <div>
+      <p>unknown tag error : {tag}</p>
+      <div set:html={html} />
+    </div>
+  ) : pOption === 'image' || pOption === 'photo' ? (
+    <div class="py-4">
+      <ContentImage variant={pOption} src={content.text} subText={content.sub_texts ?? null} />
+    </div>
+  ) : pOption === 'url' ? (
+    <div class="py-4">
+      <LinkCard link={content.text} />
+    </div>
+  ) : pOption === 'empty' || pOption === 'br' ? (
+    <p class="leading-8 my-2">
+      <br />
+    </p>
+  ) : pOption === 'table_of_contents' ? (
+    tableOfContents && <TableOfContents toc={tableOfContents} />
+  ) : pOption === 'block_start' || pOption === 'block_end' ? null : (
+    <Paragraph innerHTML={content.inner_html || content.text} attrs={content.attributes} />
+  )
+}

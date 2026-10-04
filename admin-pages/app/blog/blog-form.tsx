@@ -18,9 +18,11 @@ type Props = {
   allCategories: blogCategoryRow[]
   error?: string
   saved?: boolean
+  // 保存はできたが、公開サイトのキャッシュ削除に失敗した
+  purgeFailed?: boolean
 }
 
-export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error, saved }: Props) {
+export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error, saved, purgeFailed }: Props) {
   const action = mode === 'new' ? createBlogContentAction : updateBlogContentAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewBlogContentAction, {})
@@ -34,6 +36,11 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
   return (
     <div className="space-y-4">
       {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
+      {purgeFailed && (
+        <p className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+          公開サイトのキャッシュ削除に失敗しました。公開サイトに反映されていない場合は、上の「この記事のキャッシュを削除」を実行してください
+        </p>
+      )}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {preview.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>

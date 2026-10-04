@@ -1,0 +1,28 @@
+---
+import type { TableOfContents } from 'api-types'
+
+type Props = { toc: TableOfContents }
+
+// 階層ごとのインデント。直前より浅い階層に戻るときだけ上に余白を足す
+const indent = (level: number) => (level <= 1 ? 'ml-2' : level === 2 ? 'ml-6' : level === 3 ? 'ml-10' : 'ml-14')
+const items = Astro.props.toc.map((t, i, toc) => ({
+  ...t,
+  class: `${indent(t.level)} w-fit` + (i > 0 && toc[i - 1].level > t.level ? ' mt-1' : ''),
+}))
+---
+
+<div class="bg-gray-50 text-gray-800 p-4 mt-4 border border-gray-500/30 rounded-lg">
+  <h2 class="text-lg font-bold">Contents</h2>
+  <hr class="border-gray-500" />
+  <div class="ml-4 mt-2">
+    {
+      items.map((t) => (
+        <div class={t.class}>
+          <a class="hover:underline" href={`#${t.id}`}>
+            <p class="font-semibold">{t.title}</p>
+          </a>
+        </div>
+      ))
+    }
+  </div>
+</div>
