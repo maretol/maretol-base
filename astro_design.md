@@ -90,7 +90,7 @@ admin-pages ──▶ D1 に保存
 | `list:illust` | イラストの一覧。トップと、サイドバーを持つページ |
 | `illust:{id}` | イラスト詳細 |
 
-サイドバーを持つページ（ブログ一覧・タグ一覧・記事詳細など、`BlogLayout` を使うページ）は、サイドバーが最新の記事・漫画・イラストとタグの一覧を出すので、`blog` / `list:blog` / `list:comics` / `list:illust` をまとめて持つ（`src/lib/cache.ts` の `sidebarTags`）。漫画やイラストを保存すると、サイドバーを持つページもパージされる。トップページも同じ 4 つを持つ（3 種類の一覧を出すため）。404 と 500 のページはサイドバーを出さない（存在しない URL への連続アクセスで、サイドバーのための取得が増えないようにする）
+サイドバーを持つページ（ブログ一覧・タグ一覧・記事詳細など、`BlogLayout` を使うページ）は、サイドバーが最新の記事・漫画・イラストとタグの一覧を出すので、`blog` / `list:blog` / `list:comics` / `list:illust` をまとめて持つ（`src/lib/cache.ts` の `latestListTags`）。ページは `cachePage()` に `{ sidebar: true }` を渡して付ける。付け忘れると古いサイドバーが残るので、サイドバーの描画時に確かめて、付いていなければ例外にする（`assertSidebarTagged()`）。漫画やイラストを保存すると、サイドバーを持つページもパージされる。トップページも同じ 4 つを持つ（3 種類の一覧を出すため）。404 と 500 のページはサイドバーを出さない（存在しない URL への連続アクセスで、サイドバーのための取得が増えないようにする）
 
 一覧に出す記事の抜粋にカードが含まれる場合は、その参照先のタグも付ける。タグ一覧の `tag:{tag_id}` は、タグの一覧にある ID のときだけ付ける（クエリの値をそのままヘッダへ入れない）
 
@@ -201,7 +201,7 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 `cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。info の一覧だけは、取得中の Promise を `Astro.locals` に置き、1 回の描画の中で共有する（制作物カードが複数あると、カードごとに全件の取得とパースが走るため。リクエストをまたぐキャッシュは持たない）。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
 
-サイドバー（`src/components/shell/sidebar/BlogSidebar.astro`）は、固定文言・最新の漫画・イラスト・記事・タグの 5 つを自分で取得する。取得できなかった区画は出さずに不完全なページとして記録し（10 分キャッシュ）、本文は表示する。サイドバーはページの HTML に含める（Server Island にはしない。JS が無くても最新の一覧へのリンクが出ることと、取得が自サイトの中で完結して速いことから）
+サイドバー（`src/components/shell/sidebar/BlogSidebar.astro`）は、固定文言・最新の漫画・イラスト・記事・タグの 5 つを自分で取得する。取得できなかった区画は、枠を残して「取得できませんでした」と出し、不完全なページとして記録する（10 分キャッシュ）。本文は表示する。固定文言に該当する項目が無い場合も同じ表示にする。タグの一覧と記事の一覧は、ページ本体とサイドバーの両方が取得するので、info と同じく取得中の Promise を `Astro.locals` に置いて 1 回の描画の中で共有する（ブログ一覧の 1 ページ目では、サイドバーは本体が取得した一覧の先頭を使う）。サイドバーはページの HTML に含める（Server Island にはしない。JS が無くても最新の一覧へのリンクが出ることと、取得が自サイトの中で完結して速いことから）
 
 RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.d.ts` と `ogp-data-fetcher/types.d.ts` を参照し、`Cloudflare.Env` とグローバルの `Env` の `CMS_RPC` / `OGP_RPC` を `Service<…>` として宣言する（`wrangler types` は Service Binding を `Fetcher` としか出力しない。pages / admin-pages の `env.d.ts` と同じやり方で、キャストは使わない）
 
@@ -227,8 +227,9 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 - shadcn 由来の Button / Card は React コンポーネントにせず、class の定義（`src/components/ui/button.ts`、`card.ts`）を `.astro` と Island の両方から使う。`.astro` から React の `asChild` は使えないため
 - アイコンは `.astro` では `@lucide/astro`、Island では `lucide-react`
 - Island には class をサーバー側で組み立てて props で渡す（tailwind-merge などをクライアントへ持ち込まない）
-- サイドバーのタグの選択は React の Island（`src/components/islands/TagSelect.tsx`、Radix Select、`client:idle`）。class は現行サイトの shadcn/ui の Select を結合済みの文字列で持つ。トップページの横スクロールの左右ボタンは、Island にせず `<script>` で動かす
+- サイドバーのタグの選択は React の Island（`src/components/islands/TagSelect.tsx`、Radix Select）。サイドバーは md（48rem）以上の幅でだけ表示するので、`client:media="(min-width: 48rem)"` でその幅になってから読み込む（狭い画面で開いたあとに幅が広がった場合も、その時点で読み込まれる）。class は現行サイトの shadcn/ui の Select を結合済みの文字列で持つ。トップページの横スクロールの左右ボタンは、Island にせず `<script>` で動かす
 - ヘッダーのロゴ画像の `width` / `height` は原本（1104×210）の比率に合わせる。本文とサイドバーの列の幅は、合わせてちょうど 100% になる値（`calc(80% - 12.8px)` と `calc(20% - 3.2px)`、間隔 16px）で明示する。どちらも、初回訪問時のレイアウトのずれを避けるため（#1355）。最終的な大きさは現行サイトと同じ
+- 漫画の表紙（サイドバーと概要カード）は、1:1.41（B5 など）を想定して枠の比率を固定し、`object-contain` で収める。読み込み後に高さが変わらないようにするため（#1355）
 
 ### ビルド・デプロイ・ローカル開発
 

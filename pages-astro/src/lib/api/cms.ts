@@ -30,11 +30,32 @@ export async function getCMSContent(articleID: string, draftKey?: string): Promi
   }
 }
 
-// ブログ記事の一覧と総件数。範囲外の offset では空の一覧と総件数が返る
-export async function getCMSContents(
+// ブログ記事の一覧と総件数。範囲外の offset では空の一覧と総件数が返る。
+// 1 回の描画の中では、同じ範囲の取得を 1 回にまとめる（ページ本体とサイドバーの両方が呼ぶため）。
+// 取得中の Promise を locals に置いて共有する。リクエストをまたぐキャッシュは持たない
+export function getCMSContents(
+  locals: App.Locals,
   offset: number,
   limit: number,
 ): Promise<{ contents: contentsAPIResult[]; total: number }> {
+  const requests = (locals.contents ??= [])
+  const shared = requests.find((r) => r.offset === offset && r.limit === limit)
+  if (shared) {
+    return shared.request
+  }
+  const request = fetchContents(offset, limit)
+  requests.push({ offset, limit, request })
+  return request
+}
+
+// 最新の記事を count 件。同じ描画の中で先頭からの一覧を取得済みなら（ブログ一覧の 1 ページ目など）、その結果の先頭を使う
+export async function getLatestCMSContents(locals: App.Locals, count: number): Promise<contentsAPIResult[]> {
+  const fetched = locals.contents?.find((r) => r.offset === 0 && r.limit >= count)
+  const { contents } = await (fetched?.request ?? getCMSContents(locals, 0, count))
+  return contents.slice(0, count)
+}
+
+async function fetchContents(offset: number, limit: number): Promise<{ contents: contentsAPIResult[]; total: number }> {
   return (await env.CMS_RPC.fetchContents(offset.toString(), limit.toString())) as {
     contents: contentsAPIResult[]
     total: number
@@ -53,8 +74,12 @@ export async function getCMSContentsWithTags(
   }
 }
 
-// ブログのタグ（カテゴリ）の一覧
-export async function getTags(): Promise<categoryAPIResult[]> {
+// ブログのタグ（カテゴリ）の一覧。1 回の描画の中では取得を 1 回にまとめる（タグ一覧のページ本体とサイドバーの両方が呼ぶため）
+export function getTags(locals: App.Locals): Promise<categoryAPIResult[]> {
+  return (locals.tags ??= fetchTags())
+}
+
+async function fetchTags(): Promise<categoryAPIResult[]> {
   return (await env.CMS_RPC.fetchTags()) as categoryAPIResult[]
 }
 

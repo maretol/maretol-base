@@ -5,9 +5,9 @@ import type { PageMeta } from '@/layouts/BaseLayout.astro'
 import Article from '@/components/article/Article.astro'
 import Pagination from '@/components/ui/Pagination.astro'
 import { getCMSContents } from '@/lib/api/cms'
-import { cachePage, sidebarTags } from '@/lib/cache'
+import { cachePage } from '@/lib/cache'
 import { getSampleEmbedTags } from '@/lib/content_tags'
-import { getHrefWithoutPage, isPageOutOfRange, PAGE_LIMIT, parsePageParam } from '@/lib/pagination'
+import { getHrefWithoutPage, getTotalPage, isPageOutOfRange, PAGE_LIMIT, parsePageParam } from '@/lib/pagination'
 import { getHostname, SITE_DESCRIPTION, SITE_NAME } from '@/lib/site'
 
 // ブログの一覧
@@ -17,14 +17,14 @@ if (pageNumber === null) {
   return Astro.redirect(getHrefWithoutPage('/blog', Astro.url.searchParams), 308)
 }
 
-const { contents, total } = await getCMSContents((pageNumber - 1) * PAGE_LIMIT, PAGE_LIMIT)
+const { contents, total } = await getCMSContents(Astro.locals, (pageNumber - 1) * PAGE_LIMIT, PAGE_LIMIT)
 if (isPageOutOfRange(pageNumber, total, PAGE_LIMIT)) {
   // 記事が増えてこのページが存在するようになったら、404 のキャッシュも一緒に消えるようにする
   Astro.locals.notFound = { tags: [cacheTag.blogList] }
   return Astro.rewrite('/404')
 }
 
-cachePage(Astro.response, [...sidebarTags, ...getSampleEmbedTags(contents)])
+cachePage(Astro.response, getSampleEmbedTags(contents), { sidebar: true })
 
 const title = `Blog | ${SITE_NAME}`
 const description = `${SITE_DESCRIPTION} | ブログ`
@@ -51,7 +51,7 @@ const meta: PageMeta = {
       ))
     }
     <div class="flex justify-center">
-      <Pagination path="/blog" currentPage={pageNumber} totalPage={Math.ceil(total / PAGE_LIMIT)} />
+      <Pagination path="/blog" currentPage={pageNumber} totalPage={getTotalPage(total, PAGE_LIMIT)} />
     </div>
   </div>
 </BlogLayout>

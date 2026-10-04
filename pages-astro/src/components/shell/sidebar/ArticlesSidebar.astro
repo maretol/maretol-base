@@ -3,15 +3,16 @@ import type { contentsAPIResult } from 'api-types'
 import SidebarFrame from './SidebarFrame.astro'
 import { convertJST } from '@/lib/time'
 
-type Props = { articles: contentsAPIResult[] }
+// articles が null なのは、取得できなかったとき
+type Props = { articles: contentsAPIResult[] | null }
 
 const { articles } = Astro.props
 ---
 
-<SidebarFrame title="Latest Articles">
+<SidebarFrame title="Latest Articles" error={articles === null}>
   <div>
     {
-      articles.map((article) => (
+      articles?.map((article) => (
         <div class="mb-4">
           <a href={`/blog/${article.id}`} class="hover:underline">
             <p>{article.title}</p>

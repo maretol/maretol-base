@@ -1,5 +1,4 @@
 ---
-import { cacheTag } from 'cache-tags'
 import { BookImageIcon, ImageIcon, InfoIcon, ListIcon, MailIcon, NotebookTextIcon } from '@lucide/astro'
 import SiteLayout from '@/layouts/SiteLayout.astro'
 import Article from '@/components/article/Article.astro'
@@ -10,7 +9,7 @@ import ContentsViewerItem from '@/components/top/ContentsViewerItem.astro'
 import TopPageTitle from '@/components/top/TopPageTitle.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getAteliers, getBandeDessinees, getCMSContents } from '@/lib/api/cms'
-import { cachePage } from '@/lib/cache'
+import { cachePage, latestListTags } from '@/lib/cache'
 import { getSampleEmbedTags } from '@/lib/content_tags'
 import { cn } from '@/lib/utils'
 
@@ -23,16 +22,10 @@ const ARTICLE_COUNT = 3
 const [ateliers, bandeDessinees, blogs] = await Promise.all([
   getAteliers(0, VIEWER_COUNT),
   getBandeDessinees(0, VIEWER_COUNT),
-  getCMSContents(0, ARTICLE_COUNT),
+  getCMSContents(Astro.locals, 0, ARTICLE_COUNT),
 ])
 
-cachePage(Astro.response, [
-  cacheTag.blog,
-  cacheTag.blogList,
-  cacheTag.comicList,
-  cacheTag.illustList,
-  ...getSampleEmbedTags(blogs.contents),
-])
+cachePage(Astro.response, [...latestListTags, ...getSampleEmbedTags(blogs.contents)])
 
 const otherContentClassName = cn(buttonVariants({ variant: 'outline' }), 'w-full max-w-96')
 ---

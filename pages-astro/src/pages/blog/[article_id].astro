@@ -5,7 +5,7 @@ import type { PageMeta } from '@/layouts/BaseLayout.astro'
 import FullArticle from '@/components/article/FullArticle.astro'
 import ImageModal from '@/components/islands/ImageModal'
 import { getAdjacentContents, getCMSContent } from '@/lib/api/cms'
-import { cachePage, noStore, sidebarTags } from '@/lib/cache'
+import { cachePage, noStore } from '@/lib/cache'
 import { getEmbedTags } from '@/lib/content_tags'
 import { markDegraded } from '@/lib/degraded'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
@@ -32,7 +32,7 @@ if (draftKey) {
   noStore(Astro.response)
 } else {
   // 前後記事を表示するので、他の記事の公開・更新でもパージされるよう list:blog を持つ（サイドバーのタグに含まれる）
-  cachePage(Astro.response, [...sidebarTags, cacheTag.post(articleID), ...getEmbedTags(content.parsed_content)])
+  cachePage(Astro.response, [cacheTag.post(articleID), ...getEmbedTags(content.parsed_content)], { sidebar: true })
 }
 if (adjacent === null) {
   // 前後記事を出せない不完全なページは長くキャッシュしない

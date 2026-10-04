@@ -2,12 +2,14 @@
 import SidebarFrame from './SidebarFrame.astro'
 import SidebarLine from './SidebarLine.astro'
 
-type Props = { rawText: string }
+// rawText が無いのは、固定文言を取得できなかったとき
+type Props = { rawText?: string }
 
-const lines = Astro.props.rawText.split('\n')
+const { rawText } = Astro.props
+const lines = rawText?.split('\n') ?? []
 ---
 
-<SidebarFrame title="About">
+<SidebarFrame title="About" error={rawText === undefined}>
   <div>
     {lines.map((line) => (line === '' ? <br /> : <SidebarLine text={line} />))}
   </div>

@@ -28,5 +28,9 @@ declare namespace App {
     degraded?: string[]
     // info の一覧の取得。1 回の描画の中で共有する（src/lib/api/cms.ts の getInfo）
     info?: ReturnType<CMSDataFetcher['fetchInfo']>
+    // タグの一覧の取得。1 回の描画の中で共有する（getTags）
+    tags?: ReturnType<CMSDataFetcher['fetchTags']>
+    // ブログ記事の一覧の取得。取得した範囲ごとに持ち、1 回の描画の中で共有する（getCMSContents / getLatestCMSContents）
+    contents?: { offset: number; limit: number; request: ReturnType<CMSDataFetcher['fetchContents']> }[]
   }
 }

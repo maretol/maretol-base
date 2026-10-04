@@ -6,9 +6,9 @@ import Article from '@/components/article/Article.astro'
 import TagSelector from '@/components/article/TagSelector.astro'
 import Pagination from '@/components/ui/Pagination.astro'
 import { getCMSContentsWithTags, getTags } from '@/lib/api/cms'
-import { cachePage, sidebarTags } from '@/lib/cache'
+import { cachePage } from '@/lib/cache'
 import { getSampleEmbedTags } from '@/lib/content_tags'
-import { getHrefWithoutPage, isPageOutOfRange, PAGE_LIMIT, parsePageParam } from '@/lib/pagination'
+import { getHrefWithoutPage, getTotalPage, isPageOutOfRange, PAGE_LIMIT, parsePageParam } from '@/lib/pagination'
 import { getHostname, SITE_NAME } from '@/lib/site'
 
 // タグで絞り込んだブログの一覧。タグは tag_id で 1 つ指定する。
@@ -23,7 +23,7 @@ if (pageNumber === null) {
   return Astro.redirect(getHrefWithoutPage('/tag', searchParams), 308)
 }
 
-const tags = await getTags()
+const tags = await getTags(Astro.locals)
 // tag_id は自由に指定できる。タグの一覧に無い値は 0 件と分かっているので、D1 へ問い合わせない
 const selectedTag = tags.find((tag) => tag.id === tagID)
 // タグが作られたとき・記事が増えたときに、404 のキャッシュも一緒に消えるようにする
@@ -42,11 +42,9 @@ if (isPageOutOfRange(pageNumber, total, PAGE_LIMIT)) {
 }
 
 // Cache-Tag に入れるのは、タグの一覧にある ID だけにする（クエリの値をそのままヘッダへ入れない）
-cachePage(Astro.response, [
-  ...sidebarTags,
-  ...(selectedTag ? [cacheTag.tag(selectedTag.id)] : []),
-  ...getSampleEmbedTags(contents),
-])
+cachePage(Astro.response, [...(selectedTag ? [cacheTag.tag(selectedTag.id)] : []), ...getSampleEmbedTags(contents)], {
+  sidebar: true,
+})
 
 // ページネーションのリンクに引き継ぐクエリ。tag_name は検索に使わないが、落とすと使っていないことが URL から分かってしまう
 const queryWithoutPage = {
@@ -104,7 +102,7 @@ const meta: PageMeta = {
                 path="/tag"
                 queryWithoutPage={queryWithoutPage}
                 currentPage={pageNumber}
-                totalPage={Math.ceil(total / PAGE_LIMIT)}
+                totalPage={getTotalPage(total, PAGE_LIMIT)}
               />
             </div>
           </>

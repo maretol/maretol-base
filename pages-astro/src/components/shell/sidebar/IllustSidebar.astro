@@ -7,15 +7,16 @@ import { getObjectPositionClass } from '@/lib/illust'
 import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
-type Props = { ateliers: atelierResult[] }
+// ateliers が null なのは、取得できなかったとき
+type Props = { ateliers: atelierResult[] | null }
 
 const { ateliers } = Astro.props
 ---
 
-<SidebarFrame title="Illustrations">
+<SidebarFrame title="Illustrations" error={ateliers === null}>
   <div class="p-2">
     {
-      ateliers.map((illust) => (
+      ateliers?.map((illust) => (
         <div class="mb-4 relative w-full">
           <a href={`/illust/detail/${illust.id}`} class="hover:underline">
             <div class="bg-gray-200 p-4">

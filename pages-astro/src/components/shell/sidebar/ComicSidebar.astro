@@ -7,24 +7,27 @@ import { getComicCoverURL } from '@/lib/comic'
 import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
-type Props = { bandeDessinees: bandeDessineeResult[] }
+// bandeDessinees が null なのは、取得できなかったとき
+type Props = { bandeDessinees: bandeDessineeResult[] | null }
 
 const { bandeDessinees } = Astro.props
 ---
 
-<SidebarFrame title="Comics">
+<SidebarFrame title="Comics" error={bandeDessinees === null}>
   <div class="p-2">
     {
-      bandeDessinees.map((comic) => (
+      bandeDessinees?.map((comic) => (
         <div class="mb-4 relative w-full">
           <a href={`/comics/${comic.id}`} class="hover:underline">
             <div class="bg-gray-200 p-4">
+              {/* 表紙は 1:1.41（B5 など）を想定して枠の比率を固定する。比率の違う表紙は枠の中に収める。
+                  枠を固定しないと、読み込み後に高さが変わって下の区画が動く */}
               <CdnImage
                 src={getComicCoverURL(comic)}
                 width={100}
-                height={200}
+                height={141}
                 quality={75}
-                class="w-full h-auto object-contain"
+                class="w-full h-auto aspect-[100/141] object-contain object-center"
                 alt={comic.title_name}
               />
             </div>
