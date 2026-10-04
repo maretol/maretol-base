@@ -201,10 +201,10 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 ### 固定ページとフィード
 
-- about / contact / secret / `artifacts/post-for-nostter` は、CMS の info をパスで探して表示する（`getInfoPage()`）。該当する info が無ければ 404 にし、`info` のタグを付けて、公開されたときに一緒に消えるようにする。`artifacts/post-for-nostter` だけサイドバーを出す（現行と同じ）
-- RSS（`/rss/feed.rdf`）は、最新 20 件の記事の冒頭 10 ブロックを載せる。本文の組み立て（`src/lib/rss.ts`）は現行サイトと同じで、出力も一致する。エッジには `blog` / `list:blog` のタグで 30 日キャッシュし、記事の保存でパージする。フィードリーダーには現行と同じく `Cache-Control: public, max-age=3600` を返す。記事の取得に失敗したときは 500 にする（空のフィードをキャッシュさせない）
+- about / contact / secret / `artifacts/post-for-nostter` は、CMS の info をパスで探して表示する（`getInfoPage()`）。取得からキャッシュの指定までは 4 ページ共通で、`src/lib/info_page.ts` の `loadInfoPage()` にまとめている。該当する info が無ければ 404 にし、`info` のタグを付けて、公開されたときに一緒に消えるようにする。`artifacts/post-for-nostter` だけサイドバーを出す（現行と同じ）
+- RSS（`/rss/feed.rdf`）は、最新 20 件の記事の冒頭 10 ブロックを載せる。本文の組み立て（`src/lib/rss.ts`）は現行サイトと同じで、出力も一致する。エッジには `blog` / `list:blog` のタグで 30 日キャッシュし、記事の保存でパージする。フィードリーダーには保持させない（ほかのページと同じ `max-age=0, must-revalidate`。現行サイトは `max-age=3600` を返している）。記事の取得に失敗したときは 500 にする（空のフィードをキャッシュさせない）
 - sitemap（`/sitemap.xml`）は、現行と同じく入口になる 7 ページだけを載せる。`lastmod` は描画した時刻で、記事の保存でパージされたときに新しくなる
-- `robots.txt` と `/.well-known/nostr.json` は `public/` の静的ファイル。`nostr.json` の CORS のヘッダは `public/_headers` で付ける。`robots.txt` は、現行の `/_next/` と `/api/` の代わりに `/_astro/` と `/_server-islands/` を Disallow にする
+- `robots.txt` と `/.well-known/nostr.json` は `public/` の静的ファイル。`nostr.json` の CORS のヘッダは `public/_headers` で付ける。`robots.txt` は、現行の `/_next/` と `/api/` の Disallow を外し、`/_server-islands/` だけを Disallow にする（CSS や JS のある `/_astro/` はクローラに見せる）
 
 ### データ取得
 

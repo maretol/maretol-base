@@ -2,7 +2,7 @@
 import type { infoAPIResult } from 'api-types'
 import { HammerIcon } from '@lucide/astro'
 import { buttonVariants } from '@/components/ui/button'
-import { getInfo } from '@/lib/api/cms'
+import { getInfoPage } from '@/lib/api/cms'
 import { convertJST } from '@/lib/time'
 import { cn, parseURL } from '@/lib/utils'
 
@@ -12,14 +12,12 @@ type Props = { link: string }
 const { link } = Astro.props
 
 const linkPath = parseURL(link)?.pathname ?? ''
-const artifact: infoAPIResult | undefined = await getInfo(Astro.locals).then(
-  (info) => info.find((c) => c.page_pathname === linkPath),
-  (e) => {
-    // 取得の失敗は、該当する info が無い（非公開・削除された）場合と同じ表示にする。不完全なページ（lib/degraded.ts）としては記録しない
-    console.error('[components/blocks/ArtifactCard.astro] Info fetch error:', e)
-    return undefined
-  },
-)
+// 固定ページと同じ条件で探す（page_pathname は先頭のスラッシュが無い形でも登録されている）
+const artifact: infoAPIResult | null = await getInfoPage(Astro.locals, linkPath).catch((e) => {
+  // 取得の失敗は、該当する info が無い（非公開・削除された）場合と同じ表示にする。不完全なページ（lib/degraded.ts）としては記録しない
+  console.error('[components/blocks/ArtifactCard.astro] Info fetch error:', e)
+  return null
+})
 ---
 
 <div class="flex max-w-xl">

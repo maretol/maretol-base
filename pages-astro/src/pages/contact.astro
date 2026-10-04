@@ -1,35 +1,17 @@
 ---
-import { cacheTag } from 'cache-tags'
 import SiteLayout from '@/layouts/SiteLayout.astro'
-import type { PageMeta } from '@/layouts/BaseLayout.astro'
 import InfoArticle from '@/components/article/InfoArticle.astro'
-import { getInfoPage } from '@/lib/api/cms'
-import { cachePage } from '@/lib/cache'
-import { getEmbedTags } from '@/lib/content_tags'
-import { getHostname, SITE_NAME } from '@/lib/site'
+import { loadInfoPage } from '@/lib/info_page'
 
 // 連絡先（CMS の info の /contact）
 const PATH = '/contact'
 
-const info = await getInfoPage(Astro.locals, PATH)
-if (!info) {
-  // info が公開されたときに、404 のキャッシュも一緒に消えるようにする
-  Astro.locals.notFound = { tags: [cacheTag.info] }
-  return Astro.rewrite('/404')
-}
-
-cachePage(Astro.response, [cacheTag.info, ...getEmbedTags(info.parsed_content)])
-
-const title = `連絡先 | ${SITE_NAME}`
-const meta: PageMeta = {
-  title,
-  description: '連絡先ページ',
-  ogTitle: title,
-  ogDescription: '連絡先ページ',
-  ogURL: `${getHostname()}${PATH}`,
+const page = await loadInfoPage(Astro, { path: PATH, metaTitle: '連絡先', description: '連絡先ページ' })
+if (page instanceof Response) {
+  return page
 }
 ---
 
-<SiteLayout meta={meta} class="min-w-0">
-  <InfoArticle info={info} title="連絡先" path={PATH} articleID="contact" />
+<SiteLayout meta={page.meta} class="min-w-0">
+  <InfoArticle info={page.info} title="連絡先" path={PATH} articleID="contact" />
 </SiteLayout>

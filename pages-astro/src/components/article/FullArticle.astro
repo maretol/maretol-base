@@ -80,7 +80,7 @@ const {
   <div class={card.footer}>
     <div class="w-full space-y-4">
       <div class="flex gap-2 items-center justify-end">
-        <ShareSection shareURL={shareURL} shareTitle={title} contentType="blog" />
+        <ShareSection shareURL={shareURL} shareTitle={title} contentType={type === 'info' ? 'page' : 'blog'} />
       </div>
       {adjacent && <AdjacentArticleNav adjacent={adjacent} />}
       <div class="flex justify-center">

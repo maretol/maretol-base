@@ -11,8 +11,6 @@ import { getHostname } from '@/lib/site'
 const ITEM_COUNT = 20
 // description に含める本文のブロック数（記事の冒頭だけを載せる）
 const DESCRIPTION_BLOCK_COUNT = 10
-// フィードリーダー側で保持させる秒数。エッジのキャッシュは記事の保存でパージされる
-const CLIENT_MAX_AGE = 60 * 60
 
 // RSS 2.0 の pubDate / lastBuildDate は RFC 822 形式
 function formatRssDate(date: Date): string {
@@ -55,8 +53,7 @@ export const GET: APIRoute = async ({ locals }) => {
   </rss>`
 
   const headers = new Headers({ 'Content-Type': 'application/rss+xml; charset=utf-8' })
+  // エッジにだけキャッシュさせる。フィードリーダーには保持させず、毎回エッジに確かめさせる（ほかのページと同じ）
   cachePage({ headers }, [cacheTag.blog, cacheTag.blogList])
-  // フィードリーダーには現行と同じく 1 時間保持させる（エッジは Cloudflare-CDN-Cache-Control を見る）
-  headers.set('Cache-Control', `public, max-age=${CLIENT_MAX_AGE}`)
   return new Response(body, { headers })
 }
