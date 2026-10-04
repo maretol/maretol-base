@@ -4,20 +4,19 @@ import BlogLayout from '@/layouts/BlogLayout.astro'
 import Tags from '@/components/article/Tags.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { card } from '@/components/ui/card'
-import { noStore } from '@/lib/cache'
+import { cacheBadRequest } from '@/lib/cache'
 import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
-// ページの描画中に例外が起きたときに表示する（データ取得の失敗など）。キャッシュはしない
-noStore(Astro.response)
-// /500 を直接開いた場合も 500 で返す
-Astro.response.status = 500
+// リクエストの内容が受け付けられないとき（存在しないタグの指定など）に、各ページからの rewrite で表示する
+cacheBadRequest(Astro.response, Astro.locals.badRequest?.tags ?? [])
+Astro.response.status = 400
 ---
 
 <BlogLayout meta={{ noindex: true }} sidebar={false}>
   <div class={cn(card.root, 'w-full bg-gray-100')}>
     <div class={card.header}>
-      <h3 class={card.title}>500 Internal Server Error</h3>
+      <h3 class={card.title}>400 Bad Request</h3>
       <p class={card.description}>現在時刻{convertJST(new Date().toISOString())}</p>
       <div class={cn(card.content, 'pl-0 pt-2 pb-0')}>
         <Tags tags={[]} />
@@ -25,7 +24,7 @@ Astro.response.status = 500
     </div>
     <div class={card.content}>
       <div class="space-y-5 content">
-        <p>ページの表示中にエラーが発生しました。時間をおいて再度アクセスしてください。</p>
+        <p>リクエストの内容に誤りがあります。このページに到達する際にクリックしたリンクが正確だったかどうかを確認してください。</p>
       </div>
     </div>
     <div class={card.footer}>

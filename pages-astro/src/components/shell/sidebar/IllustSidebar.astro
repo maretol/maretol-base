@@ -1,0 +1,44 @@
+---
+import type { atelierResult } from 'api-types'
+import SidebarFrame from './SidebarFrame.astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getObjectPositionClass } from '@/lib/illust'
+import { convertJST } from '@/lib/time'
+import { cn } from '@/lib/utils'
+
+// ateliers が null なのは、取得できなかったとき
+type Props = { ateliers: atelierResult[] | null }
+
+const { ateliers } = Astro.props
+---
+
+<SidebarFrame title="Illustrations" error={ateliers === null}>
+  <div class="p-2">
+    {
+      ateliers?.map((illust) => (
+        <div class="mb-4 relative w-full">
+          <a href={`/illust/detail/${illust.id}`} class="hover:underline">
+            <div class="bg-gray-200 p-4">
+              <CdnImage
+                src={illust.src}
+                alt={illust.title}
+                width={100}
+                height={100}
+                quality={75}
+                class={cn('w-full h-auto max-h-36 object-cover', getObjectPositionClass(illust.object_position))}
+              />
+            </div>
+            <div class="bg-gray-800/60 absolute bottom-0 w-full p-1">
+              <p class="text-gray-200 font-semibold">{illust.title}</p>
+              <p class="text-gray-300">{convertJST(illust.publishedAt)}</p>
+            </div>
+          </a>
+        </div>
+      ))
+    }
+    <a href="/illust" class:list={[cn(buttonVariants({ variant: 'secondary' }), 'w-full mt-2'), 'text-gray-500']}>
+      <p class="font-bold">See latest illustrations</p>
+    </a>
+  </div>
+</SidebarFrame>

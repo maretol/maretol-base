@@ -1,0 +1,19 @@
+---
+// サイドバーの 1 区画の枠
+type Props = {
+  title: string
+  // 中身を取得できなかったとき。枠は残して、取得できなかったことを出す
+  error?: boolean
+}
+
+const { title, error = false } = Astro.props
+---
+
+<div class="bg-gray-100 pb-3 pt-3 px-3 rounded-lg">
+  <div class="mb-3">
+    <p class="text-lg font-bold text-gray-700 border-b-4 border-blue-900 font-suse">{title}</p>
+  </div>
+  <div>
+    {error ? <p class="text-sm text-gray-500">取得できませんでした</p> : <slot />}
+  </div>
+</div>

@@ -1,0 +1,16 @@
+---
+import type { atelierTagAndCategory } from 'api-types'
+
+// イラストのタグ（キャラクター・作品など）。type は配列だが、先頭の 1 つだけを使う
+type Props = { tagOrCategory: atelierTagAndCategory[] }
+---
+
+<div class="mt-1">
+  {
+    Astro.props.tagOrCategory.map((tag) => (
+      <span class="inline-block mr-2 mb-1 px-3 py-1 bg-gray-200 rounded-sm text-sm">
+        {tag.type[0]} : {tag.tag}
+      </span>
+    ))
+  }
+</div>

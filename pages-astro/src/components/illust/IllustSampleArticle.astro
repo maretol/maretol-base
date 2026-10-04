@@ -1,0 +1,48 @@
+---
+import type { atelierTagAndCategory } from 'api-types'
+import { ZoomInIcon } from '@lucide/astro'
+import IllustTags from './IllustTags.astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getObjectPositionClass } from '@/lib/illust'
+import { cn } from '@/lib/utils'
+
+// 一覧に出すイラストのカード。画像と、題名・公開日・タグを並べる
+type Props = {
+  id: string
+  title: string
+  imageSrc: string
+  objectPosition: string
+  tags: atelierTagAndCategory[]
+  publishedAt: string
+}
+
+const { id, title, imageSrc, objectPosition, tags, publishedAt } = Astro.props
+const href = `/illust/detail/${id}`
+---
+
+<div class="w-full lg:h-[45svh] max-h-3/4 rounded-lg bg-gray-100 flex lg:flex-row flex-col">
+  <a href={href} class="lg:w-3/4 w-full lg:h-full h-[45svh]">
+    <CdnImage
+      src={imageSrc}
+      alt={title}
+      width={1080}
+      height={1080}
+      quality={90}
+      class={cn('w-full h-full rounded-lg', getObjectPositionClass(objectPosition))}
+    />
+  </a>
+  <div class="p-4 h-full lg:w-1/4 flex flex-col lg:justify-between w-full gap-4">
+    <div class="flex flex-col gap-2 mt-4">
+      <div class="border-b-4 border-blue-900 pb-1">
+        <h2 class="font-bold text-2xl">{title}</h2>
+      </div>
+      <p class="text-sm text-right text-gray-500">Published at: {publishedAt.substring(0, 10)}</p>
+      <IllustTags tagOrCategory={tags} />
+    </div>
+    <a href={href} class:list={[cn(buttonVariants(), 'w-full font-suse'), 'flex items-center gap-2 font-bold']}>
+      <ZoomInIcon class="w-4 h-4" />
+      Detail
+    </a>
+  </div>
+</div>

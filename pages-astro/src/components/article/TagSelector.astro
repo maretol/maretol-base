@@ -1,0 +1,27 @@
+---
+import type { categoryAPIResult } from 'api-types'
+import { buttonVariants } from '@/components/ui/button'
+
+// タグ一覧ページのタグの選択。選択中のタグをもう一度押すと選択を外す
+type Props = { tags: categoryAPIResult[]; selectedTagID?: string }
+
+const { tags, selectedTagID } = Astro.props
+---
+
+<div class="flex flex-wrap gap-2">
+  {
+    tags.map((tag) => (
+      <div>
+        {tag.id === selectedTagID ? (
+          <a href="/tag" class={buttonVariants({ variant: 'secondary' })}>
+            {tag.name}
+          </a>
+        ) : (
+          <a href={`/tag?${new URLSearchParams({ tag_id: tag.id })}`} class={buttonVariants({ variant: 'default' })}>
+            {tag.name}
+          </a>
+        )}
+      </div>
+    ))
+  }
+</div>

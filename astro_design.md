@@ -65,6 +65,8 @@ admin-pages ──▶ D1 に保存
 
 - エッジは `Cloudflare-CDN-Cache-Control` を優先するので、ブラウザには保持させずエッジだけ長く持たせられる
 - キャッシュしないもの: 限定公開記事の本体、`draftKey` 付きリクエスト、POST、500 番台
+- 一覧（ブログ一覧・タグ一覧）のページ番号 `p` は、不正な値と `p=1` を、`p` を外した URL へ 308 でリダイレクトする（`src/lib/pagination.ts`）。総ページ数を超える `p` は 404 にする。この 404 には `list:blog` を付け、記事が増えたときに一緒に消えるようにする
+- タグ一覧で、タグの一覧に無い `tag_id` を指定された場合は 400 を返す（`src/pages/400.astro`）。404 と同じく 60 秒だけキャッシュし、`blog` を付けて、タグが作られたときに一緒に消えるようにする
 - 404 はエッジに 60 秒だけキャッシュする（存在しない URL への連続アクセスで毎回 D1 まで届くのを防ぐ）。記事詳細の 404 には `post:{id}` を付け、その記事が公開されたときのパージで一緒に消えるようにする
 - データ取得の失敗（D1 の一時的な障害など）は 404 にせず 500 で返す。404 にするとエッジにキャッシュされてしまうため。fetcher が返す「存在しない」は例外メッセージ（`... not found: {id}`）で見分ける
 - 取得に失敗した部品を含む不完全なページは 10 分だけキャッシュする（一時的な失敗による表示が 30 日残らないようにする）。対象は、前後記事、画像の寸法、引用画像の一時的な失敗（タイムアウト、引用元の 5xx など）。引用画像でも、引用元の 4xx、未対応の形式、3MB を超える画像は、取り直しても直らないので対象にしない（代わりの表示のまま通常どおりキャッシュする）。部品は失敗を `Astro.locals.degraded` に記録し（`src/lib/degraded.ts`）、ミドルウェアが保持期間を縮める。リンクカードは記事とは別のリクエスト（Server Island）で描画するので、リンク先の状態は記事のキャッシュに影響しない（5 章）。自サイトのコンテンツへのカード（ブログ・イラスト・漫画・制作物）が取得できない場合も対象にしない。コンテンツはすべて自分で管理していて、存在しないものを指すことは基本的にないので、取得できないものは公開後に非公開・削除されたとみなし、代わりの表示（「公開後に非公開になった可能性があります」）のまま通常どおりキャッシュする。再び公開されたときは、ページに付けた参照先のタグ（4.3）のパージで消える
@@ -82,12 +84,16 @@ admin-pages ──▶ D1 に保存
 | `blog` | ブログ系の全ページ（トップ・一覧・タグ一覧・記事詳細・RSS・sitemap） |
 | `list:blog` | 記事の一覧を含むページ（トップ・一覧・タグ一覧・RSS・sitemap）と、前後記事を表示する記事詳細 |
 | `post:{id}` | 記事詳細 |
-| `tag:{tag_id}` | タグ一覧（複数タグの組み合わせは構成タグをすべて付ける） |
+| `tag:{tag_id}` | タグ一覧（現行と同じく、タグは 1 つだけ指定できる） |
 | `info` | about / contact / secret |
-| `list:comics` | 漫画の一覧と、シリーズ案内を表示する漫画詳細 |
+| `list:comics` | 漫画の一覧と、シリーズ案内を表示する漫画詳細。トップと、サイドバーを持つページ |
 | `comic:{id}` / `series:{id}` | 漫画詳細 |
-| `list:illust` | イラストの一覧 |
+| `list:illust` | イラストの一覧。トップと、サイドバーを持つページ |
 | `illust:{id}` | イラスト詳細 |
+
+サイドバーを持つページ（ブログ一覧・タグ一覧・記事詳細など、`BlogLayout` を使うページ）は、サイドバーが最新の記事・漫画・イラストとタグの一覧を出すので、`blog` / `list:blog` / `list:comics` / `list:illust` をまとめて持つ（`src/lib/cache.ts` の `latestListTags`）。ページは `cachePage()` に `{ sidebar: true }` を渡して付ける。付け忘れると古いサイドバーが残るので、サイドバーの描画時に確かめて、付いていなければ例外にする（`assertSidebarTagged()`）。漫画やイラストを保存すると、サイドバーを持つページもパージされる。トップページも同じ 4 つを持つ（3 種類の一覧を出すため）。404 と 500 のページはサイドバーを出さない（存在しない URL への連続アクセスで、サイドバーのための取得が増えないようにする）
+
+一覧に出す記事の抜粋にカードが含まれる場合は、その参照先のタグも付ける。タグ一覧の `tag:{tag_id}` は、タグの一覧にある ID にだけ付ける（一覧に無い値は 400 にするので、クエリの値がそのままヘッダへ入ることはない）
 
 本文にカードを埋め込んだ記事詳細には、参照先のタグも付ける（`src/lib/content_tags.ts`）。イラストカードは `illust:{id}`、漫画カードは `comic:{id}`、制作物カードは `info`。ブログカードは記事詳細が持つ `list:blog` で足りる
 
@@ -149,7 +155,7 @@ pages-astro/
 └─ src/
    ├─ worker.ts             # Worker のエントリ（wrangler の main）。Hono + RPC メソッド
    ├─ mw/                   # cache / purge（M3 以降: log / secret / query）
-   ├─ lib/                  # RPC 呼び出し、キャッシュヘッダ、画像 URL、OGP
+   ├─ lib/                  # RPC 呼び出し、キャッシュヘッダ、画像 URL、OGP、ページ番号
    ├─ pages/
    │  ├─ index.astro
    │  ├─ blog/index.astro, blog/[article_id].astro
@@ -159,18 +165,19 @@ pages-astro/
    │  ├─ illust/index.astro, illust/detail/[id].astro
    │  ├─ about.astro, contact.astro, secret.astro
    │  ├─ rss/feed.rdf.ts, sitemap.xml.ts
-   │  ├─ 404.astro, 500.astro
+   │  ├─ 400.astro, 404.astro, 500.astro
    │  └─ .well-known/nostr.json.ts        # prerender
    ├─ components/
    │  ├─ blocks/            # ParsedContent のブロック → Astro コンポーネント
    │  ├─ article/ shell/ ui/
+   │  ├─ top/ illust/ comic/   # トップページの一覧、イラスト・漫画のカード
    │  └─ islands/           # React: 漫画ビューワ・drawer・モーダル・設定 UI
-   ├─ layouts/
+   ├─ layouts/              # BaseLayout（html / head）→ SiteLayout（ヘッダー・フッター）→ BlogLayout（サイドバー）
    └─ styles/global.css
 packages/cache-tags/        # Cache-Tag の文字列と、保存操作ごとのパージ対象
 ```
 
-いま存在するのは記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、`404.astro`、`500.astro` で、残りは M3 以降で足す
+いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、`400.astro`、`404.astro`、`500.astro` で、残りは M3 以降で足す
 
 ### Worker のエントリ（src/worker.ts）
 
@@ -194,6 +201,8 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 ### データ取得
 
 `cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。info の一覧だけは、取得中の Promise を `Astro.locals` に置き、1 回の描画の中で共有する（制作物カードが複数あると、カードごとに全件の取得とパースが走るため。リクエストをまたぐキャッシュは持たない）。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
+
+サイドバー（`src/components/shell/sidebar/BlogSidebar.astro`）は、固定文言・最新の漫画・イラスト・記事・タグの 5 つを自分で取得する。取得できなかった区画は、枠を残して「取得できませんでした」と出し、不完全なページとして記録する（10 分キャッシュ）。本文は表示する。固定文言に該当する項目が無い場合も同じ表示にする。タグの一覧と記事の一覧は、ページ本体とサイドバーの両方が取得するので、info と同じく取得中の Promise を `Astro.locals` に置いて 1 回の描画の中で共有する（ブログ一覧の 1 ページ目では、サイドバーは本体が取得した一覧の先頭を使う）。サイドバーはページの HTML に含める（Server Island にはしない。JS が無くても最新の一覧へのリンクが出ることと、取得が自サイトの中で完結して速いことから）
 
 RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.d.ts` と `ogp-data-fetcher/types.d.ts` を参照し、`Cloudflare.Env` とグローバルの `Env` の `CMS_RPC` / `OGP_RPC` を `Service<…>` として宣言する（`wrangler types` は Service Binding を `Fetcher` としか出力しない。pages / admin-pages の `env.d.ts` と同じやり方で、キャストは使わない）
 
@@ -219,6 +228,9 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 - shadcn 由来の Button / Card は React コンポーネントにせず、class の定義（`src/components/ui/button.ts`、`card.ts`）を `.astro` と Island の両方から使う。`.astro` から React の `asChild` は使えないため
 - アイコンは `.astro` では `@lucide/astro`、Island では `lucide-react`
 - Island には class をサーバー側で組み立てて props で渡す（tailwind-merge などをクライアントへ持ち込まない）
+- サイドバーのタグの選択は React の Island（`src/components/islands/TagSelect.tsx`、Radix Select）。サイドバーは md（48rem）以上の幅でだけ表示するので、`client:media="(min-width: 48rem)"` でその幅になってから読み込む（狭い画面で開いたあとに幅が広がった場合も、その時点で読み込まれる）。class は現行サイトの shadcn/ui の Select を結合済みの文字列で持つ。トップページの横スクロールの左右ボタンは、Island にせず `<script>` で動かす
+- ヘッダーのロゴ画像の `width` / `height` は原本（1104×210）の比率に合わせる。本文とサイドバーの列の幅は grid で決める（`minmax(0,4fr)` と `minmax(15rem,1fr)`、間隔 16px）。本文は残りの幅、サイドバーは全体の 1/5 で、狭い画面では 15rem にする。幅が中身・フォント・サイドバーの有無に左右されないので、読み込みの途中で本文の幅が変わらない。どちらも、初回訪問時のレイアウトのずれを避けるため（#1355）。幅 1280px 以上では現行サイトと同じ幅になり、それより狭い幅では本文が少し狭くなる（900px で 12px。現行サイトは、サイドバーの幅が中身の最小幅で決まっている）
+- 漫画の表紙（サイドバーと概要カード）は、1:1.41（B5 など）を想定して枠の比率を固定し、`object-contain` で収める。読み込み後に高さが変わらないようにするため（#1355）
 
 ### ビルド・デプロイ・ローカル開発
 

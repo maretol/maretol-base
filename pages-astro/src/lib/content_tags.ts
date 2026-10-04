@@ -1,5 +1,6 @@
-import type { ParsedContent } from 'api-types'
+import type { contentsAPIResult, ParsedContent } from 'api-types'
 import { cacheTag } from 'cache-tags'
+import { getSampleBlocks } from '@/lib/sample'
 
 // 本文に埋め込んだカードが参照するコンテンツの Cache-Tag。
 // 参照先が更新されたときに、カードを含むページもパージされるようにする。
@@ -23,6 +24,11 @@ export function getEmbedTags(contents: ParsedContent[]): string[] {
     }
   }
   return [...tags]
+}
+
+// 一覧に抜粋を出す記事について、抜粋に含まれるカードの参照先のタグ
+export function getSampleEmbedTags(articles: contentsAPIResult[]): string[] {
+  return [...new Set(articles.flatMap((article) => getEmbedTags(getSampleBlocks(article.parsed_content))))]
 }
 
 function pathSegment(link: string, index: number): string | undefined {

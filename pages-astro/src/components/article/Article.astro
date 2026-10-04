@@ -1,0 +1,46 @@
+---
+import type { categoryAPIResult, ParsedContent } from 'api-types'
+import { BookIcon } from '@lucide/astro'
+import ArticleContent from './ArticleContent.astro'
+import Tags from './Tags.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { card } from '@/components/ui/card'
+import { convertJST } from '@/lib/time'
+import { cn } from '@/lib/utils'
+
+// 一覧に出す記事のカード。本文は抜粋だけを表示する
+type Props = {
+  id: string
+  title: string
+  updatedAt: string
+  categories: categoryAPIResult[]
+  parsedContents: ParsedContent[]
+}
+
+const { id, title, updatedAt, categories, parsedContents } = Astro.props
+const href = `/blog/${id}`
+---
+
+<div lang="ja" class={cn(card.root, 'bg-gray-100')}>
+  <div class={card.header}>
+    <h1 lang="ja" class={card.title}>
+      <a href={href} class="hover:underline">{title}</a>
+    </h1>
+    <p class={card.description}>{convertJST(updatedAt)}</p>
+    <div class={cn(card.content, 'pl-0 pb-0')}>
+      <Tags tags={categories} />
+    </div>
+  </div>
+  <hr class="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
+  <div class={cn(card.content, 'relative')}>
+    <ArticleContent contents={parsedContents} articleID={id} sample />
+    <div class="absolute p-6 pt-0 bottom-0 left-0 w-full h-36 bg-linear-to-t from-gray-100 from-40% to-gray-100/0">
+    </div>
+  </div>
+  <div class={card.footer}>
+    <a href={href} class={cn(buttonVariants(), 'w-full gap-1 font-suse')}>
+      <BookIcon class="w-4 h-4" />
+      Read more...
+    </a>
+  </div>
+</div>

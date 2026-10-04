@@ -1,0 +1,51 @@
+---
+import { buttonVariants } from '@/components/ui/button'
+import { getPageHref, getPageItems, getPageSlots } from '@/lib/pagination'
+import { cn } from '@/lib/utils'
+
+// 一覧ページのページネーション。ページ数が多いときは、最初・最後・現在の前後だけを出して間を省略する
+type Props = {
+  path: string
+  // ページ番号以外に引き継ぐクエリ
+  queryWithoutPage?: Record<string, string>
+  currentPage: number
+  totalPage: number
+}
+
+// 現在のページの前後に表示する件数。狭い画面は最大 7 枠、sm 以上は最大 9 枠に収める
+const SIBLING_COUNT_NARROW = 1
+const SIBLING_COUNT_WIDE = 2
+
+const { path, queryWithoutPage = {}, currentPage, totalPage } = Astro.props
+
+// 狭い画面でも省略が要らないページ数なら、画面幅での出し分けは不要
+const groups =
+  totalPage <= getPageSlots(SIBLING_COUNT_NARROW)
+    ? [{ items: getPageItems(currentPage, totalPage, SIBLING_COUNT_NARROW), class: undefined }]
+    : [
+        { items: getPageItems(currentPage, totalPage, SIBLING_COUNT_NARROW), class: 'sm:hidden' },
+        { items: getPageItems(currentPage, totalPage, SIBLING_COUNT_WIDE), class: 'hidden sm:flex' },
+      ]
+---
+
+{
+  groups.map((group) => (
+    <div class={cn('flex gap-1 sm:gap-2', group.class)}>
+      {group.items.map((item) =>
+        typeof item === 'number' ? (
+          <a
+            href={getPageHref(path, queryWithoutPage, item)}
+            class={cn(buttonVariants({ variant: currentPage === item ? 'default' : 'secondary' }), 'p-2 w-10')}
+            aria-current={currentPage === item ? 'page' : undefined}
+          >
+            {item}
+          </a>
+        ) : (
+          <span class="w-10 h-10 flex items-end justify-center pb-2 select-none" aria-hidden="true">
+            …
+          </span>
+        ),
+      )}
+    </div>
+  ))
+}

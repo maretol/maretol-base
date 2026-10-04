@@ -1,0 +1,17 @@
+---
+import type { categoryAPIResult } from 'api-types'
+import SidebarFrame from './SidebarFrame.astro'
+import TagSelect from '@/components/islands/TagSelect'
+
+// tags が null なのは、取得できなかったとき
+type Props = { tags: categoryAPIResult[] | null }
+
+// Island に渡すのは選択肢に必要な項目だけにする
+const tags = Astro.props.tags?.map((tag) => ({ id: tag.id, name: tag.name }))
+---
+
+<SidebarFrame title="Tags" error={tags === undefined}>
+  {/* サイドバーは md（48rem）以上の幅でだけ表示するので、Island もその幅になってから読み込む。
+      狭い画面で開いたあとに幅が広がった場合（回転・リサイズ）も、その時点で読み込まれる */}
+  {tags && <TagSelect client:media="(min-width: 48rem)" tags={tags} />}
+</SidebarFrame>
