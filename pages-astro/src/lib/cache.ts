@@ -2,8 +2,8 @@ import { cacheTag } from 'cache-tags'
 
 // エッジで保持する秒数。更新は保存時のタグパージで反映するので、長さはパージ漏れ時の上限としてしか効かない
 const EDGE_TTL = 30 * 24 * 60 * 60
-// 404 を保持する秒数。存在しない URL への連続アクセスで毎回 D1 まで届くのを防ぐ
-const NOT_FOUND_TTL = 60
+// 404 と 400 を保持する秒数。存在しない URL や受け付けない値への連続アクセスで、毎回 D1 まで届くのを防ぐ
+const CLIENT_ERROR_TTL = 60
 // 取得に失敗した部品を含むページを保持する秒数。一時的な失敗による不完全な表示が 30 日残らないようにする
 const DEGRADED_TTL = 10 * 60
 // リンクカード（Server Island）を保持する秒数。リンク先の更新を知る手段が無いので、OGP データを KV に持つ期間（lib/api/ogp.ts）と同じにする
@@ -50,7 +50,11 @@ export function assertSidebarTagged(response: ResponseLike): void {
 }
 
 export function cacheNotFound(response: ResponseLike, tags: string[]): void {
-  cachePage(response, tags, { ttl: NOT_FOUND_TTL })
+  cachePage(response, tags, { ttl: CLIENT_ERROR_TTL })
+}
+
+export function cacheBadRequest(response: ResponseLike, tags: string[]): void {
+  cachePage(response, tags, { ttl: CLIENT_ERROR_TTL })
 }
 
 // リンクカード（Server Island）のレスポンスをエッジにキャッシュさせる。記事とは別のリクエストなので、保持期間も記事とは別に決める

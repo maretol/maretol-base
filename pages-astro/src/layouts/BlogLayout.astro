@@ -14,12 +14,11 @@ const { meta, sidebar = true } = Astro.props
 ---
 
 <SiteLayout meta={meta}>
-  <div class="md:flex md:flex-row">
-    {/* 2 つの列の幅は、合わせてちょうど 100% になるようにする（間隔は 16px）。
-        80% と 20% のままだと合計が 16px あふれ、縮む量がサイドバーの有無で変わる。
-        HTML の解析の途中でサイドバーが無い時点に描画されると、本文の幅が後から変わってずれる（#1355） */}
-    <div class="basis-[calc(80%-12.8px)]"><slot /></div>
-    <div class="basis-[calc(20%-3.2px)] ml-4 not-md:hidden">
+  {/* 列の幅は grid で決める。本文は残りの幅、サイドバーは全体の 1/5（狭い画面では 15rem）。
+      幅が中身やサイドバーの有無に左右されないので、読み込みの途中で本文の幅が変わらない（#1355） */}
+  <div class="md:grid md:grid-cols-[minmax(0,4fr)_minmax(15rem,1fr)] md:gap-x-4">
+    <div><slot /></div>
+    <div class="not-md:hidden">
       {sidebar && <BlogSidebar />}
     </div>
   </div>

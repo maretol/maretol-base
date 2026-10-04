@@ -24,11 +24,16 @@ if (pageNumber === null) {
 }
 
 const tags = await getTags(Astro.locals)
-// tag_id は自由に指定できる。タグの一覧に無い値は 0 件と分かっているので、D1 へ問い合わせない
 const selectedTag = tags.find((tag) => tag.id === tagID)
+if (tagID && !selectedTag) {
+  // tag_id は自由に指定できる。タグの一覧に無い値は 400 にする。タグが作られたら、400 のキャッシュも一緒に消えるようにする
+  Astro.locals.badRequest = { tags: [cacheTag.blog] }
+  return Astro.rewrite('/400')
+}
 // タグが作られたとき・記事が増えたときに、404 のキャッシュも一緒に消えるようにする
 const notFoundTags = [cacheTag.blog, cacheTag.blogList]
 if (!selectedTag && pageNumber > 1) {
+  // タグを選んでいない状態に 2 ページ目以降は無い
   Astro.locals.notFound = { tags: notFoundTags }
   return Astro.rewrite('/404')
 }
@@ -41,19 +46,21 @@ if (isPageOutOfRange(pageNumber, total, PAGE_LIMIT)) {
   return Astro.rewrite('/404')
 }
 
-// Cache-Tag に入れるのは、タグの一覧にある ID だけにする（クエリの値をそのままヘッダへ入れない）
+// Cache-Tag に入れるのは、タグの一覧にある ID だけ（クエリの値をそのままヘッダへ入れない）
 cachePage(Astro.response, [...(selectedTag ? [cacheTag.tag(selectedTag.id)] : []), ...getSampleEmbedTags(contents)], {
   sidebar: true,
 })
 
 // ページネーションのリンクに引き継ぐクエリ。tag_name は検索に使わないが、落とすと使っていないことが URL から分かってしまう
 const queryWithoutPage = {
-  ...(tagID ? { tag_id: tagID } : {}),
+  ...(selectedTag ? { tag_id: selectedTag.id } : {}),
   ...(tagName ? { tag_name: tagName } : {}),
 }
 
 const title = selectedTag ? `タグ検索：${selectedTag.name} | ${SITE_NAME}` : `タグ検索 | ${SITE_NAME}`
-const canonical = tagID ? `${getHostname()}/tag?${new URLSearchParams({ tag_id: tagID })}` : `${getHostname()}/tag`
+const canonical = selectedTag
+  ? `${getHostname()}/tag?${new URLSearchParams({ tag_id: selectedTag.id })}`
+  : `${getHostname()}/tag`
 const meta: PageMeta = {
   title,
   description: 'タグ検索ページ',
@@ -62,7 +69,7 @@ const meta: PageMeta = {
   ogURL: canonical,
   canonical,
   // タグを選んでいない状態は検索結果に出さない
-  noindex: !tagID,
+  noindex: !selectedTag,
 }
 ---
 
@@ -73,12 +80,12 @@ const meta: PageMeta = {
         <div class="mb-2">
           <h2 class="font-bold alphabet">Selected Tag :</h2>
         </div>
-        <TagSelector tags={tags} selectedTagID={tagID} />
+        <TagSelector tags={tags} selectedTagID={selectedTag?.id} />
       </div>
     </div>
     <div class="flex flex-col justify-center gap-10">
       {
-        !tagID ? (
+        !selectedTag ? (
           <div class="text-center py-10">
             <p class="text-gray-500">タグを選択してください</p>
           </div>
