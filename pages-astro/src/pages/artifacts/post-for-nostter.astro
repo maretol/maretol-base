@@ -1,0 +1,35 @@
+---
+import { cacheTag } from 'cache-tags'
+import BlogLayout from '@/layouts/BlogLayout.astro'
+import type { PageMeta } from '@/layouts/BaseLayout.astro'
+import InfoArticle from '@/components/article/InfoArticle.astro'
+import { getInfoPage } from '@/lib/api/cms'
+import { cachePage } from '@/lib/cache'
+import { getEmbedTags } from '@/lib/content_tags'
+import { getHostname, SITE_NAME } from '@/lib/site'
+
+// 制作物 Post for nostter の紹介（CMS の info の /artifacts/post-for-nostter）。サイドバーを出す
+const PATH = '/artifacts/post-for-nostter'
+
+const info = await getInfoPage(Astro.locals, PATH)
+if (!info) {
+  // info が公開されたときに、404 のキャッシュも一緒に消えるようにする
+  Astro.locals.notFound = { tags: [cacheTag.info] }
+  return Astro.rewrite('/404')
+}
+
+cachePage(Astro.response, [cacheTag.info, ...getEmbedTags(info.parsed_content)], { sidebar: true })
+
+const title = `Post for nostter | ${SITE_NAME}`
+const meta: PageMeta = {
+  title,
+  description: 'about Post for nostter',
+  ogTitle: title,
+  ogDescription: 'about Post for nostter',
+  ogURL: `${getHostname()}${PATH}`,
+}
+---
+
+<BlogLayout meta={meta}>
+  <InfoArticle info={info} title="Post for nostter" path={PATH} articleID="post-for-nostter" />
+</BlogLayout>

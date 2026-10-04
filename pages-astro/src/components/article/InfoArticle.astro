@@ -1,0 +1,33 @@
+---
+import type { infoAPIResult } from 'api-types'
+import FullArticle from './FullArticle.astro'
+import { getHostname } from '@/lib/site'
+
+// 固定ページ（about / contact など、CMS の info）の本文
+type Props = {
+  info: infoAPIResult
+  // 見出しに出す題名
+  title: string
+  // ページのパス（共有 URL に使う）
+  path: string
+  // 本文の中のリンク（画像など）に使う ID
+  articleID: string
+}
+
+const { info, title, path, articleID } = Astro.props
+---
+
+<div class="flex flex-col justify-center gap-10">
+  <FullArticle
+    articleID={articleID}
+    title={title}
+    publishedAt={info.publishedAt}
+    updatedAt={info.updatedAt}
+    categories={[]}
+    parsedContents={info.parsed_content}
+    tableOfContents={info.table_of_contents}
+    type="info"
+    shareURL={`${getHostname()}${path}`}
+    annotations={info.annotations}
+  />
+</div>

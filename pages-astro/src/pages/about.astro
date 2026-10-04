@@ -1,0 +1,35 @@
+---
+import { cacheTag } from 'cache-tags'
+import SiteLayout from '@/layouts/SiteLayout.astro'
+import type { PageMeta } from '@/layouts/BaseLayout.astro'
+import InfoArticle from '@/components/article/InfoArticle.astro'
+import { getInfoPage } from '@/lib/api/cms'
+import { cachePage } from '@/lib/cache'
+import { getEmbedTags } from '@/lib/content_tags'
+import { getHostname, SITE_NAME } from '@/lib/site'
+
+// このサイトについて（CMS の info の /about）
+const PATH = '/about'
+
+const info = await getInfoPage(Astro.locals, PATH)
+if (!info) {
+  // info が公開されたときに、404 のキャッシュも一緒に消えるようにする
+  Astro.locals.notFound = { tags: [cacheTag.info] }
+  return Astro.rewrite('/404')
+}
+
+cachePage(Astro.response, [cacheTag.info, ...getEmbedTags(info.parsed_content)])
+
+const title = `このサイトについて | ${SITE_NAME}`
+const meta: PageMeta = {
+  title,
+  description: 'このサイトについて',
+  ogTitle: title,
+  ogDescription: 'このサイトについて',
+  ogURL: `${getHostname()}${PATH}`,
+}
+---
+
+<SiteLayout meta={meta} class="min-w-0">
+  <InfoArticle info={info} title="このページについて" path={PATH} articleID="about" />
+</SiteLayout>
