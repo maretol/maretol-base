@@ -4,7 +4,6 @@ import { ImageIcon } from '@lucide/astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getAtelierByID } from '@/lib/api/cms'
-import { markDegraded } from '@/lib/degraded'
 import { convertJST } from '@/lib/time'
 import { cn, parseURL } from '@/lib/utils'
 
@@ -26,9 +25,9 @@ const illustID = parseURL(link)?.pathname.split('/')[3]
 const detailLink = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${encodeURIComponent(draftKey)}` : '')
 const illust: atelierResult | null = illustID
   ? await getAtelierByID(illustID, draftKey).catch((e) => {
-      // fetcher は「存在しない」とそれ以外の失敗を区別しないので、どちらも不完全な表示として扱う
+      // 取得できないのは、公開後に非公開・削除された場合とみなす（自サイトのコンテンツなので、存在しないものを指すことは基本的にない）。
+      // 不完全なページ（lib/degraded.ts）としては記録せず、代わりの表示のまま通常どおりキャッシュさせる。再び公開されたときはタグのパージで消える
       console.error('[components/blocks/IllustCard.astro] Illust fetch error:', e)
-      markDegraded(Astro.locals, `illust card: ${link}`)
       return null
     })
   : null
@@ -67,7 +66,7 @@ const illust: atelierResult | null = illustID
           <ImageIcon class="w-6 h-6 shrink-0" />
           <div class="w-full flex flex-col self-end">
             <p class="text-md text-wrap line-clamp-2">エラー：見つかりませんでした</p>
-            <p class="text-gray-500 text-xs font-normal">公開が停止されたか、リンクのURLを間違えたようです</p>
+            <p class="text-gray-500 text-xs font-normal">公開後に非公開になった可能性があります</p>
           </div>
         </div>
       )

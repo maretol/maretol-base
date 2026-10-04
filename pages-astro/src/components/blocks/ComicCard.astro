@@ -4,7 +4,6 @@ import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getBandeDessineeByID } from '@/lib/api/cms'
 import { getFirstPage } from '@/lib/comic'
-import { markDegraded } from '@/lib/degraded'
 import { getNoImageURL } from '@/lib/image'
 import { convertJST } from '@/lib/time'
 import { cn, parseURL } from '@/lib/utils'
@@ -18,9 +17,9 @@ const linkPath = parseURL(link)?.pathname ?? ''
 const comicID = linkPath.split('/')[2]
 const comic: bandeDessineeResult | null = comicID
   ? await getBandeDessineeByID(comicID).catch((e) => {
-      // fetcher は「存在しない」とそれ以外の失敗を区別しないので、どちらも不完全な表示として扱う
+      // 取得できないのは、公開後に非公開・削除された場合とみなす（自サイトのコンテンツなので、存在しないものを指すことは基本的にない）。
+      // 不完全なページ（lib/degraded.ts）としては記録せず、代わりの表示のまま通常どおりキャッシュさせる。再び公開されたときはタグのパージで消える
       console.error('[components/blocks/ComicCard.astro] Comic fetch error:', e)
-      markDegraded(Astro.locals, `comic card: ${link}`)
       return null
     })
   : null
@@ -83,7 +82,7 @@ const coverURL =
               <p>シリーズ : -</p>
             </div>
             <div>
-              <p>公開が停止されたか、リンクのURLを間違えたようです</p>
+              <p>公開後に非公開になった可能性があります</p>
             </div>
           </div>
         </div>

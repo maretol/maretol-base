@@ -4,7 +4,6 @@ import { LockIcon, NotebookTextIcon } from '@lucide/astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getCMSContent } from '@/lib/api/cms'
-import { markDegraded } from '@/lib/degraded'
 import { convertJST } from '@/lib/time'
 import { cn, parseURL } from '@/lib/utils'
 
@@ -17,9 +16,9 @@ const linkPath = parseURL(link)?.pathname ?? ''
 const articleID = linkPath.split('/')[2]
 const article: contentsAPIResult | null = articleID
   ? await getCMSContent(articleID).catch((e) => {
-      // 存在しない記事は null で返るので、ここに来るのは取得の失敗
+      // 非公開・削除された記事は null で返る。取得の失敗も同じ扱いにして、不完全なページ（lib/degraded.ts）としては記録しない。
+      // 代わりの表示のまま通常どおりキャッシュさせる。再び公開されたときはタグのパージで消える
       console.error('[components/blocks/BlogCard.astro] Blog fetch error:', e)
-      markDegraded(Astro.locals, `blog card: ${link}`)
       return null
     })
   : null
@@ -34,7 +33,7 @@ const thumbnail = article?.is_secret ? undefined : article?.ogp_image
           <NotebookTextIcon class="w-6 h-6 shrink-0" />
           <div class="w-full flex flex-col self-end">
             <p class="text-md font-semibold text-wrap line-clamp-2">エラー：見つかりませんでした</p>
-            <p class="text-gray-500 text-xs">公開が停止されたか、リンクのURLを間違えたようです</p>
+            <p class="text-gray-500 text-xs">公開後に非公開になった可能性があります</p>
           </div>
         </div>
       ) : article.is_secret ? (

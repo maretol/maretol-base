@@ -3,7 +3,6 @@ import type { infoAPIResult } from 'api-types'
 import { HammerIcon } from '@lucide/astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getInfo } from '@/lib/api/cms'
-import { markDegraded } from '@/lib/degraded'
 import { convertJST } from '@/lib/time'
 import { cn, parseURL } from '@/lib/utils'
 
@@ -16,8 +15,8 @@ const linkPath = parseURL(link)?.pathname ?? ''
 const artifact: infoAPIResult | undefined = await getInfo().then(
   (info) => info.find((c) => c.page_pathname === linkPath),
   (e) => {
+    // 取得の失敗は、該当する info が無い（非公開・削除された）場合と同じ表示にする。不完全なページ（lib/degraded.ts）としては記録しない
     console.error('[components/blocks/ArtifactCard.astro] Info fetch error:', e)
-    markDegraded(Astro.locals, `artifact card: ${link}`)
     return undefined
   },
 )
