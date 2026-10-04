@@ -192,7 +192,7 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 ### データ取得
 
-`cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
+`cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。info の一覧だけは、取得中の Promise を `Astro.locals` に置き、1 回の描画の中で共有する（制作物カードが複数あると、カードごとに全件の取得とパースが走るため。リクエストをまたぐキャッシュは持たない）。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
 
 RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.d.ts` と `ogp-data-fetcher/types.d.ts` を参照し、`Cloudflare.Env` とグローバルの `Env` の `CMS_RPC` / `OGP_RPC` を `Service<…>` として宣言する（`wrangler types` は Service Binding を `Fetcher` としか出力しない。pages / admin-pages の `env.d.ts` と同じやり方で、キャストは使わない）
 

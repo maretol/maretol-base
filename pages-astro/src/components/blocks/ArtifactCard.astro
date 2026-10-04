@@ -12,7 +12,7 @@ type Props = { link: string }
 const { link } = Astro.props
 
 const linkPath = parseURL(link)?.pathname ?? ''
-const artifact: infoAPIResult | undefined = await getInfo().then(
+const artifact: infoAPIResult | undefined = await getInfo(Astro.locals).then(
   (info) => info.find((c) => c.page_pathname === linkPath),
   (e) => {
     // 取得の失敗は、該当する info が無い（非公開・削除された）場合と同じ表示にする。不完全なページ（lib/degraded.ts）としては記録しない

@@ -38,8 +38,14 @@ export async function getAdjacentContents(articleID: string): Promise<adjacentCo
   }
 }
 
-// info（about / contact / artifact などの固定ページ）の一覧
-export async function getInfo(): Promise<infoAPIResult[]> {
+// info（about / contact / artifact などの固定ページ）の一覧。
+// 1 回の描画の中では取得を 1 回にまとめる（制作物カードが複数あると、カードごとに全件の取得とパースが走るため）。
+// 取得中の Promise を locals に置いて共有する。リクエストをまたぐキャッシュは持たない
+export function getInfo(locals: App.Locals): Promise<infoAPIResult[]> {
+  return (locals.info ??= fetchInfo())
+}
+
+async function fetchInfo(): Promise<infoAPIResult[]> {
   return (await env.CMS_RPC.fetchInfo()) as infoAPIResult[]
 }
 
