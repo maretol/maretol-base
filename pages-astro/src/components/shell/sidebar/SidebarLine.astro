@@ -1,0 +1,24 @@
+---
+// 固定文言（CMS の static）の 1 行。「/contact」「/about」で始まる語は、そのページへのリンクにする
+type Props = { text: string }
+
+const words = Astro.props.text.split(' ')
+---
+
+<p>
+  {
+    words.map((word) =>
+      word === '/contact' ? (
+        <a href="/contact" class="hover:underline">
+          {word}
+        </a>
+      ) : word.startsWith('/about') ? (
+        <a href="/about" class="hover:underline">
+          {word}
+        </a>
+      ) : (
+        <span> {word} </span>
+      ),
+    )
+  }
+</p>

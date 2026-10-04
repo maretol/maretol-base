@@ -18,7 +18,7 @@ if (notFound?.noStore) {
 Astro.response.status = 404
 ---
 
-<BlogLayout meta={{ noindex: true }}>
+<BlogLayout meta={{ noindex: true }} sidebar={false}>
   <div class={cn(card.root, 'w-full bg-gray-100')}>
     <div class={card.header}>
       <h3 class={card.title}>404 Not Found</h3>

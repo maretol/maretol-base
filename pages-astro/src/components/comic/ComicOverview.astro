@@ -1,0 +1,68 @@
+---
+import type { bandeDessineeResult } from 'api-types'
+import { BookImageIcon } from '@lucide/astro'
+import ArticleContent from '@/components/article/ArticleContent.astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { card } from '@/components/ui/card'
+import { getComicCoverURL } from '@/lib/comic'
+import { convertJST, convertJSTDate } from '@/lib/time'
+import { cn } from '@/lib/utils'
+
+// 一覧に出す漫画のカード。表紙と、題名・作品情報・概要の先頭を並べる
+type Props = { comic: bandeDessineeResult }
+
+const { comic } = Astro.props
+const href = `/comics/${comic.id}`
+const publishDate = comic.publish_date ? convertJSTDate(comic.publish_date) : '-'
+// 概要は説明文の先頭のブロックだけを出す
+const overview = comic.parsed_description.slice(0, 1)
+---
+
+<div class={cn(card.root, 'w-full bg-gray-100')}>
+  <div class={cn(card.header, 'py-2')}></div>
+  <div class="flex sm:flex-row flex-col mb-2 gap-x-0 gap-y-2">
+    <div class="px-6 pt-2 pb-0 sm:pr-0 flex justify-center">
+      <CdnImage
+        src={getComicCoverURL(comic)}
+        alt={comic.title_name}
+        width={400}
+        height={600}
+        class="w-96 h-auto object-contain"
+      />
+    </div>
+    <div class="w-full">
+      <div class={cn(card.header, 'pt-2')}>
+        <h1 class={card.title}>
+          <a href={href} class="hover:underline">{comic.title_name}</a>
+        </h1>
+        <p class={card.description}>
+          作成日{convertJST(comic.publishedAt)}
+          <br />
+          最終更新{convertJST(comic.updatedAt)}
+        </p>
+      </div>
+      <div class={cn(card.content, 'my-1 space-y-6 pb-2 not-lg:hidden')}>
+        <div class="w-full space-y-3 font-semibold">
+          <h2 class="text-xl font-bold pl-2 pb-1 content-h2">作品情報</h2>
+          <div>
+            <p>初公開イベント名 : {comic.publish_event || '-'}</p>
+            <p>初公開イベント日 : {publishDate}</p>
+            <p>シリーズ : {comic.series?.series_name || '-'}</p>
+            <p>ジャンル : {comic.tag.tag_name || '-'}</p>
+          </div>
+        </div>
+        <div class="w-full space-y-3">
+          <h2 class="text-xl font-bold pl-2 pb-1 content-h2">概要</h2>
+          <ArticleContent contents={overview} articleID={comic.id} sample />
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class={card.footer}>
+    <a href={href} class={cn(buttonVariants(), 'w-full gap-1 font-suse')}>
+      <BookImageIcon class="w-4 h-4" />
+      Read This
+    </a>
+  </div>
+</div>

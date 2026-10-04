@@ -2,8 +2,10 @@ import type {
   adjacentContentsResult,
   atelierResult,
   bandeDessineeResult,
+  categoryAPIResult,
   contentsAPIResult,
   infoAPIResult,
+  staticAPIResult,
 } from 'api-types'
 import { env } from 'cloudflare:workers'
 
@@ -28,6 +30,39 @@ export async function getCMSContent(articleID: string, draftKey?: string): Promi
   }
 }
 
+// ブログ記事の一覧と総件数。範囲外の offset では空の一覧と総件数が返る
+export async function getCMSContents(
+  offset: number,
+  limit: number,
+): Promise<{ contents: contentsAPIResult[]; total: number }> {
+  return (await env.CMS_RPC.fetchContents(offset.toString(), limit.toString())) as {
+    contents: contentsAPIResult[]
+    total: number
+  }
+}
+
+// タグで絞り込んだブログ記事の一覧と総件数
+export async function getCMSContentsWithTags(
+  tagIDs: string[],
+  offset: number,
+  limit: number,
+): Promise<{ contents: contentsAPIResult[]; total: number }> {
+  return (await env.CMS_RPC.fetchContentsByTag(tagIDs, offset.toString(), limit.toString())) as {
+    contents: contentsAPIResult[]
+    total: number
+  }
+}
+
+// ブログのタグ（カテゴリ）の一覧
+export async function getTags(): Promise<categoryAPIResult[]> {
+  return (await env.CMS_RPC.fetchTags()) as categoryAPIResult[]
+}
+
+// 固定文言（サイドバーの About / Profile など）
+export async function getStatic(): Promise<staticAPIResult> {
+  return (await env.CMS_RPC.fetchStatic()) as staticAPIResult
+}
+
 // 前後記事。取得に失敗したら null（記事本体は表示するが、呼び出し側でキャッシュを避ける）
 export async function getAdjacentContents(articleID: string): Promise<adjacentContentsResult | null> {
   try {
@@ -47,6 +82,28 @@ export function getInfo(locals: App.Locals): Promise<infoAPIResult[]> {
 
 async function fetchInfo(): Promise<infoAPIResult[]> {
   return (await env.CMS_RPC.fetchInfo()) as infoAPIResult[]
+}
+
+// 漫画の一覧と総件数
+export async function getBandeDessinees(
+  offset: number,
+  limit: number,
+): Promise<{ bandeDessinees: bandeDessineeResult[]; total: number }> {
+  return (await env.CMS_RPC.fetchBandeDessinees(offset.toString(), limit.toString())) as {
+    bandeDessinees: bandeDessineeResult[]
+    total: number
+  }
+}
+
+// イラストの一覧と総件数
+export async function getAteliers(
+  offset: number,
+  limit: number,
+): Promise<{ ateliers: atelierResult[]; total: number }> {
+  return (await env.CMS_RPC.fetchAteliers(offset.toString(), limit.toString())) as {
+    ateliers: atelierResult[]
+    total: number
+  }
 }
 
 // 特定の漫画。fetcher は「存在しない」とそれ以外の失敗を区別せずに例外を投げる

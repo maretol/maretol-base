@@ -1,0 +1,53 @@
+---
+import { ChevronLeftIcon, ChevronRightIcon } from '@lucide/astro'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+// トップページの横スクロールの一覧。中身は ContentsViewerItem を並べ、最後に一覧ページへのボタンを置く。
+// 左右のボタンでの移動は、下の script が受け持つ
+type Props = { moreLink: string; moreButtonText: string }
+
+const { moreLink, moreButtonText } = Astro.props
+const scrollButtonClassName = cn(
+  buttonVariants(),
+  'mb-4 h-full bg-white/10 stroke-gray-700 hover:stroke-gray-50 cursor-pointer',
+)
+---
+
+<div class="relative" data-contents-viewer>
+  <div class="absolute left-0 top-0 h-full max-md:hidden">
+    <button type="button" class={scrollButtonClassName} data-scroll-direction="-1" aria-label="前へ">
+      <ChevronLeftIcon class="w-12 h-12" />
+    </button>
+  </div>
+  <div class="snap-x snap-mandatory flex gap-8 md:gap-20 overflow-x-auto" data-scroll-area>
+    <slot />
+    <div class="md:snap-start snap-center snap-always w-48 mb-4 mr-48 flex-none">
+      <div class="h-full flex items-center justify-center">
+        <a
+          href={moreLink}
+          class={cn(buttonVariants({ variant: 'outline' }), 'h-full w-full bg-gray-100 hover:bg-white font-suse')}
+        >
+          {moreButtonText}
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="absolute right-0 top-0 h-full max-md:hidden">
+    <button type="button" class={scrollButtonClassName} data-scroll-direction="1" aria-label="次へ">
+      <ChevronRightIcon class="w-12 h-12" />
+    </button>
+  </div>
+</div>
+
+<script>
+  // 左右のボタンで一覧を横に送る。scroll-snap があるので、ある程度動かせば次の項目で止まる
+  document.addEventListener('click', (e) => {
+    const button = e.target instanceof Element ? e.target.closest<HTMLElement>('[data-scroll-direction]') : null
+    const area = button?.closest('[data-contents-viewer]')?.querySelector('[data-scroll-area]')
+    if (!button || !area) {
+      return
+    }
+    area.scrollBy({ left: area.clientWidth * 0.5 * Number(button.dataset.scrollDirection), behavior: 'smooth' })
+  })
+</script>

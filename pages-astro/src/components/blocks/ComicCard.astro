@@ -4,7 +4,7 @@ import { cardNotFound } from './card_not_found'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getBandeDessineeByID } from '@/lib/api/cms'
-import { getFirstPage } from '@/lib/comic'
+import { getComicCoverURL } from '@/lib/comic'
 import { getNoImageURL } from '@/lib/image'
 import { convertJST } from '@/lib/time'
 import { cn, parseURL } from '@/lib/utils'
@@ -25,10 +25,7 @@ const comic: bandeDessineeResult | null = comicID
     })
   : null
 
-// 表紙が無ければ 1 ページ目を使う
-const coverURL =
-  comic && comic.contents_url.replaceAll('index.json', '') +
-    (comic.cover || getFirstPage(comic.filename, comic.first_page, comic.format[0]))
+const coverURL = comic && getComicCoverURL(comic)
 ---
 
 {

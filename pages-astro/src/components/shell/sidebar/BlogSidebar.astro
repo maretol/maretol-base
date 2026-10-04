@@ -1,0 +1,44 @@
+---
+import AboutSidebar from './AboutSidebar.astro'
+import ArticlesSidebar from './ArticlesSidebar.astro'
+import ComicSidebar from './ComicSidebar.astro'
+import IllustSidebar from './IllustSidebar.astro'
+import ProfileSidebar from './ProfileSidebar.astro'
+import TagSidebar from './TagSidebar.astro'
+import { getAteliers, getBandeDessinees, getCMSContents, getStatic, getTags } from '@/lib/api/cms'
+import { markDegraded } from '@/lib/degraded'
+
+// サイドバー。固定文言と、最新の漫画・イラスト・記事、タグの一覧を出す。
+// 表示する内容のタグ（lib/cache.ts の sidebarTags）は、ページ側で付ける
+
+// 最新の一覧に出す件数
+const LATEST_COUNT = 5
+
+// 取得できなかった区画は出さず、不完全なページとして記録する（本文は表示する）
+async function fetchSection<T>(name: string, fetcher: () => Promise<T>): Promise<T | null> {
+  try {
+    return await fetcher()
+  } catch (e) {
+    console.error(`[components/shell/sidebar/BlogSidebar.astro] ${name} fetch error:`, e)
+    markDegraded(Astro.locals, `sidebar: ${name}`)
+    return null
+  }
+}
+
+const [staticData, comics, ateliers, articles, tags] = await Promise.all([
+  fetchSection('static', getStatic),
+  fetchSection('comics', () => getBandeDessinees(0, LATEST_COUNT)),
+  fetchSection('illusts', () => getAteliers(0, LATEST_COUNT)),
+  fetchSection('articles', () => getCMSContents(0, LATEST_COUNT)),
+  fetchSection('tags', getTags),
+])
+---
+
+<div class="w-full h-full gap-4 flex flex-col">
+  {staticData && <AboutSidebar rawText={staticData.sidebar_about} />}
+  {staticData && <ProfileSidebar rawText={staticData.sidebar_profile} />}
+  {comics && <ComicSidebar bandeDessinees={comics.bandeDessinees} />}
+  {ateliers && <IllustSidebar ateliers={ateliers.ateliers} />}
+  {articles && <ArticlesSidebar articles={articles.contents} />}
+  {tags && <TagSidebar tags={tags} />}
+</div>

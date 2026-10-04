@@ -1,0 +1,40 @@
+---
+import SidebarFrame from './SidebarFrame.astro'
+import SidebarLine from './SidebarLine.astro'
+
+type Props = { rawText: string }
+
+// 「Twitter:」などで始まる行は、そのサービスのプロフィールへのリンクにする
+const services = [
+  { header: 'Twitter:', href: (account: string) => `https://twitter.com/${account.replace('@', '')}` },
+  { header: 'Misskey:', href: (account: string) => `https://misskey.io/${account}` },
+  { header: 'Bluesky:', href: (account: string) => `https://bsky.app/profile/${account.replace('@', '')}` },
+]
+
+const lines = Astro.props.rawText.split('\n').map((text) => {
+  const service = services.find((s) => text.startsWith(s.header))
+  const account = service ? text.replace(service.header, '').trim() : ''
+  return { text, service, account }
+})
+---
+
+<SidebarFrame title="Profile">
+  <div>
+    {
+      lines.map(({ text, service, account }) =>
+        text === '' ? (
+          <br />
+        ) : service ? (
+          <p>
+            {service.header}{' '}
+            <a href={service.href(account)} target="_blank" class="hover:underline">
+              {account}
+            </a>
+          </p>
+        ) : (
+          <SidebarLine text={text} />
+        ),
+      )
+    }
+  </div>
+</SidebarFrame>

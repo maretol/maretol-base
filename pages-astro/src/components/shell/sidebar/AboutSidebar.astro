@@ -1,0 +1,14 @@
+---
+import SidebarFrame from './SidebarFrame.astro'
+import SidebarLine from './SidebarLine.astro'
+
+type Props = { rawText: string }
+
+const lines = Astro.props.rawText.split('\n')
+---
+
+<SidebarFrame title="About">
+  <div>
+    {lines.map((line) => (line === '' ? <br /> : <SidebarLine text={line} />))}
+  </div>
+</SidebarFrame>

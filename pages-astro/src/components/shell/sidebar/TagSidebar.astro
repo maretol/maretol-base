@@ -1,0 +1,14 @@
+---
+import type { categoryAPIResult } from 'api-types'
+import SidebarFrame from './SidebarFrame.astro'
+import TagSelect from '@/components/islands/TagSelect'
+
+type Props = { tags: categoryAPIResult[] }
+
+// Island に渡すのは選択肢に必要な項目だけにする
+const tags = Astro.props.tags.map((tag) => ({ id: tag.id, name: tag.name }))
+---
+
+<SidebarFrame title="Tags">
+  <TagSelect client:idle tags={tags} />
+</SidebarFrame>

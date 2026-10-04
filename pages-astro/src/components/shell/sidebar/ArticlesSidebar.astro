@@ -1,0 +1,24 @@
+---
+import type { contentsAPIResult } from 'api-types'
+import SidebarFrame from './SidebarFrame.astro'
+import { convertJST } from '@/lib/time'
+
+type Props = { articles: contentsAPIResult[] }
+
+const { articles } = Astro.props
+---
+
+<SidebarFrame title="Latest Articles">
+  <div>
+    {
+      articles.map((article) => (
+        <div class="mb-4">
+          <a href={`/blog/${article.id}`} class="hover:underline">
+            <p>{article.title}</p>
+            <p class="text-gray-500">{convertJST(article.publishedAt)}</p>
+          </a>
+        </div>
+      ))
+    }
+  </div>
+</SidebarFrame>

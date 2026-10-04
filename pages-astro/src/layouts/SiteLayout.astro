@@ -1,0 +1,52 @@
+---
+import BaseLayout, { type PageMeta } from './BaseLayout.astro'
+import HeaderButtons from '@/components/shell/HeaderButtons.astro'
+import FooterButtons from '@/components/shell/FooterButtons.astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getHeaderImageURL } from '@/lib/image'
+import { cn } from '@/lib/utils'
+
+// 幅が広い画面で左右に空白を作り、中央にコンテンツを置く。ヘッダー画像・ヘッダーのボタン・フッターもここで表示する
+type Props = {
+  meta?: PageMeta
+  // 中央の枠に足す class
+  class?: string
+}
+
+const { meta, class: className } = Astro.props
+const year = new Date().getFullYear()
+---
+
+<BaseLayout meta={meta}>
+  <div class="flex justify-center pb-10" id="top">
+    <div class={cn('max-w-425 w-full sm:mx-6', className)}>
+      <div class="my-10">
+        <div class="mb-2 pt-2">
+          <a href="/" class={cn(buttonVariants({ variant: 'link' }), 'p-0')}>
+            <CdnImage
+              src={getHeaderImageURL()}
+              width={400}
+              height={100}
+              class="w-125 object-contain"
+              alt="Maretol Base"
+              loading="eager"
+            />
+          </a>
+        </div>
+        <HeaderButtons />
+      </div>
+      <slot />
+      <div class="my-10">
+        <footer class="text-center text-sm text-gray-500 font-suse">
+          <FooterButtons />
+          <div>
+            © 2024 - {year} Maretol
+            <br />
+            DO NOT REPOST WITHOUT PERMISSION
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

@@ -14,7 +14,7 @@ noStore(Astro.response)
 Astro.response.status = 500
 ---
 
-<BlogLayout meta={{ noindex: true }}>
+<BlogLayout meta={{ noindex: true }} sidebar={false}>
   <div class={cn(card.root, 'w-full bg-gray-100')}>
     <div class={card.header}>
       <h3 class={card.title}>500 Internal Server Error</h3>

@@ -11,6 +11,10 @@ const LINK_CARD_TTL = 3 * 24 * 60 * 60
 // リンク先の情報を取得できなかったリンクカードを保持する秒数。時間をおいて取り直す
 const LINK_CARD_FAILURE_TTL = 10 * 60
 
+// サイドバー（components/shell/sidebar/BlogSidebar.astro）が表示する内容のタグ。
+// 最新の記事・漫画・イラストとタグの一覧を出すので、サイドバーを持つページにはこれも付ける
+export const sidebarTags = [cacheTag.blog, cacheTag.blogList, cacheTag.comicList, cacheTag.illustList]
+
 type ResponseLike = { readonly headers: Headers }
 
 // ページをエッジにキャッシュさせる。ページの frontmatter で呼ぶ（レイアウトやコンポーネントの中からはヘッダを変えられない）。

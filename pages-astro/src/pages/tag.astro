@@ -1,0 +1,115 @@
+---
+import { cacheTag } from 'cache-tags'
+import BlogLayout from '@/layouts/BlogLayout.astro'
+import type { PageMeta } from '@/layouts/BaseLayout.astro'
+import Article from '@/components/article/Article.astro'
+import TagSelector from '@/components/article/TagSelector.astro'
+import Pagination from '@/components/ui/Pagination.astro'
+import { getCMSContentsWithTags, getTags } from '@/lib/api/cms'
+import { cachePage, sidebarTags } from '@/lib/cache'
+import { getSampleEmbedTags } from '@/lib/content_tags'
+import { getHrefWithoutPage, isPageOutOfRange, PAGE_LIMIT, parsePageParam } from '@/lib/pagination'
+import { getHostname, SITE_NAME } from '@/lib/site'
+
+// タグで絞り込んだブログの一覧。タグは tag_id で 1 つ指定する。
+// tag_name は記事のタグのリンクが付ける表示用の値で、検索には使わない
+const searchParams = Astro.url.searchParams
+const tagID = searchParams.get('tag_id') || undefined
+const tagName = searchParams.get('tag_name') || undefined
+
+const pageNumber = parsePageParam(searchParams)
+if (pageNumber === null) {
+  // 不正な p と p=1 は、p を外した URL に統一する
+  return Astro.redirect(getHrefWithoutPage('/tag', searchParams), 308)
+}
+
+const tags = await getTags()
+// tag_id は自由に指定できる。タグの一覧に無い値は 0 件と分かっているので、D1 へ問い合わせない
+const selectedTag = tags.find((tag) => tag.id === tagID)
+// タグが作られたとき・記事が増えたときに、404 のキャッシュも一緒に消えるようにする
+const notFoundTags = [cacheTag.blog, cacheTag.blogList]
+if (!selectedTag && pageNumber > 1) {
+  Astro.locals.notFound = { tags: notFoundTags }
+  return Astro.rewrite('/404')
+}
+
+const { contents, total } = selectedTag
+  ? await getCMSContentsWithTags([selectedTag.id], (pageNumber - 1) * PAGE_LIMIT, PAGE_LIMIT)
+  : { contents: [], total: 0 }
+if (isPageOutOfRange(pageNumber, total, PAGE_LIMIT)) {
+  Astro.locals.notFound = { tags: notFoundTags }
+  return Astro.rewrite('/404')
+}
+
+// Cache-Tag に入れるのは、タグの一覧にある ID だけにする（クエリの値をそのままヘッダへ入れない）
+cachePage(Astro.response, [
+  ...sidebarTags,
+  ...(selectedTag ? [cacheTag.tag(selectedTag.id)] : []),
+  ...getSampleEmbedTags(contents),
+])
+
+// ページネーションのリンクに引き継ぐクエリ。tag_name は検索に使わないが、落とすと使っていないことが URL から分かってしまう
+const queryWithoutPage = {
+  ...(tagID ? { tag_id: tagID } : {}),
+  ...(tagName ? { tag_name: tagName } : {}),
+}
+
+const title = selectedTag ? `タグ検索：${selectedTag.name} | ${SITE_NAME}` : `タグ検索 | ${SITE_NAME}`
+const canonical = tagID ? `${getHostname()}/tag?${new URLSearchParams({ tag_id: tagID })}` : `${getHostname()}/tag`
+const meta: PageMeta = {
+  title,
+  description: 'タグ検索ページ',
+  ogTitle: title,
+  ogDescription: 'タグ検索ページ',
+  ogURL: canonical,
+  canonical,
+  // タグを選んでいない状態は検索結果に出さない
+  noindex: !tagID,
+}
+---
+
+<BlogLayout meta={meta}>
+  <div>
+    <div>
+      <div class="mb-4">
+        <div class="mb-2">
+          <h2 class="font-bold alphabet">Selected Tag :</h2>
+        </div>
+        <TagSelector tags={tags} selectedTagID={tagID} />
+      </div>
+    </div>
+    <div class="flex flex-col justify-center gap-10">
+      {
+        !tagID ? (
+          <div class="text-center py-10">
+            <p class="text-gray-500">タグを選択してください</p>
+          </div>
+        ) : total === 0 ? (
+          <div class="text-center py-10">
+            <p class="text-gray-500">検索結果が見つかりませんでした</p>
+          </div>
+        ) : (
+          <>
+            {contents.map((content) => (
+              <Article
+                id={content.id}
+                title={content.title}
+                updatedAt={content.updatedAt}
+                categories={content.categories}
+                parsedContents={content.parsed_content}
+              />
+            ))}
+            <div class="flex justify-center">
+              <Pagination
+                path="/tag"
+                queryWithoutPage={queryWithoutPage}
+                currentPage={pageNumber}
+                totalPage={Math.ceil(total / PAGE_LIMIT)}
+              />
+            </div>
+          </>
+        )
+      }
+    </div>
+  </div>
+</BlogLayout>
