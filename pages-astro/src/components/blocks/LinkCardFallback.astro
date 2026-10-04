@@ -1,0 +1,13 @@
+---
+import LinkCardFrame from './LinkCardFrame.astro'
+import { parseURL } from '@/lib/utils'
+
+// リンクカード（LinkCard.astro）がリンク先の情報を取得するまでの表示。同じ枠にホスト名と URL だけを出す。
+// JS が動かない閲覧者やクローラには、この表示のまま残る
+type Props = { link: string }
+
+const { link } = Astro.props
+const hostname = parseURL(link)?.hostname || link
+---
+
+<LinkCardFrame link={link} title={hostname} site={hostname} url={link} />

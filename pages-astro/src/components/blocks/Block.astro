@@ -11,6 +11,7 @@ import GoogleMap from './GoogleMap.astro'
 import Heading from './Heading.astro'
 import IllustCard from './IllustCard.astro'
 import LinkCard from './LinkCard.astro'
+import LinkCardFallback from './LinkCardFallback.astro'
 import MySiteCard from './MySiteCard.astro'
 import NofetchLinkCard from './NofetchLinkCard.astro'
 import Paragraph from './Paragraph.astro'
@@ -85,7 +86,10 @@ const pOption = tag === 'p' ? (content.p_option ?? 'normal') : null
     )
   ) : pOption === 'url' ? (
     <div class="py-4">
-      <LinkCard link={content.text} />
+      {/* リンク先の情報は、記事の表示後に別のリクエストで取得して差し込む（Server Island）。それまでは同じ枠に URL だけを出す */}
+      <LinkCard server:defer link={content.text}>
+        <LinkCardFallback slot="fallback" link={content.text} />
+      </LinkCard>
     </div>
   ) : pOption === 'nofetch_url' ? (
     <div class="py-4">

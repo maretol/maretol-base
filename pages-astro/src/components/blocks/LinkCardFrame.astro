@@ -1,0 +1,44 @@
+---
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { getNoImageURL } from '@/lib/image'
+
+// リンクカードの枠。リンク先の情報を表示するカード（LinkCard.astro）と、それを取得するまでの表示（LinkCardFallback.astro）で
+// 同じ形を使い、入れ替わったときに大きさが変わらないようにする
+type Props = {
+  link: string
+  title: string
+  description?: string
+  // リンク先の画像。無ければ No Image を表示する
+  image?: string | null
+  imageAlt?: string
+  // 下段に出すサイト名と URL
+  site: string
+  url: string
+}
+
+const { link, title, description, image, imageAlt, site, url } = Astro.props
+---
+
+<div class="max-w-2xl no-underline border-2 border-gray-300 rounded-[9px]">
+  <a href={link} target="_blank" class="no-underline hover:underline">
+    <div class="flex flex-row h-24">
+      <div class="row-span-3 w-36 h-24">
+        {
+          image ? (
+            <img src={image} alt={imageAlt} loading="lazy" class="object-contain w-36 h-24" />
+          ) : (
+            <CdnImage src={getNoImageURL()} alt="No Image" width={50} height={50} class="object-contain w-36 h-24" />
+          )
+        }
+      </div>
+      <div class="col-span-2 w-96 flex-auto ml-2 mr-1">
+        <p class="text-lg line-clamp-1 font-semibold pt-1">{title}</p>
+        <p class="text-sm line-clamp-3">{description}</p>
+      </div>
+    </div>
+    <div class="p-1 bg-gray-300 rounded-b-[6px]">
+      <p class="no-underline text-sm line-clamp-1">{site}</p>
+      <p class="no-underline text-sm line-clamp-1">{url}</p>
+    </div>
+  </a>
+</div>
