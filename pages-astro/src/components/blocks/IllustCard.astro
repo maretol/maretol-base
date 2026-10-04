@@ -1,9 +1,11 @@
 ---
 import type { atelierResult } from 'api-types'
 import { ImageIcon } from '@lucide/astro'
+import CardNotFound from './CardNotFound.astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getAtelierByID } from '@/lib/api/cms'
+import { withDraftKey } from '@/lib/draft'
 import { convertJST } from '@/lib/time'
 import { cn, parseURL } from '@/lib/utils'
 
@@ -22,7 +24,7 @@ const objectPositionClass: Record<string, string> = {
 }
 
 const illustID = parseURL(link)?.pathname.split('/')[3]
-const detailLink = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${encodeURIComponent(draftKey)}` : '')
+const detailLink = withDraftKey(`/illust/detail/${illustID}`, draftKey)
 const illust: atelierResult | null = illustID
   ? await getAtelierByID(illustID, draftKey).catch((e) => {
       // 取得できないのは、公開後に非公開・削除された場合とみなす（自サイトのコンテンツなので、存在しないものを指すことは基本的にない）。
@@ -62,13 +64,9 @@ const illust: atelierResult | null = illustID
           </div>
         </div>
       ) : (
-        <div class="flex items-center gap-2">
+        <CardNotFound>
           <ImageIcon class="w-6 h-6 shrink-0" />
-          <div class="w-full flex flex-col self-end">
-            <p class="text-md text-wrap line-clamp-2">エラー：見つかりませんでした</p>
-            <p class="text-gray-500 text-xs font-normal">公開後に非公開になった可能性があります</p>
-          </div>
-        </div>
+        </CardNotFound>
       )
     }
   </div>

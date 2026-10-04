@@ -1,3 +1,5 @@
+import { withDraftKey } from '@/lib/draft'
+
 // 画像 URL の組み立て。派生画像は Cloudflare Images の /cdn-cgi/image/ で作る
 
 const IMAGE_HOST = 'https://www.maretol.xyz'
@@ -79,6 +81,5 @@ export function toBase64URL(src: string): string {
 // 記事画像モーダルの URL。直接開くと記事の該当画像の位置へ移動する（pages/blog/[article_id]/image/[src].astro）。
 // 下書きプレビュー中は draftKey を引き継ぐ
 export function getImageModalHref(articleID: string, base64src: string, draftKey?: string): string {
-  const path = `/blog/${articleID}/image/${base64src}`
-  return draftKey ? `${path}?draftKey=${encodeURIComponent(draftKey)}` : path
+  return withDraftKey(`/blog/${articleID}/image/${base64src}`, draftKey)
 }

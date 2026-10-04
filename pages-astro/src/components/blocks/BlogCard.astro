@@ -1,6 +1,7 @@
 ---
 import type { contentsAPIResult } from 'api-types'
 import { LockIcon, NotebookTextIcon } from '@lucide/astro'
+import CardNotFound from './CardNotFound.astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getCMSContent } from '@/lib/api/cms'
@@ -29,13 +30,9 @@ const thumbnail = article?.is_secret ? undefined : article?.ogp_image
   <div class="bg-gray-300 h-full w-full px-4 py-2 rounded-md">
     {
       article === null ? (
-        <div class="flex items-center gap-2">
+        <CardNotFound>
           <NotebookTextIcon class="w-6 h-6 shrink-0" />
-          <div class="w-full flex flex-col self-end">
-            <p class="text-md font-semibold text-wrap line-clamp-2">エラー：見つかりませんでした</p>
-            <p class="text-gray-500 text-xs">公開後に非公開になった可能性があります</p>
-          </div>
-        </div>
+        </CardNotFound>
       ) : article.is_secret ? (
         // 限定公開記事は常にマスク表示する（タイトルは出す。サムネ・公開日は伏せる）
         <div class="flex items-center gap-2">

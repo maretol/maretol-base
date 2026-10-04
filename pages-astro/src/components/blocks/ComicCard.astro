@@ -1,5 +1,6 @@
 ---
 import type { bandeDessineeResult } from 'api-types'
+import { cardNotFound } from './card_not_found'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getBandeDessineeByID } from '@/lib/api/cms'
@@ -74,7 +75,7 @@ const coverURL =
           <CdnImage src={getNoImageURL()} alt="" width={300} height={300} class="max-w-36 h-auto" />
           <div class="w-full space-y-3 text-left">
             <div>
-              <p class="text-xl text-wrap line-clamp-2">エラー：見つかりませんでした</p>
+              <p class="text-xl text-wrap line-clamp-2">{cardNotFound.title}</p>
               <p class="text-gray-500 text-xs text-wrap line-clamp-2">0000/00/00 00:00:00 JST</p>
             </div>
             <div>
@@ -82,7 +83,7 @@ const coverURL =
               <p>シリーズ : -</p>
             </div>
             <div>
-              <p>公開後に非公開になった可能性があります</p>
+              <p>{cardNotFound.description}</p>
             </div>
           </div>
         </div>

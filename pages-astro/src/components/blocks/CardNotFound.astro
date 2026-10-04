@@ -1,0 +1,14 @@
+---
+import { cardNotFound } from './card_not_found'
+
+// 自サイトのコンテンツへのカードで、参照先を取得できなかったときの表示（ブログカード・イラストカード）。
+// アイコンは slot で受ける
+---
+
+<div class="flex items-center gap-2">
+  <slot />
+  <div class="w-full flex flex-col self-end">
+    <p class="text-md font-semibold text-wrap line-clamp-2">{cardNotFound.title}</p>
+    <p class="text-gray-500 text-xs font-normal">{cardNotFound.description}</p>
+  </div>
+</div>
