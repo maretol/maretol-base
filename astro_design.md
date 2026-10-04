@@ -30,6 +30,7 @@ CMS 側（admin-pages / cms-data-fetcher / D1）の設計は cms_goal.md・cms_d
 | 11 | エッジ TTL | 30 日 | パージで更新するので、長さはパージ漏れ時の上限としてしか効かない |
 | 12 | 進め方 | development へ小分け PR。`pages-astro` は development への push で staging にデプロイする | 切替まで本番に影響しない |
 | 13 | drawer・モーダル | イラスト drawer・記事画像モーダルとも Island + History API（10 章）。現行の URL と、直接開いた場合の挙動を維持する | 互換性のため、既存の仕組み（重ねて表示し URL も変える）を変えない |
+| 14 | リンクカード | Server Island（`server:defer`）にし、記事の表示後に別のリクエストで取得して差し込む（5 章）。JS が動かない閲覧者やクローラには、同じ枠にホスト名と URL だけを出す | リンク先の応答が遅くても記事の表示を待たせず、記事のキャッシュをリンク先の状態から切り離す |
 
 ## 3. 全体構成
 
@@ -63,10 +64,11 @@ admin-pages ──▶ D1 に保存
 `src/mw/cache.ts` のミドルウェアは安全側の既定値を担う。`cachePage()` を呼んでいないレスポンス、`draftKey` 付きのリクエスト、GET / HEAD 以外、500 番台はすべて `private, no-store` にする。Workers Cache は `Cache-Control` の無い 200 を既定で 2 時間キャッシュするため、明示したページだけがキャッシュされる形にしている
 
 - エッジは `Cloudflare-CDN-Cache-Control` を優先するので、ブラウザには保持させずエッジだけ長く持たせられる
-- キャッシュしないもの: 限定公開記事の本体、`draftKey` 付きリクエスト、POST、`/blog/test`、500 番台
+- キャッシュしないもの: 限定公開記事の本体、`draftKey` 付きリクエスト、POST、500 番台
 - 404 はエッジに 60 秒だけキャッシュする（存在しない URL への連続アクセスで毎回 D1 まで届くのを防ぐ）。記事詳細の 404 には `post:{id}` を付け、その記事が公開されたときのパージで一緒に消えるようにする
 - データ取得の失敗（D1 の一時的な障害など）は 404 にせず 500 で返す。404 にするとエッジにキャッシュされてしまうため。fetcher が返す「存在しない」は例外メッセージ（`... not found: {id}`）で見分ける
-- 取得に失敗した部品を含む不完全なページは長くキャッシュしない。前後記事の取得に失敗した記事詳細は `no-store` にしている。リンクカードや画像の寸法の取得失敗も同じ扱いにする（M3）
+- 取得に失敗した部品を含む不完全なページは 10 分だけキャッシュする（一時的な失敗による表示が 30 日残らないようにする）。対象は、前後記事、画像の寸法、引用画像の一時的な失敗（タイムアウト、引用元の 5xx など）。引用画像でも、引用元の 4xx、未対応の形式、3MB を超える画像は、取り直しても直らないので対象にしない（代わりの表示のまま通常どおりキャッシュする）。部品は失敗を `Astro.locals.degraded` に記録し（`src/lib/degraded.ts`）、ミドルウェアが保持期間を縮める。リンクカードは記事とは別のリクエスト（Server Island）で描画するので、リンク先の状態は記事のキャッシュに影響しない（5 章）。自サイトのコンテンツへのカード（ブログ・イラスト・漫画・制作物）が取得できない場合も対象にしない。コンテンツはすべて自分で管理していて、存在しないものを指すことは基本的にないので、取得できないものは公開後に非公開・削除されたとみなし、代わりの表示（「公開後に非公開になった可能性があります」）のまま通常どおりキャッシュする。再び公開されたときは、ページに付けた参照先のタグ（4.3）のパージで消える
+- HTML は本文を最後まで描画してから返す（ストリーミングしない）。キャッシュのヘッダはページの frontmatter で決まるが、部品の描画は本文のストリームを読み進めるまで終わらない。ストリームのまま返すと、途中で例外が起きて切れた 200 や、取得に失敗した部品を含むページがそのままキャッシュされる。描画の途中で例外が起きた場合は 500 ページを返す
 - `Set-Cookie` を返すレスポンスは保存されない。キャッシュするページでは Cookie を発行しない（Astro のセッション機能は使わない）
 - デプロイするとキャッシュは Worker バージョン単位で切り替わるため、デプロイ時の全パージは不要
 
@@ -86,6 +88,8 @@ admin-pages ──▶ D1 に保存
 | `comic:{id}` / `series:{id}` | 漫画詳細 |
 | `list:illust` | イラストの一覧 |
 | `illust:{id}` | イラスト詳細 |
+
+本文にカードを埋め込んだ記事詳細には、参照先のタグも付ける（`src/lib/content_tags.ts`）。イラストカードは `illust:{id}`、漫画カードは `comic:{id}`、制作物カードは `info`。ブログカードは記事詳細が持つ `list:blog` で足りる
 
 ### 4.3 保存操作とパージするタグ
 
@@ -149,12 +153,13 @@ pages-astro/
    ├─ pages/
    │  ├─ index.astro
    │  ├─ blog/index.astro, blog/[article_id].astro
+   │  ├─ blog/[article_id]/image/[src].astro   # 画像モーダルの URL を直接開いたときのリダイレクト
    │  ├─ tag.astro
    │  ├─ comics/index.astro, comics/[id].astro
    │  ├─ illust/index.astro, illust/detail/[id].astro
    │  ├─ about.astro, contact.astro, secret.astro
    │  ├─ rss/feed.rdf.ts, sitemap.xml.ts
-   │  ├─ 404.astro
+   │  ├─ 404.astro, 500.astro
    │  └─ .well-known/nostr.json.ts        # prerender
    ├─ components/
    │  ├─ blocks/            # ParsedContent のブロック → Astro コンポーネント
@@ -165,7 +170,7 @@ pages-astro/
 packages/cache-tags/        # Cache-Tag の文字列と、保存操作ごとのパージ対象
 ```
 
-M2 時点で存在するのは記事詳細（`blog/[article_id].astro`）と `404.astro` だけで、残りは M3 以降で足す
+いま存在するのは記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、`404.astro`、`500.astro` で、残りは M3 以降で足す
 
 ### Worker のエントリ（src/worker.ts）
 
@@ -179,14 +184,16 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 2. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
 3. クエリの正規化（M3）
 4. 限定公開記事のゲート（署名 Cookie の検証。該当レスポンスを `private, no-store` にする。M3）
-5. キャッシュヘッダの既定値（`src/mw/cache.ts`）
+5. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
 6. Astro の `middleware()` / `pages()`
 
 ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）
 
+アクセスログとは別に、5 で検出した不完全なページ（どの部品の取得に失敗したか）と描画中の例外も Axiom へ送る。キャッシュを短くしたことに気づけるようにするため。送信の仕組みはアクセスログと共用する（M5）
+
 ### データ取得
 
-`cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
+`cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。info の一覧だけは、取得中の Promise を `Astro.locals` に置き、1 回の描画の中で共有する（制作物カードが複数あると、カードごとに全件の取得とパースが走るため。リクエストをまたぐキャッシュは持たない）。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
 
 RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.d.ts` と `ogp-data-fetcher/types.d.ts` を参照し、`Cloudflare.Env` とグローバルの `Env` の `CMS_RPC` / `OGP_RPC` を `Service<…>` として宣言する（`wrangler types` は Service Binding を `Fetcher` としか出力しない。pages / admin-pages の `env.d.ts` と同じやり方で、キャストは使わない）
 
@@ -199,6 +206,11 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 - 2x の候補が 1x と同じ URL になっても srcset からは省かない。省くと画面の密度ごとの表示サイズが現行と変わる
 - 漫画ビューワは固定幅 2〜3 種の srcset、1〜2 本ずつの順次先読み、`onerror` でのリトライ（最後は原本 URL）を持つ（M4）
 - 記事本文画像の寸法と blur は現行どおり R2 + Images binding で作り、`IMAGE_CACHE` に 7 日保持する。KV の読み書きに失敗しても描画は続ける（#1300）
+- 引用画像（外部サイトの画像）は現行どおりサーバー側で取得し、data URL で HTML に埋め込む（`src/lib/api/cite_image.ts`）。待ち時間は 5 秒、成功は `IMAGE_CACHE` に 7 日、失敗は 10 分保持する。キャッシュの形式は現行と同じ。取得する画像は 3MB までにし、超えるものは失敗として扱う（HTML にそのまま埋め込まれ、描画中のメモリにも全量が載るため）。失敗の記録には、取り直しても直らない失敗かどうかの印を含める（`error:permanent:`。現行サイトは `error:` で始まる値を失敗として読むので、そのまま共有できる）
+- リンクカードは Server Island（`server:defer`）にする（`src/components/blocks/LinkCard.astro`、決定 14）。記事の HTML には、同じ枠にホスト名と URL だけを入れた表示（`LinkCardFallback.astro`）を出し、ブラウザが `/_server-islands/LinkCard` から取得したカードに差し替える。枠（`LinkCardFrame.astro`）を共有するので、差し替えで大きさは変わらない。JS が動かない閲覧者やクローラには、差し替え前の表示（リンクは機能する）のまま残る
+- island のレスポンスは記事とは別にエッジへキャッシュする（`cacheLinkCard()`）。リンク先の情報を取得できたときは 3 日（OGP データを KV に持つ期間と同じ）、取得できなかったときは 10 分
+- island の props（リンク先の URL）は、ビルドごとに生成される鍵で暗号化して URL に入る。デプロイをまたぐと古い URL は復号できない（差し替えられず、差し替え前の表示のまま残る）が、Workers Cache はデプロイで切り替わる（9 章）ので、キャッシュ済みの記事が古い鍵の URL を持ち続けることはない。鍵を固定する場合は、ビルド時に `ASTRO_KEY` を渡す
+- OGP の取得（`src/lib/api/ogp.ts`）は、待ち時間を 5 秒にし、失敗を `OGP_FETCHER_CACHE` に 10 分保持する。待ち時間を超えても取得と KV への保存は `waitUntil` で続け、遅れて返った結果を次回の描画で使う（応答が遅いだけのリンク先でも、2 回目にはカードが出る）。KV への書き込みは描画では待たない。現行サイトも同じ KV を読むので、失敗の記録は `OGPResult` として読める形（`success: false`）にしている
 
 ### スタイルと UI 部品
 
@@ -328,5 +340,11 @@ Astro には intercepting route / parallel route に相当する仕組みが無�
 - イラスト drawer（M4）: リンク先は現行と同じ `/illust/detail/{id}`。Island がクリックを横取りして drawer を開く。直接開いた場合は単独の詳細ページ
 - 戻るで閉じる。閉じる操作は `history.back()` に揃え、履歴に余分なエントリを残さない
 
-M2 の時点では画像のリンク先を仮に原寸の画像にしてある。M3 でモーダルを移植するときに `/blog/{id}/image/{base64url}` へ戻す。ページ内アンカーの `id`（`base64url`）は M2 で付けてある
+記事画像モーダルは M3 で実装した（`src/components/islands/ImageModal.tsx`、Radix Dialog）
+
+- 画像のリンク（`a.x-blog-image`）のクリックを document で受け、`pushState` で URL を変えて開く。履歴の state には画像のアンカー id を入れ、進むボタンで開き直せるようにする
+- 閉じる操作（閉じるボタン・Esc・画像の外側のクリック）は `history.back()` を呼び、`popstate` で実際に閉じる。`popstate` が届くまでの間の閉じる操作は無視する（Esc の連打などで履歴を 2 つ戻らないようにする）
+- Island は画像のある記事にだけ載せ、`client:idle` で読み込む。読み込み前のクリックや直接開いた場合は、`blog/[article_id]/image/[src].astro` が `/blog/{id}#{base64url}` へ 302 で戻す（`draftKey` は引き継ぐ）
+- 自サイトの画像は幅 1920px（2x は 3840px、原本の幅まで）の派生を表示する。引用画像は記事に埋め込まれている data URL をそのまま表示する
+- 現行サイトと同じ記事で、モーダル内の画像と閉じるボタンの位置・大きさが一致することを確認した
 

@@ -52,12 +52,14 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 ## M3. ブログ系の移植（#1343）
 
-- [ ] ブロックコンポーネントの残り（ブログカード・イラストカード・漫画カード・artifact・my_site・引用画像・nofetch_url・YouTube・Tweet・Google Maps・Amazon）
-- [ ] 引用画像プロキシ。外部取得（リンクカードを含む）のタイムアウトと負キャッシュ
-- [ ] 描画時の取得（リンクカード・画像の寸法）に失敗したページを長くキャッシュしない
-- [ ] サイドバー、500 ページ
+- [x] ブロックコンポーネントの残り（ブログカード・イラストカード・漫画カード・artifact・my_site・引用画像・nofetch_url・YouTube・Tweet・Google Maps・Amazon）
+- [x] 引用画像の取得（現行どおり data URL で埋め込む）。外部取得（リンクカードを含む）のタイムアウトと負キャッシュ
+- [x] 描画時の取得（前後記事・画像の寸法・引用画像の一時的な失敗）に失敗したページを長くキャッシュしない（10 分）。自サイトのコンテンツへのカードが取得できない場合は対象外。描画中の例外は 500 にする
+- [x] 500 ページ
+- [x] リンクカードを Server Island にする（記事の表示後に取得して差し込む。記事のキャッシュをリンク先の状態から切り離す）
+- [ ] サイドバー
 - [ ] トップ、ブログ一覧（`p` の検証・リダイレクト・範囲外 404、ページネーション）、タグ一覧（複数タグ）
-- [ ] 記事画像モーダル（Island + History API。`/blog/{id}/image/{base64url}` と、直接開いた場合の `/blog/{id}#{base64url}` への移動を維持）
+- [x] 記事画像モーダル（Island + History API。`/blog/{id}/image/{base64url}` と、直接開いた場合の `/blog/{id}#{base64url}` への移動を維持）
 - [ ] about / contact / secret
 - [ ] RSS、sitemap、robots、`/.well-known/nostr.json`、`/artifacts/post-for-nostter`
 - [ ] 限定公開記事（ゲート、unlock の POST、Rate Limiting、unlock 後の遷移）
@@ -79,6 +81,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 ## M5. 横断機能と検証（#1345）
 
 - [ ] Axiom アクセスログの移植、Clarity / Cloudflare beacon
+- [ ] 不完全なページ（`locals.degraded`）と描画中の例外（500）のログを Axiom へ送る（M3 では `console.warn` / `console.error` で Workers Logs に出すだけ）
 - [ ] head（OGP メタ・canonical・favicon）、セキュリティヘッダ
 - [ ] e2e（Playwright）を `maretol-base-v4-stg` 向けに移植
 - [ ] 現行サイトとの突き合わせ（全ルートのステータス・リダイレクト、主要ページの見た目）

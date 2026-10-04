@@ -2,11 +2,15 @@
 import type { ParsedContent, TableOfContents } from 'api-types'
 import Block from '@/components/blocks/Block.astro'
 
-type Props = { contents: ParsedContent[]; tableOfContents?: TableOfContents }
+type Props = { contents: ParsedContent[]; tableOfContents?: TableOfContents; articleID: string; draftKey?: string }
 
-const { contents, tableOfContents } = Astro.props
+const { contents, tableOfContents, articleID, draftKey } = Astro.props
 ---
 
 <div lang="ja" class="content px-2 lg:px-6">
-  {contents.map((content) => <Block content={content} tableOfContents={tableOfContents} />)}
+  {
+    contents.map((content) => (
+      <Block content={content} tableOfContents={tableOfContents} articleID={articleID} draftKey={draftKey} />
+    ))
+  }
 </div>

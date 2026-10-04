@@ -1,0 +1,90 @@
+---
+import type { contentsAPIResult } from 'api-types'
+import { LockIcon, NotebookTextIcon } from '@lucide/astro'
+import CardNotFound from './CardNotFound.astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getCMSContent } from '@/lib/api/cms'
+import { convertJST } from '@/lib/time'
+import { cn, parseURL } from '@/lib/utils'
+
+// 自サイトのブログ記事へのカード
+type Props = { link: string }
+
+const { link } = Astro.props
+
+const linkPath = parseURL(link)?.pathname ?? ''
+const articleID = linkPath.split('/')[2]
+const article: contentsAPIResult | null = articleID
+  ? await getCMSContent(articleID).catch((e) => {
+      // 非公開・削除された記事は null で返る。取得の失敗も同じ扱いにして、不完全なページ（lib/degraded.ts）としては記録しない。
+      // 代わりの表示のまま通常どおりキャッシュさせる。再び公開されたときはタグのパージで消える
+      console.error('[components/blocks/BlogCard.astro] Blog fetch error:', e)
+      return null
+    })
+  : null
+const thumbnail = article?.is_secret ? undefined : article?.ogp_image
+---
+
+<div class="max-w-2xl">
+  <div class="bg-gray-300 h-full w-full px-4 py-2 rounded-md">
+    {
+      article === null ? (
+        <CardNotFound>
+          <NotebookTextIcon class="w-6 h-6 shrink-0" />
+        </CardNotFound>
+      ) : article.is_secret ? (
+        // 限定公開記事は常にマスク表示する（タイトルは出す。サムネ・公開日は伏せる）
+        <div class="flex items-center gap-2">
+          <LockIcon class="w-6 h-6 shrink-0" />
+          <div class="w-full flex flex-col self-end">
+            <p class="text-md font-semibold text-wrap line-clamp-2">{article.title}</p>
+            <p class="text-gray-500 text-xs">限定公開・コード入力で閲覧</p>
+          </div>
+          <div>
+            <a href={linkPath} class={cn(buttonVariants(), 'h-8')}>
+              Read this
+            </a>
+          </div>
+        </div>
+      ) : thumbnail ? (
+        <div class="w-full flex flex-row space-x-4">
+          <CdnImage
+            src={thumbnail}
+            alt=""
+            width={300}
+            height={300}
+            class="w-1/3 h-24 object-full rounded-md object-center"
+          />
+          <div class="flex flex-col items-end justify-end w-2/3 gap-2">
+            <div class="w-full flex flex-row items-end">
+              <div class="flex items-center gap-2">
+                <NotebookTextIcon class="w-6 h-6" />
+                <div class="w-full flex flex-col self-end">
+                  <p class="text-md font-semibold text-wrap line-clamp-2">{article.title}</p>
+                  <p class="text-gray-500 text-xs text-wrap line-clamp-2">{convertJST(article.publishedAt)}</p>
+                </div>
+              </div>
+            </div>
+            <a href={linkPath} class={cn(buttonVariants(), 'w-full h-8')}>
+              Read this
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div class="flex items-center gap-2">
+          <NotebookTextIcon class="w-6 h-6" />
+          <div class="w-full flex flex-col self-end">
+            <p class="text-md font-semibold text-wrap line-clamp-2">{article.title}</p>
+            <p class="text-gray-500 text-xs text-wrap line-clamp-2">{convertJST(article.publishedAt)}</p>
+          </div>
+          <div>
+            <a href={linkPath} class={cn(buttonVariants(), 'h-8')}>
+              Read this
+            </a>
+          </div>
+        </div>
+      )
+    }
+  </div>
+</div>

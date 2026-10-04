@@ -1,3 +1,5 @@
+import { withDraftKey } from '@/lib/draft'
+
 // 画像 URL の組み立て。派生画像は Cloudflare Images の /cdn-cgi/image/ で作る
 
 const IMAGE_HOST = 'https://www.maretol.xyz'
@@ -69,7 +71,15 @@ export function getImageSources(
   }
 }
 
-// 記事画像の URL から、ページ内アンカーとモーダルの URL に使う base64url を作る
+// 記事画像の URL から、ページ内アンカーとモーダルの URL に使う base64url を作る。
+// btoa は Latin-1 の範囲外の文字で例外（InvalidCharacterError）を投げる。日本語などをパーセントエンコードせずに含む URL を
+// 本文に書くと、その記事は描画中の例外で 500 になる（未対応。該当する URL はパーセントエンコードして書く必要がある）
 export function toBase64URL(src: string): string {
   return btoa(src).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+}
+
+// 記事画像モーダルの URL。直接開くと記事の該当画像の位置へ移動する（pages/blog/[article_id]/image/[src].astro）。
+// 下書きプレビュー中は draftKey を引き継ぐ
+export function getImageModalHref(articleID: string, base64src: string, draftKey?: string): string {
+  return withDraftKey(`/blog/${articleID}/image/${base64src}`, draftKey)
 }

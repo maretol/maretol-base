@@ -24,5 +24,9 @@ declare namespace App {
       tags?: string[]
       noStore?: boolean
     }
+    // 描画中にデータ取得に失敗した部品の記録（src/lib/degraded.ts）。1 件でもあるとページを長くキャッシュしない
+    degraded?: string[]
+    // info の一覧の取得。1 回の描画の中で共有する（src/lib/api/cms.ts の getInfo）
+    info?: ReturnType<CMSDataFetcher['fetchInfo']>
   }
 }

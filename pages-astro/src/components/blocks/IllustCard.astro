@@ -1,0 +1,73 @@
+---
+import type { atelierResult } from 'api-types'
+import { ImageIcon } from '@lucide/astro'
+import CardNotFound from './CardNotFound.astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getAtelierByID } from '@/lib/api/cms'
+import { withDraftKey } from '@/lib/draft'
+import { convertJST } from '@/lib/time'
+import { cn, parseURL } from '@/lib/utils'
+
+// 自サイトのイラストへのカード
+type Props = { link: string; draftKey?: string }
+
+const { link, draftKey } = Astro.props
+
+// 画像のどこを切り出して見せるか。class を文字列で持つ（Tailwind が検出できるように）
+const objectPositionClass: Record<string, string> = {
+  left: 'object-left',
+  right: 'object-right',
+  top: 'object-top',
+  bottom: 'object-bottom',
+  center: 'object-center',
+}
+
+const illustID = parseURL(link)?.pathname.split('/')[3]
+const detailLink = withDraftKey(`/illust/detail/${illustID}`, draftKey)
+const illust: atelierResult | null = illustID
+  ? await getAtelierByID(illustID, draftKey).catch((e) => {
+      // 取得できないのは、公開後に非公開・削除された場合とみなす（自サイトのコンテンツなので、存在しないものを指すことは基本的にない）。
+      // 不完全なページ（lib/degraded.ts）としては記録せず、代わりの表示のまま通常どおりキャッシュさせる。再び公開されたときはタグのパージで消える
+      console.error('[components/blocks/IllustCard.astro] Illust fetch error:', e)
+      return null
+    })
+  : null
+---
+
+<div class="max-w-2xl">
+  <div class="bg-gray-300 h-full w-full px-4 py-2 rounded-md font-semibold">
+    {
+      illust ? (
+        <div class="flex flex-row space-x-4">
+          <CdnImage
+            src={illust.src}
+            alt={illust.title}
+            width={400}
+            height={400}
+            format="auto"
+            class={cn(
+              'w-2/3 h-56 object-full rounded-sm',
+              objectPositionClass[illust.object_position] ?? 'object-center',
+            )}
+          />
+          <div class="w-1/3 flex flex-col justify-between items-start">
+            <div class="w-full">
+              <p class="text-xl font-semibold">{illust.title}</p>
+              <p class="text-gray-500 text-xs text-wrap line-clamp-2">{convertJST(illust.publishedAt)}</p>
+            </div>
+            <div class="w-full">
+              <a href={detailLink} class={cn(buttonVariants(), 'w-full h-8')}>
+                View illust
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <CardNotFound>
+          <ImageIcon class="w-6 h-6 shrink-0" />
+        </CardNotFound>
+      )
+    }
+  </div>
+</div>

@@ -1,4 +1,10 @@
-import type { adjacentContentsResult, contentsAPIResult } from 'api-types'
+import type {
+  adjacentContentsResult,
+  atelierResult,
+  bandeDessineeResult,
+  contentsAPIResult,
+  infoAPIResult,
+} from 'api-types'
 import { env } from 'cloudflare:workers'
 
 // cms-data-fetcher の RPC を呼ぶ薄い関数。データのキャッシュは持たない（HTML をエッジでキャッシュする。astro_design.md 5 章）
@@ -30,4 +36,25 @@ export async function getAdjacentContents(articleID: string): Promise<adjacentCo
     console.error(`[lib/api/cms.ts] fetchAdjacentContents failed: ${articleID}`, e)
     return null
   }
+}
+
+// info（about / contact / artifact などの固定ページ）の一覧。
+// 1 回の描画の中では取得を 1 回にまとめる（制作物カードが複数あると、カードごとに全件の取得とパースが走るため）。
+// 取得中の Promise を locals に置いて共有する。リクエストをまたぐキャッシュは持たない
+export function getInfo(locals: App.Locals): Promise<infoAPIResult[]> {
+  return (locals.info ??= fetchInfo())
+}
+
+async function fetchInfo(): Promise<infoAPIResult[]> {
+  return (await env.CMS_RPC.fetchInfo()) as infoAPIResult[]
+}
+
+// 特定の漫画。fetcher は「存在しない」とそれ以外の失敗を区別せずに例外を投げる
+export async function getBandeDessineeByID(contentID: string, draftKey?: string): Promise<bandeDessineeResult> {
+  return (await env.CMS_RPC.fetchBandeDessinee(contentID, draftKey ?? null)) as bandeDessineeResult
+}
+
+// 特定のイラスト。fetcher は「存在しない」とそれ以外の失敗を区別せずに例外を投げる
+export async function getAtelierByID(contentID: string, draftKey?: string): Promise<atelierResult> {
+  return (await env.CMS_RPC.fetchAtelier(contentID, draftKey ?? null)) as atelierResult
 }

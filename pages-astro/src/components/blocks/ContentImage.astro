@@ -1,31 +1,39 @@
 ---
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { fetchBlurredImageAndMetadata } from '@/lib/api/image'
-import { getTransformedImageURL, toBase64URL } from '@/lib/image'
+import { markDegraded } from '@/lib/degraded'
+import { getImageModalHref, toBase64URL } from '@/lib/image'
 
 // 記事本文の画像（r2.maretol.xyz）と写真（photos. / capture.maretol.xyz）
 type Props = {
   variant: 'image' | 'photo'
   src: string
   subText: { [key: string]: string } | null
+  articleID: string
+  draftKey?: string
 }
 
-const { variant, src, subText } = Astro.props
+const { variant, src, subText, articleID, draftKey } = Astro.props
 const caption = subText?.caption
 const title = subText?.title
-// ページ内アンカーの id。記事画像の URL と 1 対 1 で対応する
+// ページ内アンカーの id。モーダルの URL と 1 対 1 で対応する
 const anchorID = toBase64URL(src)
-// 画像モーダル（Island + History API）を移植する M3 までは、クリックで原寸の画像を開く
-const originalHref = getTransformedImageURL(src, 'format=auto')
+// クリックは islands/ImageModal.tsx が横取りしてモーダルを開く。
+// JS が動かない場合や直接開いた場合は、この URL から記事の該当画像の位置へ戻る
+const modalHref = getImageModalHref(articleID, anchorID, draftKey)
 
 // 写真は max-w-xl（576px）の枠に収まる
 const PHOTO_MAX_WIDTH = 576
 
 const metadata = await fetchBlurredImageAndMetadata(src)
+if (metadata === null) {
+  // 寸法が無いと読み込み時にレイアウトがずれる。取り直せば直るので記録する
+  markDegraded(Astro.locals, `image metadata: ${src}`)
+}
 ---
 
 <div class={variant === 'photo' ? 'bg-indigo-200 p-2 rounded-xs w-full max-w-xl' : 'w-fit'} id={anchorID}>
-  <a href={originalHref} class="x-blog-image" data-image-src={src}>
+  <a href={modalHref} class="x-blog-image" data-image-src={src} data-image-width={metadata?.width}>
     <CdnImage
       src={src}
       alt=""

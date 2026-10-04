@@ -1,0 +1,34 @@
+---
+import { getTweetID, outerContentIframeSandbox } from '@/lib/embed'
+
+// Tweet の埋め込みは platform.twitter.com の埋め込みページを src で直接読み込む。
+// oEmbed の HTML を srcdoc で流し込む形だと iframe が自サイトと同一オリジンになり、
+// 外部スクリプト（widgets.js）に allow-same-origin で親の DOM や storage へのアクセスを許してしまう
+type Props = { twitterURL: string }
+
+const tweetID = getTweetID(Astro.props.twitterURL)
+
+const embedURL = new URL('https://platform.twitter.com/embed/Tweet.html')
+if (tweetID) {
+  embedURL.searchParams.set('id', tweetID)
+  embedURL.searchParams.set('dnt', 'true') // Do Not Track
+  embedURL.searchParams.set('lang', 'ja')
+}
+---
+
+{
+  tweetID ? (
+    // allowfullscreen は Tweet 内の動画を全画面再生するため。loading="lazy" で画面外にある間は Twitter 側の JS / XHR を走らせない
+    <iframe
+      src={embedURL.toString()}
+      title="埋め込まれたポスト"
+      sandbox={outerContentIframeSandbox}
+      allowfullscreen
+      loading="lazy"
+      width="550"
+      height="400"
+    />
+  ) : (
+    <p>Twitterの埋め込みがありましたがURLが不正なようです</p>
+  )
+}

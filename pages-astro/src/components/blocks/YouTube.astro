@@ -1,0 +1,24 @@
+---
+import { getYouTubeVideo, outerContentIframeSandbox } from '@/lib/embed'
+
+type Props = { videoURL: string }
+
+const video = getYouTubeVideo(Astro.props.videoURL)
+---
+
+{
+  video ? (
+    <div class="py-6 mx-3">
+      <iframe
+        src={`https://www.youtube.com/embed/${video.id}`}
+        sandbox={outerContentIframeSandbox}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+        width={video.isShort ? 315 : 560}
+        height={video.isShort ? 560 : 315}
+      />
+    </div>
+  ) : (
+    <p>YouTubeの埋め込みがありましたがURLが不正なようです</p>
+  )
+}
