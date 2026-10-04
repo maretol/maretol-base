@@ -13,17 +13,13 @@ export function cacheHeaders(): MiddlewareHandler {
     await next()
 
     const url = new URL(c.req.url)
-    let body: ArrayBuffer | null = null
-    if (c.res.body && c.res.headers.get('Content-Type')?.includes('text/html')) {
-      try {
-        body = await c.res.arrayBuffer()
-      } catch (e) {
-        console.error(`[mw/cache.ts] Render error: ${url.pathname}`, e)
-        // Hono は c.res を差し替えるときに元のレスポンスのヘッダを引き継ぐので、先にキャッシュ用のヘッダを落とす
-        setNoStore(c.res.headers)
-        c.res = await renderErrorResponse(c)
-        return
-      }
+    const rendered = await readHTMLBody(c.res)
+    if (!rendered.ok) {
+      console.error(`[mw/cache.ts] Render error: ${url.pathname}`, rendered.error)
+      // Hono は c.res を差し替えるときに元のレスポンスのヘッダを引き継ぐので、先にキャッシュ用のヘッダを落とす
+      setNoStore(c.res.headers)
+      c.res = await renderErrorResponse(c)
+      return
     }
 
     const cacheable =
@@ -43,9 +39,23 @@ export function cacheHeaders(): MiddlewareHandler {
         shortenForDegraded(c.res.headers)
       }
     }
-    if (body !== null) {
-      c.res = new Response(body, c.res)
+    if (rendered.body !== null) {
+      c.res = new Response(rendered.body, c.res)
     }
+  }
+}
+
+// HTML の本文を最後まで読む。HTML 以外は読まずに null を返す。描画中の例外は本文を読む途中で投げられる
+async function readHTMLBody(
+  res: Response,
+): Promise<{ ok: true; body: ArrayBuffer | null } | { ok: false; error: unknown }> {
+  if (!res.body || !res.headers.get('Content-Type')?.includes('text/html')) {
+    return { ok: true, body: null }
+  }
+  try {
+    return { ok: true, body: await res.arrayBuffer() }
+  } catch (error) {
+    return { ok: false, error }
   }
 }
 

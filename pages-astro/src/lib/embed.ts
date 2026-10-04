@@ -1,3 +1,5 @@
+import { parseURL } from '@/lib/utils'
+
 // 外部コンテンツ（YouTube / Tweet / Google Maps）を埋め込む iframe の sandbox。
 // - allow-scripts: 埋め込み側のプレイヤーや地図を動かすために必要
 // - allow-same-origin: 埋め込み側が自身のオリジンとして動くために必要。
@@ -8,25 +10,26 @@
 export const outerContentIframeSandbox = 'allow-scripts allow-popups allow-popups-to-escape-sandbox allow-same-origin'
 
 export function getYouTubeVideo(videoURL: string): { id: string; isShort: boolean } | null {
-  let url: URL
-  try {
-    url = new URL(videoURL)
-  } catch {
+  const url = parseURL(videoURL)
+  if (!url) {
     return null
   }
   const isShort = url.pathname.startsWith('/shorts/')
-  let id: string | null
+  const id = getYouTubeVideoID(url, isShort)
+  return id ? { id, isShort } : null
+}
+
+function getYouTubeVideoID(url: URL, isShort: boolean): string | null {
   if (isShort) {
     // Shorts は /shorts/{videoID}
-    id = url.pathname.split('/')[2] || null
-  } else if (url.hostname === 'youtu.be') {
-    // 短縮 URL は youtu.be/{videoID}
-    id = url.pathname.split('/')[1] || null
-  } else {
-    // 通常の動画は watch?v={videoID}
-    id = url.searchParams.get('v')
+    return url.pathname.split('/')[2] || null
   }
-  return id ? { id, isShort } : null
+  if (url.hostname === 'youtu.be') {
+    // 短縮 URL は youtu.be/{videoID}
+    return url.pathname.split('/')[1] || null
+  }
+  // 通常の動画は watch?v={videoID}
+  return url.searchParams.get('v')
 }
 
 // cms-data-fetcher の parse.ts（isTwitter）と同じホスト一覧
@@ -34,13 +37,8 @@ const tweetHostnames = ['twitter.com', 'www.twitter.com', 'x.com']
 
 // https://twitter.com/{user}/status/{id} や https://x.com/{user}/status/{id} 形式の URL から Tweet ID を取り出す
 export function getTweetID(twitterURL: string): string | null {
-  let url: URL
-  try {
-    url = new URL(twitterURL)
-  } catch {
-    return null
-  }
-  if (!tweetHostnames.includes(url.hostname)) {
+  const url = parseURL(twitterURL)
+  if (!url || !tweetHostnames.includes(url.hostname)) {
     return null
   }
   const matched = url.pathname.match(/^\/(?:[A-Za-z0-9_]+|i\/web)\/status(?:es)?\/(\d+)/)

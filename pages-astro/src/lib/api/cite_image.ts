@@ -3,7 +3,8 @@ import { env, waitUntil } from 'cloudflare:workers'
 import { sha256Hex } from '@/lib/hex'
 
 // 引用画像（外部サイトの画像）をサーバー側で取得し、data URL にして返す。
-// 閲覧者のブラウザから引用元へ直接リクエストさせないためと、引用元が消えても一定期間表示を保つため
+// 閲覧者のブラウザから引用元へ直接リクエストさせないためと、引用元が消えても一定期間表示を保つため。
+// 描画時に Worker の中でだけ動く（cloudflare:workers を使うので island からは import できない）。ブラウザには data URL を埋めた HTML だけが届く
 
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const CACHE_KEY_PREFIX = 'cite:'
@@ -36,40 +37,46 @@ export async function fetchCiteImage(url: string): Promise<string | null> {
     console.error(`[lib/api/cite_image.ts] Cache get error for ${url}:`, e)
   }
 
+  const downloaded = await downloadImage(url)
+  if ('dataURL' in downloaded) {
+    saveCache(cacheKey, downloaded.dataURL, IMAGE_CACHE_TTL)
+    return downloaded.dataURL
+  }
   // 失敗の理由は負キャッシュの値に残す
-  let failure: string
+  console.error(`[lib/api/cite_image.ts] Image fetch failed for ${url}: ${downloaded.failure}`)
+  saveCache(cacheKey, FAILURE_VALUE_PREFIX + downloaded.failure, FAILURE_CACHE_TTL)
+  return null
+}
+
+// 画像を取得して data URL にする。取得できなかったときは理由を返す
+async function downloadImage(url: string): Promise<{ dataURL: string } | { failure: string }> {
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) })
     const contentType = response.headers.get('content-type')
     const contentLength = Number(response.headers.get('content-length'))
     if (!response.ok) {
-      failure = `status ${response.status}`
-    } else if (!contentType || !SUPPORTED_FORMATS.some((format) => contentType.startsWith(format))) {
-      failure = `unsupported content-type ${contentType}`
-    } else if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
-      // Content-Length が分かるときは本文を読む前に弾く
-      failure = `too large ${contentLength} bytes`
-    } else {
-      // Content-Length がない・偽っているケースに備えて、読みながら上限を超えた時点で打ち切る
-      const bytes = await readBodyWithLimit(response, MAX_IMAGE_BYTES)
-      if (bytes === null) {
-        failure = `exceeded ${MAX_IMAGE_BYTES} bytes while reading`
-      } else if (bytes.byteLength === 0) {
-        failure = 'empty body'
-      } else {
-        const dataURL = `data:${contentType};base64,${bytes.toString('base64')}`
-        saveCache(cacheKey, dataURL, IMAGE_CACHE_TTL)
-        return dataURL
-      }
+      return { failure: `status ${response.status}` }
     }
+    if (!contentType || !SUPPORTED_FORMATS.some((format) => contentType.startsWith(format))) {
+      return { failure: `unsupported content-type ${contentType}` }
+    }
+    if (Number.isFinite(contentLength) && contentLength > MAX_IMAGE_BYTES) {
+      // Content-Length が分かるときは本文を読む前に弾く
+      return { failure: `too large ${contentLength} bytes` }
+    }
+    // Content-Length がない・偽っているケースに備えて、読みながら上限を超えた時点で打ち切る
+    const bytes = await readBodyWithLimit(response, MAX_IMAGE_BYTES)
+    if (bytes === null) {
+      return { failure: `exceeded ${MAX_IMAGE_BYTES} bytes while reading` }
+    }
+    if (bytes.byteLength === 0) {
+      return { failure: 'empty body' }
+    }
+    return { dataURL: `data:${contentType};base64,${bytes.toString('base64')}` }
   } catch (e) {
     // タイムアウト（TimeoutError）や接続失敗もここに来る
-    failure = e instanceof Error ? `${e.name}: ${e.message}` : String(e)
+    return { failure: e instanceof Error ? `${e.name}: ${e.message}` : String(e) }
   }
-
-  console.error(`[lib/api/cite_image.ts] Image fetch failed for ${url}: ${failure}`)
-  saveCache(cacheKey, FAILURE_VALUE_PREFIX + failure, FAILURE_CACHE_TTL)
-  return null
 }
 
 // KV への保存。書き込みの完了はレスポンスに必要ないので待たない。保存に失敗しても取得結果はそのまま返す

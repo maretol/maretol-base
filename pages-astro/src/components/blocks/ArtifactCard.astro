@@ -5,23 +5,22 @@ import { buttonVariants } from '@/components/ui/button'
 import { getInfo } from '@/lib/api/cms'
 import { markDegraded } from '@/lib/degraded'
 import { convertJST } from '@/lib/time'
-import { cn } from '@/lib/utils'
+import { cn, parseURL } from '@/lib/utils'
 
 // 自サイトの制作物ページ（info）へのカード
 type Props = { link: string }
 
 const { link } = Astro.props
 
-let linkPath = ''
-let artifact: infoAPIResult | undefined
-try {
-  linkPath = new URL(link).pathname
-  const info = await getInfo()
-  artifact = info.find((c) => c.page_pathname === linkPath)
-} catch (e) {
-  console.error('[components/blocks/ArtifactCard.astro] Info fetch error:', e)
-  markDegraded(Astro.locals, `artifact card: ${link}`)
-}
+const linkPath = parseURL(link)?.pathname ?? ''
+const artifact: infoAPIResult | undefined = await getInfo().then(
+  (info) => info.find((c) => c.page_pathname === linkPath),
+  (e) => {
+    console.error('[components/blocks/ArtifactCard.astro] Info fetch error:', e)
+    markDegraded(Astro.locals, `artifact card: ${link}`)
+    return undefined
+  },
+)
 ---
 
 <div class="flex max-w-xl">

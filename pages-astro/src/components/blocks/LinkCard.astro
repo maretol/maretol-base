@@ -9,32 +9,24 @@ type Props = { link: string }
 const { link } = Astro.props
 const errorDescription = 'リンク先の情報取得でエラーが発生しました。リンクは機能しています'
 
-let title = ''
-let description = ''
-let image: string | null = null
-let url = link
-let site = ''
-let imageAlt = ''
-
 const result = await getOGPData(link)
-if (result?.success) {
-  imageAlt = result.og_title
-  description = result.og_description
-  image = result.og_image !== '' ? result.og_image : null
-  url = result.og_url !== '' ? result.og_url : link
-  title = result.og_title !== '' ? result.og_title : 'No Page Title'
-  site = result.og_site_name !== '' ? result.og_site_name : title
-} else {
-  // result が null なのは取得できなかったとき（リンク先の障害・タイムアウト）。時間をおけば直る可能性があるので記録する。
-  // success: false はリンク先に OGP が無い場合で、取り直しても変わらない
-  if (result === null) {
-    markDegraded(Astro.locals, `link card: ${link}`)
-  }
-  title = 'Missing data fetching'
-  imageAlt = title
-  description = errorDescription
-  site = title
+// result が null なのは取得できなかったとき（リンク先の障害・タイムアウト）。時間をおけば直る可能性があるので記録する。
+// success: false はリンク先に OGP が無い場合で、取り直しても変わらない
+if (result === null) {
+  markDegraded(Astro.locals, `link card: ${link}`)
 }
+
+const errorTitle = 'Missing data fetching'
+const title = result?.success ? result.og_title || 'No Page Title' : errorTitle
+const { description, image, url, site, imageAlt } = result?.success
+  ? {
+      description: result.og_description,
+      image: result.og_image || null,
+      url: result.og_url || link,
+      site: result.og_site_name || title,
+      imageAlt: result.og_title,
+    }
+  : { description: errorDescription, image: null, url: link, site: errorTitle, imageAlt: errorTitle }
 ---
 
 <div class="max-w-2xl no-underline border-2 border-gray-300 rounded-[9px]">

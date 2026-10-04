@@ -6,23 +6,23 @@ import { buttonVariants } from '@/components/ui/button'
 import { getCMSContent } from '@/lib/api/cms'
 import { markDegraded } from '@/lib/degraded'
 import { convertJST } from '@/lib/time'
-import { cn } from '@/lib/utils'
+import { cn, parseURL } from '@/lib/utils'
 
 // 自サイトのブログ記事へのカード
 type Props = { link: string }
 
 const { link } = Astro.props
 
-let linkPath = ''
-let article: contentsAPIResult | null = null
-try {
-  linkPath = new URL(link).pathname
-  article = await getCMSContent(linkPath.split('/')[2])
-} catch (e) {
-  // 存在しない記事は null で返るので、ここに来るのは取得の失敗
-  console.error('[components/blocks/BlogCard.astro] Blog fetch error:', e)
-  markDegraded(Astro.locals, `blog card: ${link}`)
-}
+const linkPath = parseURL(link)?.pathname ?? ''
+const articleID = linkPath.split('/')[2]
+const article: contentsAPIResult | null = articleID
+  ? await getCMSContent(articleID).catch((e) => {
+      // 存在しない記事は null で返るので、ここに来るのは取得の失敗
+      console.error('[components/blocks/BlogCard.astro] Blog fetch error:', e)
+      markDegraded(Astro.locals, `blog card: ${link}`)
+      return null
+    })
+  : null
 const thumbnail = article?.is_secret ? undefined : article?.ogp_image
 ---
 

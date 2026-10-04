@@ -25,12 +25,12 @@ export async function getOGPData(targetURL: string): Promise<OGPResult | null> {
     console.error(`[lib/api/ogp.ts] Cache get error for key ${targetURL}:`, e)
   }
 
-  let result: OGPResult | null = null
-  try {
-    result = (await withTimeout(env.OGP_RPC.fetchOGPData(targetURL), FETCH_TIMEOUT_MS)) as OGPResult
-  } catch (e) {
-    console.error(`[lib/api/ogp.ts] OGP fetch error for ${targetURL}:`, e)
-  }
+  const result = await withTimeout(env.OGP_RPC.fetchOGPData(targetURL) as Promise<OGPResult>, FETCH_TIMEOUT_MS).catch(
+    (e) => {
+      console.error(`[lib/api/ogp.ts] OGP fetch error for ${targetURL}:`, e)
+      return null
+    },
+  )
 
   const value: CachedOGP = result ?? { success: false, fetch_failed: true }
   try {
@@ -45,10 +45,8 @@ export async function getOGPData(targetURL: string): Promise<OGPResult | null> {
 
 // RPC は途中で打ち切れないので、待つのをやめるだけにする（呼び出し自体は fetcher 側で続く）
 async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`timeout after ${ms}ms`)), ms)
-  })
+  const { promise: timeout, reject } = Promise.withResolvers<never>()
+  const timer = setTimeout(() => reject(new Error(`timeout after ${ms}ms`)), ms)
   try {
     return await Promise.race([promise, timeout])
   } finally {

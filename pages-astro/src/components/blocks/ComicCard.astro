@@ -7,23 +7,23 @@ import { getFirstPage } from '@/lib/comic'
 import { markDegraded } from '@/lib/degraded'
 import { getNoImageURL } from '@/lib/image'
 import { convertJST } from '@/lib/time'
-import { cn } from '@/lib/utils'
+import { cn, parseURL } from '@/lib/utils'
 
 // 自サイトの漫画へのカード
 type Props = { link: string }
 
 const { link } = Astro.props
 
-let linkPath = ''
-let comic: bandeDessineeResult | null = null
-try {
-  linkPath = new URL(link).pathname
-  comic = await getBandeDessineeByID(linkPath.split('/')[2])
-} catch (e) {
-  // fetcher は「存在しない」とそれ以外の失敗を区別しないので、どちらも不完全な表示として扱う
-  console.error('[components/blocks/ComicCard.astro] Comic fetch error:', e)
-  markDegraded(Astro.locals, `comic card: ${link}`)
-}
+const linkPath = parseURL(link)?.pathname ?? ''
+const comicID = linkPath.split('/')[2]
+const comic: bandeDessineeResult | null = comicID
+  ? await getBandeDessineeByID(comicID).catch((e) => {
+      // fetcher は「存在しない」とそれ以外の失敗を区別しないので、どちらも不完全な表示として扱う
+      console.error('[components/blocks/ComicCard.astro] Comic fetch error:', e)
+      markDegraded(Astro.locals, `comic card: ${link}`)
+      return null
+    })
+  : null
 
 // 表紙が無ければ 1 ページ目を使う
 const coverURL =

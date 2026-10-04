@@ -1,7 +1,7 @@
 ---
 import { BookOpenIcon, HouseIcon, ImageIcon, InfoIcon, MailIcon, NotebookTextIcon } from '@lucide/astro'
 import { buttonVariants } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
+import { cn, parseURL } from '@/lib/utils'
 
 // 自サイトのトップ・各一覧・固定ページへのカード
 type Props = { text: string }
@@ -17,12 +17,8 @@ const details = {
   '/contact/': { Icon: MailIcon, text: 'Contact', path: '/contact', description: 'お問い合わせ・連絡 | Martol Base' },
 } as const
 
-let pathname = ''
-try {
-  pathname = new URL(text).pathname
-} catch {
-  // URL として読めないものは未対応として表示する
-}
+// URL として読めないものは未対応として表示する
+const pathname = parseURL(text)?.pathname ?? ''
 const key = pathname.endsWith('/') ? pathname : pathname + '/'
 const detail = key in details ? details[key as keyof typeof details] : null
 ---

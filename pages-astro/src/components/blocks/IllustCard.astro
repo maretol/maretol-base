@@ -6,7 +6,7 @@ import { buttonVariants } from '@/components/ui/button'
 import { getAtelierByID } from '@/lib/api/cms'
 import { markDegraded } from '@/lib/degraded'
 import { convertJST } from '@/lib/time'
-import { cn } from '@/lib/utils'
+import { cn, parseURL } from '@/lib/utils'
 
 // 自サイトのイラストへのカード
 type Props = { link: string; draftKey?: string }
@@ -22,17 +22,16 @@ const objectPositionClass: Record<string, string> = {
   center: 'object-center',
 }
 
-let illust: atelierResult | null = null
-let detailLink = ''
-try {
-  const illustID = new URL(link).pathname.split('/')[3]
-  detailLink = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${encodeURIComponent(draftKey)}` : '')
-  illust = await getAtelierByID(illustID, draftKey)
-} catch (e) {
-  // fetcher は「存在しない」とそれ以外の失敗を区別しないので、どちらも不完全な表示として扱う
-  console.error('[components/blocks/IllustCard.astro] Illust fetch error:', e)
-  markDegraded(Astro.locals, `illust card: ${link}`)
-}
+const illustID = parseURL(link)?.pathname.split('/')[3]
+const detailLink = `/illust/detail/${illustID}` + (draftKey ? `?draftKey=${encodeURIComponent(draftKey)}` : '')
+const illust: atelierResult | null = illustID
+  ? await getAtelierByID(illustID, draftKey).catch((e) => {
+      // fetcher は「存在しない」とそれ以外の失敗を区別しないので、どちらも不完全な表示として扱う
+      console.error('[components/blocks/IllustCard.astro] Illust fetch error:', e)
+      markDegraded(Astro.locals, `illust card: ${link}`)
+      return null
+    })
+  : null
 ---
 
 <div class="max-w-2xl">

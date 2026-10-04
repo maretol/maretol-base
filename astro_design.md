@@ -188,6 +188,8 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）
 
+アクセスログとは別に、5 で検出した不完全なページ（どの部品の取得に失敗したか）と描画中の例外も Axiom へ送る。キャッシュを短くしたことに気づけるようにするため。送信の仕組みはアクセスログと共用する（M5）
+
 ### データ取得
 
 `cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
