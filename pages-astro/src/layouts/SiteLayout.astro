@@ -24,10 +24,11 @@ const year = new Date().getFullYear()
       <div class="my-10">
         <div class="mb-2 pt-2">
           <a href="/" class={cn(buttonVariants({ variant: 'link' }), 'p-0')}>
+            {/* width と height は原本（1104×210）の比率に合わせる。比率が違うと、読み込み後に高さが変わって下の要素がずれる（#1355） */}
             <CdnImage
               src={getHeaderImageURL()}
               width={400}
-              height={100}
+              height={76}
               class="w-125 object-contain"
               alt="Maretol Base"
               loading="eager"
