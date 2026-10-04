@@ -141,7 +141,22 @@ M1 の時点では「内部ルート + `ctx.props` による認可」を第一�
 
 ### 4.5 クエリの扱い
 
-キャッシュのキーはパスとクエリ文字列で、ホスト名は含まれない。任意のクエリで別エントリになり、`?a=1&b=2` と `?b=2&a=1` のような順序違いも別エントリになる。`src/worker.ts` のミドルウェアでルートごとに許可するクエリ（`p`、`tag_id`、`draftKey`、`illust_id` など）と並び順を決め、それ以外が付いていたり順序が違ったりしたら正規化した URL へリダイレクトする
+キャッシュのキーはパスとクエリ文字列で、ホスト名は含まれない。任意のクエリで別エントリになり、`?a=1&b=2` と `?b=2&a=1` のような順序違いも別エントリになる。そこで、ミドルウェア（`src/mw/query.ts`）でルートごとに受け付けるクエリと並び順を決め、それ以外が付いていたり順序が違ったりしたら、正規化した URL へ 308 でリダイレクトする
+
+| ルート | 受け付けるクエリ（この順） |
+|---|---|
+| `/blog` | `p` |
+| `/tag` | `tag_id`, `tag_name`, `p` |
+| `/blog/{id}`、`/blog/{id}/image/{src}` | `draftKey` |
+| それ以外 | なし |
+
+- どのルートでも、UTM パラメータ（`utm_source` / `utm_medium` / `utm_campaign` / `utm_content`）は残す。流入元の解析はブラウザ側（Clarity など）が URL から読むため。値は、共有ボタン（`src/lib/utm.ts`）と自動投稿（sns-article-publisher）が付けるものだけを通す。任意の値を通すと、値を変えるだけでキャッシュのエントリを際限なく増やせてしまう
+- 並び順は、サイト内のリンクが作る順に合わせる（合わないと、リンクを踏むたびにリダイレクトになる）
+- 同じキーが複数あるときは先頭の値を使い、空の値は外す。`/blog?` のように `?` だけが付いた URL も揃える
+- 対象は GET と HEAD だけ。Astro の内部ルート（`/_server-islands/` など）は触らない
+- リダイレクト自体は `private, no-store` にする（クエリの数だけエントリが増えるのを防ぐ）
+- 値の検証（ページ番号の範囲、存在するタグかどうか）は、各ページが行う
+- ルートを足したら（M4 のイラスト・漫画など）、受け付けるクエリの表にも足す
 
 リクエストの `Cookie` はキーに含まれない。Cookie の有無で内容が変わるページ（限定公開記事）は、未解錠の表示も含めて必ず `private, no-store` にする
 
@@ -154,7 +169,7 @@ pages-astro/
 ├─ tailwind.config.ts       # 現行 pages の設定を引き継ぐ（global.css の @config から読む）
 └─ src/
    ├─ worker.ts             # Worker のエントリ（wrangler の main）。Hono + RPC メソッド
-   ├─ mw/                   # cache / purge（M3 以降: log / query）
+   ├─ mw/                   # cache / purge / query（M5: log）
    ├─ lib/                  # RPC 呼び出し、キャッシュヘッダ、画像 URL、OGP、ページ番号
    ├─ pages/
    │  ├─ index.astro
@@ -191,7 +206,7 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 1. `cf()`（静的アセットの配信、`locals.cfContext` などの設定。Astro の他のハンドラより前に置く）
 2. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
-3. クエリの正規化（M3）
+3. クエリの正規化（`src/mw/query.ts`。4.5）
 4. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
 5. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
 6. Astro の `middleware()` / `pages()`
