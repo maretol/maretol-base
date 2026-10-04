@@ -1,7 +1,6 @@
 ---
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { getOGPData } from '@/lib/api/ogp'
-import { markDegraded } from '@/lib/degraded'
 import { getNoImageURL } from '@/lib/image'
 
 type Props = { link: string }
@@ -9,12 +8,10 @@ type Props = { link: string }
 const { link } = Astro.props
 const errorDescription = 'リンク先の情報取得でエラーが発生しました。リンクは機能しています'
 
+// result が null なのは取得できなかったとき（リンク先のエラー・タイムアウト）。
+// リンク切れや bot を弾くサイトなど取り直しても直らない失敗が多いので、不完全なページ（lib/degraded.ts）としては記録せず、
+// エラー表示のカードのまま通常どおりキャッシュさせる
 const result = await getOGPData(link)
-// result が null なのは取得できなかったとき（リンク先の障害・タイムアウト）。時間をおけば直る可能性があるので記録する。
-// success: false はリンク先に OGP が無い場合で、取り直しても変わらない
-if (result === null) {
-  markDegraded(Astro.locals, `link card: ${link}`)
-}
 
 const errorTitle = 'Missing data fetching'
 const title = result?.success ? result.og_title || 'No Page Title' : errorTitle

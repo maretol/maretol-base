@@ -45,6 +45,19 @@ function getOpenAnchorID(): string | null {
   return typeof anchorID === 'string' && location.pathname.endsWith(`/image/${anchorID}`) ? anchorID : null
 }
 
+// 閉じている途中（history.back() を呼んでから popstate が届くまで）かどうか。
+// この間は履歴の state がまだ変わらず、モーダルも開いたままなので、Esc の連打などで履歴を 2 つ戻らないようにする
+let closing = false
+
+// 閉じるときは履歴を戻す。URL が記事に戻り、popstate で実際に閉じる
+function closeModal(): void {
+  if (closing) {
+    return
+  }
+  closing = true
+  history.back()
+}
+
 // 画像リンクのクリックと、戻る・進むを購読する。どちらも履歴の state を変えるので、変わったことを React に知らせる
 function subscribe(onChange: () => void): () => void {
   const onClick = (e: MouseEvent) => {
@@ -62,11 +75,15 @@ function subscribe(onChange: () => void): () => void {
     // pushState では popstate が起きないので自分で知らせる
     onChange()
   }
+  const onPopState = () => {
+    closing = false
+    onChange()
+  }
   document.addEventListener('click', onClick)
-  window.addEventListener('popstate', onChange)
+  window.addEventListener('popstate', onPopState)
   return () => {
     document.removeEventListener('click', onClick)
-    window.removeEventListener('popstate', onChange)
+    window.removeEventListener('popstate', onPopState)
   }
 }
 
@@ -75,11 +92,8 @@ export default function ImageModal() {
   const anchorID = useSyncExternalStore(subscribe, getOpenAnchorID, () => null)
   const image = anchorID ? findImage(anchorID) : null
 
-  // 閉じるときは履歴を戻す。URL が記事に戻り、popstate で実際に閉じる
-  const close = () => history.back()
-
   return (
-    <Dialog.Root open={image !== null} onOpenChange={(open) => !open && close()} modal>
+    <Dialog.Root open={image !== null} onOpenChange={(open) => !open && closeModal()} modal>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-black/80" />
         {/* 画像に添える説明文は無いので Description は置かない。aria-describedby を明示的に外して Radix の警告を止める */}
@@ -91,7 +105,7 @@ export default function ImageModal() {
           <Dialog.Title className="sr-only">画像</Dialog.Title>
           <div
             className="relative flex h-full w-full items-center justify-center p-2"
-            onClick={(e) => e.target === e.currentTarget && close()}
+            onClick={(e) => e.target === e.currentTarget && closeModal()}
           >
             {image && (
               <img

@@ -1,4 +1,4 @@
-import { env } from 'cloudflare:workers'
+import { env, waitUntil } from 'cloudflare:workers'
 import type { OGPResult } from 'api-types'
 
 // OGP データを保持する秒数
@@ -32,14 +32,15 @@ export async function getOGPData(targetURL: string): Promise<OGPResult | null> {
     },
   )
 
+  // KV への保存。書き込みの完了はレスポンスに必要ないので待たない
   const value: CachedOGP = result ?? { success: false, fetch_failed: true }
-  try {
-    await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(value), {
+  waitUntil(
+    env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(value), {
       expirationTtl: result ? OGP_CACHE_TTL : FAILURE_CACHE_TTL,
-    })
-  } catch (e) {
-    console.error(`[lib/api/ogp.ts] Cache put error for key ${targetURL}:`, e)
-  }
+    }).catch((e) => {
+      console.error(`[lib/api/ogp.ts] Cache put error for key ${targetURL}:`, e)
+    }),
+  )
   return result
 }
 

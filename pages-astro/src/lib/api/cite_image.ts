@@ -16,11 +16,10 @@ const FAILURE_VALUE_PREFIX = 'error:'
 const FAILURE_CACHE_TTL = 10 * 60
 // 外部への fetch の待ち時間。引用元が応答しないときに記事全体の描画を止めないための上限
 const FETCH_TIMEOUT_MS = 5 * 1000
-// KV の値は 25MiB まで。data URL（base64 で 4/3 倍 + prefix）がそこに収まる元画像のサイズを上限にする。
-// これを超える画像はキャッシュできない上に HTML にもそのまま埋め込まれるので、取得自体を打ち切って失敗扱いにする
-const KV_VALUE_MAX_BYTES = 25 * 1024 * 1024
-const DATA_URL_PREFIX_MAX_BYTES = 64 // `data:image/jpeg;base64,` 程度
-const MAX_IMAGE_BYTES = Math.floor(((KV_VALUE_MAX_BYTES - DATA_URL_PREFIX_MAX_BYTES) * 3) / 4)
+// 取得する画像の上限。画像は data URL（base64 で約 4/3 倍）にして HTML に埋め込むので、そのまま全閲覧者が受け取る HTML の大きさになる。
+// 描画中は画像の全量を何重にもメモリに持つ（mw/cache.ts が本文を最後まで読む）ことにもなるので、小さく抑える。
+// これを超える画像は取得を打ち切って失敗扱いにする。KV の値の上限（25MiB）には data URL にしても十分収まる
+const MAX_IMAGE_BYTES = 3 * 1024 * 1024
 
 // 取得できたら data URL、できなかったら null
 export async function fetchCiteImage(url: string): Promise<string | null> {

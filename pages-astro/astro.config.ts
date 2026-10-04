@@ -23,7 +23,7 @@ export default defineConfig({
       optimizeDeps: {
         // 開発サーバーが最初のリクエストの途中で依存を最適化し直すと、React が二重に読み込まれて Island の描画が失敗する。
         // 起動時に最適化を済ませておく
-        include: ['@lucide/astro', 'lucide-react'],
+        include: ['@lucide/astro', 'lucide-react', '@radix-ui/react-dialog'],
       },
     },
   },
