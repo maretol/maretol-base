@@ -65,7 +65,9 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 - [ ] 限定公開記事（ゲート、unlock の POST、Rate Limiting、unlock 後の遷移）
 - [ ] `draftKey` プレビュー
 - [ ] クエリの正規化
-- [ ] `Cache-Tag` の付与と、admin のタグ・info・static 保存からのパージ（ブログ記事の保存は M2 で対応済み）
+- [ ] `Cache-Tag` の付与と、admin のタグ・info・static 保存からのパージ（ブログ記事の保存は M2 で対応済み）。次の 2 つを含む
+  - info の保存で、固定ページ（about / contact / secret / `artifacts/post-for-nostter`）と制作物カードを含む記事がパージされることの確認
+  - sitemap のタグの見直し（漫画・イラスト・info の保存でも `lastmod` が変わるようにするか、`lastmod` を出さないか）
 
 **成果物**: staging でブログ系が現行と同等に動く
 
