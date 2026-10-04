@@ -5,7 +5,8 @@ import tailwindcss from '@tailwindcss/vite'
 
 // 設計は astro_design.md を参照
 export default defineConfig({
-  site: 'https://www.maretol.xyz',
+  // site は設定しない。絶対 URL は環境ごとの HOST（wrangler.toml の vars）から作る（src/lib/site.ts）。
+  // ここに本番の URL を書くと、staging でも Astro.site が本番を指してしまう
   // 全ルートをリクエスト時に描画する。静的にするページだけ個別に prerender = true を付ける
   output: 'server',
   adapter: cloudflare({

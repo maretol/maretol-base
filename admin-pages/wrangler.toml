@@ -57,7 +57,7 @@ services = [
     { binding = "SNS_PUBLISHER", service = "sns-article-publisher-stg" },
     # 公開サイト（Astro 版）の Workers Cache を保存時にパージする（lib/edge_cache.ts 参照）
     # 本番は Astro 版への切替時に追加する
-    { binding = "PAGES_PURGE", service = "maretol-base-v4-stg" }
+    { binding = "ASTRO_PAGES", service = "maretol-base-v4-stg" }
 ]
 
 [env.staging.vars]

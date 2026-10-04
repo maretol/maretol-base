@@ -114,7 +114,7 @@ Workers Cache のパージには次の制約がある
 入口の形は **default entrypoint の RPC メソッド**とする（M2 で確定）
 
 - `pages-astro` の default export を `WorkerEntrypoint` のクラスにし、`fetch()` と並べて `purgeTags(tags)` を持たせる（`src/worker.ts`）
-- admin-pages は `env.PAGES_PURGE.purgeTags(tags)` を呼ぶ（`admin-pages/lib/edge_cache.ts`）。メソッドの型は `packages/cache-tags` の `PurgeRPC`
+- admin-pages は `env.ASTRO_PAGES.purgeTags(tags)` を呼ぶ（`admin-pages/lib/edge_cache.ts`）。メソッドの型は `packages/cache-tags` の `PurgeRPC`
 - RPC メソッドは Service Binding を持つ Worker からしか呼べない。公開側から到達する経路が無いので、認可の仕組みを持たなくてよい
 
 M1 の時点では「内部ルート + `ctx.props` による認可」を第一候補にしていたが、採用しなかった。静的アセットを持つ Worker に対しては、Service Binding に付けた props がローカル実行（`wrangler dev` の複数 Worker 構成）で空になった。M1 の検証用 Worker はアセットを持たなかったため見えていなかった。本番で同じ挙動になるかは確認していないが、RPC メソッドなら props に依存しない
@@ -188,7 +188,9 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 `cloudflare:workers` の `env` から `CMS_RPC` を呼ぶ薄い関数を `src/lib/api/` に置く。`pages/lib/api/workers.ts` の `createCachedAPIFunction`（KV キャッシュ）と一覧総件数キャッシュは移植しない。Live Content Collections は使わない（RPC を包むだけなので素の関数で足り、エラーの扱いも自前で決められる）
 
-RPC メソッドの型は `cms-data-fetcher/types.d.ts` と `ogp-data-fetcher/types.d.ts` を参照して付ける（`wrangler types` は Service Binding を `Fetcher` としか出力しない）
+RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.d.ts` と `ogp-data-fetcher/types.d.ts` を参照し、`Cloudflare.Env` とグローバルの `Env` の `CMS_RPC` / `OGP_RPC` を `Service<…>` として宣言する（`wrangler types` は Service Binding を `Fetcher` としか出力しない。pages / admin-pages の `env.d.ts` と同じやり方で、キャストは使わない）
+
+絶対 URL（OGP・canonical・RSS など）は環境ごとの `HOST`（wrangler.toml の vars）から作る（`src/lib/site.ts`）。astro.config.ts の `site` は設定しない。ビルド時に決まる値なので、本番の URL を書くと staging でも `Astro.site` が本番を指す
 
 ### 画像
 

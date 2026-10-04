@@ -1,6 +1,5 @@
 import { env } from 'cloudflare:workers'
 import type { OGPResult } from 'api-types'
-import { ogpRPC } from './bindings'
 
 // OGP データを保持する秒数
 const OGP_CACHE_TTL = 3 * 24 * 60 * 60
@@ -17,7 +16,7 @@ export async function getOGPData(targetURL: string): Promise<OGPResult> {
   }
 
   try {
-    const res = (await ogpRPC().fetchOGPData(targetURL)) as OGPResult
+    const res = (await env.OGP_RPC.fetchOGPData(targetURL)) as OGPResult
     try {
       await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(res), { expirationTtl: OGP_CACHE_TTL })
     } catch (e) {
