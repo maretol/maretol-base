@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto'
 import { env } from 'cloudflare:workers'
 import { bufferToHex } from '@/lib/hex'
 
@@ -29,16 +30,18 @@ export function unlockCookieOptions(articleID: string) {
 }
 
 async function getSigningKey(): Promise<string> {
-  const key = await env.SECRET_ARTICLE_COOKIE_KEY.get().catch(() => null)
-  if (key) {
-    return key
-  }
-  // 鍵が無い・空のときに既定の鍵を使うのは開発サーバーだけ。
-  // それ以外では、推測できる鍵で Cookie を偽造されないよう、エラーにする
+  // 鍵を読めない・空のときに既定の鍵を使うのは開発サーバーだけ
   if (import.meta.env.DEV) {
-    return DEV_SIGNING_KEY
+    const devKey = await env.SECRET_ARTICLE_COOKIE_KEY.get().catch(() => null)
+    return devKey || DEV_SIGNING_KEY
   }
-  throw new Error('SECRET_ARTICLE_COOKIE_KEY is not set')
+  // それ以外では、推測できる鍵で Cookie を偽造されないよう、エラーにする。
+  // 読み取りの失敗（Secrets Store の一時的な障害など）は、原因がログに残るよう例外のまま上げる
+  const key = await env.SECRET_ARTICLE_COOKIE_KEY.get()
+  if (!key) {
+    throw new Error('SECRET_ARTICLE_COOKIE_KEY is not set')
+  }
+  return key
 }
 
 // 解錠の Cookie に入れる署名。
@@ -63,8 +66,7 @@ export async function secureEqual(a: string, b: string): Promise<boolean> {
     crypto.subtle.digest('SHA-256', encoder.encode(a)),
     crypto.subtle.digest('SHA-256', encoder.encode(b)),
   ])
-  const bytesB = new Uint8Array(digestB)
-  return new Uint8Array(digestA).reduce((diff, byte, i) => diff | (byte ^ bytesB[i]), 0) === 0
+  return timingSafeEqual(new Uint8Array(digestA), new Uint8Array(digestB))
 }
 
 // Cookie の値が、いまの secret_code に対応する有効な署名かどうか
