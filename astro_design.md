@@ -85,17 +85,17 @@ admin-pages ──▶ D1 に保存
 | `list:blog` | 記事の一覧を含むページ（トップ・一覧・タグ一覧・RSS・sitemap）と、前後記事を表示する記事詳細 |
 | `post:{id}` | 記事詳細 |
 | `tag:{tag_id}` | タグ一覧（現行と同じく、タグは 1 つだけ指定できる） |
-| `info` | about / contact / secret / `artifacts/post-for-nostter`（info の内容を表示するページ）。制作物カードを含む記事詳細。sitemap |
-| `list:comics` | 漫画の一覧と、シリーズ案内を表示する漫画詳細。トップと、サイドバーを持つページ。sitemap |
+| `info` | about / contact / secret / `artifacts/post-for-nostter`（info の内容を表示するページ）。制作物カードを含む記事詳細 |
+| `list:comics` | 漫画の一覧と、シリーズ案内を表示する漫画詳細。トップと、サイドバーを持つページ。漫画カードを含むページ |
 | `comic:{id}` / `series:{id}` | 漫画詳細 |
-| `list:illust` | イラストの一覧。トップと、サイドバーを持つページ。sitemap |
+| `list:illust` | イラストの一覧。トップと、サイドバーを持つページ。イラストカードを含むページ |
 | `illust:{id}` | イラスト詳細 |
 
 サイドバーを持つページ（ブログ一覧・タグ一覧・記事詳細など、`BlogLayout` を使うページ）は、サイドバーが最新の記事・漫画・イラストとタグの一覧を出すので、`blog` / `list:blog` / `list:comics` / `list:illust` をまとめて持つ（`src/lib/cache.ts` の `latestListTags`）。ページは `cachePage()` に `{ sidebar: true }` を渡して付ける。付け忘れると古いサイドバーが残るので、サイドバーの描画時に確かめて、付いていなければ例外にする（`assertSidebarTagged()`）。漫画やイラストを保存すると、サイドバーを持つページもパージされる。トップページも同じ 4 つを持つ（3 種類の一覧を出すため）。404 と 500 のページはサイドバーを出さない（存在しない URL への連続アクセスで、サイドバーのための取得が増えないようにする）
 
 一覧に出す記事の抜粋にカードが含まれる場合は、その参照先のタグも付ける。タグ一覧の `tag:{tag_id}` は、タグの一覧にある ID にだけ付ける（一覧に無い値は 400 にするので、クエリの値がそのままヘッダへ入ることはない）
 
-本文にカードを埋め込んだ記事詳細には、参照先のタグも付ける（`src/lib/content_tags.ts`）。イラストカードは `illust:{id}`、漫画カードは `comic:{id}`、制作物カードは `info`、ブログカードは `list:blog`。固定ページ（`/secret` など）の本文にブログカードがある場合も、同じ仕組みで `list:blog` が付き、記事の保存でパージされる
+本文にカードを埋め込んだ記事詳細には、参照先のタグも付ける（`src/lib/content_tags.ts`）。イラストカードは `illust:{id}` と `list:illust`、漫画カードは `comic:{id}` と `list:comics`、制作物カードは `info`、ブログカードは `list:blog`。固定ページ（`/secret` など）の本文にブログカードがある場合も、同じ仕組みで `list:blog` が付き、記事の保存でパージされる。イラストと漫画のカードに粗いタグ（`list:illust` / `list:comics`）も付けるのは、手動パージ（4.3）がこのタグで消すため。サイドバーの無い固定ページは、付けないとカードの参照先のタグ（`illust:{id}` など）しか持たず、手動パージが届かない
 
 ### 4.3 保存操作とパージするタグ
 
@@ -109,17 +109,19 @@ admin-pages ──▶ D1 に保存
 | イラストの保存・削除 | `purgeAtelierCache()` | `illust:{id}`, `list:illust` |
 | 手動パージ（admin の `/cache` ページ） | グループ単位・全件 | グループごとに下の表のタグ。全件は `layout` |
 
-手動パージのグループとタグ（`admin-pages/lib/cache.ts` の `CACHE_GROUPS`）
+手動パージのグループとタグ（`packages/cache-tags` の `manualPurgeTags`。admin 側のグループの定義は `admin-pages/lib/cache-groups.ts` の `CACHE_GROUPS`）
 
 | グループ | パージするタグ |
 |---|---|
 | イラスト | `list:illust` |
 | マンガ | `list:comics` |
-| ブログ一覧・タグ絞り込み / ブログ記事単体 | `blog` |
+| ブログ（一覧・タグ絞り込み・記事単体） | `blog` |
 | ブログメタ（tags / info / static） | `layout`（固定文言は全ページに出るため、全ページを対象にする） |
 
 - 記事詳細は前後記事を表示するため `list:blog` を持つ。記事を保存するとブログ系はほぼ全ページがパージされる。現行の KV パージと同じ粒度であり、前後記事のパージ漏れ（#1310）はこれで解消する
 - 手動パージは保存時より粗い。保存時のパージに失敗したときの回復と、D1 を直接編集したあとの反映に使う。漫画・イラストの詳細ページを追加するとき（M4）に、手動パージのタグがそれらに届くかを見直す
+- ブログの一覧と記事単体は、KV ではキーが分かれるが、公開サイトでは同じ `blog` になる。グループを分けると同じパージを 2 回実行することになるので、1 つのグループにしている
+- 手動パージの `blog` は、ブログカードを埋め込んだサイドバーの無い固定ページ（`list:blog` だけを持つ）には届かない。該当するのは `/secret` だけなので、許容する（届かせるなら「ブログメタ」をパージする）
 - 絞る余地: 公開状態・公開日・タイトルが変わらない保存では `post:{id}` だけにする
 
 ### 4.4 パージ経路
@@ -139,7 +141,7 @@ Workers Cache のパージには次の制約がある
 
 M1 の時点では「内部ルート + `ctx.props` による認可」を第一候補にしていたが、採用しなかった。静的アセットを持つ Worker に対しては、Service Binding に付けた props がローカル実行（`wrangler dev` の複数 Worker 構成）で空になった。M1 の検証用 Worker はアセットを持たなかったため見えていなかった。本番で同じ挙動になるかは確認していないが、RPC メソッドなら props に依存しない
 
-タグの文字列と、保存操作ごとにパージするタグの組は `packages/cache-tags` に置き、付ける側（pages-astro）とパージする側（admin-pages）の両方がそこを参照する
+タグの文字列と、パージするタグの組（保存操作ごとの `purgeTags` と、手動パージのグループごとの `manualPurgeTags`）は `packages/cache-tags` に置き、付ける側（pages-astro）とパージする側（admin-pages）の両方がそこを参照する
 
 運用上の決まり
 
@@ -207,7 +209,7 @@ pages-astro/
    │  └─ islands/           # React: 漫画ビューワ・drawer・モーダル・設定 UI
    ├─ layouts/              # BaseLayout（html / head）→ SiteLayout（ヘッダー・フッター）→ BlogLayout（サイドバー）
    └─ styles/global.css
-packages/cache-tags/        # Cache-Tag の文字列と、保存操作ごとのパージ対象
+packages/cache-tags/        # Cache-Tag の文字列と、保存操作・手動パージごとのパージ対象
 ```
 
 いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、限定公開記事の解錠（`blog/[article_id]/unlock.ts`）、固定ページ（`about.astro`、`contact.astro`、`secret.astro`、`artifacts/post-for-nostter.astro`）、フィード（`rss/feed.rdf.ts`、`sitemap.xml.ts`）、`400.astro`、`404.astro`、`500.astro` で、残りは M3 以降で足す
@@ -235,7 +237,7 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 - about / contact / secret / `artifacts/post-for-nostter` は、CMS の info をパスで探して表示する（`getInfoPage()`）。取得からキャッシュの指定までは 4 ページ共通で、`src/lib/info_page.ts` の `loadInfoPage()` にまとめている。該当する info が無ければ 404 にし、`info` のタグを付けて、公開されたときに一緒に消えるようにする。`artifacts/post-for-nostter` だけサイドバーを出す（現行と同じ）
 - RSS（`/rss/feed.rdf`）は、最新 20 件の記事の冒頭 10 ブロックを載せる。本文の組み立て（`src/lib/rss.ts`）は現行サイトと同じで、出力も一致する。エッジには `blog` / `list:blog` のタグで 30 日キャッシュし、記事の保存でパージする。フィードリーダーには保持させない（ほかのページと同じ `max-age=0, must-revalidate`。現行サイトは `max-age=3600` を返している）。記事の取得に失敗したときは 500 にする（空のフィードをキャッシュさせない）
-- sitemap（`/sitemap.xml`）は、現行と同じく入口になる 7 ページだけを載せる。`lastmod` は描画した時刻で、全ページ共通。載せているページのどれかが変わる保存（記事・漫画・イラスト・タグ・info）でパージされたときに新しくなる。そのために、サイドバーを持つページと同じ 4 つのタグ（`latestListTags`）と `info` を付ける
+- sitemap（`/sitemap.xml`）は、現行と同じく入口になる 7 ページだけを載せる。`lastmod` は描画した時刻で、記事の保存でパージされたときに新しくなる。漫画・イラスト・タグ・info の保存には追従させない（現行サイトの `lastmod` も内容の更新には追従していない。追従させるためにタグを足すと、内容と無関係なパージでも全ページの `lastmod` が変わる）
 - `robots.txt` と `/.well-known/nostr.json` は `public/` の静的ファイル。`nostr.json` の CORS のヘッダは `public/_headers` で付ける。`robots.txt` は、現行の `/_next/` と `/api/` の Disallow を外し、`/_server-islands/` だけを Disallow にする（CSS や JS のある `/_astro/` はクローラに見せる）
 
 ### データ取得
