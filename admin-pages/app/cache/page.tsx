@@ -1,4 +1,5 @@
-import { getCacheStats, CACHE_GROUPS, type CacheGroupKey } from '@/lib/cache'
+import { getCacheStats } from '@/lib/cache'
+import { CACHE_GROUPS, type CacheGroupKey } from '@/lib/cache-groups'
 import { purgeCacheGroupAction, purgeAllCacheAction } from './actions'
 import { SubmitButton } from '@/components/submit-button'
 

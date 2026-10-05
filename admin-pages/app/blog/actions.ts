@@ -17,7 +17,7 @@ import {
   type BlogContentInput,
   type BlogInfoInput,
 } from '@/lib/db_blog'
-import { purgeBlogContentCache, purgeBlogMetaCache, CACHE_GROUPS } from '@/lib/cache'
+import { purgeBlogContentCache, purgeBlogMetaCache } from '@/lib/cache'
 import { saveBlogContentDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
@@ -200,9 +200,7 @@ export async function addBlogCategoryInlineAction(
   revalidatePath('/blog/categories')
   return {
     categories: [...prev.categories, { id, name }],
-    warning: purged
-      ? undefined
-      : `公開サイトのキャッシュ削除に失敗しました。反映されていない場合は、キャッシュ管理で「${CACHE_GROUPS.blog_meta.label}」をパージしてください`,
+    purgeFailed: !purged,
   }
 }
 

@@ -4,11 +4,9 @@
  * illust のキー（atelier_ プレフィックス: 一覧・単体とも）を一括削除する
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { cacheTag, purgeTags } from 'cache-tags'
+import { manualPurgeTags, purgeTags } from 'cache-tags'
+import { ATELIER_PREFIX, BANDE_DESSINEE_PREFIX, CACHE_GROUPS, type CacheGroupKey } from './cache-groups'
 import { purgeEdgeCache } from './edge_cache'
-
-const ATELIER_PREFIX = 'atelier_'
-const BANDE_DESSINEE_PREFIX = 'bande_dessinee_'
 
 export async function purgeAtelierCache(): Promise<void> {
   const { env } = await getCloudflareContext({ async: true })
@@ -43,40 +41,7 @@ export async function purgeBlogMetaCache(key: keyof typeof blogMetaPurgeTags): P
   return purgeEdgeCache(blogMetaPurgeTags[key]())
 }
 
-// --- キャッシュ管理ページ（cms-cache-purger の運用機能の移行先） ---
-// 保存時の自動パージで賄えないケース（D1直接編集後・カテゴリ改名後・不整合時など）のための手動パージ
-// edgeTags は、Astro 版の公開サイト（Workers Cache）でパージするタグ（astro_design.md 4.3）。
-// 保存時より粗く、種類ごとにまとめて消す。static は全ページに出るので、ブログメタは全ページを対象にする
-
-export const CACHE_GROUPS = {
-  illust: {
-    label: 'イラスト（一覧・単体）',
-    prefixes: [ATELIER_PREFIX],
-    keys: [] as string[],
-    edgeTags: [cacheTag.illustList],
-  },
-  comic: {
-    label: 'マンガ（一覧・単体）',
-    prefixes: [BANDE_DESSINEE_PREFIX],
-    keys: [] as string[],
-    edgeTags: [cacheTag.comicList],
-  },
-  blog_list: {
-    label: 'ブログ一覧・タグ絞り込み',
-    prefixes: ['contents_'],
-    keys: [] as string[],
-    edgeTags: [cacheTag.blog],
-  },
-  blog_content: { label: 'ブログ記事単体', prefixes: ['content_'], keys: [] as string[], edgeTags: [cacheTag.blog] },
-  blog_meta: {
-    label: 'ブログメタ（tags / info / static）',
-    prefixes: [] as string[],
-    keys: ['tags', 'info', 'static'],
-    edgeTags: [cacheTag.layout],
-  },
-} as const
-
-export type CacheGroupKey = keyof typeof CACHE_GROUPS
+// --- キャッシュ管理ページの手動パージ。グループの定義は lib/cache-groups.ts ---
 
 // グループごとのキャッシュ済みキー数を数える
 export async function getCacheStats(): Promise<Record<CacheGroupKey, number>> {
@@ -99,7 +64,7 @@ export async function getCacheStats(): Promise<Record<CacheGroupKey, number>> {
 export async function purgeCacheGroup(group: CacheGroupKey): Promise<boolean> {
   const { env } = await getCloudflareContext({ async: true })
   await purgeGroupKV(env.CMS_CACHE, group)
-  return purgeEdgeCache([...CACHE_GROUPS[group].edgeTags])
+  return purgeEdgeCache(CACHE_GROUPS[group].edgeTags)
 }
 
 export async function purgeAllCMSCache(): Promise<boolean> {
@@ -108,7 +73,7 @@ export async function purgeAllCMSCache(): Promise<boolean> {
     await purgeGroupKV(env.CMS_CACHE, group)
   }
   // 公開サイトは、全ページが持つタグで 1 回だけパージする（パージにはレート制限がある）
-  return purgeEdgeCache([cacheTag.layout])
+  return purgeEdgeCache(manualPurgeTags.all())
 }
 
 async function purgeGroupKV(kv: KVNamespace, group: CacheGroupKey): Promise<void> {

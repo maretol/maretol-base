@@ -2,7 +2,8 @@
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { purgeCacheGroup, purgeAllCMSCache, CACHE_GROUPS, type CacheGroupKey } from '@/lib/cache'
+import { purgeCacheGroup, purgeAllCMSCache } from '@/lib/cache'
+import { CACHE_GROUPS, type CacheGroupKey } from '@/lib/cache-groups'
 
 export async function purgeCacheGroupAction(formData: FormData): Promise<void> {
   const group = formData.get('group') as string

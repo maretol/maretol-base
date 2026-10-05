@@ -1,6 +1,6 @@
-// 公開サイト（pages-astro）がレスポンスに付ける Cache-Tag と、admin-pages が保存時にパージするタグの対応。
+// 公開サイト（pages-astro）がレスポンスに付ける Cache-Tag と、admin-pages が保存時・手動パージでパージするタグの対応。
 // 付ける側とパージする側でタグの文字列がずれると「パージは成功したのに消えない」状態になるため、両方がここを参照する。
-// 設計は astro_design.md の 4.2（タグ）と 4.3（保存操作とパージするタグ）
+// 設計は astro_design.md の 4.2（タグ）と 4.3（保存操作・手動パージとパージするタグ）
 
 export const cacheTag = {
   // 全ページ。固定文言など共通要素の変更時にパージする
@@ -29,6 +29,19 @@ export const purgeTags = {
   static: () => [cacheTag.layout],
   comic: (comicID: string) => [cacheTag.comic(comicID), cacheTag.comicList],
   illust: (illustID: string) => [cacheTag.illust(illustID), cacheTag.illustList],
+}
+
+// admin の手動パージ（キャッシュ管理のページ）で、グループごとにパージするタグ。
+// 保存時より粗く、種類ごとにまとめて消す（保存時のパージに失敗したときの回復と、D1 を直接編集したあとの反映に使う）。
+// ページに付けるタグを変えたら、ここのタグがそのページに届くかを確かめる
+export const manualPurgeTags = {
+  // イラストカードや漫画カードを埋め込んだページにも、list:illust / list:comics を付けている
+  illust: () => [cacheTag.illustList],
+  comic: () => [cacheTag.comicList],
+  blog: () => [cacheTag.blog],
+  // タグ・info・固定文言。固定文言は全ページに出るので、全ページを対象にする
+  blogMeta: () => [cacheTag.layout],
+  all: () => [cacheTag.layout],
 }
 
 // パージの結果。レート制限などで失敗しても例外にはならず success: false になる
