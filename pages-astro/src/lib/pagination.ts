@@ -8,28 +8,17 @@ const PAGE_PATTERN = /^[1-9]\d{0,8}$/
 
 export type PageItem = number | 'ellipsis-start' | 'ellipsis-end'
 
-// クエリの p をページ番号にする。p が無ければ 1 ページ目。
-// 次の場合は null を返すので、呼び出し側で p を外した URL（getHrefWithoutPage）へリダイレクトする
-// - 正の整数以外（小数、0、負数、`1e1` のような別表記、空文字、複数指定など）
-// - `p=1`（1 ページ目は p を省略した URL に統一する）
-export function parsePageParam(searchParams: URLSearchParams): number | null {
-  const values = searchParams.getAll('p')
-  if (values.length === 0) {
-    return 1
-  }
-  const [page] = values
-  if (values.length > 1 || !PAGE_PATTERN.test(page) || page === '1') {
-    return null
-  }
-  return Number(page)
+// クエリの p として受け付ける値かどうか。受け付けない値はミドルウェア（mw/query.ts）が外し、p の無い URL へリダイレクトする
+// - 正の整数以外（小数、0、負数、`1e1` のような別表記など）
+// - `1`（1 ページ目は p を省略した URL に統一する）
+export function isPageParam(value: string): boolean {
+  return PAGE_PATTERN.test(value) && value !== '1'
 }
 
-// クエリから p だけを取り除いた URL。p が不正なときのリダイレクト先に使う。
-// p 以外は値も順序もそのまま引き継ぐ（`draftKey` や計測用のパラメータなどを落とさないため）
-export function getHrefWithoutPage(path: string, searchParams: URLSearchParams): string {
-  const params = new URLSearchParams([...searchParams].filter(([key]) => key !== 'p'))
-  const query = params.toString()
-  return query ? `${path}?${query}` : path
+// クエリの p をページ番号にする。p が無ければ 1 ページ目。
+// ミドルウェアを通ったあとの p は isPageParam を満たすので、ここでは検証しない
+export function getPageNumber(searchParams: URLSearchParams): number {
+  return Number(searchParams.get('p') ?? 1)
 }
 
 // 一覧ページの URL。1 ページ目は p を省略する

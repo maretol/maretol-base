@@ -7,15 +7,11 @@ import Pagination from '@/components/ui/Pagination.astro'
 import { getCMSContents } from '@/lib/api/cms'
 import { cachePage } from '@/lib/cache'
 import { getSampleEmbedTags } from '@/lib/content_tags'
-import { getHrefWithoutPage, getTotalPage, isPageOutOfRange, PAGE_LIMIT, parsePageParam } from '@/lib/pagination'
+import { getPageNumber, getTotalPage, isPageOutOfRange, PAGE_LIMIT } from '@/lib/pagination'
 import { getHostname, SITE_DESCRIPTION, SITE_NAME } from '@/lib/site'
 
 // ブログの一覧
-const pageNumber = parsePageParam(Astro.url.searchParams)
-if (pageNumber === null) {
-  // 不正な p と p=1 は、p を外した URL に統一する
-  return Astro.redirect(getHrefWithoutPage('/blog', Astro.url.searchParams), 308)
-}
+const pageNumber = getPageNumber(Astro.url.searchParams)
 
 const { contents, total } = await getCMSContents(Astro.locals, (pageNumber - 1) * PAGE_LIMIT, PAGE_LIMIT)
 if (isPageOutOfRange(pageNumber, total, PAGE_LIMIT)) {
