@@ -2,7 +2,7 @@ import { useState, useTransition, type CSSProperties, type SubmitEvent } from 'r
 import { EyeIcon, EyeOffIcon, LockIcon } from 'lucide-react'
 import type { UnlockResult } from '@/pages/blog/[article_id]/unlock'
 
-// 限定公開記事の閲覧コードの入力フォーム。コードを POST し、解錠できたらページを読み込み直して本文を表示する。
+// 限定公開記事の閲覧コードの入力フォーム。コードを POST し、解錠できたら記事を読み込み直して本文を表示する。
 // class はサーバー側で組み立てて渡す（tailwind-merge などをクライアントへ持ち込まないため）
 
 async function requestUnlock(action: string, body: FormData): Promise<UnlockResult> {
@@ -32,12 +32,20 @@ export default function SecretGateForm({ action, inputClassName, buttonClassName
     const body = new FormData(e.currentTarget)
     startTransition(async () => {
       const result = await requestUnlock(action, body)
-      if (result.ok) {
-        // 解錠の Cookie が付いたので、読み込み直すと本文が出る
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      // 解錠の Cookie が付いたので、読み込み直すと本文が出る。
+      // 正規でない表記の URL（/blog/%74est など）で開いているときは、Cookie の path と一致せず Cookie が送られないので、
+      // 読み込み直す代わりに正規の URL へ移る
+      const articleURL = new URL(result.location, location.href)
+      if (articleURL.pathname === location.pathname) {
         location.reload()
         return
       }
-      setError(result.error ?? '認証できませんでした')
+      articleURL.hash = location.hash
+      location.replace(articleURL)
     })
   }
 
@@ -81,7 +89,11 @@ export default function SecretGateForm({ action, inputClassName, buttonClassName
           {masked ? <EyeIcon className="h-5 w-5" /> : <EyeOffIcon className="h-5 w-5" />}
         </button>
       </div>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && (
+        <p role="alert" className="text-sm text-red-500">
+          {error}
+        </p>
+      )}
       <button type="submit" disabled={pending} className={buttonClassName}>
         <LockIcon className="h-4 w-4" />
         {pending ? '確認中...' : '解錠する'}

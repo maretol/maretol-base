@@ -1,5 +1,5 @@
 ---
-import { withDraftKey } from '@/lib/draft'
+import { getDraftKey, withDraftKey } from '@/lib/draft'
 
 // 記事画像モーダルの URL（/blog/{id}/image/{base64url}）を直接開いたとき。
 // 記事の中でのクリックは islands/ImageModal.tsx がモーダルを開くので、ここに来るのは
@@ -12,6 +12,5 @@ if (!/^[A-Za-z0-9_-]+$/.test(src)) {
   return Astro.rewrite('/404')
 }
 
-const draftKey = Astro.url.searchParams.get('draftKey')
-return Astro.redirect(`${withDraftKey(`/blog/${encodeURIComponent(articleID)}`, draftKey)}#${src}`, 302)
+return Astro.redirect(`${withDraftKey(`/blog/${encodeURIComponent(articleID)}`, getDraftKey(Astro.url))}#${src}`, 302)
 ---
