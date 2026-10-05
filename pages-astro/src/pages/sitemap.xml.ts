@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro'
 import { cacheTag } from 'cache-tags'
-import { cachePage, latestListTags } from '@/lib/cache'
+import { cachePage } from '@/lib/cache'
 import { getHostname } from '@/lib/site'
 
 // sitemap。現行と同じく、入口になるページだけを載せる（個々の記事は載せない）
@@ -16,7 +16,7 @@ const pages = [
 
 export const GET: APIRoute = () => {
   const host = getHostname()
-  // lastmod は描画した時刻。載せているページのどれかが変わる保存（記事・漫画・イラスト・タグ・info）でパージされ、そのときに新しくなる
+  // lastmod は描画した時刻。記事の保存でパージされるので、そのときに新しくなる
   const lastModified = new Date().toISOString()
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
@@ -34,6 +34,6 @@ ${pages
 </urlset>`
 
   const headers = new Headers({ 'Content-Type': 'application/xml' })
-  cachePage({ headers }, [...latestListTags, cacheTag.info])
+  cachePage({ headers }, [cacheTag.blog, cacheTag.blogList])
   return new Response(body, { headers })
 }
