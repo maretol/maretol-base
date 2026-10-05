@@ -267,11 +267,12 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 
 - 現行の `pages/lib/secret_unlock.ts`（HMAC-SHA256 署名 Cookie `secret_unlock_{id}`、HttpOnly / Secure / path 限定 / 30 日、定数時間比較）をそのまま移植する（`src/lib/secret_unlock.ts`）。署名の方式と鍵（Secrets Store の `SECRET_ARTICLE_COOKIE_KEY`）が現行と同じなので、現行サイトで発行した Cookie は Astro 版でもそのまま有効
 - ゲートは記事詳細のページ（`blog/[article_id].astro`）で判定する。限定公開記事は、解錠の Cookie が有効なときだけ本文を描画し、それ以外は題名と入力フォームだけを出す（`SecretGate.astro`）。下書きプレビューでも同じく閲覧コードを求める
-- unlock は POST エンドポイント（`/blog/{id}/unlock`）にし、Workers の Rate Limiting バインディング（`SECRET_UNLOCK_RATE_LIMIT`）で IP ごとに 60 秒で 5 回までに制限する（colo 単位の近似である点は許容）。超えたら 429 を返す
-- 入力フォームは React の Island（`SecretGateForm.tsx`、`client:load`）。結果を JSON で受け取り、解錠できたらページを読み込み直す。JS が動く前に送信された場合は通常のフォーム送信として受け、303 で記事へ戻す
+- unlock は POST エンドポイント（`/blog/{id}/unlock`）にし、Workers の Rate Limiting バインディング（`SECRET_UNLOCK_RATE_LIMIT`）で IP ごとに 60 秒で 5 回までに制限する（colo 単位の近似である点は許容）。超えたら 429 を返す。IPv6 は、利用者が /64 の中でアドレスを変えられるので、/64 ごとに数える（`src/lib/rate_limit.ts`）
+- 入力フォームは React の Island（`SecretGateForm.tsx`、`client:load`）。結果を JSON で受け取り、解錠できたらページを読み込み直す。正規でない表記の URL（`/blog/%74est` など）で開いているときは、Cookie の path と一致せず Cookie が送られないので、読み込み直す代わりに正規の URL へ移る。JS が動く前に送信された場合は通常のフォーム送信として受け、303 で記事へ戻す
 - 別オリジンからのフォーム送信は、Astro の既定の確認（`security.checkOrigin`）で 403 になる
 - 記事本体のレスポンスは `private, no-store`（解錠する前の表示も含む）。メタ情報には本文とサムネイルを出さず、`noindex` にする（解錠の状態にかかわらず）。一覧には従来どおり出さない
 - 署名の鍵を読めないときは解錠できない（500）。既定の鍵に置き換えるのは開発サーバー（`astro dev`）だけ
+- 解錠の Cookie があるのに確かめられないとき（`secret_code` の取得や、署名の鍵の読み取りの失敗）は、ゲートを出さずに 500 にする。未解錠として扱うと、解錠済みの閲覧者に閲覧コードの再入力を求めてしまうため
 - 受容リスク: `secret_code` は D1 に平文で保存し、admin の編集フォームにも表示する
 
 ## 7. 切替と撤去

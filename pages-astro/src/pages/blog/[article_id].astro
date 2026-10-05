@@ -9,14 +9,22 @@ import { getAdjacentContents, getCMSContent, getSecretMeta } from '@/lib/api/cms
 import { cachePage, noStore } from '@/lib/cache'
 import { getEmbedTags } from '@/lib/content_tags'
 import { markDegraded } from '@/lib/degraded'
+import { getDraftKey } from '@/lib/draft'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { isValidUnlockCookie, unlockCookieName } from '@/lib/secret_unlock'
 import { getHostname, SITE_NAME } from '@/lib/site'
 
 const articleID = Astro.params.article_id!
-const draftKey = Astro.url.searchParams.get('draftKey') || undefined
+const draftKey = getDraftKey(Astro.url)
+// 限定公開記事の解錠の Cookie。path を記事の URL に限定して発行するので、解錠したことのある記事でだけ届く
+const unlockCookie = Astro.cookies.get(unlockCookieName(articleID))?.value
 
-const [content, adjacent] = await Promise.all([getCMSContent(articleID, draftKey), getAdjacentContents(articleID)])
+const [content, adjacent, secretMeta] = await Promise.all([
+  getCMSContent(articleID, draftKey),
+  getAdjacentContents(articleID),
+  // 解錠の Cookie を確かめるための情報。Cookie が無ければ未解錠と決まるので、取得しない
+  unlockCookie ? getSecretMeta(articleID, draftKey) : null,
+])
 
 if (!content) {
   // 記事が公開されたときに 404 のキャッシュも消えるよう、記事のタグを付けておく
@@ -25,23 +33,16 @@ if (!content) {
 }
 
 // 限定公開記事は、解錠するまで本文を出さない（下書きプレビューでも閲覧コードを求める）。
-// 解錠の Cookie は、いまの secret_code に対応する署名かどうかで確かめる。コードを変えると Cookie は無効になる
-async function isUnlocked(): Promise<boolean> {
-  const cookie = Astro.cookies.get(unlockCookieName(articleID))?.value
-  if (!cookie) {
-    // Cookie が無ければ、secret_code を取得するまでもなく未解錠
-    return false
-  }
-  try {
-    const meta = await getSecretMeta(articleID, draftKey)
-    return !!meta.secret_code && (await isValidUnlockCookie(articleID, meta.secret_code, cookie))
-  } catch (e) {
-    console.error(`[pages/blog/[article_id].astro] Unlock check failed: ${articleID}`, e)
-    return false
-  }
-}
-const isSecret = content.is_secret === true
-const unlocked = !isSecret || (await isUnlocked())
+// is_secret に真偽値以外が届いても、ゲートを出す側に倒す
+const isSecret = !!content.is_secret
+// 解錠の Cookie は、いまの secret_code に対応する署名かどうかで確かめる。コードを変えると Cookie は無効になる。
+// 確かめる途中の失敗（secret_code の取得や署名の鍵の読み取り）は、例外のまま上げて 500 にする。
+// 未解錠として扱うと、解錠済みの閲覧者に閲覧コードの再入力を求めてしまう
+const unlocked =
+  !isSecret ||
+  (!!unlockCookie &&
+    !!secretMeta?.secret_code &&
+    (await isValidUnlockCookie(articleID, secretMeta.secret_code, unlockCookie)))
 
 if (draftKey || isSecret) {
   // 下書きプレビューと限定公開記事はキャッシュしない。
