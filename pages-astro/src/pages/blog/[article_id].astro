@@ -3,32 +3,50 @@ import { cacheTag } from 'cache-tags'
 import BlogLayout from '@/layouts/BlogLayout.astro'
 import type { PageMeta } from '@/layouts/BaseLayout.astro'
 import FullArticle from '@/components/article/FullArticle.astro'
+import SecretGate from '@/components/article/SecretGate.astro'
 import ImageModal from '@/components/islands/ImageModal'
-import { getAdjacentContents, getCMSContent } from '@/lib/api/cms'
+import { getAdjacentContents, getCMSContent, getSecretMeta } from '@/lib/api/cms'
 import { cachePage, noStore } from '@/lib/cache'
 import { getEmbedTags } from '@/lib/content_tags'
 import { markDegraded } from '@/lib/degraded'
+import { getDraftKey } from '@/lib/draft'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
+import { isValidUnlockCookie, unlockCookieName } from '@/lib/secret_unlock'
 import { getHostname, SITE_NAME } from '@/lib/site'
 
 const articleID = Astro.params.article_id!
-const draftKey = Astro.url.searchParams.get('draftKey') || undefined
+const draftKey = getDraftKey(Astro.url)
+// 限定公開記事の解錠の Cookie。path を記事の URL に限定して発行するので、解錠したことのある記事でだけ届く
+const unlockCookie = Astro.cookies.get(unlockCookieName(articleID))?.value
 
-const [content, adjacent] = await Promise.all([getCMSContent(articleID, draftKey), getAdjacentContents(articleID)])
+const [content, adjacent, secretMeta] = await Promise.all([
+  getCMSContent(articleID, draftKey),
+  getAdjacentContents(articleID),
+  // 解錠の Cookie を確かめるための情報。Cookie が無ければ未解錠と決まるので、取得しない
+  unlockCookie ? getSecretMeta(articleID, draftKey) : null,
+])
 
 if (!content) {
   // 記事が公開されたときに 404 のキャッシュも消えるよう、記事のタグを付けておく
   Astro.locals.notFound = { tags: [cacheTag.post(articleID)] }
   return Astro.rewrite('/404')
 }
-if (content.is_secret) {
-  // 限定公開記事のゲートと解錠は未移植（astro_milestones.md の M3）。それまでは本文を出さず、キャッシュもしない
-  Astro.locals.notFound = { noStore: true }
-  return Astro.rewrite('/404')
-}
 
-if (draftKey) {
-  // 下書きプレビューはキャッシュしない
+// 限定公開記事は、解錠するまで本文を出さない（下書きプレビューでも閲覧コードを求める）。
+// is_secret に真偽値以外が届いても、ゲートを出す側に倒す
+const isSecret = !!content.is_secret
+// 解錠の Cookie は、いまの secret_code に対応する署名かどうかで確かめる。コードを変えると Cookie は無効になる。
+// 確かめる途中の失敗（secret_code の取得や署名の鍵の読み取り）は、例外のまま上げて 500 にする。
+// 未解錠として扱うと、解錠済みの閲覧者に閲覧コードの再入力を求めてしまう
+const unlocked =
+  !isSecret ||
+  (!!unlockCookie &&
+    !!secretMeta?.secret_code &&
+    (await isValidUnlockCookie(articleID, secretMeta.secret_code, unlockCookie)))
+
+if (draftKey || isSecret) {
+  // 下書きプレビューと限定公開記事はキャッシュしない。
+  // 限定公開記事は Cookie の有無で内容が変わるので、解錠する前の表示も含めてキャッシュさせない
   noStore(Astro.response)
 } else {
   // 前後記事を表示するので、他の記事の公開・更新でもパージされるよう list:blog を持つ（サイドバーのタグに含まれる）
@@ -46,35 +64,46 @@ const hasImage = content.parsed_content.some(
 
 const url = `${getHostname()}/blog/${articleID}`
 const pageTitle = `${content.title} | ${SITE_NAME}`
-const description = content.parsed_content
-  .slice(0, 5)
-  .map((c) => c.text)
-  .join(' ')
+// 限定公開記事は、解錠の状態にかかわらず、本文とサムネイルをメタ情報に出さず、検索結果にも出さない
+const ogpImage = isSecret ? undefined : content.ogp_image
+const description = isSecret
+  ? '限定公開記事です'
+  : content.parsed_content
+      .slice(0, 5)
+      .map((c) => c.text)
+      .join(' ')
 const meta: PageMeta = {
   title: pageTitle,
   description: content.title,
   ogTitle: pageTitle,
   ogDescription: description,
   ogURL: url,
-  ogImage: getOGPImageURL(content.ogp_image ?? getDefaultOGPImageURL()),
-  twitterCard: content.ogp_image == null ? 'summary' : 'summary_large_image',
+  ogImage: getOGPImageURL(ogpImage ?? getDefaultOGPImageURL()),
+  twitterCard: ogpImage == null ? 'summary' : 'summary_large_image',
+  noindex: isSecret,
 }
 ---
 
 <BlogLayout meta={meta}>
-  <FullArticle
-    articleID={articleID}
-    draftKey={draftKey}
-    title={content.title}
-    publishedAt={content.publishedAt}
-    updatedAt={content.updatedAt}
-    categories={content.categories}
-    parsedContents={content.parsed_content}
-    tableOfContents={content.table_of_contents}
-    type="blog"
-    shareURL={url}
-    annotations={content.annotations}
-    adjacent={adjacent ?? undefined}
-  />
-  {hasImage && <ImageModal client:idle />}
+  {
+    unlocked ? (
+      <FullArticle
+        articleID={articleID}
+        draftKey={draftKey}
+        title={content.title}
+        publishedAt={content.publishedAt}
+        updatedAt={content.updatedAt}
+        categories={content.categories}
+        parsedContents={content.parsed_content}
+        tableOfContents={content.table_of_contents}
+        type="blog"
+        shareURL={url}
+        annotations={content.annotations}
+        adjacent={adjacent ?? undefined}
+      />
+    ) : (
+      <SecretGate articleID={articleID} title={content.title} draftKey={draftKey} />
+    )
+  }
+  {unlocked && hasImage && <ImageModal client:idle />}
 </BlogLayout>

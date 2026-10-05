@@ -88,6 +88,15 @@ export async function getStatic(): Promise<staticAPIResult> {
   return (await env.CMS_RPC.fetchStatic()) as staticAPIResult
 }
 
+// 限定公開記事のコードの照合に使う情報。secret_code を含むので、ブラウザへは渡さない。
+// 下書きプレビューのときは draftKey を渡す（渡さないと、未公開の記事の secret_code を取得できない）
+export async function getSecretMeta(
+  articleID: string,
+  draftKey?: string,
+): Promise<{ is_secret: boolean; secret_code: string | null }> {
+  return await env.CMS_RPC.fetchSecretMeta(articleID, draftKey ?? null)
+}
+
 // 前後記事。取得に失敗したら null（記事本体は表示するが、呼び出し側でキャッシュを避ける）
 export async function getAdjacentContents(articleID: string): Promise<adjacentContentsResult | null> {
   try {
