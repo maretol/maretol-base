@@ -7,11 +7,14 @@ import { cf } from '@astrojs/cloudflare/hono'
 import type { PurgeResult, PurgeRPC } from 'cache-tags'
 import { cacheHeaders } from './mw/cache'
 import { purgeByTags } from './mw/purge'
+import { normalizeQuery } from './mw/query'
 
 const app = new Hono<{ Bindings: Env }>()
 
 // cf() は Astro の他のハンドラより前に置く（静的アセットの配信、locals.cfContext などの設定）
 app.use(cf())
+// クエリの正規化は、ページの描画やキャッシュのヘッダの確定より前に行う
+app.use(normalizeQuery())
 app.use(cacheHeaders())
 app.use(middleware())
 app.use(pages())

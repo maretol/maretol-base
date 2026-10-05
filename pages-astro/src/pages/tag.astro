@@ -8,7 +8,7 @@ import Pagination from '@/components/ui/Pagination.astro'
 import { getCMSContentsWithTags, getTags } from '@/lib/api/cms'
 import { cachePage } from '@/lib/cache'
 import { getSampleEmbedTags } from '@/lib/content_tags'
-import { getHrefWithoutPage, getTotalPage, isPageOutOfRange, PAGE_LIMIT, parsePageParam } from '@/lib/pagination'
+import { getPageNumber, getTotalPage, isPageOutOfRange, PAGE_LIMIT } from '@/lib/pagination'
 import { getHostname, SITE_NAME } from '@/lib/site'
 
 // タグで絞り込んだブログの一覧。タグは tag_id で 1 つ指定する。
@@ -16,12 +16,7 @@ import { getHostname, SITE_NAME } from '@/lib/site'
 const searchParams = Astro.url.searchParams
 const tagID = searchParams.get('tag_id') || undefined
 const tagName = searchParams.get('tag_name') || undefined
-
-const pageNumber = parsePageParam(searchParams)
-if (pageNumber === null) {
-  // 不正な p と p=1 は、p を外した URL に統一する
-  return Astro.redirect(getHrefWithoutPage('/tag', searchParams), 308)
-}
+const pageNumber = getPageNumber(searchParams)
 
 const tags = await getTags(Astro.locals)
 const selectedTag = tags.find((tag) => tag.id === tagID)
