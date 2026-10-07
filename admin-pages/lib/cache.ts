@@ -4,11 +4,9 @@
  * illust のキー（atelier_ プレフィックス: 一覧・単体とも）を一括削除する
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import { purgeTags } from 'cache-tags'
+import { manualPurgeTags, purgeTags } from 'cache-tags'
+import { ATELIER_PREFIX, BANDE_DESSINEE_PREFIX, CACHE_GROUPS, type CacheGroupKey } from './cache-groups'
 import { purgeEdgeCache } from './edge_cache'
-
-const ATELIER_PREFIX = 'atelier_'
-const BANDE_DESSINEE_PREFIX = 'bande_dessinee_'
 
 export async function purgeAtelierCache(): Promise<void> {
   const { env } = await getCloudflareContext({ async: true })
@@ -29,24 +27,21 @@ export async function purgeBlogContentCache(articleID: string): Promise<boolean>
   return purgeEdgeCache(purgeTags.blogContent(articleID))
 }
 
-// カテゴリ・固定ページ・静的文言の保存時: 対応する固定キーを削除する
-export async function purgeBlogMetaCache(key: 'tags' | 'info' | 'static'): Promise<void> {
-  const { env } = await getCloudflareContext({ async: true })
-  await env.CMS_CACHE.delete(key)
+const blogMetaPurgeTags = {
+  tags: purgeTags.blogTags,
+  info: purgeTags.info,
+  static: purgeTags.static,
 }
 
-// --- キャッシュ管理ページ（cms-cache-purger の運用機能の移行先） ---
-// 保存時の自動パージで賄えないケース（D1直接編集後・カテゴリ改名後・不整合時など）のための手動パージ
+// カテゴリ・固定ページ・静的文言の保存時: 対応する固定キーを削除する
+// Astro 版の公開サイト（Workers Cache）も併せてパージする。戻り値はそちらのパージができたか
+export async function purgeBlogMetaCache(key: keyof typeof blogMetaPurgeTags): Promise<boolean> {
+  const { env } = await getCloudflareContext({ async: true })
+  await env.CMS_CACHE.delete(key)
+  return purgeEdgeCache(blogMetaPurgeTags[key]())
+}
 
-export const CACHE_GROUPS = {
-  illust: { label: 'イラスト（一覧・単体）', prefixes: [ATELIER_PREFIX], keys: [] as string[] },
-  comic: { label: 'マンガ（一覧・単体）', prefixes: [BANDE_DESSINEE_PREFIX], keys: [] as string[] },
-  blog_list: { label: 'ブログ一覧・タグ絞り込み', prefixes: ['contents_'], keys: [] as string[] },
-  blog_content: { label: 'ブログ記事単体', prefixes: ['content_'], keys: [] as string[] },
-  blog_meta: { label: 'ブログメタ（tags / info / static）', prefixes: [] as string[], keys: ['tags', 'info', 'static'] },
-} as const
-
-export type CacheGroupKey = keyof typeof CACHE_GROUPS
+// --- キャッシュ管理ページの手動パージ。グループの定義は lib/cache-groups.ts ---
 
 // グループごとのキャッシュ済みキー数を数える
 export async function getCacheStats(): Promise<Record<CacheGroupKey, number>> {
@@ -65,19 +60,28 @@ export async function getCacheStats(): Promise<Record<CacheGroupKey, number>> {
   return stats
 }
 
-export async function purgeCacheGroup(group: CacheGroupKey): Promise<void> {
+// 戻り値は、Astro 版の公開サイト（Workers Cache）のパージができたか
+export async function purgeCacheGroup(group: CacheGroupKey): Promise<boolean> {
   const { env } = await getCloudflareContext({ async: true })
-  const def = CACHE_GROUPS[group]
-  for (const prefix of def.prefixes) {
-    await deleteByPrefix(env.CMS_CACHE, prefix)
-  }
-  await Promise.all(def.keys.map((key) => env.CMS_CACHE.delete(key)))
+  await purgeGroupKV(env.CMS_CACHE, group)
+  return purgeEdgeCache(CACHE_GROUPS[group].edgeTags)
 }
 
-export async function purgeAllCMSCache(): Promise<void> {
+export async function purgeAllCMSCache(): Promise<boolean> {
+  const { env } = await getCloudflareContext({ async: true })
   for (const group of Object.keys(CACHE_GROUPS) as CacheGroupKey[]) {
-    await purgeCacheGroup(group)
+    await purgeGroupKV(env.CMS_CACHE, group)
   }
+  // 公開サイトは、全ページが持つタグで 1 回だけパージする（パージにはレート制限がある）
+  return purgeEdgeCache(manualPurgeTags.all())
+}
+
+async function purgeGroupKV(kv: KVNamespace, group: CacheGroupKey): Promise<void> {
+  const def = CACHE_GROUPS[group]
+  for (const prefix of def.prefixes) {
+    await deleteByPrefix(kv, prefix)
+  }
+  await Promise.all(def.keys.map((key) => kv.delete(key)))
 }
 
 async function countByPrefix(kv: KVNamespace, prefix: string): Promise<number> {

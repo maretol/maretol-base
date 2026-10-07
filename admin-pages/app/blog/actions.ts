@@ -70,9 +70,17 @@ function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: s
   return { input }
 }
 
-// 保存後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、編集画面で知らせる
+// 公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
+function withPurgeResult(url: string, purged: boolean): string {
+  if (purged) {
+    return url
+  }
+  return `${url}${url.includes('?') ? '&' : '?'}purge_failed=1`
+}
+
+// 保存後の遷移先
 function savedURL(articleID: string, purged: boolean): string {
-  return `/blog/${articleID}/edit?saved=1${purged ? '' : '&purge_failed=1'}`
+  return withPurgeResult(`/blog/${articleID}/edit?saved=1`, purged)
 }
 
 export async function createBlogContentAction(formData: FormData): Promise<void> {
@@ -163,10 +171,10 @@ export async function updateBlogCategoryOrderAction(formData: FormData): Promise
   }
 
   await updateBlogCategoryOrders(orders)
-  await purgeBlogMetaCache('tags')
+  const purged = await purgeBlogMetaCache('tags')
 
   revalidatePath('/blog/categories')
-  redirect('/blog/categories')
+  redirect(withPurgeResult('/blog/categories', purged))
 }
 
 // 記事編集画面からのカテゴリ追加。編集中の本文を失わないようページ遷移させず、
@@ -187,10 +195,13 @@ export async function addBlogCategoryInlineAction(
 
   const id = generateContentID()
   await createBlogCategory({ id, name })
-  await purgeBlogMetaCache('tags')
+  const purged = await purgeBlogMetaCache('tags')
 
   revalidatePath('/blog/categories')
-  return { categories: [...prev.categories, { id, name }] }
+  return {
+    categories: [...prev.categories, { id, name }],
+    purgeFailed: !purged,
+  }
 }
 
 export async function createBlogCategoryAction(formData: FormData): Promise<void> {
@@ -205,10 +216,10 @@ export async function createBlogCategoryAction(formData: FormData): Promise<void
   }
 
   await createBlogCategory({ id, name })
-  await purgeBlogMetaCache('tags')
+  const purged = await purgeBlogMetaCache('tags')
 
   revalidatePath('/blog/categories')
-  redirect('/blog/categories')
+  redirect(withPurgeResult('/blog/categories', purged))
 }
 
 function parseInfoForm(formData: FormData): { input: BlogInfoInput; error?: string } {
@@ -240,11 +251,11 @@ export async function createBlogInfoAction(formData: FormData): Promise<void> {
   }
 
   await createBlogInfo(input)
-  await purgeBlogMetaCache('info')
+  const purged = await purgeBlogMetaCache('info')
 
   revalidatePath('/blog/info')
   // 保存後は一覧へ戻らず、作成したページの編集画面へ遷移する
-  redirect(`/blog/info/${input.id}/edit?saved=1`)
+  redirect(withPurgeResult(`/blog/info/${input.id}/edit?saved=1`, purged))
 }
 
 export async function updateBlogInfoAction(formData: FormData): Promise<void> {
@@ -254,11 +265,11 @@ export async function updateBlogInfoAction(formData: FormData): Promise<void> {
   }
 
   await updateBlogInfo(input)
-  await purgeBlogMetaCache('info')
+  const purged = await purgeBlogMetaCache('info')
 
   revalidatePath('/blog/info')
   // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(`/blog/info/${input.id}/edit?saved=1`)
+  redirect(withPurgeResult(`/blog/info/${input.id}/edit?saved=1`, purged))
 }
 
 export async function updateBlogStaticAction(formData: FormData): Promise<void> {
@@ -269,8 +280,8 @@ export async function updateBlogStaticAction(formData: FormData): Promise<void> 
   }
 
   await upsertBlogStatic(key, value)
-  await purgeBlogMetaCache('static')
+  const purged = await purgeBlogMetaCache('static')
 
   revalidatePath('/blog/static')
-  redirect('/blog/static')
+  redirect(withPurgeResult('/blog/static', purged))
 }

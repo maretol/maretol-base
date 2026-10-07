@@ -2,14 +2,19 @@ import { listBlogStatic } from '@/lib/db_blog'
 import { updateBlogStaticAction } from '../actions'
 import { SubmitButton } from '@/components/submit-button'
 import { ContentTextarea } from '@/components/content-textarea'
+import { PurgeFailedNotice } from '@/components/purge-failed-notice'
 
 export const dynamic = 'force-dynamic'
 
 // タイムスタンプ行は編集対象から外す（API互換用の値のため）
 const READONLY_KEYS = ['createdAt', 'updatedAt', 'publishedAt', 'revisedAt']
 
-export default async function BlogStatic({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams
+export default async function BlogStatic({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; purge_failed?: string }>
+}) {
+  const { error, purge_failed: purgeFailed } = await searchParams
   const entries = await listBlogStatic()
   const editable = entries.filter((e) => !READONLY_KEYS.includes(e.key))
 
@@ -18,6 +23,7 @@ export default async function BlogStatic({ searchParams }: { searchParams: Promi
       <h1 className="text-2xl font-bold">静的文言管理（サイドバー・トップページ等）</h1>
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {purgeFailed === '1' && <PurgeFailedNotice />}
 
       <div className="space-y-4">
         {editable.map((e) => (
