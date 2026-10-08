@@ -7,14 +7,17 @@ import { setupShareCopy } from '@/lib/share_copy'
 // イラストの drawer。一覧や記事の上に重ねて表示し、URL も詳細の URL（/illust/detail/{id}）に変える（astro_design.md 決定 13）。
 // - 詳細へのリンクのクリックを横取りし、pushState で URL を変えて開く。中身は詳細ページを取得し、
 //   その中の [data-illust-detail] の要素を差し込む
-// - 開いているかどうかは URL だけで決める。閉じる操作は、自分で履歴を進めていれば history.back()、
-//   詳細の URL を直接開いていれば一覧の URL への replaceState。戻る・進むでも閉じたり開き直したりする
+// - 開いているかどうかは URL だけで決める。閉じる操作は、このドキュメントで履歴を進めていれば history.back()、
+//   詳細の URL を直接開いていれば（再読み込みを含む）一覧の URL への replaceState。戻る・進むでも閉じたり開き直したりする
 // - 詳細の URL を直接開いたとき（JS が動く前を含む）は、サーバーが描画した中身（children）を固定の枠で出し、
 //   hydration 後に同じ中身をアニメーションなしで drawer に移す
 // - URL の形（/illust/detail/{id}）は lib/illust.ts で決める。末尾のスラッシュは Worker が 301 で外すので、ここに届く URL は正規形
 
-// 自分で pushState した履歴の印。閉じるときに history.back() でよいかの判定に使う
+// 自分で pushState した履歴の印。閉じるときに history.back() でよいかの判定に使う。
+// 値はドキュメントごとに変える。pushState で開いたあとに再読み込みすると history.state は残るが、その履歴は前のドキュメントが
+// 積んだもので、戻る先は一覧とは限らない（記事やトップから開いた場合）。印が自分のものでなければ直接開いたときと同じ扱いにする
 const STATE_KEY = 'illustDrawer'
+const DOCUMENT_TOKEN = Math.random().toString(36).slice(2)
 const FRAGMENT_SELECTOR = '[data-illust-detail]'
 // 中身にある閉じるボタン（JS が動かないときのために一覧へのリンクになっている）
 const CLOSE_SELECTOR = 'a[data-illust-drawer-close]'
@@ -108,12 +111,12 @@ function closeDrawer(): void {
   if (closing) {
     return
   }
-  if (history.state?.[STATE_KEY]) {
+  if (history.state?.[STATE_KEY] === DOCUMENT_TOKEN) {
     closing = true
     history.back()
     return
   }
-  // 詳細の URL を直接開いたときは、戻る先が一覧ではないので、URL を一覧に置き換えて閉じる
+  // 詳細の URL を直接開いたとき（再読み込みを含む）は、戻る先が一覧ではないので、URL を一覧に置き換えて閉じる
   history.replaceState(null, '', ILLUST_LIST_PATH)
   notify()
 }
@@ -151,7 +154,7 @@ function subscribeStore(onChange: () => void, initialID: string | null): () => v
       return
     }
     e.preventDefault()
-    history.pushState({ [STATE_KEY]: true }, '', link.href)
+    history.pushState({ [STATE_KEY]: DOCUMENT_TOKEN }, '', link.href)
     openFragment(id, link.pathname + link.search, initialID)
   }
   const onPopState = () => {
@@ -159,13 +162,19 @@ function subscribeStore(onChange: () => void, initialID: string | null): () => v
     const id = getOpenID()
     if (id) {
       openFragment(id, location.pathname + location.search, initialID)
-    } else {
-      notify()
+      return
     }
+    // 詳細の URL を直接開いたページが描画できるのは、詳細と一覧（背景の 1 ページ目）だけ。
+    // 再読み込みの前に別のページ（記事やトップ）から pushState で開いていた場合、Chrome はその履歴もこのドキュメントの
+    // ものとして扱い、戻るとページを描き直さずに URL だけが変わる。そのときは、その URL のページを読み込み直す
+    if (initialID !== null && location.pathname + location.search !== ILLUST_LIST_PATH) {
+      location.reload()
+      return
+    }
+    notify()
   }
-  // bfcache から復元されたときも閉じる途中の印を戻す。pushState で開いたあとに再読み込みしたページでは、
-  // 閉じる操作の history.back() が別のドキュメント（一覧）への遷移になる。そこから進むで戻ってくると、
-  // このページは bfcache から復元されて popstate が届かず、closing が立ったまま閉じられなくなる
+  // bfcache から復元されたときも閉じる途中の印を戻す。history.back() が別のドキュメントへの遷移になった場合、
+  // 進むで戻ってくるとこのページは bfcache から復元されて popstate が届かず、closing が立ったまま閉じられなくなる
   const onPageShow = (e: PageTransitionEvent) => {
     if (e.persisted) {
       closing = false
