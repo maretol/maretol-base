@@ -8,7 +8,8 @@ import { setupShareCopy } from '@/lib/share_copy'
 // - 詳細へのリンクのクリックを横取りし、pushState で URL を変えて開く。中身は詳細ページを取得し、
 //   その中の [data-illust-detail] の要素を差し込む
 // - 開いているかどうかは URL だけで決める。閉じる操作は、このドキュメントで履歴を進めていれば history.back()、
-//   詳細の URL を直接開いていれば（再読み込みを含む）一覧の URL への replaceState。戻る・進むでも閉じたり開き直したりする
+//   詳細の URL を直接開いていれば（再読み込みを含む）一覧の URL への pushState。drawer は別のページとして扱うので、
+//   閉じたあとの戻るで開き直す。戻る・進むでも閉じたり開き直したりする
 // - 詳細の URL を直接開いたとき（JS が動く前を含む）は、サーバーが描画した中身（children）を固定の枠で出し、
 //   hydration 後に同じ中身をアニメーションなしで drawer に移す。閉じる途中は直前の中身を出し続ける
 // - URL の形（/illust/detail/{id}）は lib/illust.ts で決める。末尾のスラッシュは Worker が 301 で外すので、ここに届く URL は正規形
@@ -133,8 +134,9 @@ function closeDrawer(): void {
     history.back()
     return
   }
-  // 詳細の URL を直接開いたとき（再読み込みを含む）は、戻る先が一覧ではないので、URL を一覧に置き換えて閉じる
-  history.replaceState(null, '', ILLUST_LIST_PATH)
+  // 詳細の URL を直接開いたとき（再読み込みを含む）は、戻る先が一覧ではないので、一覧の URL へ進んで閉じる。
+  // JS が動かないときの閉じるボタン（一覧へのリンク）と同じく履歴が 1 つ増え、戻ると詳細が開き直す
+  history.pushState(null, '', ILLUST_LIST_PATH)
   notify()
 }
 
