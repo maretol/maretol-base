@@ -125,12 +125,13 @@ async function fetchInfo(): Promise<infoAPIResult[]> {
   return (await env.CMS_RPC.fetchInfo()) as infoAPIResult[]
 }
 
-// 漫画の一覧と総件数
+// 漫画の一覧と総件数。seriesID を渡すとそのシリーズの漫画だけになる（総件数も絞り込んだ後の数）
 export async function getBandeDessinees(
   offset: number,
   limit: number,
+  seriesID?: string,
 ): Promise<{ bandeDessinees: bandeDessineeResult[]; total: number }> {
-  return (await env.CMS_RPC.fetchBandeDessinees(offset.toString(), limit.toString())) as {
+  return (await env.CMS_RPC.fetchBandeDessinees(offset.toString(), limit.toString(), seriesID ?? null)) as {
     bandeDessinees: bandeDessineeResult[]
     total: number
   }

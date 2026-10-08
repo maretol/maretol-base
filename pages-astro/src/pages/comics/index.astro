@@ -1,0 +1,103 @@
+---
+import { cacheTag } from 'cache-tags'
+import { BookImageIcon } from '@lucide/astro'
+import SiteLayout from '@/layouts/SiteLayout.astro'
+import type { PageMeta } from '@/layouts/BaseLayout.astro'
+import ComicOverview from '@/components/comic/ComicOverview.astro'
+import Pagination from '@/components/ui/Pagination.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getBandeDessinees } from '@/lib/api/cms'
+import { cacheNotFound, cachePage } from '@/lib/cache'
+import { getSeriesName, SERIES_ID_PATTERN } from '@/lib/comic'
+import { getEmbedTags } from '@/lib/content_tags'
+import { getPageNumber, getTotalPage, isPageOutOfRange, PAGE_LIMIT } from '@/lib/pagination'
+import { getHostname, SITE_DESCRIPTION, SITE_NAME } from '@/lib/site'
+import { cn } from '@/lib/utils'
+
+// 漫画の一覧。series でシリーズに絞り込める（漫画の詳細の「This series」と、ビューワの末尾の案内から来る）
+const searchParams = Astro.url.searchParams
+const pageNumber = getPageNumber(searchParams)
+const seriesID = searchParams.get('series') || undefined
+if (seriesID !== undefined && !SERIES_ID_PATTERN.test(seriesID)) {
+  // ID の形式に合わない値は 400 にする（現行サイトは無視して全件を出していたが、任意の値で別のキャッシュが増えるので受け付けない）
+  Astro.locals.badRequest = { tags: [cacheTag.comicList] }
+  return Astro.rewrite('/400')
+}
+
+const { bandeDessinees, total } = await getBandeDessinees((pageNumber - 1) * PAGE_LIMIT, PAGE_LIMIT, seriesID)
+// 漫画が増えてこのページやシリーズが存在するようになったら、404 のキャッシュも一緒に消えるようにする
+const notFoundTags = [cacheTag.comicList]
+if (isPageOutOfRange(pageNumber, total, PAGE_LIMIT)) {
+  Astro.locals.notFound = { tags: notFoundTags }
+  return Astro.rewrite('/404')
+}
+
+// シリーズで絞り込んだときの名前は一覧の先頭から取る。存在しないシリーズ（や公開中の漫画が無いシリーズ）は 0 件になる
+const seriesName = seriesID ? getSeriesName(bandeDessinees) : undefined
+const seriesNotFound = seriesID !== undefined && total === 0
+if (seriesNotFound) {
+  // 見出しと見つからなかったことは出すが、404 として短くキャッシュする
+  Astro.response.status = 404
+  cacheNotFound(Astro.response, notFoundTags)
+} else {
+  // Cache-Tag に入れるシリーズ ID は、漫画が実際にあるものだけ（クエリの値をそのままヘッダへ入れない）
+  cachePage(Astro.response, [
+    cacheTag.comicList,
+    ...(seriesID ? [cacheTag.series(seriesID)] : []),
+    // 一覧には説明文の先頭のブロックだけを出す（components/comic/ComicOverview.astro）
+    ...getEmbedTags(bandeDessinees.flatMap((comic) => comic.parsed_description.slice(0, 1))),
+  ])
+}
+
+const title = seriesName
+  ? `Comics : ${seriesName} : page ${pageNumber} | ${SITE_NAME}`
+  : `Comics : page ${pageNumber} | ${SITE_NAME}`
+const description = `${SITE_DESCRIPTION} | マンガ`
+const query = new URLSearchParams({
+  ...(seriesID ? { series: seriesID } : {}),
+  ...(pageNumber > 1 ? { p: pageNumber.toString() } : {}),
+}).toString()
+const url = `${getHostname()}/comics${query ? `?${query}` : ''}`
+const meta: PageMeta = {
+  title,
+  description,
+  ogTitle: title,
+  ogDescription: description,
+  ogURL: url,
+  canonical: url,
+}
+---
+
+<SiteLayout meta={meta}>
+  <div class="flex flex-col justify-center gap-10">
+    {
+      seriesID && (
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          {/* 0 件のときは名前が引けないので ID で代替する */}
+          <h2 class="text-xl font-bold">シリーズ : {seriesName ?? seriesID}</h2>
+          <a href="/comics" class={cn(buttonVariants({ variant: 'secondary' }), 'gap-1 font-suse')}>
+            <BookImageIcon class="w-4 h-4" />
+            All Comics
+          </a>
+        </div>
+      )
+    }
+    {
+      seriesNotFound ? (
+        <div class="text-center py-10">
+          <p class="text-gray-500">このシリーズのマンガは見つかりませんでした</p>
+        </div>
+      ) : (
+        bandeDessinees.map((comic) => <ComicOverview comic={comic} />)
+      )
+    }
+    <div class="flex justify-center">
+      <Pagination
+        path="/comics"
+        queryWithoutPage={seriesID ? { series: seriesID } : {}}
+        currentPage={pageNumber}
+        totalPage={getTotalPage(total, PAGE_LIMIT)}
+      />
+    </div>
+  </div>
+</SiteLayout>
