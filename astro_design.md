@@ -174,7 +174,8 @@ M1 の時点では「内部ルート + `ctx.props` による認可」を第一�
 - 対象は GET と HEAD だけ。Astro の内部ルート（`/_server-islands/` など）は触らない
 - リダイレクト先（`Location`）は、スラッシュ 1 つで始まるパスにする。`//example.com?x=1` のようなパスをそのまま返すと、ブラウザがホスト名として解釈し、別サイトへのリダイレクト（オープンリダイレクト）になる
 - リダイレクト自体は `private, no-store` にする（クエリの数だけエントリが増えるのを防ぐ）
-- パスの表記揺れ（末尾のスラッシュ、重複したスラッシュ、エンコードの違い）は揃えない。別のエントリになるが、許容する
+- 末尾のスラッシュは付けない形に揃える（`astro.config.ts` の `trailingSlash: 'never'`。`/illust/detail/{id}/` → `/illust/detail/{id}` へ 301。クエリは引き継ぐ。`/` と `/_` で始まる内部パスは対象外）。末尾の重複したスラッシュ（`/blog//`）も同時に揃う。リダイレクトを行うハンドラ（`astro/hono` の `trailingSlash()`）は `middleware()` / `pages()` に含まれないので、`src/worker.ts` で明示的に載せる。GET は 301、それ以外は 308。レスポンスは Astro のもので `Cache-Control` は付かず、キャッシュヘッダの確定（`src/mw/cache.ts`）より前で返るので `no-store` も付かない。恒久的なリダイレクトなので、エッジが既定の期間だけ保持しても問題ない。揃えないと、エッジのエントリが分かれるだけでなく、URL からイラストの ID を読む drawer の island（`/illust/detail/{id}` にだけ一致させている）が、`/illust/detail/{id}/` を開いたときに hydration 後に閉じてしまう
+- パスのエンコードの違いは揃えない。別のエントリになるが、許容する
 - `/tag` の `tag_name` は表示用の値で、任意の値を通す。値を変えればエントリは増えるが、許容する（問題になったら `tag_name` 自体をやめる）
 - リンクカードの Server Island（`/_server-islands/LinkCard`）のクエリは正規化していない。扱いは別に考える
 
@@ -225,15 +226,16 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 ミドルウェアの順序
 
 1. `cf()`（静的アセットの配信、`locals.cfContext` などの設定。Astro の他のハンドラより前に置く）
-2. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
-3. クエリの正規化（`src/mw/query.ts`。4.5）
-4. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
-5. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
-6. Astro の `middleware()` / `pages()`
+2. 末尾のスラッシュの正規化（`astro/hono` の `trailingSlash()`。4.5。クエリの正規化より前に置き、両方がずれていてもスラッシュを直した URL にクエリの正規化が 1 回かかるだけで済むようにする）
+3. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
+4. クエリの正規化（`src/mw/query.ts`。4.5）
+5. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
+6. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
+7. Astro の `middleware()` / `pages()`
 
 ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）
 
-アクセスログとは別に、5 で検出した不完全なページ（どの部品の取得に失敗したか）と描画中の例外も Axiom へ送る。キャッシュを短くしたことに気づけるようにするため。送信の仕組みはアクセスログと共用する（M5）
+アクセスログとは別に、6 で検出した不完全なページ（どの部品の取得に失敗したか）と描画中の例外も Axiom へ送る。キャッシュを短くしたことに気づけるようにするため。送信の仕組みはアクセスログと共用する（M5）
 
 ### 固定ページとフィード
 
@@ -414,7 +416,8 @@ Astro には intercepting route / parallel route に相当する仕組みが無�
 
 - 開いているかどうかは URL だけで決める（`/illust/detail/{id}` なら開いている）。`/illust/detail/{id}` へのリンク（一覧のカード、サイドバー、記事のイラストカード）のクリックを document で受け、`pushState` で URL を変えて開く。Island は、イラスト一覧・トップ・サイドバーを持つページ（`BlogLayout`）に `client:idle` で載せる。載っていないページ（about など）からは通常の遷移になる
 - drawer の中身は、詳細ページ（`/illust/detail/{id}`）を `fetch` し、その HTML から `[data-illust-detail]` の要素（`src/components/illust/IllustDetail.astro`）を取り出して差し込む。詳細ページはエッジにキャッシュされるので、2 回目以降は速い。同じ HTML を直接開いたときにも使うので、見た目と中身が一致する。取得した中身はページを離れるまで持ち、戻る・進むで開き直すときに使う
-- 閉じる操作（閉じるボタン・Esc・外側のクリック・スワイプ）は、自分で `pushState` した履歴があれば `history.back()`、詳細の URL を直接開いていれば一覧の URL への `replaceState`。戻るボタンでも閉じ、進むボタンで開き直す。閉じる途中（`popstate` が届くまで）の閉じる操作は無視する（画像モーダルと同じ）
+- 閉じる操作（閉じるボタン・Esc・外側のクリック・スワイプ）は、自分で `pushState` した履歴があれば `history.back()`、詳細の URL を直接開いていれば一覧の URL への `replaceState`。戻るボタンでも閉じ、進むボタンで開き直す。閉じる途中（`popstate` が届くまで）の閉じる操作は無視する（画像モーダルと同じ）。`pushState` で開いたあとに再読み込みしたページでは、`history.state` に印が残っているので `history.back()` が別のドキュメント（一覧）への遷移になり、そこから進むで戻ると bfcache から復元されて `popstate` が届かない。このときは `pageshow`（`persisted`）で閉じる途中の印を戻す（#1366 のレビュー）
+- URL の形（`/illust/detail/{id}`）は `src/lib/illust.ts` で決める。詳細の URL を組み立てる側（一覧のカード・サイドバー・記事のイラストカード・共有 URL）と、URL から開いているイラストの ID を読む island の両方がこれを使う。末尾のスラッシュは 4.5 のとおり Worker が外すので、island は正規形にだけ一致させる
 - 詳細の URL を直接開いたとき（共有されたリンク、再読み込み、JS が動かない場合）は、`pages/illust/detail/[id].astro` が一覧の 1 ページ目を背景にして、詳細を固定の枠（drawer と同じ見た目）で描画する。中身は Island の children として渡し、hydration 後に同じ中身を drawer に移す（vaul の `defaultOpen` で、このときだけ開くアニメーションを付けない）。閉じると URL は `/illust` になり、背景の一覧がそのまま残る。JS が動かないときは、閉じるボタンが一覧へのリンクとして働く
 - `document.title` は、開いたときに詳細の title（`[data-illust-detail]` の `data-title`）、閉じたときに元の title（直接開いたページでは一覧の title）にする
 - 現行の `/illust?illust_id={id}` から `/illust/detail/{id}` へのリダイレクトは作らない。Next.js のパラレルルートの都合で内部的に使っていた URL で、外部に共有されている可能性は低い（#1344 のコメント）
