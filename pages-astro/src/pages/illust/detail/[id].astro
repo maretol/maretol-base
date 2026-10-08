@@ -1,0 +1,69 @@
+---
+import { cacheTag } from 'cache-tags'
+import SiteLayout from '@/layouts/SiteLayout.astro'
+import type { PageMeta } from '@/layouts/BaseLayout.astro'
+import IllustDetail from '@/components/illust/IllustDetail.astro'
+import IllustList from '@/components/illust/IllustList.astro'
+import IllustDrawer from '@/components/islands/IllustDrawer'
+import { getAtelierByID, getAteliers } from '@/lib/api/cms'
+import { cachePage, noStore } from '@/lib/cache'
+import { getEmbedTags } from '@/lib/content_tags'
+import { getDraftKey } from '@/lib/draft'
+import { getIllustDetailTitle, illustDetailPath } from '@/lib/illust'
+import { getOGPImageURL } from '@/lib/image'
+import { PAGE_LIMIT } from '@/lib/pagination'
+import { getHostname } from '@/lib/site'
+
+// イラストの詳細の URL を直接開いたとき（共有されたリンク、再読み込み、JS が動かない場合）。
+// 一覧の上に drawer が開いた状態を、現行サイトと同じく最初から描画する。背景は一覧の 1 ページ目。
+// 一覧の中でのクリックは islands/IllustDrawer.tsx がこのページを取得して drawer に差し込む
+const illustID = Astro.params.id!
+const draftKey = getDraftKey(Astro.url)
+
+const [illust, list] = await Promise.all([
+  // fetcher は「存在しない」とそれ以外の失敗を区別せずに例外を投げるので、取得できなければ 404 にする
+  getAtelierByID(illustID, draftKey).catch((e) => {
+    console.error(`[pages/illust/detail/[id].astro] Illust fetch error: ${illustID}`, e)
+    return null
+  }),
+  getAteliers(0, PAGE_LIMIT),
+])
+
+if (!illust) {
+  // イラストが公開されたときに 404 のキャッシュも消えるよう、イラストのタグを付けておく
+  Astro.locals.notFound = { tags: [cacheTag.illust(illustID)] }
+  return Astro.rewrite('/404')
+}
+
+if (draftKey) {
+  // 下書きプレビューはキャッシュしない
+  noStore(Astro.response)
+} else {
+  // 背景に一覧を出すので list:illust も持つ（手動パージの「イラスト」もこのタグで届く）
+  cachePage(Astro.response, [
+    cacheTag.illust(illustID),
+    cacheTag.illustList,
+    ...getEmbedTags(illust.parsed_description),
+  ])
+}
+
+const title = getIllustDetailTitle(illust.title)
+const url = `${getHostname()}${illustDetailPath(illustID)}`
+const meta: PageMeta = {
+  title,
+  description: title,
+  ogTitle: title,
+  ogDescription: title,
+  ogURL: url,
+  ogImage: getOGPImageURL(illust.src),
+  twitterCard: 'summary_large_image',
+  canonical: url,
+}
+---
+
+<SiteLayout meta={meta}>
+  <IllustList ateliers={list.ateliers} pageNumber={1} total={list.total} />
+  <IllustDrawer client:idle initialID={illustID}>
+    <IllustDetail illust={illust} draftKey={draftKey} />
+  </IllustDrawer>
+</SiteLayout>

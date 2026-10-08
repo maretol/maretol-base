@@ -4,6 +4,7 @@ import SiteLayout from '@/layouts/SiteLayout.astro'
 import Article from '@/components/article/Article.astro'
 import ComicOverview from '@/components/comic/ComicOverview.astro'
 import IllustSampleArticle from '@/components/illust/IllustSampleArticle.astro'
+import IllustDrawer from '@/components/islands/IllustDrawer'
 import ContentsViewer from '@/components/top/ContentsViewer.astro'
 import ContentsViewerItem from '@/components/top/ContentsViewerItem.astro'
 import TopPageTitle from '@/components/top/TopPageTitle.astro'
@@ -126,4 +127,5 @@ const otherContentClassName = cn(buttonVariants({ variant: 'outline' }), 'w-full
       </div>
     </div>
   </div>
+  <IllustDrawer client:idle />
 </SiteLayout>

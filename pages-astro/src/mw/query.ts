@@ -19,6 +19,8 @@ const routes: Partial<Record<string, string[]>> = {
   // 解錠は POST で、POST はここを通らない。GET で開かれたときは 404 になる
   '/blog/[article_id]/unlock': [],
   '/tag': ['tag_id', 'tag_name', 'p'],
+  '/illust': ['p'],
+  '/illust/detail/[id]': ['draftKey'],
   '/about': [],
   '/contact': [],
   '/secret': [],

@@ -88,7 +88,7 @@ admin-pages ──▶ D1 に保存
 | `info` | about / contact / secret / `artifacts/post-for-nostter`（info の内容を表示するページ）。制作物カードを含む記事詳細 |
 | `list:comics` | 漫画の一覧と、シリーズ案内を表示する漫画詳細。トップと、サイドバーを持つページ。漫画カードを含むページ |
 | `comic:{id}` / `series:{id}` | 漫画詳細 |
-| `list:illust` | イラストの一覧。トップと、サイドバーを持つページ。イラストカードを含むページ |
+| `list:illust` | イラストの一覧と、イラスト詳細（背景に一覧の 1 ページ目を出すため）。トップと、サイドバーを持つページ。イラストカードを含むページ |
 | `illust:{id}` | イラスト詳細 |
 
 サイドバーを持つページ（ブログ一覧・タグ一覧・記事詳細など、`BlogLayout` を使うページ）は、サイドバーが最新の記事・漫画・イラストとタグの一覧を出すので、`blog` / `list:blog` / `list:comics` / `list:illust` をまとめて持つ（`src/lib/cache.ts` の `latestListTags`）。ページは `cachePage()` に `{ sidebar: true }` を渡して付ける。付け忘れると古いサイドバーが残るので、サイドバーの描画時に確かめて、付いていなければ例外にする（`assertSidebarTagged()`）。漫画やイラストを保存すると、サイドバーを持つページもパージされる。トップページも同じ 4 つを持つ（3 種類の一覧を出すため）。404 と 500 のページはサイドバーを出さない（存在しない URL への連続アクセスで、サイドバーのための取得が増えないようにする）
@@ -160,6 +160,8 @@ M1 の時点では「内部ルート + `ctx.props` による認可」を第一�
 | `/blog` | `p` |
 | `/tag` | `tag_id`, `tag_name`, `p` |
 | `/blog/[article_id]`、`/blog/[article_id]/image/[src]` | `draftKey` |
+| `/illust` | `p` |
+| `/illust/detail/[id]` | `draftKey` |
 | それ以外 | なし |
 
 - 受け付けるクエリの表は、Astro のルート（`src/pages` のファイルと 1 対 1。`blog/[article_id].astro` なら `/blog/[article_id]`）をキーにして `src/mw/query.ts` に持つ。リクエストがどのルートに当たるかは Astro の判定（`getFetchState(c).routeData`）を使うので、パスのデコードや末尾のスラッシュの扱いが、ページの描画と揃う
@@ -172,7 +174,8 @@ M1 の時点では「内部ルート + `ctx.props` による認可」を第一�
 - 対象は GET と HEAD だけ。Astro の内部ルート（`/_server-islands/` など）は触らない
 - リダイレクト先（`Location`）は、スラッシュ 1 つで始まるパスにする。`//example.com?x=1` のようなパスをそのまま返すと、ブラウザがホスト名として解釈し、別サイトへのリダイレクト（オープンリダイレクト）になる
 - リダイレクト自体は `private, no-store` にする（クエリの数だけエントリが増えるのを防ぐ）
-- パスの表記揺れ（末尾のスラッシュ、重複したスラッシュ、エンコードの違い）は揃えない。別のエントリになるが、許容する
+- 末尾のスラッシュは付けない形に揃える（`astro.config.ts` の `trailingSlash: 'never'`。`/illust/detail/{id}/` → `/illust/detail/{id}` へ 301。クエリは引き継ぐ。`/` と `/_` で始まる内部パスは対象外）。末尾の重複したスラッシュ（`/blog//`）も同時に揃う。リダイレクトを行うハンドラ（`astro/hono` の `trailingSlash()`）は `middleware()` / `pages()` に含まれないので、`src/worker.ts` で明示的に載せる。GET は 301、それ以外は 308。レスポンスは Astro のもので `Cache-Control` は付かず、キャッシュヘッダの確定（`src/mw/cache.ts`）より前で返るので `no-store` も付かない。恒久的なリダイレクトなので、エッジが既定の期間だけ保持しても問題ない。揃えないと、エッジのエントリが分かれるだけでなく、URL からイラストの ID を読む drawer の island（`/illust/detail/{id}` にだけ一致させている）が、`/illust/detail/{id}/` を開いたときに hydration 後に閉じてしまう
+- パスのエンコードの違いは揃えない。別のエントリになるが、許容する
 - `/tag` の `tag_name` は表示用の値で、任意の値を通す。値を変えればエントリは増えるが、許容する（問題になったら `tag_name` 自体をやめる）
 - リンクカードの Server Island（`/_server-islands/LinkCard`）のクエリは正規化していない。扱いは別に考える
 
@@ -212,7 +215,7 @@ pages-astro/
 packages/cache-tags/        # Cache-Tag の文字列と、保存操作・手動パージごとのパージ対象
 ```
 
-いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、限定公開記事の解錠（`blog/[article_id]/unlock.ts`）、固定ページ（`about.astro`、`contact.astro`、`secret.astro`、`artifacts/post-for-nostter.astro`）、フィード（`rss/feed.rdf.ts`、`sitemap.xml.ts`）、`400.astro`、`404.astro`、`500.astro` で、残りは M3 以降で足す
+いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、限定公開記事の解錠（`blog/[article_id]/unlock.ts`）、固定ページ（`about.astro`、`contact.astro`、`secret.astro`、`artifacts/post-for-nostter.astro`）、フィード（`rss/feed.rdf.ts`、`sitemap.xml.ts`）、イラスト一覧（`illust/index.astro`）、イラスト詳細（`illust/detail/[id].astro`）、`400.astro`、`404.astro`、`500.astro` で、残り（漫画）は M4 で足す
 
 ### Worker のエントリ（src/worker.ts）
 
@@ -223,15 +226,16 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 ミドルウェアの順序
 
 1. `cf()`（静的アセットの配信、`locals.cfContext` などの設定。Astro の他のハンドラより前に置く）
-2. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
-3. クエリの正規化（`src/mw/query.ts`。4.5）
-4. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
-5. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
-6. Astro の `middleware()` / `pages()`
+2. 末尾のスラッシュの正規化（`astro/hono` の `trailingSlash()`。4.5。クエリの正規化より前に置き、両方がずれていてもスラッシュを直した URL にクエリの正規化が 1 回かかるだけで済むようにする）
+3. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
+4. クエリの正規化（`src/mw/query.ts`。4.5）
+5. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
+6. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
+7. Astro の `middleware()` / `pages()`
 
 ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）
 
-アクセスログとは別に、5 で検出した不完全なページ（どの部品の取得に失敗したか）と描画中の例外も Axiom へ送る。キャッシュを短くしたことに気づけるようにするため。送信の仕組みはアクセスログと共用する（M5）
+アクセスログとは別に、6 で検出した不完全なページ（どの部品の取得に失敗したか）と描画中の例外も Axiom へ送る。キャッシュを短くしたことに気づけるようにするため。送信の仕組みはアクセスログと共用する（M5）
 
 ### 固定ページとフィード
 
@@ -270,6 +274,7 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 - shadcn 由来の Button / Card は React コンポーネントにせず、class の定義（`src/components/ui/button.ts`、`card.ts`）を `.astro` と Island の両方から使う。`.astro` から React の `asChild` は使えないため
 - アイコンは `.astro` では `@lucide/astro`、Island では `lucide-react`
 - Island には class をサーバー側で組み立てて props で渡す（tailwind-merge などをクライアントへ持ち込まない）
+- 共有のボタン（`src/components/article/ShareSection.astro`）の「タイトルと URL をコピー」は Island にせず、document で受けるクリック（`src/lib/share_copy.ts`）で動かす。イラストの drawer に差し込んだ HTML の中にあるボタンでも動くようにするため（差し込んだ HTML の中の `<astro-island>` は hydrate されない）。コピーしたことはボタンの `data-copied` 属性で示し、アイコンの切り替えは CSS で行う
 - サイドバーのタグの選択は React の Island（`src/components/islands/TagSelect.tsx`、Radix Select）。サイドバーは md（48rem）以上の幅でだけ表示するので、`client:media="(min-width: 48rem)"` でその幅になってから読み込む（狭い画面で開いたあとに幅が広がった場合も、その時点で読み込まれる）。class は現行サイトの shadcn/ui の Select を結合済みの文字列で持つ。トップページの横スクロールの左右ボタンは、Island にせず `<script>` で動かす
 - ヘッダーのロゴ画像の `width` / `height` は原本（1104×210）の比率に合わせる。本文とサイドバーの列の幅は grid で決める（`minmax(0,4fr)` と `minmax(15rem,1fr)`、間隔 16px）。本文は残りの幅、サイドバーは全体の 1/5 で、狭い画面では 15rem にする。幅が中身・フォント・サイドバーの有無に左右されないので、読み込みの途中で本文の幅が変わらない。どちらも、初回訪問時のレイアウトのずれを避けるため（#1355）。幅 1280px 以上では現行サイトと同じ幅になり、それより狭い幅では本文が少し狭くなる（900px で 12px。現行サイトは、サイドバーの幅が中身の最小幅で決まっている）
 - 漫画の表紙（サイドバーと概要カード）は、1:1.41（B5 など）を想定して枠の比率を固定し、`object-contain` で収める。読み込み後に高さが変わらないようにするため（#1355）
@@ -396,7 +401,7 @@ Astro には intercepting route / parallel route に相当する仕組みが無�
 決定（決定 13）: イラスト drawer・記事画像モーダルとも A。互換性のため、既存の仕組み（重ねて表示し URL も変える）を変えない
 
 - 記事画像モーダル（M3）: リンク先は現行と同じ `/blog/{id}/image/{base64url}`。Island がクリックを横取りしてモーダルを開き、`pushState` で URL を変える。直接開いた場合（JS が無効の場合を含む）は、現行と同じく `/blog/{id}#{base64url}` へ移動する
-- イラスト drawer（M4）: リンク先は現行と同じ `/illust/detail/{id}`。Island がクリックを横取りして drawer を開く。直接開いた場合は単独の詳細ページ
+- イラスト drawer（M4）: リンク先は現行と同じ `/illust/detail/{id}`。Island がクリックを横取りして drawer を開く。直接開いた場合は、現行サイトと同じく、一覧（1 ページ目）の上に drawer が開いた状態を最初から描画する
 - 戻るで閉じる。閉じる操作は `history.back()` に揃え、履歴に余分なエントリを残さない
 
 記事画像モーダルは M3 で実装した（`src/components/islands/ImageModal.tsx`、Radix Dialog）
@@ -406,4 +411,19 @@ Astro には intercepting route / parallel route に相当する仕組みが無�
 - Island は画像のある記事にだけ載せ、`client:idle` で読み込む。読み込み前のクリックや直接開いた場合は、`blog/[article_id]/image/[src].astro` が `/blog/{id}#{base64url}` へ 302 で戻す（`draftKey` は引き継ぐ）
 - 自サイトの画像は幅 1920px（2x は 3840px、原本の幅まで）の派生を表示する。引用画像は記事に埋め込まれている data URL をそのまま表示する
 - 現行サイトと同じ記事で、モーダル内の画像と閉じるボタンの位置・大きさが一致することを確認した
+
+イラスト drawer は M4 で実装した（`src/components/islands/IllustDrawer.tsx`、vaul。現行サイトと同じライブラリで、スワイプで閉じる操作も同じ）
+
+- 開いているかどうかは URL だけで決める（`/illust/detail/{id}` なら開いている）。`/illust/detail/{id}` へのリンク（一覧のカード、サイドバー、記事のイラストカード）のクリックを document で受け、`pushState` で URL を変えて開く。Island は、イラスト一覧・トップ・サイドバーを持つページ（`BlogLayout`）に `client:idle` で載せる。載っていないページ（about など）からは通常の遷移になる
+- drawer の中身は、詳細ページ（`/illust/detail/{id}`）を `fetch` し、その HTML から `[data-illust-detail]` の要素（`src/components/illust/IllustDetail.astro`）を取り出して差し込む。詳細ページはエッジにキャッシュされるので、2 回目以降は速い。同じ HTML を直接開いたときにも使うので、見た目と中身が一致する。取得した中身はページを離れるまで持ち、戻る・進むで開き直すときに使う
+- 閉じる操作（閉じるボタン・Esc・外側のクリック・スワイプ）は、このドキュメントで `pushState` した履歴があれば `history.back()`、詳細の URL を直接開いていれば一覧の URL への `pushState`。drawer は別のページとして扱うので、閉じる操作も一覧への遷移として履歴に残し、戻ると詳細が開き直す（JS が動かないときの閉じるボタンが一覧へのリンクであるのと同じ形。現行サイトも直接開いた URL から数回のリダイレクトを経て一覧が履歴に積まれる）。戻るボタンでも閉じ、進むボタンで開き直す。閉じる途中（`popstate` が届くまで）の閉じる操作は無視する（画像モーダルと同じ）
+- `pushState` で開いたあとに再読み込みしたページは、直接開いたページとして扱う。`history.state` の印は残るが、その履歴を積んだのは前のドキュメントで、戻る先は一覧とは限らない（記事やトップから開いた場合）。印にはドキュメントごとの値を入れ、自分の印でなければ一覧への `pushState` で閉じる。Chrome では、再読み込みの前に `pushState` で積んだ履歴も新しいドキュメントの履歴として扱われ、戻るとページを描き直さずに URL だけが変わる（リロード前が `/` なら、URL が `/` なのに一覧が表示される）。詳細の URL を直接開いたページが描画できるのは詳細と一覧（背景の 1 ページ目）だけなので、`popstate` でそれ以外の URL になったら `location.reload()` でその URL のページを読み込み直す。画像モーダルの Island と同居するページ（記事）ではこの読み込み直しを行わない（モーダルの履歴を壊すため。詳細の URL を直接開いたページにだけ適用する）
+- `history.back()` が別のドキュメントへの遷移になった場合に、進むで bfcache から復元されると `popstate` が届かず閉じる途中の印が残るので、`pageshow`（`persisted`）で戻す（#1366 のレビュー）
+- URL の形（`/illust/detail/{id}`）は `src/lib/illust.ts` で決める。詳細の URL を組み立てる側（一覧のカード・サイドバー・記事のイラストカード・共有 URL）と、URL から開いているイラストの ID を読む island の両方がこれを使う。末尾のスラッシュは 4.5 のとおり Worker が外すので、island は正規形にだけ一致させる
+- 詳細の URL を直接開いたとき（共有されたリンク、再読み込み、JS が動かない場合）は、`pages/illust/detail/[id].astro` が一覧の 1 ページ目を背景にして、詳細を固定の枠（drawer と同じ見た目）で描画する。中身は Island の children として渡し、hydration 後に同じ中身を drawer に移す。このときだけ開くアニメーションを付けない。閉じると URL は `/illust` になり、背景の一覧がそのまま残る。JS が動かないときは、閉じるボタンが一覧へのリンクとして働く
+- 最初の表示のアニメーションの抑止は、vaul の `defaultOpen` ではなく、`Drawer.Overlay` と `Drawer.Content` に渡す `data-vaul-animate` 属性（vaul の CSS で `animation: none`）を Island が自分で決めて行う。`defaultOpen` は同じ属性で止めるが、再有効化が ref の書き換えだけで DOM の属性は次の再描画まで変わらず、最初の pointerdown（vaul の `isDragging` の更新）の再描画で属性が `true` になった瞬間に、止めていた開くアニメーションが走る（drawer が閉じ位置へ飛んでから開き直し、続けて本来の閉じるアニメーションが走るので「閉じる→開く→閉じる」に見える。vaul 1.1.2）。属性は、このドキュメントで一度閉じるまで `false`、それ以降は `true`
+- 閉じるアニメーションの間も、drawer の中身は直前のイラストを出し続ける（URL が一覧に戻った時点で中身を切り替えると、スライドアウト中に中身が消える）
+- `document.title` は、開いたときに詳細の title（`[data-illust-detail]` の `data-title`）、閉じたときに元の title（直接開いたページでは一覧の title）にする
+- 現行の `/illust?illust_id={id}` から `/illust/detail/{id}` へのリダイレクトは作らない。Next.js のパラレルルートの都合で内部的に使っていた URL で、外部に共有されている可能性は低い（#1344 のコメント）
+- 現行サイトと同じイラストで、一覧のカードと drawer の中身（画像・ボタン・題名・公開日・タグ・説明）の位置・大きさが一致することを確認した
 

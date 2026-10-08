@@ -3,7 +3,7 @@ import type { atelierResult } from 'api-types'
 import SidebarFrame from './SidebarFrame.astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
-import { getObjectPositionClass } from '@/lib/illust'
+import { getObjectPositionClass, illustDetailPath } from '@/lib/illust'
 import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
@@ -18,7 +18,7 @@ const { ateliers } = Astro.props
     {
       ateliers?.map((illust) => (
         <div class="mb-4 relative w-full">
-          <a href={`/illust/detail/${illust.id}`} class="hover:underline">
+          <a href={illustDetailPath(illust.id)} class="hover:underline">
             <div class="bg-gray-200 p-4">
               <CdnImage
                 src={illust.src}

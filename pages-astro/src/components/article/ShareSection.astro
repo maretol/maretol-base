@@ -1,6 +1,6 @@
 ---
 import { faBluesky, faTwitter } from '@fortawesome/free-brands-svg-icons'
-import ShareCopyButton from '@/components/islands/ShareCopyButton'
+import { CheckIcon, CopyIcon } from '@lucide/astro'
 import { buttonVariants } from '@/components/ui/button'
 import { addUtmParams, type ContentType } from '@/lib/utm'
 import { cn } from '@/lib/utils'
@@ -9,7 +9,7 @@ type Props = { shareURL: string; shareTitle: string; contentType?: ContentType }
 
 const { shareURL, shareTitle, contentType = 'page' } = Astro.props
 const text = `${shareTitle} | Maretol Base`
-const withUtm = (source: 'twitter' | 'bluesky') =>
+const withUtm = (source: 'twitter' | 'bluesky' | 'clipboard') =>
   addUtmParams(shareURL, { source, medium: 'social', campaign: 'share_button', content: contentType })
 
 const links = [
@@ -46,10 +46,23 @@ const buttonClassName = cn(buttonVariants({ variant: 'secondary' }), 'p-3')
     )
   })
 }
-<ShareCopyButton
-  client:visible
-  url={shareURL}
-  title={shareTitle}
-  contentType={contentType}
-  className={cn(buttonClassName, 'cursor-pointer')}
-/>
+{
+  /* コピーのボタンは island にせず、document で受けるクリック（lib/share_copy.ts）で動かす。
+     イラストの drawer に差し込まれた HTML の中でも動くようにするため。コピーしたあとは 1 秒だけチェックのアイコンに変わる */
+}
+<button
+  type="button"
+  class={cn(buttonClassName, 'group cursor-pointer')}
+  data-share-copy
+  data-share-text={`${text}\n${withUtm('clipboard')}`}
+  aria-label="タイトルと URL をコピー"
+>
+  <CopyIcon class="h-6 w-6 group-data-[copied]:hidden" />
+  <CheckIcon class="hidden h-6 w-6 group-data-[copied]:block" />
+</button>
+
+<script>
+  import { setupShareCopy } from '@/lib/share_copy'
+
+  setupShareCopy()
+</script>

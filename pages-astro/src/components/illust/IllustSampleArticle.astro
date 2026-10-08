@@ -4,7 +4,7 @@ import { ZoomInIcon } from '@lucide/astro'
 import IllustTags from './IllustTags.astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
-import { getObjectPositionClass } from '@/lib/illust'
+import { getObjectPositionClass, illustDetailPath } from '@/lib/illust'
 import { cn } from '@/lib/utils'
 
 // 一覧に出すイラストのカード。画像と、題名・公開日・タグを並べる
@@ -18,7 +18,7 @@ type Props = {
 }
 
 const { id, title, imageSrc, objectPosition, tags, publishedAt } = Astro.props
-const href = `/illust/detail/${id}`
+const href = illustDetailPath(id)
 ---
 
 <div class="w-full lg:h-[45svh] max-h-3/4 rounded-lg bg-gray-100 flex lg:flex-row flex-col">

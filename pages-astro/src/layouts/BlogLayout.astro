@@ -2,6 +2,7 @@
 import SiteLayout from './SiteLayout.astro'
 import type { PageMeta } from './BaseLayout.astro'
 import BlogSidebar from '@/components/shell/sidebar/BlogSidebar.astro'
+import IllustDrawer from '@/components/islands/IllustDrawer'
 
 // 中央にコンテンツ、右にサイドバーを置く。サイドバーは md 以上の幅でだけ表示する
 type Props = {
@@ -22,4 +23,6 @@ const { meta, sidebar = true } = Astro.props
       {sidebar && <BlogSidebar />}
     </div>
   </div>
+  {/* サイドバーと本文のイラストカードから、イラストの詳細を drawer で開く */}
+  {sidebar && <IllustDrawer client:idle />}
 </SiteLayout>
