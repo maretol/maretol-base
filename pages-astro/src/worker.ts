@@ -2,7 +2,7 @@
 // Workers Cache のパージは呼び出した entrypoint のキャッシュにしか届かないので、パージ入口はここに置く（astro_design.md 4.4）
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import { Hono } from 'hono'
-import { middleware, pages } from 'astro/hono'
+import { middleware, pages, trailingSlash } from 'astro/hono'
 import { cf } from '@astrojs/cloudflare/hono'
 import type { PurgeResult, PurgeRPC } from 'cache-tags'
 import { cacheHeaders } from './mw/cache'
@@ -13,6 +13,9 @@ const app = new Hono<{ Bindings: Env }>()
 
 // cf() は Astro の他のハンドラより前に置く（静的アセットの配信、locals.cfContext などの設定）
 app.use(cf())
+// 末尾のスラッシュの正規化（astro.config.ts の trailingSlash）。クエリの正規化より前に置き、スラッシュとクエリの両方がずれていても
+// スラッシュを直した URL にクエリの正規化が 1 回かかるだけで済むようにする
+app.use(trailingSlash())
 // クエリの正規化は、ページの描画やキャッシュのヘッダの確定より前に行う
 app.use(normalizeQuery())
 app.use(cacheHeaders())
