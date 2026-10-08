@@ -6,7 +6,7 @@ import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getAtelierByID } from '@/lib/api/cms'
 import { withDraftKey } from '@/lib/draft'
-import { getObjectPositionClass } from '@/lib/illust'
+import { getObjectPositionClass, illustDetailPath } from '@/lib/illust'
 import { convertJST } from '@/lib/time'
 import { cn, parseURL } from '@/lib/utils'
 
@@ -16,7 +16,6 @@ type Props = { link: string; draftKey?: string }
 const { link, draftKey } = Astro.props
 
 const illustID = parseURL(link)?.pathname.split('/')[3]
-const detailLink = withDraftKey(`/illust/detail/${illustID}`, draftKey)
 const illust: atelierResult | null = illustID
   ? await getAtelierByID(illustID, draftKey).catch((e) => {
       // 取得できないのは、公開後に非公開・削除された場合とみなす（自サイトのコンテンツなので、存在しないものを指すことは基本的にない）。
@@ -46,7 +45,7 @@ const illust: atelierResult | null = illustID
               <p class="text-gray-500 text-xs text-wrap line-clamp-2">{convertJST(illust.publishedAt)}</p>
             </div>
             <div class="w-full">
-              <a href={detailLink} class={cn(buttonVariants(), 'w-full h-8')}>
+              <a href={withDraftKey(illustDetailPath(illust.id), draftKey)} class={cn(buttonVariants(), 'w-full h-8')}>
                 View illust
               </a>
             </div>
