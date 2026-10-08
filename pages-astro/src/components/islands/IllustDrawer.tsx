@@ -10,7 +10,7 @@ import { setupShareCopy } from '@/lib/share_copy'
 // - 開いているかどうかは URL だけで決める。閉じる操作は、このドキュメントで履歴を進めていれば history.back()、
 //   詳細の URL を直接開いていれば（再読み込みを含む）一覧の URL への replaceState。戻る・進むでも閉じたり開き直したりする
 // - 詳細の URL を直接開いたとき（JS が動く前を含む）は、サーバーが描画した中身（children）を固定の枠で出し、
-//   hydration 後に同じ中身をアニメーションなしで drawer に移す
+//   hydration 後に同じ中身をアニメーションなしで drawer に移す。閉じる途中は直前の中身を出し続ける
 // - URL の形（/illust/detail/{id}）は lib/illust.ts で決める。末尾のスラッシュは Worker が 301 で外すので、ここに届く URL は正規形
 
 // 自分で pushState した履歴の印。閉じるときに history.back() でよいかの判定に使う。
@@ -32,12 +32,23 @@ const LINK_BUTTON_CLASS =
 
 type Fragment =
   { status: 'loading' } | { status: 'loaded'; html: string; title: string } | { status: 'error'; href: string }
-type Snapshot = { openID: string | null; fragment: Fragment | null }
+type Snapshot = {
+  // 開いているイラストの ID。URL が詳細の URL のときだけ開いているとみなす
+  openID: string | null
+  // drawer に出す中身の ID。閉じる途中（openID は null）も、閉じるアニメーションの間は直前の中身を出し続ける
+  contentID: string | null
+  // contentID の中身
+  fragment: Fragment | null
+  // このドキュメントで一度でも閉じたか。詳細の URL を直接開いたときの最初の表示にだけアニメーションを付けないために使う
+  closedOnce: boolean
+}
 
 // 取得した詳細。ページを離れるまで持つ
 const fragments = new Map<string, Fragment>()
 const listeners = new Set<() => void>()
 let snapshot: Snapshot | null = null
+let lastOpenID: string | null = null
+let closedOnce = false
 const serverSnapshots = new Map<string | null, Snapshot>()
 
 // 開いているイラストの ID。URL が詳細の URL のときだけ開いているとみなす
@@ -47,7 +58,13 @@ function getOpenID(): string | null {
 
 function computeSnapshot(): Snapshot {
   const openID = getOpenID()
-  return { openID, fragment: openID ? (fragments.get(openID) ?? null) : null }
+  if (openID === null) {
+    closedOnce = true
+  } else {
+    lastOpenID = openID
+  }
+  const contentID = openID ?? lastOpenID
+  return { openID, contentID, fragment: contentID ? (fragments.get(contentID) ?? null) : null, closedOnce }
 }
 
 function getSnapshot(): Snapshot {
@@ -58,7 +75,7 @@ function getSnapshot(): Snapshot {
 function getServerSnapshot(initialID: string | null): Snapshot {
   let cached = serverSnapshots.get(initialID)
   if (!cached) {
-    cached = { openID: initialID, fragment: null }
+    cached = { openID: initialID, contentID: initialID, fragment: null, closedOnce: false }
     serverSnapshots.set(initialID, cached)
   }
   return cached
@@ -128,10 +145,10 @@ function subscribeStore(onChange: () => void, initialID: string | null): () => v
   const listener = () => {
     onChange()
     const { openID, fragment } = getSnapshot()
-    if (fragment?.status === 'loaded') {
-      document.title = fragment.title
-    } else if (openID === null) {
+    if (openID === null) {
       document.title = closedTitle
+    } else if (fragment?.status === 'loaded') {
+      document.title = fragment.title
     }
   }
   const onClick = (e: MouseEvent) => {
@@ -206,7 +223,9 @@ type Props = {
 
 export default function IllustDrawer({ initialID = null, children }: Props) {
   const subscribe = useCallback((onChange: () => void) => subscribeStore(onChange, initialID), [initialID])
-  const { openID, fragment } = useSyncExternalStore(subscribe, getSnapshot, () => getServerSnapshot(initialID))
+  const { openID, contentID, fragment, closedOnce } = useSyncExternalStore(subscribe, getSnapshot, () =>
+    getServerSnapshot(initialID),
+  )
   // hydration が終わるまでは、サーバーと同じ固定の枠を出す（drawer の中身は portal で描画されるので、サーバーでは描画されない）
   const hydrated = useSyncExternalStore(
     subscribeNothing,
@@ -226,7 +245,7 @@ export default function IllustDrawer({ initialID = null, children }: Props) {
   }
 
   const content =
-    openID === initialID ? (
+    contentID === initialID ? (
       children
     ) : fragment?.status === 'loaded' ? (
       <div dangerouslySetInnerHTML={{ __html: fragment.html }} />
@@ -246,18 +265,22 @@ export default function IllustDrawer({ initialID = null, children }: Props) {
       </div>
     )
 
+  // 詳細の URL を直接開いたときは、固定の枠から drawer への切り替えなので、最初の表示には開くアニメーションを付けない。
+  // vaul の defaultOpen は使わない。defaultOpen は data-vaul-animate="false"（animation: none）で開くアニメーションを止めるが、
+  // 再有効化が ref の書き換えだけで DOM の属性は次の再描画まで変わらず、最初の pointerdown（isDragging の更新）の再描画で
+  // 属性が true になった瞬間に、止めていた開くアニメーションが走る（閉じ位置へ飛んでから開き直す）。属性はここで決めて渡す
+  const animate = closedOnce || initialID === null ? 'true' : 'false'
+
   return (
-    // 詳細の URL を直接開いたときは、固定の枠から drawer への切り替えなので、開くアニメーションを付けない（defaultOpen）
-    <Drawer.Root
-      direction="right"
-      open={openID !== null}
-      defaultOpen={initialID !== null}
-      onOpenChange={(open) => !open && closeDrawer()}
-    >
+    <Drawer.Root direction="right" open={openID !== null} onOpenChange={(open) => !open && closeDrawer()}>
       <Drawer.Portal>
-        <Drawer.Overlay className={OVERLAY_CLASS} />
+        <Drawer.Overlay className={OVERLAY_CLASS} data-vaul-animate={animate} />
         {/* 中身の説明文は無いので Description は置かない。aria-describedby を外して Radix の警告を止める */}
-        <Drawer.Content className={`${PANEL_CLASS} outline-none`} aria-describedby={undefined}>
+        <Drawer.Content
+          className={`${PANEL_CLASS} outline-none`}
+          aria-describedby={undefined}
+          data-vaul-animate={animate}
+        >
           <Drawer.Title className="sr-only">イラストの詳細</Drawer.Title>
           <div className="overflow-auto">{content}</div>
         </Drawer.Content>
