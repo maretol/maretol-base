@@ -2,25 +2,31 @@
  * pages の KV キャッシュ（CMS_CACHE）のパージ処理
  * cms-cache-purger と同等のロジックをCMS側に統合したもの（cms_goal.md 参照）
  * illust のキー（atelier_ プレフィックス: 一覧・単体とも）を一括削除する
+ *
+ * Astro 版の公開サイト（Workers Cache）も併せてパージする。各関数の戻り値はそちらのパージができたか
+ * （KV は現行サイト用で、Astro 版へ切り替えたあと撤去する。astro_milestones.md の M7）
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { manualPurgeTags, purgeTags } from 'cache-tags'
 import { ATELIER_PREFIX, BANDE_DESSINEE_PREFIX, CACHE_GROUPS, type CacheGroupKey } from './cache-groups'
 import { purgeEdgeCache } from './edge_cache'
 
-export async function purgeAtelierCache(): Promise<void> {
+// イラストの保存時: 公開サイトは、そのイラストの詳細と、イラストの一覧を含むページ（トップ・サイドバーを持つページ・カードを含むページ）
+export async function purgeAtelierCache(illustID: string): Promise<boolean> {
   const { env } = await getCloudflareContext({ async: true })
   await deleteByPrefix(env.CMS_CACHE, ATELIER_PREFIX)
+  return purgeEdgeCache(purgeTags.illust(illustID))
 }
 
-export async function purgeBandeDessineeCache(): Promise<void> {
+// 漫画の保存時: 公開サイトは、その漫画の詳細と、漫画の一覧を含むページ。
+// 前後の巻の詳細（リンクが変わる）も list:comics を持つので、まとめてパージされる
+export async function purgeBandeDessineeCache(comicID: string): Promise<boolean> {
   const { env } = await getCloudflareContext({ async: true })
   await deleteByPrefix(env.CMS_CACHE, BANDE_DESSINEE_PREFIX)
+  return purgeEdgeCache(purgeTags.comic(comicID))
 }
 
 // blog記事の保存時: 一覧（contents_* / contents_with_tags_*）と単体（content_{id}）を削除する
-// Astro 版の公開サイト（Workers Cache）も併せてパージする。戻り値はそちらのパージができたか
-// （KV は現行サイト用で、Astro 版へ切り替えたあと撤去する。astro_milestones.md の M7）
 export async function purgeBlogContentCache(articleID: string): Promise<boolean> {
   const { env } = await getCloudflareContext({ async: true })
   await Promise.all([deleteByPrefix(env.CMS_CACHE, 'contents_'), env.CMS_CACHE.delete(`content_${articleID}`)])
@@ -34,7 +40,6 @@ const blogMetaPurgeTags = {
 }
 
 // カテゴリ・固定ページ・静的文言の保存時: 対応する固定キーを削除する
-// Astro 版の公開サイト（Workers Cache）も併せてパージする。戻り値はそちらのパージができたか
 export async function purgeBlogMetaCache(key: keyof typeof blogMetaPurgeTags): Promise<boolean> {
   const { env } = await getCloudflareContext({ async: true })
   await env.CMS_CACHE.delete(key)

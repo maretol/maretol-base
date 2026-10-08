@@ -18,6 +18,7 @@ import {
   type BlogInfoInput,
 } from '@/lib/db_blog'
 import { purgeBlogContentCache, purgeBlogMetaCache } from '@/lib/cache'
+import { withPurgeResult } from '@/lib/purge_result'
 import { saveBlogContentDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
@@ -70,15 +71,7 @@ function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: s
   return { input }
 }
 
-// 公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
-function withPurgeResult(url: string, purged: boolean): string {
-  if (purged) {
-    return url
-  }
-  return `${url}${url.includes('?') ? '&' : '?'}purge_failed=1`
-}
-
-// 保存後の遷移先
+// 保存後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
 function savedURL(articleID: string, purged: boolean): string {
   return withPurgeResult(`/blog/${articleID}/edit?saved=1`, purged)
 }
