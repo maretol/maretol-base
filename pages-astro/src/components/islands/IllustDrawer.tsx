@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore, type ReactNode } from 'react'
 import { Drawer } from 'vaul'
 import { LoaderCircleIcon } from 'lucide-react'
-import { ILLUST_LIST_TITLE } from '@/lib/illust'
+import { getIllustIDFromPath, ILLUST_LIST_PATH, ILLUST_LIST_TITLE } from '@/lib/illust'
 import { setupShareCopy } from '@/lib/share_copy'
 
 // イラストの drawer。一覧や記事の上に重ねて表示し、URL も詳細の URL（/illust/detail/{id}）に変える（astro_design.md 決定 13）。
@@ -11,9 +11,8 @@ import { setupShareCopy } from '@/lib/share_copy'
 //   詳細の URL を直接開いていれば一覧の URL への replaceState。戻る・進むでも閉じたり開き直したりする
 // - 詳細の URL を直接開いたとき（JS が動く前を含む）は、サーバーが描画した中身（children）を固定の枠で出し、
 //   hydration 後に同じ中身をアニメーションなしで drawer に移す
+// - URL の形（/illust/detail/{id}）は lib/illust.ts で決める。末尾のスラッシュは Worker が 301 で外すので、ここに届く URL は正規形
 
-const DETAIL_PATH = /^\/illust\/detail\/([^/]+)$/
-const LIST_PATH = '/illust'
 // 自分で pushState した履歴の印。閉じるときに history.back() でよいかの判定に使う
 const STATE_KEY = 'illustDrawer'
 const FRAGMENT_SELECTOR = '[data-illust-detail]'
@@ -40,7 +39,7 @@ const serverSnapshots = new Map<string | null, Snapshot>()
 
 // 開いているイラストの ID。URL が詳細の URL のときだけ開いているとみなす
 function getOpenID(): string | null {
-  return location.pathname.match(DETAIL_PATH)?.[1] ?? null
+  return getIllustIDFromPath(location.pathname)
 }
 
 function computeSnapshot(): Snapshot {
@@ -115,7 +114,7 @@ function closeDrawer(): void {
     return
   }
   // 詳細の URL を直接開いたときは、戻る先が一覧ではないので、URL を一覧に置き換えて閉じる
-  history.replaceState(null, '', LIST_PATH)
+  history.replaceState(null, '', ILLUST_LIST_PATH)
   notify()
 }
 
@@ -146,7 +145,7 @@ function subscribeStore(onChange: () => void, initialID: string | null): () => v
       closeDrawer()
       return
     }
-    const id = link.pathname.match(DETAIL_PATH)?.[1]
+    const id = getIllustIDFromPath(link.pathname)
     // ページ内のアンカー（注釈など）は横取りしない
     if (!id || link.hash || link.hasAttribute(NO_DRAWER_ATTRIBUTE)) {
       return
@@ -164,15 +163,25 @@ function subscribeStore(onChange: () => void, initialID: string | null): () => v
       notify()
     }
   }
+  // bfcache から復元されたときも閉じる途中の印を戻す。pushState で開いたあとに再読み込みしたページでは、
+  // 閉じる操作の history.back() が別のドキュメント（一覧）への遷移になる。そこから進むで戻ってくると、
+  // このページは bfcache から復元されて popstate が届かず、closing が立ったまま閉じられなくなる
+  const onPageShow = (e: PageTransitionEvent) => {
+    if (e.persisted) {
+      closing = false
+    }
+  }
   listeners.add(listener)
   document.addEventListener('click', onClick)
   window.addEventListener('popstate', onPopState)
+  window.addEventListener('pageshow', onPageShow)
   // 中身にあるコピーのボタンを動かす（components/article/ShareSection.astro）
   setupShareCopy()
   return () => {
     listeners.delete(listener)
     document.removeEventListener('click', onClick)
     window.removeEventListener('popstate', onPopState)
+    window.removeEventListener('pageshow', onPageShow)
   }
 }
 
@@ -218,7 +227,7 @@ export default function IllustDrawer({ initialID = null, children }: Props) {
         <a href={fragment.href} className={LINK_BUTTON_CLASS} {...{ [NO_DRAWER_ATTRIBUTE]: '' }}>
           詳細ページを開く
         </a>
-        <a href={LIST_PATH} className={LINK_BUTTON_CLASS} data-illust-drawer-close>
+        <a href={ILLUST_LIST_PATH} className={LINK_BUTTON_CLASS} data-illust-drawer-close>
           閉じる
         </a>
       </div>

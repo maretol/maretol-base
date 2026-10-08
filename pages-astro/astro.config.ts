@@ -9,6 +9,10 @@ export default defineConfig({
   // ここに本番の URL を書くと、staging でも Astro.site が本番を指してしまう
   // 全ルートをリクエスト時に描画する。静的にするページだけ個別に prerender = true を付ける
   output: 'server',
+  // 末尾のスラッシュは付けない形に揃える（/illust/detail/{id}/ → /illust/detail/{id} へ 301）。
+  // エッジのキャッシュのエントリが表記揺れで分かれないようにし、URL からイラストの ID を読む island（islands/IllustDrawer.tsx）の判定とも揃える。
+  // リダイレクトを行うハンドラは src/worker.ts で明示的に載せる（middleware() / pages() には含まれない）
+  trailingSlash: 'never',
   adapter: cloudflare({
     // astro:assets の画像最適化は使わない（/cdn-cgi/image/ の URL を自前で組み立てる）。
     // 既定の 'cloudflare-binding' はアダプタが IMAGES という名前の Images binding を注入し、R2 の IMAGES と衝突する

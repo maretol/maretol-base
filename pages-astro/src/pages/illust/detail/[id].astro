@@ -9,7 +9,7 @@ import { getAtelierByID, getAteliers } from '@/lib/api/cms'
 import { cachePage, noStore } from '@/lib/cache'
 import { getEmbedTags } from '@/lib/content_tags'
 import { getDraftKey } from '@/lib/draft'
-import { getIllustDetailTitle } from '@/lib/illust'
+import { getIllustDetailTitle, illustDetailPath } from '@/lib/illust'
 import { getOGPImageURL } from '@/lib/image'
 import { PAGE_LIMIT } from '@/lib/pagination'
 import { getHostname } from '@/lib/site'
@@ -48,7 +48,7 @@ if (draftKey) {
 }
 
 const title = getIllustDetailTitle(illust.title)
-const url = `${getHostname()}/illust/detail/${illustID}`
+const url = `${getHostname()}${illustDetailPath(illustID)}`
 const meta: PageMeta = {
   title,
   description: title,
