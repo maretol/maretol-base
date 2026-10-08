@@ -73,7 +73,7 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 ## M4. 作品系の移植（#1344）
 
-- [ ] イラスト一覧・詳細、drawer（Island + History API。`/illust/detail/{id}` を維持）、`/illust?illust_id=` 互換リダイレクト
+- [x] イラスト一覧・詳細、drawer（Island + History API。`/illust/detail/{id}` を維持。直接開いたときは、現行と同じく一覧の上に drawer が開いた状態を描画する）。`/illust?illust_id=` 互換リダイレクトは作らない（Next.js のパラレルルートの都合で内部的に使っていた URL のため。#1344 のコメント）
 - [ ] 漫画一覧・詳細
 - [ ] 漫画ビューワの Island（見開き・右綴じ・キーボード・スワイプ・マウスゾーン・シリーズ案内・設定保存、固定幅 srcset・順次先読み・`onerror` リトライ）
 - [ ] admin の漫画・イラスト保存からのパージ

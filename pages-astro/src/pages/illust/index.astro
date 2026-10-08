@@ -1,0 +1,45 @@
+---
+import { cacheTag } from 'cache-tags'
+import SiteLayout from '@/layouts/SiteLayout.astro'
+import type { PageMeta } from '@/layouts/BaseLayout.astro'
+import IllustList from '@/components/illust/IllustList.astro'
+import IllustDrawer from '@/components/islands/IllustDrawer'
+import { getAteliers } from '@/lib/api/cms'
+import { cachePage } from '@/lib/cache'
+import { ILLUST_LIST_TITLE } from '@/lib/illust'
+import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
+import { getPageNumber, isPageOutOfRange, PAGE_LIMIT } from '@/lib/pagination'
+import { getHostname } from '@/lib/site'
+
+// イラストの一覧。詳細は drawer（islands/IllustDrawer.tsx）で重ねて表示する
+const pageNumber = getPageNumber(Astro.url.searchParams)
+
+const { ateliers, total } = await getAteliers((pageNumber - 1) * PAGE_LIMIT, PAGE_LIMIT)
+if (isPageOutOfRange(pageNumber, total, PAGE_LIMIT)) {
+  // イラストが増えてこのページが存在するようになったら、404 のキャッシュも一緒に消えるようにする
+  Astro.locals.notFound = { tags: [cacheTag.illustList] }
+  return Astro.rewrite('/404')
+}
+
+cachePage(Astro.response, [cacheTag.illustList])
+
+const description = `A collection of illustrations by Maretol: page_${pageNumber}`
+const url = pageNumber === 1 ? `${getHostname()}/illust` : `${getHostname()}/illust?p=${pageNumber}`
+// サムネイルは先頭のイラスト。0 件のときは既定の画像
+const firstIllust = ateliers.at(0)
+const meta: PageMeta = {
+  title: ILLUST_LIST_TITLE,
+  description,
+  ogTitle: ILLUST_LIST_TITLE,
+  ogDescription: description,
+  ogURL: url,
+  ogImage: getOGPImageURL(firstIllust?.src ?? getDefaultOGPImageURL()),
+  twitterCard: firstIllust ? 'summary_large_image' : 'summary',
+  canonical: url,
+}
+---
+
+<SiteLayout meta={meta}>
+  <IllustList ateliers={ateliers} pageNumber={pageNumber} total={total} />
+  <IllustDrawer client:idle />
+</SiteLayout>
