@@ -1,10 +1,11 @@
 /**
- * pages の KV キャッシュ（CMS_CACHE）のパージ処理
- * cms-cache-purger と同等のロジックをCMS側に統合したもの（cms_goal.md 参照）
- * illust のキー（atelier_ プレフィックス: 一覧・単体とも）を一括削除する
+ * admin の保存操作とキャッシュ管理ページからの、公開サイトのキャッシュのパージ処理
  *
- * Astro 版の公開サイト（Workers Cache）も併せてパージする。各関数の戻り値はそちらのパージができたか
- * （KV は現行サイト用で、Astro 版へ切り替えたあと撤去する。astro_milestones.md の M7）
+ * - 現行サイト（pages）の KV キャッシュ（CMS_CACHE）: cms-cache-purger と同等のロジックを CMS 側に統合したもの（cms_goal.md 参照）。
+ *   ブログ記事・漫画・イラストの保存時はプレフィックス単位（一覧・単体とも）で、カテゴリ・info・固定文言は固定キーで削除する。
+ *   キャッシュ管理ページからはグループ単位・全件で削除する（グループの定義は lib/cache-groups.ts）
+ * - Astro 版の公開サイト（Workers Cache）: 同じ操作でタグをパージする。各関数の戻り値はそちらのパージができたか
+ *   （KV は現行サイト用で、Astro 版へ切り替えたあと撤去する。astro_milestones.md の M7）
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { manualPurgeTags, purgeTags } from 'cache-tags'

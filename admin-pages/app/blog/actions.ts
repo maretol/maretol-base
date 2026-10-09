@@ -24,18 +24,10 @@ import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState, AddCategoryState } from '@/lib/form-state'
+import { text, textOrNull } from '@/lib/form-data'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
-
-function text(formData: FormData, name: string): string {
-  return ((formData.get(name) as string | null) ?? '').trim()
-}
-
-function textOrNull(formData: FormData, name: string): string | null {
-  const v = text(formData, name)
-  return v === '' ? null : v
-}
 
 function parseStatus(formData: FormData): BlogContentInput['status'] {
   const status = text(formData, 'status')

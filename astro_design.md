@@ -106,8 +106,8 @@ admin-pages ──▶ D1 に保存
 | タグ（カテゴリ）の編集 | `purgeBlogMetaCache('tags')` | `blog` |
 | info の編集 | `purgeBlogMetaCache('info')` | `info` |
 | static（固定文言）の編集 | `purgeBlogMetaCache('static')` | `layout` |
-| 漫画の保存・削除 | `purgeBandeDessineeCache()` | `comic:{id}`, `list:comics` |
-| イラストの保存・削除 | `purgeAtelierCache()` | `illust:{id}`, `list:illust` |
+| 漫画の保存・削除 | `purgeBandeDessineeCache(id)` | `comic:{id}`, `list:comics` |
+| イラストの保存・削除 | `purgeAtelierCache(id)` | `illust:{id}`, `list:illust` |
 | 手動パージ（admin の `/cache` ページ） | グループ単位・全件 | グループごとに下の表のタグ。全件は `layout` |
 
 手動パージのグループとタグ（`packages/cache-tags` の `manualPurgeTags`。admin 側のグループの定義は `admin-pages/lib/cache-groups.ts` の `CACHE_GROUPS`）

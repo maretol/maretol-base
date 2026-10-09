@@ -11,17 +11,18 @@ import { notifyAtelierPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
+import { text } from '@/lib/form-data'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const VALID_POSITION = ['center', 'top', 'bottom', 'left', 'right']
 
 function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: string } {
-  const id = (formData.get('id') as string | null)?.trim() || generateContentID()
-  const title = (formData.get('title') as string | null)?.trim() ?? ''
-  const src = (formData.get('src') as string | null)?.trim() ?? ''
-  const objectPosition = (formData.get('object_position') as string | null) ?? 'center'
+  const id = text(formData, 'id') || generateContentID()
+  const title = text(formData, 'title')
+  const src = text(formData, 'src')
+  const objectPosition = text(formData, 'object_position')
   const description = (formData.get('description') as string | null) ?? ''
-  const status = (formData.get('status') as string | null) ?? 'DRAFT'
+  const status = text(formData, 'status')
   const tagIDs = formData.getAll('tag_ids').map((v) => String(v))
 
   const input: AtelierInput = {
@@ -108,7 +109,7 @@ export async function previewAtelierAction(
 
 // 編集画面からの手動キャッシュ削除。イラストのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
 export async function purgeAtelierCacheAction(_prev: PurgeActionState, formData: FormData): Promise<PurgeActionState> {
-  const id = (formData.get('id') as string | null)?.trim() ?? ''
+  const id = text(formData, 'id')
   if (id === '') {
     return { error: 'IDが不正です' }
   }
@@ -123,9 +124,9 @@ export async function purgeAtelierCacheAction(_prev: PurgeActionState, formData:
 }
 
 export async function createTagAction(formData: FormData): Promise<void> {
-  const id = (formData.get('id') as string | null)?.trim() || generateContentID()
-  const tag = (formData.get('tag') as string | null)?.trim() ?? ''
-  const type = (formData.get('type') as string | null)?.trim() ?? ''
+  const id = text(formData, 'id') || generateContentID()
+  const tag = text(formData, 'tag')
+  const type = text(formData, 'type')
 
   if (tag === '' || type === '') {
     redirect(`/illust/tags?error=${encodeURIComponent('タグ名と種別は必須です')}`)
