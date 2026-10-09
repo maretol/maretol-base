@@ -106,8 +106,8 @@ admin-pages ──▶ D1 に保存
 | タグ（カテゴリ）の編集 | `purgeBlogMetaCache('tags')` | `blog` |
 | info の編集 | `purgeBlogMetaCache('info')` | `info` |
 | static（固定文言）の編集 | `purgeBlogMetaCache('static')` | `layout` |
-| 漫画の保存・削除 | `purgeBandeDessineeCache()` | `comic:{id}`, `list:comics` |
-| イラストの保存・削除 | `purgeAtelierCache()` | `illust:{id}`, `list:illust` |
+| 漫画の保存・削除 | `purgeBandeDessineeCache(id)` | `comic:{id}`, `list:comics` |
+| イラストの保存・削除 | `purgeAtelierCache(id)` | `illust:{id}`, `list:illust` |
 | 手動パージ（admin の `/cache` ページ） | グループ単位・全件 | グループごとに下の表のタグ。全件は `layout` |
 
 手動パージのグループとタグ（`packages/cache-tags` の `manualPurgeTags`。admin 側のグループの定義は `admin-pages/lib/cache-groups.ts` の `CACHE_GROUPS`）
@@ -150,7 +150,7 @@ M1 の時点では「内部ルート + `ctx.props` による認可」を第一�
 - 切替（M6）までは admin が KV パージと Workers Cache パージの両方を呼ぶ。Service Binding が無い環境では Workers Cache パージを飛ばす
 - **保存 1 回につきパージ呼び出しは 1 回**にし、必要なタグをまとめて渡す。パージにはレート制限がある（連続で約 25 回、以後は毎分 5 回程度。9 章）
 - `purge()` は制限に達しても例外を投げず `success: false` を返す。戻り値を必ず確認する
-- パージの失敗は保存の失敗にしない（現行の KV パージと同じ扱い）。失敗時は admin に表示し、手動パージで回復できるようにする。保存後の遷移先に `purge_failed=1` を付け、画面に「公開サイトのキャッシュ削除に失敗しました」と出す（記事は編集画面の「この記事のキャッシュを削除」、タグ・info・固定文言はキャッシュ管理の「ブログメタ」へ案内する）。手動パージ自体が失敗したときも同じように表示する
+- パージの失敗は保存の失敗にしない（現行の KV パージと同じ扱い）。失敗時は admin に表示し、手動パージで回復できるようにする。保存後の遷移先に `purge_failed=1` を付け、画面に「公開サイトのキャッシュ削除に失敗しました」と出す（記事・漫画・イラストは編集画面のキャッシュ削除ボタン、タグ・info・固定文言はキャッシュ管理の「ブログメタ」へ案内する）。手動パージ自体が失敗したときも同じように表示する
 
 ### 4.5 クエリの扱い
 

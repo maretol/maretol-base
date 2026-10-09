@@ -5,22 +5,24 @@ import { revalidatePath } from 'next/cache'
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { createAtelier, updateAtelier, getAtelier, createTag, type AtelierInput } from '@/lib/db'
 import { purgeAtelierCache } from '@/lib/cache'
+import { withPurgeResult } from '@/lib/purge_result'
 import { saveAtelierDraft } from '@/lib/draft'
 import { notifyAtelierPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
+import { text } from '@/lib/form-data'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const VALID_POSITION = ['center', 'top', 'bottom', 'left', 'right']
 
 function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: string } {
-  const id = (formData.get('id') as string | null)?.trim() || generateContentID()
-  const title = (formData.get('title') as string | null)?.trim() ?? ''
-  const src = (formData.get('src') as string | null)?.trim() ?? ''
-  const objectPosition = (formData.get('object_position') as string | null) ?? 'center'
+  const id = text(formData, 'id') || generateContentID()
+  const title = text(formData, 'title')
+  const src = text(formData, 'src')
+  const objectPosition = text(formData, 'object_position')
   const description = (formData.get('description') as string | null) ?? ''
-  const status = (formData.get('status') as string | null) ?? 'DRAFT'
+  const status = text(formData, 'status')
   const tagIDs = formData.getAll('tag_ids').map((v) => String(v))
 
   const input: AtelierInput = {
@@ -45,6 +47,11 @@ function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: st
   return { input }
 }
 
+// 保存後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
+function savedURL(illustID: string, purged: boolean): string {
+  return withPurgeResult(`/illust/${illustID}/edit?saved=1`, purged)
+}
+
 export async function createAtelierAction(formData: FormData): Promise<void> {
   const { input, error } = parseAtelierForm(formData)
   if (error) {
@@ -55,12 +62,12 @@ export async function createAtelierAction(formData: FormData): Promise<void> {
   }
 
   await createAtelier(input)
-  await purgeAtelierCache()
+  const purged = await purgeAtelierCache(input.id)
   await notifyAtelierPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/illust')
   // 保存後は一覧へ戻らず、作成したイラストの編集画面へ遷移する（連続編集のため）
-  redirect(`/illust/${input.id}/edit?saved=1`)
+  redirect(savedURL(input.id, purged))
 }
 
 export async function updateAtelierAction(formData: FormData): Promise<void> {
@@ -74,12 +81,12 @@ export async function updateAtelierAction(formData: FormData): Promise<void> {
   const oldStatus = current?.status
 
   await updateAtelier(input)
-  await purgeAtelierCache()
+  const purged = await purgeAtelierCache(input.id)
   await notifyAtelierPublishToSNS({ input, type: 'edit', oldStatus })
 
   revalidatePath('/illust')
   // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(`/illust/${input.id}/edit?saved=1`)
+  redirect(savedURL(input.id, purged))
 }
 
 // 編集中の内容をKVに保存し、pages本体のプレビューURLを返す（D1には書き込まない）
@@ -101,9 +108,15 @@ export async function previewAtelierAction(
 }
 
 // 編集画面からの手動キャッシュ削除。イラストのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
-export async function purgeAtelierCacheAction(_prev: PurgeActionState, _formData: FormData): Promise<PurgeActionState> {
+export async function purgeAtelierCacheAction(_prev: PurgeActionState, formData: FormData): Promise<PurgeActionState> {
+  const id = text(formData, 'id')
+  if (id === '') {
+    return { error: 'IDが不正です' }
+  }
   try {
-    await purgeAtelierCache()
+    if (!(await purgeAtelierCache(id))) {
+      return { error: '公開サイトのキャッシュ削除に失敗しました。時間をおいて再度実行してください' }
+    }
     return { done: 'イラストのキャッシュを削除しました（一覧・単体すべて）' }
   } catch {
     return { error: 'キャッシュ削除に失敗しました' }
@@ -111,9 +124,9 @@ export async function purgeAtelierCacheAction(_prev: PurgeActionState, _formData
 }
 
 export async function createTagAction(formData: FormData): Promise<void> {
-  const id = (formData.get('id') as string | null)?.trim() || generateContentID()
-  const tag = (formData.get('tag') as string | null)?.trim() ?? ''
-  const type = (formData.get('type') as string | null)?.trim() ?? ''
+  const id = text(formData, 'id') || generateContentID()
+  const tag = text(formData, 'tag')
+  const type = text(formData, 'type')
 
   if (tag === '' || type === '') {
     redirect(`/illust/tags?error=${encodeURIComponent('タグ名と種別は必須です')}`)

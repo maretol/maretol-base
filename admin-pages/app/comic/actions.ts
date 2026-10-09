@@ -15,23 +15,16 @@ import {
 } from '@/lib/db_comic'
 import type { bandeDessineeRow } from 'api-types'
 import { purgeBandeDessineeCache } from '@/lib/cache'
+import { withPurgeResult } from '@/lib/purge_result'
 import { saveBandeDessineeDraft } from '@/lib/draft_comic'
 import { notifyComicPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
+import { text, textOrNull } from '@/lib/form-data'
 
 const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
-
-function text(formData: FormData, name: string): string {
-  return ((formData.get(name) as string | null) ?? '').trim()
-}
-
-function textOrNull(formData: FormData, name: string): string | null {
-  const v = text(formData, name)
-  return v === '' ? null : v
-}
 
 function parseComicForm(formData: FormData): { input: BandeDessineeInput; error?: string } {
   const id = text(formData, 'id') || generateContentID()
@@ -168,6 +161,11 @@ function chainInfoParam(messages: string[]): string {
   return messages.length > 0 ? `&info=${encodeURIComponent(messages.join(' / '))}` : ''
 }
 
+// 保存後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
+function savedURL(comicID: string, syncMessages: string[], purged: boolean): string {
+  return withPurgeResult(`/comic/${comicID}/edit?saved=1${chainInfoParam(syncMessages)}`, purged)
+}
+
 export async function createBandeDessineeAction(formData: FormData): Promise<void> {
   const { input, error } = parseComicForm(formData)
   if (error) {
@@ -183,12 +181,12 @@ export async function createBandeDessineeAction(formData: FormData): Promise<voi
 
   await createBandeDessinee(input)
   const syncMessages = await syncChainPointers(input, neighbors, null)
-  await purgeBandeDessineeCache()
+  const purged = await purgeBandeDessineeCache(input.id)
   await notifyComicPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/comic')
   // 保存後は一覧へ戻らず、作成したマンガの編集画面へ遷移する（連続編集のため）
-  redirect(`/comic/${input.id}/edit?saved=1${chainInfoParam(syncMessages)}`)
+  redirect(savedURL(input.id, syncMessages, purged))
 }
 
 export async function updateBandeDessineeAction(formData: FormData): Promise<void> {
@@ -209,12 +207,12 @@ export async function updateBandeDessineeAction(formData: FormData): Promise<voi
 
   await updateBandeDessinee(input)
   const syncMessages = await syncChainPointers(input, neighbors, current)
-  await purgeBandeDessineeCache()
+  const purged = await purgeBandeDessineeCache(input.id)
   await notifyComicPublishToSNS({ input, type: 'edit', oldStatus })
 
   revalidatePath('/comic')
   // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(`/comic/${input.id}/edit?saved=1${chainInfoParam(syncMessages)}`)
+  redirect(savedURL(input.id, syncMessages, purged))
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
@@ -237,10 +235,16 @@ export async function previewBandeDessineeAction(
 // 編集画面からの手動キャッシュ削除。マンガのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
 export async function purgeBandeDessineeCacheAction(
   _prev: PurgeActionState,
-  _formData: FormData
+  formData: FormData
 ): Promise<PurgeActionState> {
+  const id = text(formData, 'id')
+  if (id === '') {
+    return { error: 'IDが不正です' }
+  }
   try {
-    await purgeBandeDessineeCache()
+    if (!(await purgeBandeDessineeCache(id))) {
+      return { error: '公開サイトのキャッシュ削除に失敗しました。時間をおいて再度実行してください' }
+    }
     return { done: 'マンガのキャッシュを削除しました（一覧・単体すべて）' }
   } catch {
     return { error: 'キャッシュ削除に失敗しました' }

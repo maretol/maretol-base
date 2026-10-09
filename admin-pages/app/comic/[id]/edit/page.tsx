@@ -11,10 +11,10 @@ export default async function EditComic({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string; info?: string }>
+  searchParams: Promise<{ error?: string; saved?: string; info?: string; purge_failed?: string }>
 }) {
   const { id } = await params
-  const { error, saved, info } = await searchParams
+  const { error, saved, info, purge_failed: purgeFailed } = await searchParams
 
   const comic = await getBandeDessinee(id)
   if (!comic) {
@@ -44,6 +44,7 @@ export default async function EditComic({
         error={error}
         saved={saved === '1'}
         info={info}
+        purgeFailed={purgeFailed === '1'}
       />
     </div>
   )
