@@ -1,7 +1,7 @@
 ---
 import BaseLayout, { type PageMeta } from './BaseLayout.astro'
 import HeaderButtons from '@/components/shell/HeaderButtons.astro'
-import FooterButtons from '@/components/shell/FooterButtons.astro'
+import SiteFooter from '@/components/shell/SiteFooter.astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { getHeaderImageURL } from '@/lib/image'
@@ -15,7 +15,6 @@ type Props = {
 }
 
 const { meta, class: className } = Astro.props
-const year = new Date().getFullYear()
 ---
 
 <BaseLayout meta={meta}>
@@ -39,14 +38,7 @@ const year = new Date().getFullYear()
       </div>
       <slot />
       <div class="my-10">
-        <footer class="text-center text-sm text-gray-500 font-suse">
-          <FooterButtons />
-          <div>
-            © 2024 - {year} Maretol
-            <br />
-            DO NOT REPOST WITHOUT PERMISSION
-          </div>
-        </footer>
+        <SiteFooter />
       </div>
     </div>
   </div>

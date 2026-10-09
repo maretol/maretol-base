@@ -1,0 +1,15 @@
+---
+import FooterButtons from './FooterButtons.astro'
+
+// ページ下部のフッター。SiteLayout と、SiteLayout を使わない漫画の詳細で使う
+const year = new Date().getFullYear()
+---
+
+<footer class="text-center text-sm text-gray-500 font-suse">
+  <FooterButtons />
+  <div>
+    © 2024 - {year} Maretol
+    <br />
+    DO NOT REPOST WITHOUT PERMISSION
+  </div>
+</footer>

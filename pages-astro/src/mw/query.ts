@@ -21,6 +21,8 @@ const routes: Partial<Record<string, string[]>> = {
   '/tag': ['tag_id', 'tag_name', 'p'],
   '/illust': ['p'],
   '/illust/detail/[id]': ['draftKey'],
+  '/comics': ['series', 'p'],
+  '/comics/[id]': ['draftKey'],
   '/about': [],
   '/contact': [],
   '/secret': [],

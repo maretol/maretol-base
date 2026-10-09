@@ -5,7 +5,7 @@ import ArticleContent from '@/components/article/ArticleContent.astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { card } from '@/components/ui/card'
-import { getComicCoverURL } from '@/lib/comic'
+import { comicPath, getComicCoverURL } from '@/lib/comic'
 import { convertJST, convertJSTDate } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 type Props = { comic: bandeDessineeResult }
 
 const { comic } = Astro.props
-const href = `/comics/${comic.id}`
+const href = comicPath(comic.id)
 const publishDate = comic.publish_date ? convertJSTDate(comic.publish_date) : '-'
 // 概要は説明文の先頭のブロックだけを出す
 const overview = comic.parsed_description.slice(0, 1)

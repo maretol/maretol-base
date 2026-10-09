@@ -1,0 +1,97 @@
+---
+import { cacheTag } from 'cache-tags'
+import BaseLayout, { type PageMeta } from '@/layouts/BaseLayout.astro'
+import ComicDetail from '@/components/comic/ComicDetail.astro'
+import ComicHeader from '@/components/comic/ComicHeader.astro'
+import ComicNotFound from '@/components/comic/ComicNotFound.astro'
+import ComicViewer from '@/components/islands/comic-viewer/ComicViewer'
+import type { ComicViewerData } from '@/components/islands/comic-viewer/types'
+import SiteFooter from '@/components/shell/SiteFooter.astro'
+import { getBandeDessineeByID } from '@/lib/api/cms'
+import { cacheNotFound, cachePage, noStore } from '@/lib/cache'
+import { comicPath, getComicBaseURL, getComicCoverURL } from '@/lib/comic'
+import { getEmbedTags } from '@/lib/content_tags'
+import { getDraftKey } from '@/lib/draft'
+import { getOGPImageURL } from '@/lib/image'
+import { getHostname, SITE_NAME } from '@/lib/site'
+
+// 漫画の詳細。上にビューワ（island）、下に作品情報と説明文。サイトのヘッダーは出さず、マウスを乗せたときだけロゴを出す（現行と同じ）
+const comicID = Astro.params.id!
+const draftKey = getDraftKey(Astro.url)
+
+// fetcher は「存在しない」とそれ以外の失敗を区別せずに例外を投げるので、取得できなければ 404 にする
+const comic = await getBandeDessineeByID(comicID, draftKey).catch((e) => {
+  console.error(`[pages/comics/[id].astro] Comic fetch error: ${comicID}`, e)
+  return null
+})
+
+if (!comic) {
+  // 漫画が公開されたときに 404 のキャッシュも消えるよう、漫画のタグを付けておく
+  Astro.response.status = 404
+  cacheNotFound(Astro.response, [cacheTag.comic(comicID)])
+} else if (draftKey) {
+  // 下書きプレビューはキャッシュしない
+  noStore(Astro.response)
+} else {
+  // 前後の巻へのリンクは他の巻の公開状態で変わるので、どの漫画も list:comics を持つ（手動パージの「マンガ」もこのタグで届く）
+  cachePage(Astro.response, [
+    cacheTag.comic(comicID),
+    cacheTag.comicList,
+    ...(comic.series ? [cacheTag.series(comic.series.id)] : []),
+    ...getEmbedTags(comic.parsed_description),
+  ])
+}
+
+const title = comic ? `${comic.title_name} | ${SITE_NAME}` : `Not Found | ${SITE_NAME}`
+const url = `${getHostname()}${comicPath(comicID)}`
+const meta: PageMeta = comic
+  ? {
+      title,
+      description: title,
+      ogTitle: title,
+      ogDescription: title,
+      ogURL: url,
+      ogImage: getOGPImageURL(getComicCoverURL(comic)),
+      twitterCard: 'summary_large_image',
+      canonical: url,
+    }
+  : { title, noindex: true }
+
+// ビューワに渡す情報。island の props は JSON になるので、説明文などは渡さない
+const viewerData: ComicViewerData | null = comic && {
+  id: comic.id,
+  baseURL: getComicBaseURL(comic.contents_url),
+  filename: comic.filename,
+  firstPage: comic.first_page,
+  lastPage: comic.last_page,
+  format: comic.format[0],
+  cover: comic.cover || null,
+  backCover: comic.back_cover || null,
+  firstLeftRight: comic.first_left_right[0] ?? 'left',
+  seriesID: comic.series?.id ?? null,
+  nextID: comic.next_id || null,
+}
+---
+
+<BaseLayout meta={meta}>
+  <div id="top">
+    {
+      comic && viewerData ? (
+        <>
+          <ComicHeader />
+          <ComicViewer client:load comic={viewerData} />
+          <div class="flex justify-center w-full">
+            <div class="w-full max-w-375">
+              <ComicDetail comic={comic} draftKey={draftKey} />
+              <div class="my-10">
+                <SiteFooter />
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <ComicNotFound />
+      )
+    }
+  </div>
+</BaseLayout>
