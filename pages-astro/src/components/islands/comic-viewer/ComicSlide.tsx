@@ -49,11 +49,6 @@ function ComicSlide({ mode, page, isActive, loadable, onSettle }: Props) {
   // mode === 'double'
   // dir=rtl 配下のため justify-start はスライド右端、justify-end はスライド左端に寄る
   switch (page.position) {
-    case 'center':
-      // 表紙・裏表紙はスライド内で中央寄せ
-      return (
-        <div className="flex justify-center items-center h-full w-full">{image('object-contain h-full w-auto')}</div>
-      )
     case 'right':
       // 視覚上の右ページ: 画像を左端（中央のシーム側）に寄せる
       return (

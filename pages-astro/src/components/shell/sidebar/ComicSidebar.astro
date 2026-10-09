@@ -3,7 +3,7 @@ import type { bandeDessineeResult } from 'api-types'
 import SidebarFrame from './SidebarFrame.astro'
 import CdnImage from '@/components/ui/CdnImage.astro'
 import { buttonVariants } from '@/components/ui/button'
-import { getComicCoverURL } from '@/lib/comic'
+import { comicPath, getComicCoverURL } from '@/lib/comic'
 import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
@@ -18,7 +18,7 @@ const { bandeDessinees } = Astro.props
     {
       bandeDessinees?.map((comic) => (
         <div class="mb-4 relative w-full">
-          <a href={`/comics/${comic.id}`} class="hover:underline">
+          <a href={comicPath(comic.id)} class="hover:underline">
             <div class="bg-gray-200 p-4">
               {/* 表紙は 1:1.41（B5 など）を想定して枠の比率を固定する。比率の違う表紙は枠の中に収める。
                   枠を固定しないと、読み込み後に高さが変わって下の区画が動く */}
