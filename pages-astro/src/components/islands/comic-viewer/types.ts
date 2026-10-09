@@ -27,9 +27,9 @@ export type SeriesGuide = {
 
 // 1 スライド分の状態
 // id: モード間で共通の論理ページ ID。モード切替時の表示位置の復元と React の key に使う
-// position: 見開き時の視覚上の配置。right が先に読むページ、center は表紙・裏表紙
+// position: 見開き時の視覚上の配置。right が先に読むページ（表紙・裏表紙も left / right のどちらかに置く）
 export type PageState =
-  | { kind: 'page'; id: string; position: 'left' | 'right' | 'center'; src: string }
+  | { kind: 'page'; id: string; position: 'left' | 'right'; src: string }
   // 見開き整列用の空白スライド
   | { kind: 'blank'; id: string; position: 'left' | 'right' }
   // 本編の末尾に置く案内スライド（次の話へ / 現在の最新話）

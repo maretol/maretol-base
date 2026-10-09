@@ -58,14 +58,17 @@ const query = new URLSearchParams({
   ...(pageNumber > 1 ? { p: pageNumber.toString() } : {}),
 }).toString()
 const url = `${getHostname()}/comics${query ? `?${query}` : ''}`
-const meta: PageMeta = {
-  title,
-  description,
-  ogTitle: title,
-  ogDescription: description,
-  ogURL: url,
-  canonical: url,
-}
+// 見つからないシリーズの 404 は、存在しない URL を canonical や OGP に出さず、index もさせない（comics/[id].astro の 404 と同じ）
+const meta: PageMeta = seriesNotFound
+  ? { title, noindex: true }
+  : {
+      title,
+      description,
+      ogTitle: title,
+      ogDescription: description,
+      ogURL: url,
+      canonical: url,
+    }
 ---
 
 <SiteLayout meta={meta}>
@@ -91,13 +94,18 @@ const meta: PageMeta = {
         bandeDessinees.map((comic) => <ComicOverview comic={comic} />)
       )
     }
-    <div class="flex justify-center">
-      <Pagination
-        path="/comics"
-        queryWithoutPage={seriesID ? { series: seriesID } : {}}
-        currentPage={pageNumber}
-        totalPage={getTotalPage(total, PAGE_LIMIT)}
-      />
-    </div>
+    {/* 0 件でも getTotalPage は 1 を返すので、見つからないときはページネーションを出さない（リンク先が同じ 404 の URL になる） */}
+    {
+      !seriesNotFound && (
+        <div class="flex justify-center">
+          <Pagination
+            path="/comics"
+            queryWithoutPage={seriesID ? { series: seriesID } : {}}
+            currentPage={pageNumber}
+            totalPage={getTotalPage(total, PAGE_LIMIT)}
+          />
+        </div>
+      )
+    }
   </div>
 </SiteLayout>
