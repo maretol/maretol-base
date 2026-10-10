@@ -108,7 +108,7 @@ npm run dev:sns          # SNS 投稿 Worker
 
 ### cms-data-fetcher
 
-内製 CMS の D1（`maretol-cms`）からコンテンツを取得する Worker。pages-astro からは Service Binding の RPC で呼びます。HTTP（`api.maretol.xyz/cms/*`）は API キーによる認証が必要。
+内製 CMS の D1（`maretol-cms`）からコンテンツを取得する Worker。pages-astro からは Service Binding の RPC で呼びます。HTTP の入口（`api.maretol.xyz`）は呼び出し元がなく、#1305 で閉じる予定です。
 
 ### ogp-data-fetcher
 
@@ -116,7 +116,7 @@ npm run dev:sns          # SNS 投稿 Worker
 
 ### sns-article-publisher
 
-新規記事公開時に各種 SNS（Twitter/X、Bluesky、Nostr）に自動投稿する Worker。admin-pages から Service Binding の RPC で呼ぶため、HTTP の入口は持ちません。
+新規記事公開時に各種 SNS（Twitter/X、Bluesky、Misskey、Nostr）に自動投稿する Worker。admin-pages から Service Binding の RPC で呼ぶため、HTTP の入口は持ちません。
 
 ### cms-db
 

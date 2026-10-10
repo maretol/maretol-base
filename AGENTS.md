@@ -9,7 +9,7 @@
 - `/admin-pages/` - 内製 CMS の管理ページ（Next.js + OpenNext、Cloudflare Access）
 - `/cms-data-fetcher/` - CMS データ取得 Worker
 - `/ogp-data-fetcher/` - OGP 情報取得・キャッシュ Worker
-- `/sns-article-publisher/` - SNS 自動投稿 Worker（Twitter/X, Bluesky, Nostr）
+- `/sns-article-publisher/` - SNS 自動投稿 Worker（Twitter/X, Bluesky, Misskey, Nostr）
 - `/packages/` - 共有パッケージ（api-types, cache-tags, md-converter）
 
 ## コーディング規約（Coding Style Guidelines）
@@ -26,7 +26,7 @@
 ## セキュリティ（Security considerations）
 
 - API キー・認証情報は `.secrets` および環境変数で管理（`.gitignore` 済み）
-- SNS 投稿用の認証情報（Twitter, Bluesky, Nostr）は Workers の secrets で管理
+- SNS 投稿用の認証情報（Twitter, Bluesky, Misskey, Nostr）は Workers の secrets で管理
 
 ## ビルド＆テスト手順（Build & Test）
 
