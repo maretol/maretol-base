@@ -82,8 +82,8 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 ## M5. 横断機能と検証（#1345）
 
-- [ ] Axiom アクセスログの移植、Clarity / Cloudflare beacon
-- [ ] 不完全なページ（`locals.degraded`）と描画中の例外（500）のログを Axiom へ送る（M3 では `console.warn` / `console.error` で Workers Logs に出すだけ）
+- [x] Axiom アクセスログの移植、Clarity / Cloudflare beacon（タグは本番だけに出す。staging では出さない）
+- [x] 不完全なページ（`locals.degraded`）と描画中の例外（500）のログを Axiom へ送る（アクセスログと同じ仕組み。設計 5 章「ログと解析」）
 - [ ] head（OGP メタ・canonical・favicon）、セキュリティヘッダ
 - [ ] e2e（Playwright）を `maretol-base-v4-stg` 向けに移植
 - [ ] 現行サイトとの突き合わせ（全ルートのステータス・リダイレクト、主要ページの見た目）
