@@ -3,7 +3,9 @@ import { requireBaseURL, SITE_LOGO_ALT } from './lib/constants'
 // デプロイ反映待ち（readiness）。
 // テスト本体の実行前に、トップページ（/）が 2xx で応答し、共通シェルの既知マーカー（ヘッダーロゴの alt）を
 // 含むまでポーリングして待機する。対象は Astro 版の staging（maretol-base-v4-stg）。
-// ページは Workers Cache にヒットすれば Worker を起動せずに返り、ミスしても本文まで描画してから返る。
+// ページは Workers Cache にヒットすれば Worker を起動せずに返るので、前のデプロイが残したエントリで通らないように、
+// 実行ごとに違う値の UTM クエリを付けてキャッシュを外す（UTM はどのルートでも残り、キャッシュのキーに含まれる。astro_design.md 4.5）。
+// ミスしたリクエストは本文まで描画してから返るので、応答が返れば今の Worker が起動して描画できたことになる。
 
 const READINESS_INTERVAL_MS = 5_000
 const READINESS_TIMEOUT_MS = 180_000
@@ -53,7 +55,9 @@ async function waitForStagingReady(options: ReadinessOptions): Promise<void> {
 
 export default async function globalSetup(): Promise<void> {
   const baseURL = requireBaseURL()
-  const target = new URL('/', baseURL).toString()
+  // キャッシュのキーを実行ごとに変える。GitHub Actions では run の ID、ローカルでは実行時刻
+  const runId = process.env.GITHUB_RUN_ID ?? String(Date.now())
+  const target = new URL(`/?utm_source=e2e&utm_content=${runId}`, baseURL).toString()
   await waitForStagingReady({
     url: target,
     marker: SITE_LOGO_ALT,
