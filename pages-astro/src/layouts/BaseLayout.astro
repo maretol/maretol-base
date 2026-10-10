@@ -1,5 +1,6 @@
 ---
 import '@/styles/global.css'
+import AnalyticsScripts from '@/components/shell/AnalyticsScripts.astro'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { getHostname, SITE_DESCRIPTION, SITE_NAME, TWITTER_ACCOUNT } from '@/lib/site'
 
@@ -52,6 +53,7 @@ const twitterCard = meta.twitterCard ?? 'summary'
     <meta name="twitter:description" content={ogDescription} />
     <meta name="twitter:image" content={ogImage} />
     <link rel="icon" href="/favicon.ico" />
+    <AnalyticsScripts />
   </head>
   <body lang="ja" class="min-h-screen antialiased bg-gray-300 font-mplus1">
     <slot />

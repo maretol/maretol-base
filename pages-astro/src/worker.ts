@@ -6,6 +6,7 @@ import { middleware, pages, trailingSlash } from 'astro/hono'
 import { cf } from '@astrojs/cloudflare/hono'
 import type { PurgeResult, PurgeRPC } from 'cache-tags'
 import { cacheHeaders } from './mw/cache'
+import { accessLog } from './mw/log'
 import { purgeByTags } from './mw/purge'
 import { normalizeQuery } from './mw/query'
 
@@ -16,6 +17,8 @@ app.use(cf())
 // 末尾のスラッシュの正規化（astro.config.ts の trailingSlash）。クエリの正規化より前に置き、スラッシュとクエリの両方がずれていても
 // スラッシュを直した URL にクエリの正規化が 1 回かかるだけで済むようにする
 app.use(trailingSlash())
+// アクセスログ（Axiom）。レスポンスが確定してから記録するので、この後ろのミドルウェアが返す 308 や 500 もそのステータスで残る
+app.use(accessLog())
 // クエリの正規化は、ページの描画やキャッシュのヘッダの確定より前に行う
 app.use(normalizeQuery())
 app.use(cacheHeaders())

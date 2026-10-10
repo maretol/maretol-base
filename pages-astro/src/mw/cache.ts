@@ -1,5 +1,6 @@
 import type { Context, MiddlewareHandler } from 'hono'
 import { getFetchState } from 'astro/hono'
+import { pageEvent, sendLogs } from '../lib/axiom'
 import { setNoStore, shortenForDegraded } from '../lib/cache'
 
 // レスポンスのキャッシュヘッダを確定する（astro_design.md 4.1）
@@ -16,6 +17,7 @@ export function cacheHeaders(): MiddlewareHandler {
     const rendered = await readHTMLBody(c.res)
     if (!rendered.ok) {
       console.error(`[mw/cache.ts] Render error: ${url.pathname}`, rendered.error)
+      sendLogs(c.executionCtx, [pageEvent('render_error', url, describeError(rendered.error))])
       // Hono は c.res を差し替えるときに元のレスポンスのヘッダを引き継ぐので、先にキャッシュ用のヘッダを落とす
       setNoStore(c.res.headers)
       c.res = await renderErrorResponse(c)
@@ -36,6 +38,7 @@ export function cacheHeaders(): MiddlewareHandler {
       const degraded = getFetchState(c).locals.degraded
       if (degraded?.length) {
         console.warn(`[mw/cache.ts] Degraded page (short cache): ${url.pathname}`, JSON.stringify(degraded))
+        sendLogs(c.executionCtx, [pageEvent('degraded_page', url, { reasons: degraded })])
         shortenForDegraded(c.res.headers)
       }
     }
@@ -43,6 +46,14 @@ export function cacheHeaders(): MiddlewareHandler {
       c.res = new Response(rendered.body, c.res)
     }
   }
+}
+
+// 描画中の例外を Axiom に送る形にする
+function describeError(error: unknown): { error: string; stack?: string } {
+  if (error instanceof Error) {
+    return { error: `${error.name}: ${error.message}`, stack: error.stack }
+  }
+  return { error: String(error) }
 }
 
 // HTML の本文を最後まで読む。HTML 以外は読まずに null を返す。描画中の例外は本文を読む途中で投げられる
