@@ -229,14 +229,15 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 ミドルウェアの順序
 
 1. `cf()`（静的アセットの配信、`locals.cfContext` などの設定。Astro の他のハンドラより前に置く）
-2. 末尾のスラッシュの正規化（`astro/hono` の `trailingSlash()`。4.5。クエリの正規化より前に置き、両方がずれていてもスラッシュを直した URL にクエリの正規化が 1 回かかるだけで済むようにする）
-3. アクセスログ（`src/mw/log.ts`。Axiom へ送る。「ログと解析」）
-4. クエリの正規化（`src/mw/query.ts`。4.5）
-5. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
-6. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
-7. Astro の `middleware()` / `pages()`
+2. セキュリティヘッダ（`src/mw/headers.ts`。この後ろが返すリダイレクトやエラーにも付ける。「セキュリティヘッダ」）
+3. 末尾のスラッシュの正規化（`astro/hono` の `trailingSlash()`。4.5。クエリの正規化より前に置き、両方がずれていてもスラッシュを直した URL にクエリの正規化が 1 回かかるだけで済むようにする）
+4. アクセスログ（`src/mw/log.ts`。Axiom へ送る。「ログと解析」）
+5. クエリの正規化（`src/mw/query.ts`。4.5）
+6. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
+7. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
+8. Astro の `middleware()` / `pages()`
 
-ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）。6 で検出した不完全なページと描画中の例外も、アクセスログと同じ仕組みで Axiom へ送る（「ログと解析」）
+ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）。7 で検出した不完全なページと描画中の例外も、アクセスログと同じ仕組みで Axiom へ送る（「ログと解析」）
 
 ### 固定ページとフィード
 
@@ -298,6 +299,19 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
   - `degraded_page`（`src/mw/cache.ts`）: 取得に失敗した部品を含むページ（4.1）。`reasons` に `locals.degraded` の内容
   - `render_error`（`src/mw/cache.ts`）: 描画中の例外で 500 にしたページ。`error` と `stack`
 - Workers Logs（observability）には、現行がしていた全アクセスの `console.log` は出さない（Axiom に一本化する）。不完全なページと描画中の例外は、これまでどおり `console.warn` / `console.error` にも出す
+
+### セキュリティヘッダ
+
+現行サイトにはこの種のヘッダが無い（#1306）。付けるのは次の 2 つだけ（M5 で決定）
+
+- `X-Content-Type-Options: nosniff`。ブラウザに Content-Type を推測させない。すべての応答の Content-Type は正しいので副作用は無い
+- `Content-Security-Policy: frame-ancestors 'self' https://clarity.microsoft.com`。他サイトの iframe に埋め込まれないようにする。Clarity のヒートマップはダッシュボードが自サイトを iframe で開くので許す。自サイトの中で自分を iframe にする箇所は無い（drawer は fetch、admin のプレビューはリンク）。YouTube・Tweet・地図の埋め込みは自サイトが外を読む向きなので影響しない
+
+付けないと決めたもの: `script-src` などを含む本格的な CSP（信頼境界が著者本人で、利用者の入力を HTML に出す箇所も無い。許可リストにはリンクカードの OGP 画像の任意のホストや Twitter の widget が注入する style まで要り、埋め込みを足すたびに直す保守が割に合わない）、`Strict-Transport-Security`（付けるならゾーンの設定で。v3 と v4 の両方と apex に同時に効く）、`Referrer-Policy`（ブラウザの既定と同じになる）、`Permissions-Policy`、COOP / COEP / CORP（COEP は外部の埋め込みを壊す）
+
+付け方: ページ（404・500・リダイレクト・Server Island を含む）は Hono のミドルウェア（`src/mw/headers.ts`。`cf()` の直後）で付ける。静的アセットは Worker の手前で配信されるので `public/_headers` の `/*` で `nosniff` だけ付ける。Workers Cache はヘッダごと保存するのでヒット時にも付く。変えるときはデプロイが要るが、デプロイでキャッシュが切り替わるので追加の手当ては要らない
+
+head（OGP・canonical・noindex・favicon）は `src/layouts/BaseLayout.astro` に集約済み（M3・M4）。favicon は `public/favicon.ico` を `/favicon.ico` で配信する。現行サイトの `/icon.ico`（Next.js の規約）は作らない
 
 ### ビルド・デプロイ・ローカル開発
 
