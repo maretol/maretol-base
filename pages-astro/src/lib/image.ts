@@ -71,11 +71,19 @@ export function getImageSources(
   }
 }
 
+// 原本のピクセル幅で表示する 1 枚の URL（記事画像のモーダル）。原本の幅が分からないときは最大の候補にする（原本より大きくはならない）。
+// 表示サイズを CSS で決めない img に getImageSources の srcset を渡すと、2x の候補が選ばれる画面では
+// 画像の大きさが実ピクセルの半分として扱われ、原本の半分の大きさで表示されるので使わない
+export function getFullSizeImageURL(src: string, sourceWidth?: number): string {
+  return getTransformedImageURL(src, `w=${pickWidth(sourceWidth ?? Infinity)},q=80,f=webp`)
+}
+
 // 記事画像の URL から、ページ内アンカーとモーダルの URL に使う base64url を作る。
-// btoa は Latin-1 の範囲外の文字で例外（InvalidCharacterError）を投げる。日本語などをパーセントエンコードせずに含む URL を
-// 本文に書くと、その記事は描画中の例外で 500 になる（未対応。該当する URL はパーセントエンコードして書く必要がある）
+// btoa は Latin-1 の範囲外の文字で例外（InvalidCharacterError）を投げるので、UTF-8 のバイト列にしてから渡す。
+// ASCII だけの URL は、バイト列にしても結果が変わらない（共有済みのモーダルの URL もそのまま使える）
 export function toBase64URL(src: string): string {
-  return btoa(src).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
+  const binary = String.fromCharCode(...new TextEncoder().encode(src))
+  return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_')
 }
 
 // 記事画像モーダルの URL。直接開くと記事の該当画像の位置へ移動する（pages/blog/[article_id]/image/[src].astro）。
