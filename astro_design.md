@@ -26,7 +26,7 @@ CMS 側（admin-pages / cms-data-fetcher / D1）の設計は cms_goal.md・cms_d
 | 7 | KV | `CMS_CACHE` のみ撤去。`IMAGE_CACHE` / `OGP_FETCHER_CACHE` / `CMS_DRAFT` は残す | 残す 3 つは結果整合性で困らない用途 |
 | 8 | 限定公開記事 | キャッシュしない。unlock にレート制限を付ける。`secret_code` はハッシュ化しない | Workers Cache は Cookie でキーを分けられない。admin で既存コードを確認できる運用を優先 |
 | 9 | prerender | `/.well-known/nostr.json`・robots など本当に静的なものだけ（どちらも `public/` の静的ファイルにした） | about / contact / secret は D1 由来で CMS から更新される |
-| 10 | アクセスログ | Axiom へのログは描画時（ミス時）のみになることを受容。アクセス解析は Cloudflare beacon / Clarity / Cloudflare Analytics で見る | ヒット時は Worker が起動しない。ログはエラーと異常アクセスの監視用に残す |
+| 10 | アクセスログ | Axiom へのログは描画時（ミス時）のみになることを受容。アクセス解析は Cloudflare beacon / Clarity / Cloudflare Analytics で見る。beacon / Clarity のタグは本番だけに出す（staging では出さない） | ヒット時は Worker が起動しない。ログはエラーと異常アクセスの監視用に残す。staging のアクセスを解析に混ぜない |
 | 11 | エッジ TTL | 30 日 | パージで更新するので、長さはパージ漏れ時の上限としてしか効かない |
 | 12 | 進め方 | development へ小分け PR。`pages-astro` は development への push で staging にデプロイする | 切替まで本番に影響しない |
 | 13 | drawer・モーダル | イラスト drawer・記事画像モーダルとも Island + History API（10 章）。現行の URL と、直接開いた場合の挙動を維持する | 互換性のため、既存の仕組み（重ねて表示し URL も変える）を変えない |
@@ -193,7 +193,7 @@ pages-astro/
 ├─ tailwind.config.ts       # 現行 pages の設定を引き継ぐ（global.css の @config から読む）
 └─ src/
    ├─ worker.ts             # Worker のエントリ（wrangler の main）。Hono + RPC メソッド
-   ├─ mw/                   # cache / purge / query（M5: log）
+   ├─ mw/                   # cache / purge / query / log
    ├─ lib/                  # RPC 呼び出し、キャッシュヘッダ、画像 URL、OGP、ページ番号
    ├─ pages/
    │  ├─ index.astro
@@ -230,15 +230,13 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 
 1. `cf()`（静的アセットの配信、`locals.cfContext` などの設定。Astro の他のハンドラより前に置く）
 2. 末尾のスラッシュの正規化（`astro/hono` の `trailingSlash()`。4.5。クエリの正規化より前に置き、両方がずれていてもスラッシュを直した URL にクエリの正規化が 1 回かかるだけで済むようにする）
-3. アクセスログ（Axiom。bot 判定・geo・prefetch 除外は現行 `pages/middleware.ts` を移植。M5）
+3. アクセスログ（`src/mw/log.ts`。Axiom へ送る。「ログと解析」）
 4. クエリの正規化（`src/mw/query.ts`。4.5）
 5. （限定公開記事のゲートはミドルウェアにしない。記事詳細のページが記事を取得した時点で判定する。6 章）
 6. キャッシュヘッダの確定（`src/mw/cache.ts`。HTML の本文を最後まで描画し、既定値の適用・不完全なページの保持期間の短縮・描画中の例外の 500 化を行う）
 7. Astro の `middleware()` / `pages()`
 
-ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）
-
-アクセスログとは別に、6 で検出した不完全なページ（どの部品の取得に失敗したか）と描画中の例外も Axiom へ送る。キャッシュを短くしたことに気づけるようにするため。送信の仕組みはアクセスログと共用する（M5）
+ログはレスポンスを待たせない（`waitUntil`）。Secrets Store の取得をリクエストごとに await しない（#1303 と同じ問題を持ち込まない）。6 で検出した不完全なページと描画中の例外も、アクセスログと同じ仕組みで Axiom へ送る（「ログと解析」）
 
 ### 固定ページとフィード
 
@@ -290,6 +288,16 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 - サイドバーのタグの選択は React の Island（`src/components/islands/TagSelect.tsx`、Radix Select）。サイドバーは md（48rem）以上の幅でだけ表示するので、`client:media="(min-width: 48rem)"` でその幅になってから読み込む（狭い画面で開いたあとに幅が広がった場合も、その時点で読み込まれる）。class は現行サイトの shadcn/ui の Select を結合済みの文字列で持つ。トップページの横スクロールの左右ボタンは、Island にせず `<script>` で動かす
 - ヘッダーのロゴ画像の `width` / `height` は原本（1104×210）の比率に合わせる。本文とサイドバーの列の幅は grid で決める（`minmax(0,4fr)` と `minmax(15rem,1fr)`、間隔 16px）。本文は残りの幅、サイドバーは全体の 1/5 で、狭い画面では 15rem にする。幅が中身・フォント・サイドバーの有無に左右されないので、読み込みの途中で本文の幅が変わらない。どちらも、初回訪問時のレイアウトのずれを避けるため（#1355）。幅 1280px 以上では現行サイトと同じ幅になり、それより狭い幅では本文が少し狭くなる（900px で 12px。現行サイトは、サイドバーの幅が中身の最小幅で決まっている）
 - 漫画の表紙（サイドバーと概要カード）は、1:1.41（B5 など）を想定して枠の比率を固定し、`object-contain` で収める。読み込み後に高さが変わらないようにするため（#1355）
+
+### ログと解析
+
+- アクセス解析は Cloudflare Web Analytics の beacon と Microsoft Clarity で行う（決定 10）。どちらも本番（`ENV` が `PRD`）だけに出し、staging と開発サーバーでは出さない（`src/components/shell/AnalyticsScripts.astro`、`isProduction()`）。Clarity のプロジェクト ID は Secrets Store（`CLARITY_ID`）から読み、isolate ごとに 1 回だけ取得して使い回す（`src/lib/analytics.ts`）。読めないときは Clarity を出さずに描画を続ける
+- Axiom へのログは、異常なアクセスとエラーの監視用（決定 10）。ヒット時は Worker が起動しないので、残るのは描画した（ミスした）リクエストだけ。本番と staging の両方から送り（現行と同じ。`host` で区別する）、開発サーバーからは送らない（`src/worker.ts` を通らない）。送信は `src/lib/axiom.ts` に集約し、`waitUntil` でレスポンスを待たせない。Secrets Store（`AXIOM_ENDPOINT` / `AXIOM_APITOKEN`）は isolate ごとに 1 回だけ読む（#1303 の問題を持ち込まない）。送信の失敗はページに影響させず、Workers Logs に残す
+- 送るイベントは 3 種類。`type` で区別する
+  - `access_log`（`src/mw/log.ts`）: 現行 `pages/middleware.ts` と同じ項目（method / host / path / search / referer / utm_* / is_bot / bot_name / user_agent / country / region / city / connecting_ip）に `status` を足したもの。bot 判定は現行のパターンをそのまま使う。地域情報は `request.cf` から読む。残さないのは、Astro の内部ルート（`/_server-islands/` など `/_` で始まるパス）、`/cdn-cgi/`、機械向けのルート（`/rss/feed.rdf`、`/sitemap.xml`、`/.well-known/nostr.json`、`/favicon.ico`、`/icon.ico`）、画像・CSS・JS の拡張子、ブラウザの先読み（`Sec-Purpose` / `Purpose` に prefetch）。レスポンスが確定してから記録するので、500 への差し替えやクエリの正規化の 308 もそのステータスで残る。末尾のスラッシュの 301 はこの前で返るので残らない
+  - `degraded_page`（`src/mw/cache.ts`）: 取得に失敗した部品を含むページ（4.1）。`reasons` に `locals.degraded` の内容
+  - `render_error`（`src/mw/cache.ts`）: 描画中の例外で 500 にしたページ。`error` と `stack`
+- Workers Logs（observability）には、現行がしていた全アクセスの `console.log` は出さない（Axiom に一本化する）。不完全なページと描画中の例外は、これまでどおり `console.warn` / `console.error` にも出す
 
 ### ビルド・デプロイ・ローカル開発
 
