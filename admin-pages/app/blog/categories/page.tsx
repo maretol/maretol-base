@@ -2,11 +2,16 @@ import { listBlogCategories } from '@/lib/db_blog'
 import { createBlogCategoryAction } from '../actions'
 import { CategoryOrderList } from './category-order-list'
 import { SubmitButton } from '@/components/submit-button'
+import { PurgeFailedNotice } from '@/components/purge-failed-notice'
 
 export const dynamic = 'force-dynamic'
 
-export default async function BlogCategories({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams
+export default async function BlogCategories({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; purge_failed?: string }>
+}) {
+  const { error, purge_failed: purgeFailed } = await searchParams
   const categories = await listBlogCategories()
 
   return (
@@ -14,6 +19,7 @@ export default async function BlogCategories({ searchParams }: { searchParams: P
       <h1 className="text-2xl font-bold">ブログカテゴリ管理</h1>
 
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {purgeFailed === '1' && <PurgeFailedNotice />}
 
       <CategoryOrderList categories={categories} />
 

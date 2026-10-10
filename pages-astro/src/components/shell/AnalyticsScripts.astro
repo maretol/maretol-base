@@ -1,0 +1,22 @@
+---
+import { CF_BEACON_TOKEN, claritySnippet, getClarityID } from '@/lib/analytics'
+import { isProduction } from '@/lib/site'
+
+// アクセス解析のタグ（Cloudflare Web Analytics の beacon と Microsoft Clarity）。
+// 本番だけに出し、staging と開発サーバーでは出さない（astro_design.md 5 章「ログと解析」）。
+// Clarity の ID は Secrets Store から読む（isolate ごとに 1 回）。読めないときは beacon だけを出す
+const enabled = isProduction()
+const clarityID = enabled ? await getClarityID() : null
+---
+
+{
+  enabled && (
+    <script
+      is:inline
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={`{"token": "${CF_BEACON_TOKEN}"}`}
+    />
+  )
+}
+{clarityID !== null && <script is:inline set:html={claritySnippet(clarityID)} />}

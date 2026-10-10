@@ -1,0 +1,96 @@
+---
+import type { atelierResult } from 'api-types'
+import { ExternalLinkIcon, XIcon } from '@lucide/astro'
+import IllustTags from './IllustTags.astro'
+import Annotations from '@/components/article/Annotations.astro'
+import ArticleContent from '@/components/article/ArticleContent.astro'
+import ShareSection from '@/components/article/ShareSection.astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getIllustDetailTitle, illustDetailPath } from '@/lib/illust'
+import { getTransformedImageURL } from '@/lib/image'
+import { getHostname } from '@/lib/site'
+import { convertJST } from '@/lib/time'
+import { cn } from '@/lib/utils'
+
+// イラストの詳細。drawer（islands/IllustDrawer.tsx）の中身で、詳細の URL を直接開いたときは固定の枠に出る。
+// 一覧から開いたときは、island が詳細ページを取得して [data-illust-detail] の要素を drawer に差し込む。
+// 閉じるボタンは一覧へのリンクにしておき、island が動いているときはクリックを横取りして drawer を閉じる
+type Props = { illust: atelierResult; draftKey?: string }
+
+const { illust, draftKey } = Astro.props
+const title = getIllustDetailTitle(illust.title)
+const publishedAt = convertJST(illust.publishedAt)
+const shareURL = `${getHostname()}${illustDetailPath(illust.id)}`
+// 原寸の画像。形式だけ閲覧者の環境に合わせる
+const originalImageURL = getTransformedImageURL(illust.src, 'f=auto,q=100')
+---
+
+<div data-illust-detail data-title={title}>
+  <div class="absolute right-0 top-0 z-10">
+    <a
+      href="/illust"
+      class={cn(buttonVariants({ variant: 'ghost' }), 'p-2 w-12 h-12 cursor-pointer')}
+      data-illust-drawer-close
+      aria-label="閉じる"
+    >
+      <XIcon class="stroke-2" />
+    </a>
+  </div>
+  <div class="w-full h-auto">
+    {/* drawer の幅（画面の 3/4）いっぱいに出す。2x でも 2048px までにする */}
+    <CdnImage
+      src={illust.src}
+      alt={illust.title}
+      width={1080}
+      height={1080}
+      quality={90}
+      maxDisplayWidth={1024}
+      loading="eager"
+      class="w-full h-full max-h-dvh object-contain"
+    />
+  </div>
+  <div class="flex justify-between p-4">
+    <a
+      href={originalImageURL}
+      target="_blank"
+      rel="noopener noreferrer"
+      class={cn(buttonVariants({ variant: 'outline' }), 'font-suse flex items-center gap-2')}
+    >
+      <ExternalLinkIcon />
+      Open in new tab
+    </a>
+    <div class="flex items-center gap-2">
+      <ShareSection shareURL={shareURL} shareTitle={`Illustration: ${illust.title}`} contentType="illust" />
+    </div>
+  </div>
+  <div class="mx-4">
+    <div class="p-4 pb-2">
+      <h1 class="font-bold text-3xl">{illust.title}</h1>
+    </div>
+    <p class="px-4 py-0 text-right text-sm text-muted-foreground">Published at : {publishedAt}</p>
+    <div class="px-4">
+      <IllustTags tagOrCategory={illust.tag_or_category} />
+    </div>
+    <div class="px-4 py-2">
+      <ArticleContent
+        contents={illust.parsed_description}
+        tableOfContents={illust.table_of_contents}
+        articleID=""
+        draftKey={draftKey}
+      />
+      <Annotations annotations={illust.annotations ?? []} />
+    </div>
+  </div>
+  <div class="w-full flex flex-col items-center justify-center gap-2 p-4 mt-4">
+    <a
+      href="/illust"
+      class={cn(buttonVariants({ variant: 'secondary' }), 'w-1/2 cursor-pointer flex justify-center gap-2 font-bold')}
+      data-illust-drawer-close
+    >
+      <XIcon class="w-4 h-4" />
+      Close
+    </a>
+    <p class="font-suse">Drawn by Maretol. © {publishedAt.substring(0, 4)} Maretol</p>
+  </div>
+</div>

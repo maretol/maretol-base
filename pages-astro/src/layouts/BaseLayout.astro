@@ -1,5 +1,6 @@
 ---
 import '@/styles/global.css'
+import AnalyticsScripts from '@/components/shell/AnalyticsScripts.astro'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { getHostname, SITE_DESCRIPTION, SITE_NAME, TWITTER_ACCOUNT } from '@/lib/site'
 
@@ -14,6 +15,8 @@ export type PageMeta = {
   ogImage?: string
   twitterCard?: 'summary' | 'summary_large_image'
   noindex?: boolean
+  // 正規の URL。クエリで内容が変わるページで指定する
+  canonical?: string
 }
 
 type Props = { meta?: PageMeta }
@@ -36,6 +39,7 @@ const twitterCard = meta.twitterCard ?? 'summary'
     <title>{title}</title>
     <meta name="description" content={description} />
     {meta.noindex && <meta name="robots" content="noindex, nofollow" />}
+    {meta.canonical && <link rel="canonical" href={meta.canonical} />}
     <meta property="og:title" content={ogTitle} />
     <meta property="og:description" content={ogDescription} />
     <meta property="og:url" content={ogURL} />
@@ -49,6 +53,7 @@ const twitterCard = meta.twitterCard ?? 'summary'
     <meta name="twitter:description" content={ogDescription} />
     <meta name="twitter:image" content={ogImage} />
     <link rel="icon" href="/favicon.ico" />
+    <AnalyticsScripts />
   </head>
   <body lang="ja" class="min-h-screen antialiased bg-gray-300 font-mplus1">
     <slot />

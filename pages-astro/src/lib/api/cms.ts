@@ -1,4 +1,12 @@
-import type { adjacentContentsResult, contentsAPIResult } from 'api-types'
+import type {
+  adjacentContentsResult,
+  atelierResult,
+  bandeDessineeResult,
+  categoryAPIResult,
+  contentsAPIResult,
+  infoAPIResult,
+  staticAPIResult,
+} from 'api-types'
 import { env } from 'cloudflare:workers'
 
 // cms-data-fetcher の RPC を呼ぶ薄い関数。データのキャッシュは持たない（HTML をエッジでキャッシュする。astro_design.md 5 章）
@@ -22,6 +30,73 @@ export async function getCMSContent(articleID: string, draftKey?: string): Promi
   }
 }
 
+// ブログ記事の一覧と総件数。範囲外の offset では空の一覧と総件数が返る。
+// 1 回の描画の中では、同じ範囲の取得を 1 回にまとめる（ページ本体とサイドバーの両方が呼ぶため）。
+// 取得中の Promise を locals に置いて共有する。リクエストをまたぐキャッシュは持たない
+export function getCMSContents(
+  locals: App.Locals,
+  offset: number,
+  limit: number,
+): Promise<{ contents: contentsAPIResult[]; total: number }> {
+  const requests = (locals.contents ??= [])
+  const shared = requests.find((r) => r.offset === offset && r.limit === limit)
+  if (shared) {
+    return shared.request
+  }
+  const request = fetchContents(offset, limit)
+  requests.push({ offset, limit, request })
+  return request
+}
+
+// 最新の記事を count 件。同じ描画の中で先頭からの一覧を取得済みなら（ブログ一覧の 1 ページ目など）、その結果の先頭を使う
+export async function getLatestCMSContents(locals: App.Locals, count: number): Promise<contentsAPIResult[]> {
+  const fetched = locals.contents?.find((r) => r.offset === 0 && r.limit >= count)
+  const { contents } = await (fetched?.request ?? getCMSContents(locals, 0, count))
+  return contents.slice(0, count)
+}
+
+async function fetchContents(offset: number, limit: number): Promise<{ contents: contentsAPIResult[]; total: number }> {
+  return (await env.CMS_RPC.fetchContents(offset.toString(), limit.toString())) as {
+    contents: contentsAPIResult[]
+    total: number
+  }
+}
+
+// タグで絞り込んだブログ記事の一覧と総件数
+export async function getCMSContentsWithTags(
+  tagIDs: string[],
+  offset: number,
+  limit: number,
+): Promise<{ contents: contentsAPIResult[]; total: number }> {
+  return (await env.CMS_RPC.fetchContentsByTag(tagIDs, offset.toString(), limit.toString())) as {
+    contents: contentsAPIResult[]
+    total: number
+  }
+}
+
+// ブログのタグ（カテゴリ）の一覧。1 回の描画の中では取得を 1 回にまとめる（タグ一覧のページ本体とサイドバーの両方が呼ぶため）
+export function getTags(locals: App.Locals): Promise<categoryAPIResult[]> {
+  return (locals.tags ??= fetchTags())
+}
+
+async function fetchTags(): Promise<categoryAPIResult[]> {
+  return (await env.CMS_RPC.fetchTags()) as categoryAPIResult[]
+}
+
+// 固定文言（サイドバーの About / Profile など）
+export async function getStatic(): Promise<staticAPIResult> {
+  return (await env.CMS_RPC.fetchStatic()) as staticAPIResult
+}
+
+// 限定公開記事のコードの照合に使う情報。secret_code を含むので、ブラウザへは渡さない。
+// 下書きプレビューのときは draftKey を渡す（渡さないと、未公開の記事の secret_code を取得できない）
+export async function getSecretMeta(
+  articleID: string,
+  draftKey?: string,
+): Promise<{ is_secret: boolean; secret_code: string | null }> {
+  return await env.CMS_RPC.fetchSecretMeta(articleID, draftKey ?? null)
+}
+
 // 前後記事。取得に失敗したら null（記事本体は表示するが、呼び出し側でキャッシュを避ける）
 export async function getAdjacentContents(articleID: string): Promise<adjacentContentsResult | null> {
   try {
@@ -30,4 +105,55 @@ export async function getAdjacentContents(articleID: string): Promise<adjacentCo
     console.error(`[lib/api/cms.ts] fetchAdjacentContents failed: ${articleID}`, e)
     return null
   }
+}
+
+// info（about / contact / artifact などの固定ページ）の一覧。
+// 1 回の描画の中では取得を 1 回にまとめる（制作物カードが複数あると、カードごとに全件の取得とパースが走るため）。
+// 取得中の Promise を locals に置いて共有する。リクエストをまたぐキャッシュは持たない
+export function getInfo(locals: App.Locals): Promise<infoAPIResult[]> {
+  return (locals.info ??= fetchInfo())
+}
+
+// 固定ページ（about / contact など）の info。パスで探し、無ければ null
+export async function getInfoPage(locals: App.Locals, pathname: string): Promise<infoAPIResult | null> {
+  const info = await getInfo(locals)
+  // page_pathname は先頭のスラッシュが無い形でも登録されている
+  return info.find((c) => c.page_pathname === pathname || c.page_pathname === pathname.slice(1)) ?? null
+}
+
+async function fetchInfo(): Promise<infoAPIResult[]> {
+  return (await env.CMS_RPC.fetchInfo()) as infoAPIResult[]
+}
+
+// 漫画の一覧と総件数。seriesID を渡すとそのシリーズの漫画だけになる（総件数も絞り込んだ後の数）
+export async function getBandeDessinees(
+  offset: number,
+  limit: number,
+  seriesID?: string,
+): Promise<{ bandeDessinees: bandeDessineeResult[]; total: number }> {
+  return (await env.CMS_RPC.fetchBandeDessinees(offset.toString(), limit.toString(), seriesID ?? null)) as {
+    bandeDessinees: bandeDessineeResult[]
+    total: number
+  }
+}
+
+// イラストの一覧と総件数
+export async function getAteliers(
+  offset: number,
+  limit: number,
+): Promise<{ ateliers: atelierResult[]; total: number }> {
+  return (await env.CMS_RPC.fetchAteliers(offset.toString(), limit.toString())) as {
+    ateliers: atelierResult[]
+    total: number
+  }
+}
+
+// 特定の漫画。fetcher は「存在しない」とそれ以外の失敗を区別せずに例外を投げる
+export async function getBandeDessineeByID(contentID: string, draftKey?: string): Promise<bandeDessineeResult> {
+  return (await env.CMS_RPC.fetchBandeDessinee(contentID, draftKey ?? null)) as bandeDessineeResult
+}
+
+// 特定のイラスト。fetcher は「存在しない」とそれ以外の失敗を区別せずに例外を投げる
+export async function getAtelierByID(contentID: string, draftKey?: string): Promise<atelierResult> {
+  return (await env.CMS_RPC.fetchAtelier(contentID, draftKey ?? null)) as atelierResult
 }

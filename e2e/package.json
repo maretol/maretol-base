@@ -2,7 +2,7 @@
   "name": "e2e",
   "version": "0.1.0",
   "private": true,
-  "description": "staging 環境に対する E2E テスト（Playwright）",
+  "description": "staging 環境（Astro 版の公開サイト maretol-base-v4-stg）に対する E2E テスト（Playwright）",
   "scripts": {
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",

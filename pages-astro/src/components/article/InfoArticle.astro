@@ -1,0 +1,35 @@
+---
+import type { infoAPIResult } from 'api-types'
+import FullArticle from './FullArticle.astro'
+import { getHostname } from '@/lib/site'
+
+// 固定ページ（about / contact など、CMS の info）の本文
+type Props = {
+  info: infoAPIResult
+  // 見出しに出す題名
+  title: string
+  // ページのパス（共有 URL に使う）
+  path: string
+  // 本文の中のリンク（画像など）に使う ID
+  articleID: string
+}
+
+const { info, title, path, articleID } = Astro.props
+---
+
+{/* 外枠の div は現行サイトから移したもの。子が 1 つなので flex も gap も効いていない。
+    外すとこのコンポーネントは props を渡すだけになるので、整理するときは各ページから FullArticle を直接使う形も考えられる */}
+<div class="flex flex-col justify-center gap-10">
+  <FullArticle
+    articleID={articleID}
+    title={title}
+    publishedAt={info.publishedAt}
+    updatedAt={info.updatedAt}
+    categories={[]}
+    parsedContents={info.parsed_content}
+    tableOfContents={info.table_of_contents}
+    type="info"
+    shareURL={`${getHostname()}${path}`}
+    annotations={info.annotations}
+  />
+</div>

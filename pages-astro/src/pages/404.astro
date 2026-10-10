@@ -4,21 +4,16 @@ import BlogLayout from '@/layouts/BlogLayout.astro'
 import Tags from '@/components/article/Tags.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { card } from '@/components/ui/card'
-import { cacheNotFound, noStore } from '@/lib/cache'
+import { cacheNotFound } from '@/lib/cache'
 import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
 // 一致するルートが無いときと、各ページからの rewrite で表示する
-const notFound = Astro.locals.notFound
-if (notFound?.noStore) {
-  noStore(Astro.response)
-} else {
-  cacheNotFound(Astro.response, notFound?.tags ?? [])
-}
+cacheNotFound(Astro.response, Astro.locals.notFound?.tags ?? [])
 Astro.response.status = 404
 ---
 
-<BlogLayout meta={{ noindex: true }}>
+<BlogLayout meta={{ noindex: true }} sidebar={false}>
   <div class={cn(card.root, 'w-full bg-gray-100')}>
     <div class={card.header}>
       <h3 class={card.title}>404 Not Found</h3>

@@ -1,53 +1,28 @@
 ---
-import BaseLayout, { type PageMeta } from './BaseLayout.astro'
-import HeaderButtons from '@/components/shell/HeaderButtons.astro'
-import FooterButtons from '@/components/shell/FooterButtons.astro'
-import CdnImage from '@/components/ui/CdnImage.astro'
-import { buttonVariants } from '@/components/ui/button'
-import { getHeaderImageURL } from '@/lib/image'
-import { cn } from '@/lib/utils'
+import SiteLayout from './SiteLayout.astro'
+import type { PageMeta } from './BaseLayout.astro'
+import BlogSidebar from '@/components/shell/sidebar/BlogSidebar.astro'
+import IllustDrawer from '@/components/islands/IllustDrawer'
 
-// 幅が広い画面で左右に空白を作り、中央にコンテンツ、右にサイドバーを置く。ヘッダー画像とフッターもここで表示する
-type Props = { meta?: PageMeta }
+// 中央にコンテンツ、右にサイドバーを置く。サイドバーは md 以上の幅でだけ表示する
+type Props = {
+  meta?: PageMeta
+  // サイドバーを出さない場合は false（列は残る）。エラーページで、サイドバーのための取得を増やさないために使う
+  sidebar?: boolean
+}
 
-const { meta } = Astro.props
-const year = new Date().getFullYear()
+const { meta, sidebar = true } = Astro.props
 ---
 
-<BaseLayout meta={meta}>
-  <div class="flex justify-center pb-10" id="top">
-    <div class="max-w-425 w-full sm:mx-6">
-      <div class="my-10">
-        <div class="mb-2 pt-2">
-          <a href="/" class={cn(buttonVariants({ variant: 'link' }), 'p-0')}>
-            <CdnImage
-              src={getHeaderImageURL()}
-              width={400}
-              height={100}
-              class="w-125 object-contain"
-              alt="Maretol Base"
-              loading="eager"
-            />
-          </a>
-        </div>
-        <HeaderButtons />
-      </div>
-      <div class="md:flex md:flex-row">
-        <div class="basis-4/5"><slot /></div>
-        <div class="basis-1/5 ml-4 not-md:hidden">
-          <slot name="sidebar" />
-        </div>
-      </div>
-      <div class="my-10">
-        <footer class="text-center text-sm text-gray-500 font-suse">
-          <FooterButtons />
-          <div>
-            © 2024 - {year} Maretol
-            <br />
-            DO NOT REPOST WITHOUT PERMISSION
-          </div>
-        </footer>
-      </div>
+<SiteLayout meta={meta}>
+  {/* 列の幅は grid で決める。本文は残りの幅、サイドバーは全体の 1/5（狭い画面では 15rem）。
+      幅が中身やサイドバーの有無に左右されないので、読み込みの途中で本文の幅が変わらない（#1355） */}
+  <div class="md:grid md:grid-cols-[minmax(0,4fr)_minmax(15rem,1fr)] md:gap-x-4">
+    <div><slot /></div>
+    <div class="not-md:hidden">
+      {sidebar && <BlogSidebar />}
     </div>
   </div>
-</BaseLayout>
+  {/* サイドバーと本文のイラストカードから、イラストの詳細を drawer で開く */}
+  {sidebar && <IllustDrawer client:idle />}
+</SiteLayout>

@@ -1,0 +1,94 @@
+---
+import {
+  BookImageIcon,
+  CircleAlertIcon,
+  HouseIcon,
+  SquareArrowLeftIcon,
+  SquareArrowRightIcon,
+  SquareArrowUpIcon,
+} from '@lucide/astro'
+import ComicHeader from './ComicHeader.astro'
+import ComicNavButton from './ComicNavButton.astro'
+import SiteFooter from '@/components/shell/SiteFooter.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { card } from '@/components/ui/card'
+import { cn } from '@/lib/utils'
+
+// 漫画が取得できなかったとき（非公開・削除・存在しない ID）。ビューワの形を保ったまま、見つからなかったことを出す
+const title = 'Not Found'
+const linkButtonClassName = cn(buttonVariants(), 'w-48 gap-1 font-suse')
+---
+
+<div>
+  <div class="w-full h-screen bg-gray-700 flex justify-center items-center">
+    <ComicHeader />
+    <CircleAlertIcon class="w-16 h-16 text-white" />
+  </div>
+  <div class="flex justify-center w-full">
+    <div class="w-full max-w-375">
+      <div class={cn(card.root, 'w-full bg-gray-100')}>
+        <div class={cn(card.content, 'py-2')}>
+          <div class="mt-5 space-y-2">
+            <h1 class="text-2xl font-bold pl-2 pb-1 content-h2">{title}</h1>
+            <div class="flex items-center justify-end gap-2"></div>
+            <div class="w-full font-semibold flex justify-center items-center gap-10">
+              <ComicNavButton href={null}>
+                <SquareArrowLeftIcon class="w-4 h-4" />
+                Next episode
+              </ComicNavButton>
+              <ComicNavButton href={null}>
+                Previous episode
+                <SquareArrowRightIcon class="w-4 h-4" />
+              </ComicNavButton>
+            </div>
+            <div class="w-full font-semibold flex justify-center items-center gap-10">
+              <ComicNavButton href={null}>
+                <SquareArrowUpIcon class="w-4 h-4" />
+                This series
+              </ComicNavButton>
+            </div>
+          </div>
+        </div>
+        <div class={cn(card.content, 'my-1 space-y-3')}>
+          <h2 class="text-xl font-bold pb-1 border-blue-900 pl-3 border-l-4">作品詳細</h2>
+          <div class="space-y-4 font-semibold">
+            <div>
+              <p>タイトル : {title}</p>
+              <p>シリーズ : -</p>
+              <p>ジャンル : -</p>
+            </div>
+            <div>
+              <p>作成日 : -</p>
+              <p>最終更新日 : -</p>
+            </div>
+            <div>
+              <p>初公開イベント名 : -</p>
+              <p>初公開イベント日 : -</p>
+            </div>
+          </div>
+          <div class="space-x-4 flex justify-center">
+            <a href="/comics" class={linkButtonClassName}>
+              <BookImageIcon class="w-4 h-4" />
+              Comics Page Top
+            </a>
+            <a href="/" class={linkButtonClassName}>
+              <HouseIcon class="w-4 h-4" />
+              Page Home
+            </a>
+          </div>
+        </div>
+        <hr class="border-gray-600 mx-4 h-8" />
+        <div class={card.content}>
+          <div class="space-y-5 content">
+            <p>対象のマンガが見つかりませんでした</p>
+            <p>リンクが正確でなかったか、公開が停止された可能性があります</p>
+            <p>Comics Page Top のリンクから探すか、Maretolに連絡してください</p>
+          </div>
+        </div>
+      </div>
+      <div class="my-10">
+        <SiteFooter />
+      </div>
+    </div>
+  </div>
+</div>

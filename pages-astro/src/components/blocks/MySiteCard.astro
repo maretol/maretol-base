@@ -1,0 +1,45 @@
+---
+import { BookOpenIcon, HouseIcon, ImageIcon, InfoIcon, MailIcon, NotebookTextIcon } from '@lucide/astro'
+import { buttonVariants } from '@/components/ui/button'
+import { cn, parseURL } from '@/lib/utils'
+
+// 自サイトのトップ・各一覧・固定ページへのカード
+type Props = { text: string }
+
+const { text } = Astro.props
+
+const details = {
+  '/': { Icon: HouseIcon, text: 'Top', path: '/', description: 'トップページ | Martol Base' },
+  '/blog/': { Icon: NotebookTextIcon, text: 'Blog', path: '/blog', description: 'ブログ | Martol Base' },
+  '/illust/': { Icon: ImageIcon, text: 'Illustrations', path: '/illust', description: 'イラスト | Martol Base' },
+  '/comics/': { Icon: BookOpenIcon, text: 'Comics', path: '/comics', description: 'マンガ | Martol Base' },
+  '/about/': { Icon: InfoIcon, text: 'About', path: '/about', description: 'このサイトについて | Martol Base' },
+  '/contact/': { Icon: MailIcon, text: 'Contact', path: '/contact', description: 'お問い合わせ・連絡 | Martol Base' },
+} as const
+
+// URL として読めないものは未対応として表示する
+const pathname = parseURL(text)?.pathname ?? ''
+const key = pathname.endsWith('/') ? pathname : pathname + '/'
+const detail = key in details ? details[key as keyof typeof details] : null
+---
+
+{
+  detail ? (
+    <div class="max-w-2xl">
+      <div class="flex flex-row items-center gap-2 p-4 bg-gray-300 rounded-lg">
+        <div class="w-full">
+          <div class="flex items-center gap-2 w-full">
+            <detail.Icon class="w-4 h-4" />
+            <div class="text-sm font-semibold text-gray-700">{detail.text}</div>
+          </div>
+          <p class="text-xs text-gray-500 ml-1">{detail.description}</p>
+        </div>
+        <a href={detail.path} class={cn(buttonVariants(), 'h-8')}>
+          Go to page
+        </a>
+      </div>
+    </div>
+  ) : (
+    <p>未対応: {text}</p>
+  )
+}

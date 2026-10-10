@@ -32,8 +32,12 @@ r2_buckets = [
     { binding = "STATIC", bucket_name = "static", remote = true }
 ]
 images = { binding = "IMAGE_TRANSFORMATION", remote = true }
+# 限定公開記事の解錠（POST /blog/{id}/unlock）の試行回数の制限。IP ごと（IPv6 は /64 ごと）に 60 秒で 5 回まで（#1301）
+ratelimits = [
+    { name = "SECRET_UNLOCK_RATE_LIMIT", namespace_id = "1001", simple = { limit = 5, period = 60 } }
+]
 
-# Workers Cache。ヒット時は Worker が起動しない。パージは src/worker.ts の POST /__purge
+# Workers Cache。ヒット時は Worker が起動しない。パージは src/worker.ts の RPC メソッド purgeTags()
 [cache]
 enabled = true
 
@@ -72,6 +76,9 @@ r2_buckets = [
     { binding = "STATIC", bucket_name = "static" }
 ]
 images = { binding = "IMAGE_TRANSFORMATION" }
+ratelimits = [
+    { name = "SECRET_UNLOCK_RATE_LIMIT", namespace_id = "1002", simple = { limit = 5, period = 60 } }
+]
 
 [env.staging.cache]
 enabled = true

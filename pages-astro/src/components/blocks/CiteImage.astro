@@ -1,0 +1,62 @@
+---
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { fetchCiteImage } from '@/lib/api/cite_image'
+import { markDegraded } from '@/lib/degraded'
+import { getImageModalHref, getNoImageURL, toBase64URL } from '@/lib/image'
+
+// 外部サイトの画像の引用。画像はサーバー側で取得して data URL で埋め込む
+type Props = {
+  url: string
+  source: string
+  caption?: string
+  sourceTitle?: string
+  articleID: string
+  draftKey?: string
+}
+
+const { url, source, caption, sourceTitle, articleID, draftKey } = Astro.props
+
+const image = await fetchCiteImage(url)
+const dataURL = image.ok ? image.dataURL : null
+// 時間をおけば直る可能性のある失敗（タイムアウトなど）だけ、不完全なページとして記録する。
+// 引用元が画像を消した・拒否しているなど、取り直しても直らない失敗は、代わりの表示のまま通常どおりキャッシュさせる
+if (!image.ok && !image.permanent) {
+  markDegraded(Astro.locals, `cite image: ${url}`)
+}
+// ページ内アンカーの id。モーダルの URL と 1 対 1 で対応する
+const anchorID = toBase64URL(url)
+const alt = caption || '引用画像'
+---
+
+<div class="bg-gray-200 p-3 rounded-lg border-l-8 border-l-gray-500 w-fit max-w-xl" id={anchorID}>
+  {
+    dataURL ? (
+      <a href={getImageModalHref(articleID, anchorID, draftKey)} class="x-blog-image">
+        {/* 画像は HTML に埋め込み済みなので遅延読み込みにしない（遅らせると、読み込み後に枠の大きさが変わる） */}
+        <img
+          src={dataURL}
+          alt={alt}
+          width={300}
+          height={400}
+          decoding="async"
+          class="w-full h-auto object-contain shadow-xl"
+        />
+      </a>
+    ) : (
+      <CdnImage src={getNoImageURL()} alt={alt} width={300} height={400} class="object-contain shadow-xl" />
+    )
+  }
+  <blockquote>
+    <div class="mt-3 text-center">
+      <p class="text-sm text-gray-800">
+        {caption && <span>{caption}　</span>}
+        {!dataURL && <span>引用元の画像にアクセスできませんでした</span>}
+      </p>
+      <p class="text-sm text-gray-800">
+        <a href={source} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">
+          {sourceTitle ? `引用元 : ${sourceTitle}` : '引用元'}
+        </a>
+      </p>
+    </div>
+  </blockquote>
+</div>

@@ -1,0 +1,22 @@
+---
+import { ShoppingCartIcon } from '@lucide/astro'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+type Props = { amazonURL: string }
+
+const { amazonURL } = Astro.props
+---
+
+{
+  amazonURL ? (
+    <div class="py-2">
+      <a href={amazonURL} target="_blank" class={cn(buttonVariants(), 'bg-gray-900 text-gray-100 space-x-2')}>
+        <ShoppingCartIcon size={24} />
+        <p>Amazon商品リンク</p>
+      </a>
+    </div>
+  ) : (
+    <p>Amazonの埋め込みがありましたがURLが不正ですなようです</p>
+  )
+}

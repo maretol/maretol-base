@@ -1,0 +1,131 @@
+---
+import { BookImageIcon, ImageIcon, InfoIcon, ListIcon, MailIcon, NotebookTextIcon } from '@lucide/astro'
+import SiteLayout from '@/layouts/SiteLayout.astro'
+import Article from '@/components/article/Article.astro'
+import ComicOverview from '@/components/comic/ComicOverview.astro'
+import IllustSampleArticle from '@/components/illust/IllustSampleArticle.astro'
+import IllustDrawer from '@/components/islands/IllustDrawer'
+import ContentsViewer from '@/components/top/ContentsViewer.astro'
+import ContentsViewerItem from '@/components/top/ContentsViewerItem.astro'
+import TopPageTitle from '@/components/top/TopPageTitle.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getAteliers, getBandeDessinees, getCMSContents } from '@/lib/api/cms'
+import { cachePage, latestListTags } from '@/lib/cache'
+import { getSampleEmbedTags } from '@/lib/content_tags'
+import { cn } from '@/lib/utils'
+
+// トップページ。最新のイラスト・漫画・記事を並べる
+
+// 横スクロールの一覧に出す件数と、記事の件数
+const VIEWER_COUNT = 5
+const ARTICLE_COUNT = 3
+
+const [ateliers, bandeDessinees, blogs] = await Promise.all([
+  getAteliers(0, VIEWER_COUNT),
+  getBandeDessinees(0, VIEWER_COUNT),
+  getCMSContents(Astro.locals, 0, ARTICLE_COUNT),
+])
+
+cachePage(Astro.response, [...latestListTags, ...getSampleEmbedTags(blogs.contents)])
+
+const otherContentClassName = cn(buttonVariants({ variant: 'outline' }), 'w-full max-w-96')
+---
+
+<SiteLayout class="min-w-0">
+  <div class="space-y-12">
+    <div class="space-y-20">
+      <div class="space-y-6">
+        <div>
+          <TopPageTitle>
+            <ImageIcon class="w-6 h-6" />
+            Illustrations
+          </TopPageTitle>
+        </div>
+        <ContentsViewer moreLink="/illust" moreButtonText="See all illustrations">
+          {
+            ateliers.ateliers.map((atelier) => (
+              <ContentsViewerItem>
+                <IllustSampleArticle
+                  id={atelier.id}
+                  title={atelier.title}
+                  imageSrc={atelier.src}
+                  objectPosition={atelier.object_position}
+                  tags={atelier.tag_or_category}
+                  publishedAt={atelier.publishedAt}
+                />
+              </ContentsViewerItem>
+            ))
+          }
+        </ContentsViewer>
+      </div>
+      <div class="space-y-6">
+        <div>
+          <TopPageTitle>
+            <BookImageIcon class="w-6 h-6" />
+            Comics
+          </TopPageTitle>
+        </div>
+        <ContentsViewer moreLink="/comics" moreButtonText="See all comics">
+          {
+            bandeDessinees.bandeDessinees.map((comic) => (
+              <ContentsViewerItem>
+                <ComicOverview comic={comic} />
+              </ContentsViewerItem>
+            ))
+          }
+        </ContentsViewer>
+      </div>
+      <div class="space-y-6">
+        <div>
+          <TopPageTitle>
+            <NotebookTextIcon class="w-6 h-6" />
+            Blog Articles
+          </TopPageTitle>
+        </div>
+        {
+          blogs.contents.map((content) => (
+            <Article
+              id={content.id}
+              title={content.title}
+              updatedAt={content.updatedAt}
+              categories={content.categories}
+              parsedContents={content.parsed_content}
+            />
+          ))
+        }
+        <div class="w-full">
+          <a href="/blog" class={cn(buttonVariants({ variant: 'outline' }), 'w-full bg-gray-100 hover:bg-white font-suse')}>
+            See all blog articles
+          </a>
+        </div>
+      </div>
+      <div class="space-y-6">
+        <div>
+          <TopPageTitle>
+            <ListIcon class="w-6 h-6" />
+            Other Contents
+          </TopPageTitle>
+        </div>
+        <div class="flex md:flex-row flex-col gap-4 justify-center items-center">
+          <a href="/about" class={otherContentClassName}>
+            <div class="flex items-center gap-2">
+              <InfoIcon class="h-6 w-6" />{' '}
+              <p>
+                <span class="alphabet">About :</span> このサイトについて
+              </p>
+            </div>
+          </a>
+          <a href="/contact" class={otherContentClassName}>
+            <div class="flex items-center gap-2">
+              <MailIcon class="h-6 w-6" />{' '}
+              <p>
+                <span class="alphabet">Contact :</span> 連絡はこちら
+              </p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <IllustDrawer client:idle />
+</SiteLayout>

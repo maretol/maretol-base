@@ -1,64 +1,39 @@
 ---
-import CdnImage from '@/components/ui/CdnImage.astro'
+import LinkCardFrame from './LinkCardFrame.astro'
 import { getOGPData } from '@/lib/api/ogp'
-import { getNoImageURL } from '@/lib/image'
+import { cacheLinkCard } from '@/lib/cache'
 
+// リンク先の OGP を表示するカード。Server Island（server:defer）として使う（Block.astro）。
+// 記事とは別のリクエストで描画されるので、リンク先の応答が遅くても記事の表示を待たせず、記事のキャッシュもリンク先の状態に左右されない
 type Props = { link: string }
 
 const { link } = Astro.props
 const errorDescription = 'リンク先の情報取得でエラーが発生しました。リンクは機能しています'
 
-let title = ''
-let description = ''
-let image: string | null = null
-let url = link
-let site = ''
-let imageAlt = ''
+// result が null なのは取得できなかったとき（リンク先のエラー・タイムアウト）
+const result = await getOGPData(link)
+// カードは記事とは別にエッジへキャッシュさせる。取得できなかったときは短く保持して、時間をおいて取り直す
+cacheLinkCard(Astro.response, result !== null)
 
-try {
-  const result = await getOGPData(link)
-  if (result.success) {
-    imageAlt = result.og_title
-    description = result.og_description
-    image = result.og_image !== '' ? result.og_image : null
-    url = result.og_url !== '' ? result.og_url : link
-    title = result.og_title !== '' ? result.og_title : 'No Page Title'
-    site = result.og_site_name !== '' ? result.og_site_name : title
-  } else {
-    title = 'Missing data fetching'
-    imageAlt = title
-    description = errorDescription
-    site = title
-  }
-} catch (e) {
-  console.error('[components/blocks/LinkCard.astro] OGP fetch error:', e)
-  title = 'Title was not readable.'
-  site = title
-  description = errorDescription
-  url = ''
-}
+const errorTitle = 'Missing data fetching'
+const title = result?.success ? result.og_title || 'No Page Title' : errorTitle
+const { description, image, url, site, imageAlt } = result?.success
+  ? {
+      description: result.og_description,
+      image: result.og_image || null,
+      url: result.og_url || link,
+      site: result.og_site_name || title,
+      imageAlt: result.og_title,
+    }
+  : { description: errorDescription, image: null, url: link, site: errorTitle, imageAlt: errorTitle }
 ---
 
-<div class="max-w-2xl no-underline border-2 border-gray-300 rounded-[9px]">
-  <a href={link} target="_blank" class="no-underline hover:underline">
-    <div class="flex flex-row h-24">
-      <div class="row-span-3 w-36 h-24">
-        {
-          image ? (
-            <img src={image} alt={imageAlt} loading="lazy" class="object-contain w-36 h-24" />
-          ) : (
-            <CdnImage src={getNoImageURL()} alt="No Image" width={50} height={50} class="object-contain w-36 h-24" />
-          )
-        }
-      </div>
-      <div class="col-span-2 w-96 flex-auto ml-2 mr-1">
-        <p class="text-lg line-clamp-1 font-semibold pt-1">{title}</p>
-        <p class="text-sm line-clamp-3">{description}</p>
-      </div>
-    </div>
-    <div class="p-1 bg-gray-300 rounded-b-[6px]">
-      <p class="no-underline text-sm line-clamp-1">{site}</p>
-      <p class="no-underline text-sm line-clamp-1">{url}</p>
-    </div>
-  </a>
-</div>
+<LinkCardFrame
+  link={link}
+  title={title}
+  description={description}
+  image={image}
+  imageAlt={imageAlt}
+  site={site}
+  url={url}
+/>

@@ -1,0 +1,31 @@
+---
+import type { atelierResult } from 'api-types'
+import IllustSampleArticle from './IllustSampleArticle.astro'
+import Pagination from '@/components/ui/Pagination.astro'
+import { getTotalPage, PAGE_LIMIT } from '@/lib/pagination'
+
+// イラストの一覧。一覧ページ（pages/illust/index.astro）と、詳細の URL を直接開いたときの背景（pages/illust/detail/[id].astro）で使う
+type Props = { ateliers: atelierResult[]; pageNumber: number; total: number }
+
+const { ateliers, pageNumber, total } = Astro.props
+---
+
+<div class="flex flex-col justify-center gap-24">
+  {
+    ateliers.map((atelier) => (
+      <div class="w-full h-auto flex items-center justify-center">
+        <IllustSampleArticle
+          id={atelier.id}
+          title={atelier.title}
+          imageSrc={atelier.src}
+          objectPosition={atelier.object_position}
+          tags={atelier.tag_or_category}
+          publishedAt={atelier.publishedAt}
+        />
+      </div>
+    ))
+  }
+  <div class="flex justify-center">
+    <Pagination path="/illust" currentPage={pageNumber} totalPage={getTotalPage(total, PAGE_LIMIT)} />
+  </div>
+</div>

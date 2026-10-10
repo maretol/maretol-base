@@ -9,10 +9,10 @@ export default async function EditBlogInfo({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string }>
+  searchParams: Promise<{ error?: string; saved?: string; purge_failed?: string }>
 }) {
   const { id } = await params
-  const { error, saved } = await searchParams
+  const { error, saved, purge_failed: purgeFailed } = await searchParams
 
   const info = await getBlogInfo(id)
   if (!info) {
@@ -22,7 +22,7 @@ export default async function EditBlogInfo({
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">固定ページ編集: {info.page_pathname}</h1>
-      <InfoForm mode="edit" info={info} error={error} saved={saved === '1'} />
+      <InfoForm mode="edit" info={info} error={error} saved={saved === '1'} purgeFailed={purgeFailed === '1'} />
     </div>
   )
 }

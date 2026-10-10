@@ -12,6 +12,9 @@ import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
 type Props = {
+  // 画像モーダルの URL に使う
+  articleID: string
+  draftKey?: string
   title: string
   publishedAt: string
   updatedAt: string
@@ -26,6 +29,8 @@ type Props = {
 }
 
 const {
+  articleID,
+  draftKey,
   title,
   publishedAt,
   updatedAt,
@@ -64,13 +69,18 @@ const {
   </div>
   <hr class="border-gray-300 border-2 mx-6 mb-2 -mt-3" />
   <div class={cn(card.content, 'mb-8')}>
-    <ArticleContent contents={parsedContents} tableOfContents={tableOfContents} />
+    <ArticleContent
+      contents={parsedContents}
+      tableOfContents={tableOfContents}
+      articleID={articleID}
+      draftKey={draftKey}
+    />
     <Annotations annotations={annotations ?? []} />
   </div>
   <div class={card.footer}>
     <div class="w-full space-y-4">
       <div class="flex gap-2 items-center justify-end">
-        <ShareSection shareURL={shareURL} shareTitle={title} contentType="blog" />
+        <ShareSection shareURL={shareURL} shareTitle={title} contentType={type === 'info' ? 'page' : 'blog'} />
       </div>
       {adjacent && <AdjacentArticleNav adjacent={adjacent} />}
       <div class="flex justify-center">

@@ -16,6 +16,8 @@ type Props = {
   error?: string
   saved?: boolean
   info?: string
+  // 保存はできたが、公開サイトのキャッシュ削除に失敗した
+  purgeFailed?: boolean
 }
 
 // ISO 8601 UTC の日時を date input 用の JST 日付（YYYY-MM-DD）に変換する
@@ -25,7 +27,7 @@ function toJSTDateValue(iso: string | null | undefined): string {
   return jst.toISOString().slice(0, 10)
 }
 
-export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, saved, info }: Props) {
+export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, saved, info, purgeFailed }: Props) {
   const action = mode === 'new' ? createBandeDessineeAction : updateBandeDessineeAction
   // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
   const [preview, previewFormAction] = useActionState(previewBandeDessineeAction, {})
@@ -42,6 +44,11 @@ export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, s
   return (
     <div className="space-y-4">
       {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
+      {purgeFailed && (
+        <p className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
+          公開サイトのキャッシュ削除に失敗しました。公開サイトに反映されていない場合は、上の「マンガのキャッシュを削除」を実行してください
+        </p>
+      )}
       {info && <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">自動連携: {info}</p>}
       {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       {preview.error && (

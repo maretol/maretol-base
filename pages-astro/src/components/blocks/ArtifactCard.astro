@@ -1,0 +1,33 @@
+---
+import type { infoAPIResult } from 'api-types'
+import { HammerIcon } from '@lucide/astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getInfoPage } from '@/lib/api/cms'
+import { convertJST } from '@/lib/time'
+import { cn, parseURL } from '@/lib/utils'
+
+// 自サイトの制作物ページ（info）へのカード
+type Props = { link: string }
+
+const { link } = Astro.props
+
+const linkPath = parseURL(link)?.pathname ?? ''
+// 固定ページと同じ条件で探す（page_pathname は先頭のスラッシュが無い形でも登録されている）
+const artifact: infoAPIResult | null = await getInfoPage(Astro.locals, linkPath).catch((e) => {
+  // 取得の失敗は、該当する info が無い（非公開・削除された）場合と同じ表示にする。不完全なページ（lib/degraded.ts）としては記録しない
+  console.error('[components/blocks/ArtifactCard.astro] Info fetch error:', e)
+  return null
+})
+---
+
+<div class="flex max-w-xl">
+  <a href={linkPath} class={cn(buttonVariants({ variant: 'outline' }), 'no-underline bg-gray-300 h-full w-full')}>
+    <HammerIcon class="w-8 h-8 mr-2" />
+    <div class="w-full flex flex-row space-x-2">
+      <div class="w-full flex flex-col self-end">
+        <p class="text-md text-wrap line-clamp-2">{artifact?.title || 'タイトル未定義'}</p>
+        {artifact && <p class="text-gray-500 text-xs text-wrap line-clamp-2">{convertJST(artifact.publishedAt)}</p>}
+      </div>
+    </div>
+  </a>
+</div>

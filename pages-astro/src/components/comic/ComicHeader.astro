@@ -1,0 +1,26 @@
+---
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { getHeaderImageURL } from '@/lib/image'
+import { cn } from '@/lib/utils'
+
+// 漫画の詳細の上端に重ねるヘッダー。普段は見えず、マウスを乗せるとロゴ（トップへのリンク）が出る
+---
+
+<div
+  class="absolute z-50 top-0 left-0 w-full flex justify-center items-center bg-gray-300 transition-opacity ease-in-out duration-100 opacity-0 hover:opacity-70"
+>
+  <div class="pt-10 bg-gray-300 w-full max-w-375">
+    <a href="/" class={cn(buttonVariants({ variant: 'link' }), 'p-0')}>
+      {/* width と height は原本（1104×210）の比率に合わせる（#1355） */}
+      <CdnImage
+        src={getHeaderImageURL()}
+        width={300}
+        height={57}
+        alt="Maretol Base"
+        class="w-full h-auto object-contain"
+        loading="eager"
+      />
+    </a>
+  </div>
+</div>

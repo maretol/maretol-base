@@ -1,12 +1,26 @@
 ---
 import type { ParsedContent, TableOfContents } from 'api-types'
 import Block from '@/components/blocks/Block.astro'
+import { getSampleBlocks } from '@/lib/sample'
+import { cn } from '@/lib/utils'
 
-type Props = { contents: ParsedContent[]; tableOfContents?: TableOfContents }
+type Props = {
+  contents: ParsedContent[]
+  tableOfContents?: TableOfContents
+  articleID: string
+  draftKey?: string
+  // 一覧に出す抜粋。先頭の数ブロックだけを描画し、行数も切り詰める
+  sample?: boolean
+}
 
-const { contents, tableOfContents } = Astro.props
+const { contents, tableOfContents, articleID, draftKey, sample = false } = Astro.props
+const blocks = sample ? getSampleBlocks(contents) : contents
 ---
 
-<div lang="ja" class="content px-2 lg:px-6">
-  {contents.map((content) => <Block content={content} tableOfContents={tableOfContents} />)}
+<div lang="ja" class={cn(sample ? 'content-sample line-clamp-6' : 'content', 'px-2 lg:px-6')}>
+  {
+    blocks.map((content) => (
+      <Block content={content} tableOfContents={tableOfContents} articleID={articleID} draftKey={draftKey} />
+    ))
+  }
 </div>
