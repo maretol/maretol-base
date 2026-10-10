@@ -39,7 +39,7 @@ type PublishContent = {
   ogpImage: string | null
 }
 
-// 管理ページ（admin-pages）から Service Binding の RPC で呼ぶ。HTTP のルートと fetch ハンドラは持たない
+// 管理ページ（admin-pages）から Service Binding の RPC で呼ぶ。HTTP の入口（ルート・workers.dev）は持たない
 export default class Publisher extends WorkerEntrypoint<Env> {
   // Service Binding は同一アカウント内でバインディングを宣言した Worker からしか呼べないため、
   // API キー・署名検証は不要
@@ -57,6 +57,14 @@ export default class Publisher extends WorkerEntrypoint<Env> {
   async postText(text: string): Promise<SNSPostTextResult[]> {
     console.log('RPC postText')
     return await postFreeText(this.env, text)
+  }
+
+  // Cloudflare API はデフォルトエクスポートに fetch などのイベントハンドラが無いスクリプトを
+  // 「The uploaded script has no registered event handlers [code: 10068]」で拒否する（RPC メソッドは数えない）
+  // https://github.com/cloudflare/workers-sdk/issues/5663
+  // デプロイを通すためだけのハンドラで、HTTP の入口は無いので通常は呼ばれない。呼ばれたら誤用なので例外にする
+  async fetch(): Promise<Response> {
+    throw new Error('sns-article-publisher is RPC-only. Call publishArticle / postText via the Service Binding')
   }
 }
 
