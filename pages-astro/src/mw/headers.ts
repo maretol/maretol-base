@@ -1,7 +1,8 @@
 import type { MiddlewareHandler } from 'hono'
 
-// セキュリティヘッダ（astro_design.md 5 章「セキュリティヘッダ」）。Worker が返すすべてのレスポンスに付ける。
-// 静的アセット（/_astro/ や favicon など）は Worker の手前で配信されるので、public/_headers で付ける
+// セキュリティヘッダ（astro_design.md 5 章「セキュリティヘッダ」）。cf() を通過したすべてのレスポンスに付ける。
+// 静的アセットは Worker の手前で配信され、cf() が ASSETS binding の応答をそのまま返す経路（manifest にはあるが実体の無い /_headers への 404 など）も
+// ここを通らないので、同じ 2 つを public/_headers の /* でも付ける（値は両方で同じにそろえる）
 // - X-Content-Type-Options: ブラウザに Content-Type を推測させない
 // - Content-Security-Policy は frame-ancestors だけ。他サイトの iframe に埋め込まれないようにする。
 //   自サイトのほかに、Clarity のヒートマップ（ダッシュボードが自サイトを iframe で開く）を許す。

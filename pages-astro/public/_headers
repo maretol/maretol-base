@@ -1,6 +1,8 @@
-# 静的アセット（この Worker の手前で配信される）のセキュリティヘッダ。ページ側は src/mw/headers.ts で付ける
+# 静的アセットのセキュリティヘッダ。ページ側は src/mw/headers.ts で付ける（値は両方で同じにそろえる）。
+# アセットは Worker の手前で配信されるほか、cf() が ASSETS binding の応答をそのまま返す経路（/_headers への 404 など）があり、どちらもここで付く
 /*
   X-Content-Type-Options: nosniff
+  Content-Security-Policy: frame-ancestors 'self' https://clarity.microsoft.com
 
 # NIP-05（Nostr の識別子の確認）。別オリジンのクライアントから読めるようにする
 /.well-known/nostr.json

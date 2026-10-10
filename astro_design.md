@@ -315,7 +315,7 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 
 付けないと決めたもの: `script-src` などを含む本格的な CSP（信頼境界が著者本人で、利用者の入力を HTML に出す箇所も無い。許可リストにはリンクカードの OGP 画像の任意のホストや Twitter の widget が注入する style まで要り、埋め込みを足すたびに直す保守が割に合わない）、`Strict-Transport-Security`（付けるならゾーンの設定で。v3 と v4 の両方と apex に同時に効く）、`Referrer-Policy`（ブラウザの既定と同じになる）、`Permissions-Policy`、COOP / COEP / CORP（COEP は外部の埋め込みを壊す）
 
-付け方: ページ（404・500・リダイレクト・Server Island を含む）は Hono のミドルウェア（`src/mw/headers.ts`。`cf()` の直後）で付ける。静的アセットは Worker の手前で配信されるので `public/_headers` の `/*` で `nosniff` だけ付ける。Workers Cache はヘッダごと保存するのでヒット時にも付く。変えるときはデプロイが要るが、デプロイでキャッシュが切り替わるので追加の手当ては要らない
+付け方: ページ（404・500・リダイレクト・Server Island を含む）は Hono のミドルウェア（`src/mw/headers.ts`。`cf()` の直後）で付ける。静的アセットは Worker の手前で配信されるので `public/_headers` の `/*` で同じ 2 つを付ける（値は両方で同じにそろえる）。`cf()` は manifest にあるパスと、ルートに一致しないパスで ASSETS binding の応答をそのまま返すことがある（現状で実際に通るのは、manifest には載るが wrangler がアップロードしない `/_headers` への 404 だけ）。この経路はミドルウェアを通らないが、binding の応答にも `_headers` が効くので抜けは無い。Workers Cache はヘッダごと保存するのでヒット時にも付く。変えるときはデプロイが要るが、デプロイでキャッシュが切り替わるので追加の手当ては要らない
 
 head（OGP・canonical・noindex・favicon）は `src/layouts/BaseLayout.astro` に集約済み（M3・M4）。favicon は `public/favicon.ico` を `/favicon.ico` で配信する。現行サイトの `/icon.ico`（Next.js の規約）は作らない
 
