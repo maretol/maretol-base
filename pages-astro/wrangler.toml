@@ -6,8 +6,12 @@ main = "./src/worker.ts"
 compatibility_date = "2026-10-01"
 compatibility_flags = [ "nodejs_compat", "global_fetch_strictly_public" ]
 
-# 切替（M6）までは workers.dev のみ。切替時に www.maretol.xyz の custom domain を付ける
-workers_dev = true
+# 本番は www.maretol.xyz の custom domain で配信する（M6 で v3 から付け替え。付け替えはダッシュボードで行い、この設定はそれに追従させた。astro_design.md 7 章）。
+# 切替前の確認に使っていた workers.dev は閉じる（staging は workers.dev のまま）
+routes = [
+    { pattern = "www.maretol.xyz", custom_domain = true }
+]
+workers_dev = false
 
 services = [
     { binding = "CMS_RPC", service = "cms-data-fetcher" },
