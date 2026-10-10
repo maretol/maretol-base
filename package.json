@@ -28,6 +28,7 @@
     "build:astro": "npm run --workspace=pages-astro build",
     "build-stg:astro": "npm run --workspace=pages-astro build-stg",
     "deploy-stg:astro": "npm run --workspace=pages-astro deploy-stg",
+    "deploy:astro": "npm run --workspace=pages-astro deploy-prd",
     "lint:page": "npm run --workspace=pages lint",
     "test:cms": "npm run --workspace=cms-data-fetcher test",
     "test:md": "npm run --workspace=md-converter test",

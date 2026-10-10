@@ -351,7 +351,8 @@ jobs:
     environment:
       name: stg
     env:
-      E2E_BASE_URL: ${{ vars.E2E_BASE_URL || 'https://maretol-base-v3-stg.maretol-ruha.workers.dev' }}
+      # Astro 版の staging（pages-astro）に対して走らせる。Next.js 版（maretol-base-v3-stg）は対象にしない
+      E2E_BASE_URL: ${{ vars.E2E_BASE_URL || 'https://maretol-base-v4-stg.maretol-ruha.workers.dev' }}
     steps:
       - uses: actions/checkout@v7
       - name: setup node

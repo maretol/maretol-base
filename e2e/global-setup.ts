@@ -1,10 +1,9 @@
 import { requireBaseURL, SITE_LOGO_ALT } from './lib/constants'
 
 // デプロイ反映待ち（readiness）。
-// テスト本体の実行前に、既存トップページ（/）へ正常応答（2xx）かつ共通シェルの既知マーカーが
-// 返るまでポーリングして待機する。App Router のストリーミング SSR により、CMS 本文が
-// suspend 中でもシェル（ヘッダー/フッター）を含む 2xx が即時返るため、既存ページでも
-// 安定した疎通判定点になる。
+// テスト本体の実行前に、トップページ（/）が 2xx で応答し、共通シェルの既知マーカー（ヘッダーロゴの alt）を
+// 含むまでポーリングして待機する。対象は Astro 版の staging（maretol-base-v4-stg）。
+// ページは Workers Cache にヒットすれば Worker を起動せずに返り、ミスしても本文まで描画してから返る。
 
 const READINESS_INTERVAL_MS = 5_000
 const READINESS_TIMEOUT_MS = 180_000
