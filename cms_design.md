@@ -253,7 +253,7 @@ CREATE TABLE atelier_tag_relations (
 - これによりシークレット管理（admin-pages への SNS_PUB_CMS_KEY / SECRET 設定）と偽 WebhookPayload の組み立てが不要になる
 - sns-article-publisher に RPC メソッド `publishArticle` を追加（既存の投稿処理 `publish()` の薄いラッパー。`waitUntil` で非同期投稿）。投稿可否の判定（新規公開・下書き→公開のみ、is_secret 除外）は呼び出し側（admin-pages）が行う
 - 送信は `SNS_NOTIFY_ENABLED = 'true'` の環境（本番のみ）に限定し、staging・ローカルからの誤投稿を防ぐ
-- 公開 Webhook（fetch ハンドラ + HMAC検証）は microCMS 用として撤去フェーズまで残置した。#1273 で fetch ハンドラと HTTP のルートを撤去し、sns-article-publisher は RPC だけで呼ぶ Worker になった
+- 公開 Webhook（fetch ハンドラ + HMAC検証）は microCMS 用として撤去フェーズまで残置した。#1273 で Webhook の fetch ハンドラと HTTP のルートを撤去し、sns-article-publisher は RPC だけで呼ぶ Worker になった。ただし Cloudflare API はイベントハンドラの無いスクリプトのアップロードを拒否する（code 10068、RPC メソッドは数えない）ため、呼ばれたら例外を投げるだけの `fetch` を残している
 
 ## 5. microCMS からのデータインポート
 
