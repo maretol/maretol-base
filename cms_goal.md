@@ -109,7 +109,7 @@ Markdown から現行互換 HTML への変換器を用意する。独自拡張�
 
 - キャッシュパージは内製CMS側に統合する。記事の公開・更新時に CMS 自身が KV（CMS_CACHE）をパージし、cms-cache-purger は移行完了後に廃止する
   - パージ対象キーの生成は既存の `packages/cms-cache-key-gen` を再利用する
-  - ※ pages の Astro 移行（issue #1336）で、KV（CMS_CACHE）のパージは Workers Cache のタグパージに置き換える。保存操作とタグの対応は astro_design.md を正とする
+  - ※ pages の Astro 移行（issue #1336）で、KV（CMS_CACHE）のパージは Workers Cache のタグパージに置き換えた。保存操作とタグの対応は astro_design.md を正とする。KV（CMS_CACHE）・cms-cache-purger・cms-cache-key-gen は移行の M7（#1347）で撤去した
 - SNS 自動投稿（sns-article-publisher）は維持する。新規記事公開時に CMS から通知を送る
   - 通知形式（現行の WebhookPayload 互換で送るか、簡素化するか）は設計フェーズで決定する
 
@@ -128,7 +128,7 @@ microCMS の3サービスを単位に、規模の小さいものから段階的�
 - cms-data-fetcher の該当サービスの参照先を D1 に切り替え
 - ステージング（-stg / dev-api.maretol.xyz）で検証後に本番切り替え
 
-全サービス移行完了後、microCMS SDK・APIキー・cms-cache-purger を撤去する
+全サービス移行完了後、microCMS SDK・APIキー・cms-cache-purger を撤去する（cms-cache-purger は Astro 移行の M7 で撤去済み）
 
 ## 移行対象データ（現行 microCMS の構造）
 

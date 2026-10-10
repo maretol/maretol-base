@@ -107,7 +107,7 @@ export async function previewAtelierAction(
   return { previewURL: `${env.PAGES_HOST}/illust/detail/${input.id}?draftKey=${draftKey}` }
 }
 
-// 編集画面からの手動キャッシュ削除。イラストのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
+// 編集画面からの手動キャッシュ削除。イラストの詳細も一覧のタグを持つので、一覧・単体まとめて削除される
 export async function purgeAtelierCacheAction(_prev: PurgeActionState, formData: FormData): Promise<PurgeActionState> {
   const id = text(formData, 'id')
   if (id === '') {

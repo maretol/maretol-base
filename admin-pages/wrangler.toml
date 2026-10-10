@@ -14,8 +14,6 @@ routes = [
 workers_dev = false
 
 kv_namespaces = [
-    # pages の CMS キャッシュ（公開・更新時にパージする。cms-cache-purger と同じ namespace）
-    { binding = "CMS_CACHE", id = "eda084a77bf54fab906cd6b02fa1b3a1" },
     # KVプレビュー（draftKey互換）のドラフト保存先
     { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
 ]
@@ -53,7 +51,6 @@ name = "admin-pages-stg"
 routes = []
 workers_dev = true
 kv_namespaces = [
-    { binding = "CMS_CACHE", id = "eda084a77bf54fab906cd6b02fa1b3a1" },
     { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
 ]
 services = [
