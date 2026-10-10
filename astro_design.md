@@ -346,7 +346,7 @@ head（OGP・canonical・noindex・favicon）は `src/layouts/BaseLayout.astro` 
 2. admin-pages 本番に Service Binding を追加し、KV と Workers Cache の両方をパージする状態にする（binding 先の Worker が本番に無いとデプロイに失敗するので、1 の後に入れる。2026-10-10 済み）
 3. custom domain `www.maretol.xyz` を `maretol-base-v3` から外し、`maretol-base-v4` に付ける。ダウンタイムを減らすため付け替えはダッシュボードで行い、wrangler.toml はその後に追従させる（v3 の `routes` を外して `workers_dev = false`、v4 に `routes` を足して `workers_dev = false`）。注意: CI（非対話）の `wrangler deploy` は他の Worker に付いている custom domain を確認なしに上書きするので、設定を先にデプロイすると wrangler が付け替えを行ってしまう。`routes` が無い Worker は wrangler が workers.dev を既定で有効にするので、v3 は明示的に閉じる（2026-10-10 済み）
 4. 切替直後に戻すときは custom domain をダッシュボードで v3 に付け直す。v3 と KV パージは撤去（M7）まで残した。撤去後は戻せない
-5. 撤去（M7）: リポジトリからは `pages/`、`cms-cache-purger`、`packages/cms-cache-key-gen`、それらの CI のジョブ・root のスクリプト、`deploy_stg_astro.yaml` を消し、admin の KV パージと `/cache` ページの KV 部分を外す（admin は #1380）。Cloudflare 上の Worker `maretol-base-v3` / `-stg`・`cms-cache-purger` / `-stg` と KV `cms-cache`（binding 名 `CMS_CACHE`）はダッシュボードで削除する。KV は、参照する Worker（admin を含む）が無くなってから消す。microCMS の管理画面に `cms-cache-purger` 向けの Webhook が残っていれば外す
+5. 撤去（M7）: リポジトリからは `pages/`、`cms-cache-purger`、`packages/cms-cache-key-gen`、それらの CI のジョブ・root のスクリプト、`deploy_stg_astro.yaml` を消し、admin の KV パージと `/cache` ページの KV 部分を外す（admin は #1380）。Cloudflare 上の Worker `maretol-base-v3` / `-stg`・`cms-cache-purger` / `-stg` と KV `cms-cache`（binding 名 `CMS_CACHE`）はダッシュボードで削除する。KV は、参照する Worker（admin を含む）が無くなってから消す。microCMS の管理画面に `cms-cache-purger` 向けの Webhook が残っていれば外す（2026-10-10 済み）
 
 ## 8. 検証で確定させること
 
