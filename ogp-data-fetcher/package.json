@@ -22,7 +22,6 @@
     "wrangler": "^4.127.1"
   },
   "dependencies": {
-    "cms-cache-purger": "^1.0.0",
     "open-graph-scraper-lite": "^2.1.0"
   }
 }
