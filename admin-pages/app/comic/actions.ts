@@ -232,7 +232,7 @@ export async function previewBandeDessineeAction(
   return { previewURL: `${env.PAGES_HOST}/comics/${input.id}?draftKey=${draftKey}` }
 }
 
-// 編集画面からの手動キャッシュ削除。マンガのキャッシュはプレフィックス単位（一覧・単体まとめて）で削除する
+// 編集画面からの手動キャッシュ削除。マンガの詳細も一覧のタグを持つので、一覧・単体まとめて削除される
 export async function purgeBandeDessineeCacheAction(
   _prev: PurgeActionState,
   formData: FormData
