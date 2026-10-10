@@ -91,12 +91,12 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 **成果物**: 切替可能と判断できる状態
 
-## M6. 切替（#1346）
+## M6. 切替（#1346） ✅（2026-10-10 完了）
 
 - [x] `maretol-base-v4` を本番にデプロイし workers.dev で確認（2026-10-10、#1365）
-- [ ] admin-pages 本番に Service Binding を追加（KV と Workers Cache の両方をパージ）。`PAGES_HOST` の確認
+- [x] admin-pages 本番に Service Binding を追加（KV と Workers Cache の両方をパージ）。`PAGES_HOST` の確認（#1375。`PAGES_HOST` は www のままでよい）
 - [x] custom domain `www.maretol.xyz` を v3 から v4 へ付け替え（ダッシュボードで実施し、wrangler.toml を追従させた）
-- [ ] 切替後の確認（キャッシュヒット、保存から反映まで、限定公開、RSS、ログ）
+- [x] 切替後の確認（キャッシュヒット、保存から反映まで、限定公開、RSS、ログ。2026-10-10）
 
 戻すときは custom domain を v3 に付け直す。v3 と KV パージは M7 まで残す
 
