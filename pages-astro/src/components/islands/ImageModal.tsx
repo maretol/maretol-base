@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
-import { getImageSources } from '@/lib/image'
+import { getFullSizeImageURL } from '@/lib/image'
 
 // 記事画像のモーダル。記事の上に重ねて表示し、URL も画像の URL（/blog/{id}/image/{base64url}）に変える。
 // - 画像のリンク（a.x-blog-image）のクリックを横取りし、pushState で URL を変えてモーダルを開く
@@ -12,27 +12,20 @@ import { getImageSources } from '@/lib/image'
 const LINK_SELECTOR = 'a.x-blog-image'
 // 履歴の state に持たせるキー。値は画像のアンカー id（data URL は大きいので state には入れない）
 const STATE_KEY = 'imageModal'
-// モーダルで表示する幅（CSS px）の上限
-const MODAL_WIDTH = 1920
 
-type ModalImage = { src: string; srcSet?: string }
-
-function imageOf(link: HTMLAnchorElement): ModalImage | null {
-  // 自サイトの画像は、画面いっぱいに出せる大きさの派生を要求する
+// モーダルで表示する画像の URL。どちらも原本のピクセル幅で表示する（画面に収まらなければ縮める）
+function imageOf(link: HTMLAnchorElement): string | null {
+  // 自サイトの画像は、原本の幅の派生を要求する
   const originalSrc = link.dataset.imageSrc
   if (originalSrc) {
-    const sources = getImageSources(originalSrc, MODAL_WIDTH, {
-      maxDisplayWidth: MODAL_WIDTH,
-      sourceWidth: Number(link.dataset.imageWidth) || undefined,
-    })
-    return { src: sources.src, srcSet: sources.srcset }
+    return getFullSizeImageURL(originalSrc, Number(link.dataset.imageWidth) || undefined)
   }
   // 引用画像は記事に埋め込まれている data URL をそのまま使う
   const img = link.querySelector('img')
-  return img ? { src: img.currentSrc || img.src } : null
+  return img ? img.currentSrc || img.src : null
 }
 
-function findImage(anchorID: string): ModalImage | null {
+function findImage(anchorID: string): string | null {
   const link = document.getElementById(anchorID)?.querySelector<HTMLAnchorElement>(LINK_SELECTOR)
   return link ? imageOf(link) : null
 }
@@ -107,14 +100,7 @@ export default function ImageModal() {
             className="relative flex h-full w-full items-center justify-center p-2"
             onClick={(e) => e.target === e.currentTarget && closeModal()}
           >
-            {image && (
-              <img
-                src={image.src}
-                srcSet={image.srcSet}
-                alt=""
-                className="h-auto max-h-full w-auto max-w-full object-contain"
-              />
-            )}
+            {image && <img src={image} alt="" className="h-auto max-h-full w-auto max-w-full object-contain" />}
           </div>
           <Dialog.Close className="absolute right-4 top-4 rounded-xs opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
             <X className="h-8 w-8" />
