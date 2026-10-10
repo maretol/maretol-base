@@ -1,7 +1,7 @@
 // E2E テスト全体で共有する定数・ヘルパ。
 // マーカーや対象ルートを単一箇所で管理し、テストと readiness の間で drift を防ぐ。
 
-// 主要ルート共通シェル（BaseLayout / BlogLayout の双方）が描画するヘッダーロゴの alt。
+// 主要ルート共通シェル（pages-astro の SiteLayout）が描画するヘッダーロゴの alt。
 // readiness マーカーおよびスモークのランドマークとして利用する。
 export const SITE_LOGO_ALT = 'Maretol Base'
 
