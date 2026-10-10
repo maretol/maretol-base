@@ -1,9 +1,3 @@
-export type SNSPubData = {
-  article_url: string
-  article_title: string
-  post_message: string | null
-}
-
 // 管理ページ（admin-pages）から sns-article-publisher の postText RPC で
 // 自由文面を投稿したときの、SNSごとの投稿結果
 export type SNSPostTextResult = {
@@ -12,20 +6,32 @@ export type SNSPostTextResult = {
   error?: string
 }
 
-// 管理ページ（admin-pages）から sns-article-publisher の publishArticle RPC へ渡す公開コンテンツ情報
-// ContentValue のうち投稿文組み立てに使うフィールドのみ必須とする
-export type SNSPublishValue = Partial<ContentValue> & { id: string }
+// 管理ページ（admin-pages）から sns-article-publisher の publishArticle RPC へ渡す引数（サービス種別と公開コンテンツ情報の組）
+// サービス種別ごとに、投稿文・OGP画像の組み立てに使うフィールドを必須とする
+export type SNSPublishArgs =
+  | [serviceType: 'blog', value: SNSPublishBlogValue]
+  | [serviceType: 'illust', value: SNSPublishIllustValue]
+  | [serviceType: 'comic', value: SNSPublishComicValue]
 
-export type ContentValue = {
-  id: string // 共通
-  title: string // blog/illustで共通
-  title_name: string // comicのタイトル
-  src: string | null // illustのときの画像ソース
-  sns_text: string | null // blogのときのSNS投稿文（マンガ、イラストでは対応するときにこの名前に合わせる
-  ogp_image: string | null // blogのときのOGP画像。illustのときはsrc、comicの場合coverまたはfirst_page
-  cover: string | null // comicのときの表紙。ただしない場合は1ページ目をogpにする
-  first_page: number // comicのときの1ページ目のファイル番号
-  filename: string // comicのときの1ページ目を取り出すときに利用する値
-  format: string[] // comicのときのファイル形式
-  is_secret?: boolean // blogのときの限定公開フラグ。trueの場合は一覧非表示・SNS自動投稿の対象外とする
+export type SNSPublishBlogValue = {
+  id: string
+  title: string
+  sns_text: string | null // SNS投稿文（マンガ、イラストでは対応するときにこの名前に合わせる）
+  ogp_image: string | null
+  is_secret: boolean // 限定公開フラグ。trueの場合は一覧非表示・SNS自動投稿の対象外とする
+}
+
+export type SNSPublishIllustValue = {
+  id: string
+  title: string
+  src: string // 画像ソース。OGP画像にも使う
+}
+
+export type SNSPublishComicValue = {
+  id: string
+  title_name: string
+  cover: string | null // 表紙。ない場合は1ページ目をOGP画像にする
+  first_page: number // 1ページ目のファイル番号
+  filename: string // 1ページ目を取り出すときに利用する値
+  format: string[] // ファイル形式
 }

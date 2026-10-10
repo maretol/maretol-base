@@ -1,7 +1,7 @@
 import PostTweet, { TwitterAuthInfo } from './twitter'
 import PostBlueSky, { BlueSkyAuthInfo } from './bluesky'
 import PostNostrKind1, { NostrAuthInfo } from './nostr'
-import { ContentValue, SNSPostTextResult, SNSPublishValue } from 'api-types'
+import { SNSPostTextResult, SNSPublishArgs } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import NoteMisskey, { MisskeyAuthInfo } from './misskey'
 import { addUtmParams, SNSTarget } from './utm'
@@ -30,7 +30,7 @@ const TARGET = {
   misskey: true,
 }
 
-type ServiceType = 'blog' | 'illust' | 'comic'
+type ServiceType = SNSPublishArgs[0]
 
 type PublishContent = {
   url: string
@@ -44,8 +44,9 @@ export default class Publisher extends WorkerEntrypoint<Env> {
   // Service Binding は同一アカウント内でバインディングを宣言した Worker からしか呼べないため、
   // API キー・署名検証は不要
   // 投稿可否の判定（新規公開・下書き→公開のみ、限定公開除外）は呼び出し側で行う
-  async publishArticle(serviceType: ServiceType, value: SNSPublishValue): Promise<void> {
-    const content = getContent(serviceType, value as ContentValue)
+  async publishArticle(...args: SNSPublishArgs): Promise<void> {
+    const [serviceType] = args
+    const content = getContent(...args)
     console.log('RPC publishArticle:', serviceType, content.url)
     this.ctx.waitUntil(publish(this.env, content, serviceType))
   }
@@ -217,35 +218,33 @@ function createMisskeyAuthInfo(env: Env) {
   } as MisskeyAuthInfo
 }
 
-function getContent(serviceType: ServiceType, newContent: ContentValue): PublishContent {
-  if (serviceType === 'blog') {
-    return {
-      url: `https://www.maretol.xyz/blog/${newContent.id}`,
-      title: newContent.title,
-      message: newContent.sns_text,
-      ogpImage: newContent.ogp_image,
-    }
-  }
-  if (serviceType === 'illust') {
-    return {
-      url: `https://www.maretol.xyz/illust/detail/${newContent.id}`,
-      title: newContent.title,
-      message: null,
-      ogpImage: newContent.src,
-    }
-  }
-  if (serviceType === 'comic') {
-    // 表紙、または1ページ目
-    // 1ページ目のファイル名生成はほぼ決め打ちでやっているので失敗時のリカバリが必要
-    const ogp = newContent.cover || newContent.filename + '_00' + newContent.first_page + '.' + newContent.format[0]
+function getContent(...[serviceType, value]: SNSPublishArgs): PublishContent {
+  switch (serviceType) {
+    case 'blog':
+      return {
+        url: `https://www.maretol.xyz/blog/${value.id}`,
+        title: value.title,
+        message: value.sns_text,
+        ogpImage: value.ogp_image,
+      }
+    case 'illust':
+      return {
+        url: `https://www.maretol.xyz/illust/detail/${value.id}`,
+        title: value.title,
+        message: null,
+        ogpImage: value.src,
+      }
+    case 'comic': {
+      // 表紙、または1ページ目
+      // 1ページ目のファイル名生成はほぼ決め打ちでやっているので失敗時のリカバリが必要
+      const ogp = value.cover || value.filename + '_00' + value.first_page + '.' + value.format[0]
 
-    return {
-      url: `https://www.maretol.xyz/comics/${newContent.id}`,
-      title: newContent.title_name,
-      message: null,
-      ogpImage: ogp,
+      return {
+        url: `https://www.maretol.xyz/comics/${value.id}`,
+        title: value.title_name,
+        message: null,
+        ogpImage: ogp,
+      }
     }
   }
-
-  return {} as PublishContent
 }
