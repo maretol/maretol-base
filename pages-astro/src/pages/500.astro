@@ -5,10 +5,20 @@ import Tags from '@/components/article/Tags.astro'
 import { buttonVariants } from '@/components/ui/button'
 import { card } from '@/components/ui/card'
 import { noStore } from '@/lib/cache'
+import { createEvent, describeError, recordLogEvent } from '@/lib/log'
 import { convertJST } from '@/lib/time'
 import { cn } from '@/lib/utils'
 
 // ページの描画中に例外が起きたときに表示する（データ取得の失敗など）。キャッシュはしない
+// Astro がページの frontmatter の例外を受けてこのページを描くときは error を受け取る（本文の描画中の例外やミドルウェアの例外は
+// src/mw/cache.ts と src/worker.ts が /500 へ rewrite するので error は無く、それぞれが記録する）
+type Props = { error?: unknown }
+
+const { error } = Astro.props
+if (error !== undefined) {
+  recordLogEvent(Astro.locals, createEvent('render_error', { stage: 'page', ...describeError(error) }))
+}
+
 noStore(Astro.response)
 // /500 を直接開いた場合も 500 で返す
 Astro.response.status = 500
