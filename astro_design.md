@@ -325,7 +325,7 @@ head（OGP・canonical・noindex・favicon）は `src/layouts/BaseLayout.astro` 
 - `astro check` は TypeScript 7 に未対応のため、このワークスペースだけ TypeScript 6 を使う
 - ローカル開発は `npm run dev:cms` と `npm run dev:ogp` を起動した状態で `npm run dev:astro`。Service Binding はローカルの fetcher につながる。R2 と Images binding は `remote = true` で実物を読む（cms-data-fetcher の D1 と同じ扱い）
 - Workers Cache はローカルでは働かない。キャッシュとパージの確認は staging で行う
-- デプロイ: staging は development への push（`deploy_stg_astro.yaml`）と main 宛て PR（`deploy_stg.yaml`）で `maretol-base-v4-stg` へ、本番は main への push（`deploy_prd.yaml`）で `maretol-base-v4` へ出す。本番の Worker は切替（M6）まで custom domain を付けず workers.dev だけで動くので、本番デプロイを先に始めても公開サイトには影響しない
+- デプロイ: staging は development への push（`deploy_stg_astro.yaml`）と main 宛て PR（`deploy_stg.yaml`）で `maretol-base-v4-stg` へ、本番は main への push（`deploy_prd.yaml`）で `maretol-base-v4` へ出す。本番の Worker は `www.maretol.xyz` の custom domain で配信する（M6 で切替済み。7 章）。workers.dev は staging だけ
 - e2e（`e2e/`、Playwright）は main 宛て PR の staging デプロイ後（`deploy_stg.yaml` の e2e ジョブ）に `maretol-base-v4-stg` に対して走る。development への push では走らせない。Next.js 版（`maretol-base-v3-stg`）は対象にしない
 
 ## 6. 限定公開記事
@@ -342,10 +342,10 @@ head（OGP・canonical・noindex・favicon）は `src/layouts/BaseLayout.astro` 
 
 ## 7. 切替と撤去
 
-1. `maretol-base-v4` を本番にデプロイし、workers.dev で確認する
-2. admin-pages 本番に Service Binding を追加し、KV と Workers Cache の両方をパージする状態にする
-3. custom domain `www.maretol.xyz` を `maretol-base-v3` から外し、`maretol-base-v4` に付ける
-4. 戻すときは custom domain を v3 に付け直す。v3 と KV パージは撤去（M7）まで残す
+1. `maretol-base-v4` を本番にデプロイし、workers.dev で確認する（2026-10-10 済み）
+2. admin-pages 本番に Service Binding を追加し、KV と Workers Cache の両方をパージする状態にする（binding 先の Worker が本番に無いとデプロイに失敗するので、1 の後に入れる）
+3. custom domain `www.maretol.xyz` を `maretol-base-v3` から外し、`maretol-base-v4` に付ける。ダウンタイムを減らすため付け替えはダッシュボードで行い、wrangler.toml はその後に追従させる（v3 の `routes` を外して `workers_dev = false`、v4 に `routes` を足して `workers_dev = false`）。注意: CI（非対話）の `wrangler deploy` は他の Worker に付いている custom domain を確認なしに上書きするので、設定を先にデプロイすると wrangler が付け替えを行ってしまう。`routes` が無い Worker は wrangler が workers.dev を既定で有効にするので、v3 は明示的に閉じる
+4. 戻すときは custom domain をダッシュボードで v3 に付け直す。v3 と KV パージは撤去（M7）まで残す
 5. 撤去: `pages/`、Worker `maretol-base-v3` / `-stg`、KV `CMS_CACHE`、`admin-pages/lib/cache.ts` と `/cache` ページの KV 部分、`packages/cms-cache-key-gen`、`cms-cache-purger`
 
 ## 8. 検証で確定させること

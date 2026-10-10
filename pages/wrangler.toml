@@ -3,9 +3,10 @@ main = ".open-next/worker.js"
 compatibility_date = "2025-05-05"
 compatibility_flags = [ "nodejs_compat", "global_fetch_strictly_public" ]
 
-routes = [
-    { pattern = "www.maretol.xyz", custom_domain = true }
-]
+# www.maretol.xyz は Astro 版（maretol-base-v4、pages-astro/wrangler.toml）へ付け替えた（M6。astro_design.md 7 章）。
+# routes が無い Worker は wrangler が workers.dev を既定で有効にするので、明示的に閉じておく。戻すときは custom domain を v3 に付け直す
+workers_dev = false
+
 services = [
     { binding = "OGP_FETCHER", service = "ogp-data-fetcher", environment = "production" },
     { binding = "CMS_FETCHER", service = "cms-data-fetcher", environment = "production" },
