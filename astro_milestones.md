@@ -80,13 +80,13 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 **成果物**: staging で作品系が現行と同等に動く
 
-## M5. 横断機能と検証（#1345）
+## M5. 横断機能と検証（#1345） ✅（2026-10-10 完了）
 
 - [x] Axiom アクセスログの移植、Clarity / Cloudflare beacon（タグは本番だけに出す。staging では出さない）
 - [x] 不完全なページ（`locals.degraded`）と描画中の例外（500）のログを Axiom へ送る（アクセスログと同じ仕組み。設計 5 章「ログと解析」）
 - [x] head（OGP メタ・canonical・favicon）、セキュリティヘッダ（head は M3・M4 で実装済み。セキュリティヘッダは `nosniff` と `frame-ancestors` だけ。設計 5 章「セキュリティヘッダ」）
 - [x] e2e（Playwright）を `maretol-base-v4-stg` 向けに移植（`deploy_stg.yaml` の e2e ジョブの対象を v4-stg に変更。URL の正規化のテストを追加。development への push では走らせない）
-- [ ] 現行サイトとの突き合わせ（全ルートのステータス・リダイレクト、主要ページの見た目）
+- [x] 現行サイトとの突き合わせ（全ルートのステータス・リダイレクト、主要ページの見た目。ステータスとリダイレクト先は 26 ルートで v3 本番と比較し、差分は末尾スラッシュの 301、`/favicon.ico` と `/icon.ico`、存在しない漫画・イラストの 404（v3 は 500 / 200）の意図したものだけ。結果は #1345 のコメント）
 - [x] 本番デプロイの workflow に `pages-astro` を追加（custom domain はまだ付けない。`deploy_prd.yaml` の `deploy-pages-astro`）
 
 **成果物**: 切替可能と判断できる状態
