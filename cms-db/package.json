@@ -1,20 +1,14 @@
 {
   "name": "cms-db",
   "version": "1.0.0",
-  "description": "内製CMSのD1スキーマ管理（migrations）とmicroCMSからのデータインポート",
+  "description": "内製CMSのD1スキーマ管理（migrations）",
   "private": true,
   "type": "module",
   "scripts": {
     "migrate:local": "wrangler d1 migrations apply maretol-cms --local",
-    "migrate:remote": "wrangler d1 migrations apply maretol-cms --remote",
-    "export": "tsx scripts/export_microcms.ts",
-    "generate-sql:illust": "tsx scripts/generate_illust_sql.ts",
-    "generate-sql:comic": "tsx scripts/generate_comic_sql.ts",
-    "generate-sql:blog": "tsx scripts/generate_blog_sql.ts"
+    "migrate:remote": "wrangler d1 migrations apply maretol-cms --remote"
   },
   "devDependencies": {
-    "tsx": "^4.23.15",
-    "typescript": "^7.0.2",
     "wrangler": "^4.147.0"
   }
 }

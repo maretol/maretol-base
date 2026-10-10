@@ -13,13 +13,6 @@ kv_namespaces = [
     { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
 ]
 
-[vars]
-# サービスごとの参照先。'd1' で内製CMS（D1）、'microcms' で従来のmicroCMSを参照する
-# 全サービスともステージング検証済み（2026-07-11）のため本番も D1 を参照する
-ATELIER_SOURCE = "d1"
-COMIC_SOURCE = "d1"
-BLOG_SOURCE = "d1"
-
 [[d1_databases]]
 binding = "DB"
 database_name = "maretol-cms"
@@ -39,12 +32,6 @@ routes = [
 kv_namespaces = [
     { binding = "CMS_DRAFT", id = "d472c0eaca4947bd8dc216a463ae0703" }
 ]
-
-[env.staging.vars]
-ATELIER_SOURCE = "d1"
-# ステージングは先行してD1を参照する
-COMIC_SOURCE = "d1"
-BLOG_SOURCE = "d1"
 
 [[env.staging.d1_databases]]
 binding = "DB"

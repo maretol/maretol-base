@@ -1,6 +1,6 @@
 /**
  * D1（内製CMS DB）からコンテンツを取得する処理
- * micro_cms.ts と同じ結果型を返し、index.ts 側の parse 処理を共有する
+ * api-types の結果型を返し、index.ts 側の parse 処理を共有する
  *
  * cms_design.md「主要クエリの対応表」参照。公開サイト向けのため常に status='PUBLISH' で絞る
  */

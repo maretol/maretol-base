@@ -9,7 +9,7 @@
 - `/admin-pages/` - 内製 CMS の管理ページ（Next.js + OpenNext、Cloudflare Access）
 - `/cms-data-fetcher/` - CMS データ取得 Worker
 - `/ogp-data-fetcher/` - OGP 情報取得・キャッシュ Worker
-- `/sns-article-publisher/` - SNS 自動投稿 Worker（Twitter/X, Bluesky, Nostr）
+- `/sns-article-publisher/` - SNS 自動投稿 Worker（Twitter/X, Bluesky, Misskey, Nostr）
 - `/packages/` - 共有パッケージ（api-types, cache-tags, md-converter）
 
 ## コーディング規約（Coding Style Guidelines）
@@ -26,8 +26,7 @@
 ## セキュリティ（Security considerations）
 
 - API キー・認証情報は `.secrets` および環境変数で管理（`.gitignore` 済み）
-- microCMS API キーは Cloudflare Workers の環境変数として設定
-- SNS 投稿用の認証情報（Twitter, Bluesky, Nostr）は Workers の secrets で管理
+- SNS 投稿用の認証情報（Twitter, Bluesky, Misskey, Nostr）は Workers の secrets で管理
 
 ## ビルド＆テスト手順（Build & Test）
 
@@ -70,7 +69,7 @@ npm run test:sns       # SNS Worker テスト
 ### 主要ライブラリ
 - **公開サイト**: Astro + @astrojs/cloudflare（Hono で Worker を組む。`pages-astro/src/worker.ts`）
 - **管理ページ**: Next.js + @opennextjs/cloudflare
-- **CMS**: microcms-js-sdk
+- **CMS**: 内製（D1 + admin-pages）
 - **UI**: Radix UI, shadcn/ui, Tailwind CSS 4, Lucide React icons
 - **テスト**: Vitest + @cloudflare/vitest-pool-workers
 

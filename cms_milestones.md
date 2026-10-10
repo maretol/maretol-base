@@ -91,7 +91,8 @@ cms_goal.md のゴール・決定事項を前提とした作業の区切り。�
 - [x] 本番切替（PR #1126 → #1125 マージで本番デプロイ、動作確認済み 2026-07-11。**サイト全体が microCMS 非依存になった**）
 - [x] 撤去の前提: cms-cache-purger の運用機能（手動パージ）を admin-pages のキャッシュ管理ページ（/cache）に移行（PR #1127、本番動作確認済み 2026-07-11）
 - [x] 新規記事公開時のSNS自動投稿の実弾確認（RPC経路）と投稿時キャッシュパージの本番動作確認（2026-07-12）
-- [ ] 撤去: microCMS SDK・API キー・cms-cache-purger・sns公開Webhookハンドラ・*_SOURCE 切替機構の削除（**切替後の安定確認まで保留**。cms-cache-purger は Astro 移行の M7（#1347）で撤去済み）
+- [x] 撤去（コード）: microCMS SDK・sns公開Webhookハンドラ（fetch ハンドラと api / dev-api の `/sns-publisher` ルート）・*_SOURCE 切替機構・microCMS からのインポートスクリプト（cms-db/scripts）の削除（#1273。cms-cache-purger は Astro 移行の M7（#1347）で撤去済み）
+- [ ] 撤去（Cloudflare 側）: 上のデプロイ後に、Worker の secrets（cms-data-fetcher / -stg の CMS_API_KEY・CMS_API_KEY_AT・CMS_API_KEY_BD、sns-article-publisher の SNS_PUB_CMS_KEY・SNS_PUB_CMS_SECRET・API_KEY、sns-article-publisher-stg の API_KEY）と、sns-article-publisher / -stg のルート（wrangler は設定から消えたルートを外さない）を削除する。microCMS の管理画面に SNS 投稿向けの Webhook が残っていれば外す
 - [ ] microCMS 契約解除（最終ゴール達成）
 
 **成果物**: cms_goal.md の最終ゴールが達成された状態

@@ -8,7 +8,7 @@
  * - SNS_NOTIFY_ENABLED が 'true' の環境でのみ送信する（staging/ローカルからの誤投稿防止）
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
-import type { SNSPostTextResult, SNSPublishValue } from 'api-types'
+import type { SNSPostTextResult, SNSPublishArgs } from 'api-types'
 import type { BlogContentInput } from './db_blog'
 import type { BandeDessineeInput } from './db_comic'
 import type { AtelierInput } from './db'
@@ -32,8 +32,9 @@ function isPublishEvent(status: ContentStatus, { type, oldStatus }: NotifyMeta):
   return true
 }
 
-async function publishToSNS(serviceType: 'blog' | 'illust' | 'comic', value: SNSPublishValue): Promise<void> {
+async function publishToSNS(...args: SNSPublishArgs): Promise<void> {
   const { env } = await getCloudflareContext({ async: true })
+  const [serviceType, value] = args
 
   if (env.SNS_NOTIFY_ENABLED !== 'true') {
     console.log('SNS notify skipped: disabled in this environment')
@@ -41,7 +42,7 @@ async function publishToSNS(serviceType: 'blog' | 'illust' | 'comic', value: SNS
   }
 
   try {
-    await env.SNS_PUBLISHER.publishArticle(serviceType, value)
+    await env.SNS_PUBLISHER.publishArticle(...args)
     console.log(`SNS notify sent (${serviceType}: ${value.id})`)
   } catch (e) {
     // SNS通知の失敗でコンテンツ保存を失敗させない
