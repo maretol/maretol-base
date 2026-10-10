@@ -6,7 +6,7 @@
 
 このプロジェクトは、Cloudflare Workers を活用した個人サイトのモノレポジトリです。Astro の公開サイト、Next.js の管理ページと、複数の Edge Workers を npm workspaces で統合的に管理しています。
 
-現在、外部 CMS（microCMS）から Cloudflare D1 ベースの内製 CMS への移行を進めています。
+コンテンツは Cloudflare D1 ベースの内製 CMS で管理しています（microCMS から移行済み）。
 
 ## アーキテクチャ
 
@@ -17,7 +17,7 @@ maretol-base/
 ├── cms-data-fetcher/       # CMS データ取得 Worker
 ├── ogp-data-fetcher/       # OGP データ取得 Worker
 ├── sns-article-publisher/  # SNS 自動投稿 Worker
-├── cms-db/                 # 内製CMSの D1 スキーマ管理・microCMS データインポート
+├── cms-db/                 # 内製CMSの D1 スキーマ管理
 ├── e2e/                    # staging 環境に対する E2E テスト (Playwright)
 └── packages/               # 共有パッケージ
     ├── api-types/          # API の型定義
@@ -31,7 +31,7 @@ maretol-base/
 - **管理ページ**: Next.js (App Router) + React + TypeScript + Tailwind CSS（OpenNext `@opennextjs/cloudflare`）
 - **インフラ**: Cloudflare Workers / Workers Cache / D1 / KV / R2 / Secrets Store
 - **パッケージ管理**: npm workspaces
-- **CMS**: microCMS（内製 CMS への移行作業中）
+- **CMS**: 内製（D1 + admin-pages）
 - **CI/CD**: GitHub Actions
 - **テスト**: Vitest（Workers）/ Playwright（E2E）
 
@@ -108,7 +108,7 @@ npm run dev:sns          # SNS 投稿 Worker
 
 ### cms-data-fetcher
 
-microCMS からコンテンツを取得する Worker。API キーによる認証が必要。
+内製 CMS の D1（`maretol-cms`）からコンテンツを取得する Worker。pages-astro からは Service Binding の RPC で呼びます。HTTP（`api.maretol.xyz/cms/*`）は API キーによる認証が必要。
 
 ### ogp-data-fetcher
 
@@ -116,22 +116,16 @@ microCMS からコンテンツを取得する Worker。API キーによる認証
 
 ### sns-article-publisher
 
-新規記事公開時に各種 SNS（Twitter/X、Bluesky、Nostr）に自動投稿する Worker。
+新規記事公開時に各種 SNS（Twitter/X、Bluesky、Nostr）に自動投稿する Worker。admin-pages から Service Binding の RPC で呼ぶため、HTTP の入口は持ちません。
 
 ### cms-db
 
-内製 CMS の D1 データベース（`maretol-cms`）のマイグレーション管理と、microCMS からのデータインポートスクリプト群。
+内製 CMS の D1 データベース（`maretol-cms`）のマイグレーション管理。
 
 ```bash
 # マイグレーション
 npm run --workspace=cms-db migrate:local   # ローカル D1 に適用
 npm run --workspace=cms-db migrate:remote  # リモート D1 に適用
-
-# microCMS からのデータ移行
-npm run --workspace=cms-db export               # microCMS データのエクスポート
-npm run --workspace=cms-db generate-sql:blog    # ブログ記事の SQL 生成
-npm run --workspace=cms-db generate-sql:illust  # イラストの SQL 生成
-npm run --workspace=cms-db generate-sql:comic   # マンガの SQL 生成
 ```
 
 ## デプロイ

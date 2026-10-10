@@ -128,7 +128,7 @@ microCMS の3サービスを単位に、規模の小さいものから段階的�
 - cms-data-fetcher の該当サービスの参照先を D1 に切り替え
 - ステージング（-stg / dev-api.maretol.xyz）で検証後に本番切り替え
 
-全サービス移行完了後、microCMS SDK・APIキー・cms-cache-purger を撤去する（cms-cache-purger は Astro 移行の M7 で撤去済み）
+全サービス移行完了後、microCMS SDK・APIキー・cms-cache-purger を撤去する（cms-cache-purger は Astro 移行の M7 で、microCMS SDK・切替機構・SNS の Webhook ハンドラは #1273 で撤去した）
 
 ## 移行対象データ（現行 microCMS の構造）
 

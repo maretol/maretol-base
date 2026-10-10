@@ -11,19 +11,6 @@ import {
   infoAPIResult,
   atelierResult,
 } from 'api-types'
-import {
-  getBandeDessinee,
-  getBandeDessinees,
-  getContent,
-  getContents,
-  getContentsByTag,
-  getStatic,
-  getInfo,
-  getTags,
-  getAtelier,
-  getAteliers,
-  getSecretMeta,
-} from './micro_cms'
 import { parse } from './parse'
 import {
   getAteliersFromD1,
@@ -50,20 +37,13 @@ import { WorkerEntrypoint } from 'cloudflare:workers'
 
 export interface Env {
   API_KEY: string
-  CMS_API_KEY: string
-  CMS_API_KEY_BD: string
-  CMS_API_KEY_AT: string
-  // サービスごとの参照先切り替え（段階移行用）。'd1' で D1、それ以外は microCMS を参照する
-  ATELIER_SOURCE?: string
-  COMIC_SOURCE?: string
-  BLOG_SOURCE?: string
   // 内製CMSのD1データベース（maretol-cms）
   DB: D1Database
   // KVプレビュー（draftKey互換）のドラフト参照先。管理ページ（admin-pages）が書き込む
   CMS_DRAFT: KVNamespace
 }
 
-// D1参照時のマンガ単体取得。draftKey指定時はKVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
+// マンガ単体取得。draftKey指定時はKVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
 // 未公開（下書き）の前後の巻へはリンクさせない。D1の公開データは取得時に判定済みのため、KVのドラフトにだけ同じ処理を掛ける
 // なお複数の巻を同時に下書きしていると、プレビューでは相手の巻が伏せられる（両方の公開後には「次の話へ」になる）
 async function fetchBandeDessineeFromD1(env: Env, contentID: string, draftKey?: string): Promise<bandeDessineeResult> {
@@ -166,16 +146,12 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     offset?: string,
     limit?: string
   ): Promise<{ contents: contentsAPIResult[]; total: number }> {
-    const apiKey = this.env.CMS_API_KEY
     if (tagIDs === null) {
       return { contents: [], total: 0 }
     }
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
-    const contents =
-      this.env.BLOG_SOURCE === 'd1'
-        ? await getBlogContentsByTagFromD1(this.env.DB, tagIDs, offsetNum, limitNum)
-        : await getContentsByTag(apiKey, tagIDs, offsetNum, limitNum)
+    const contents = await getBlogContentsByTagFromD1(this.env.DB, tagIDs, offsetNum, limitNum)
     contents.contents.forEach((c) => {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
@@ -187,13 +163,9 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchContents(offset?: string, limit?: string): Promise<{ contents: contentsAPIResult[]; total: number }> {
-    const apiKey = this.env.CMS_API_KEY
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
-    const contents =
-      this.env.BLOG_SOURCE === 'd1'
-        ? await getBlogContentsFromD1(this.env.DB, offsetNum, limitNum)
-        : await getContents(apiKey, offsetNum, limitNum)
+    const contents = await getBlogContentsFromD1(this.env.DB, offsetNum, limitNum)
     contents.contents.forEach((c) => {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
@@ -205,15 +177,12 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchContent(articleID: string, draftKey?: string | null): Promise<contentsAPIResult> {
-    const apiKey = this.env.CMS_API_KEY
     const parsedDraftKey = draftKey === null ? undefined : draftKey
-    // D1参照時のdraftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
+    // draftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
     const content =
-      this.env.BLOG_SOURCE === 'd1'
-        ? (parsedDraftKey !== undefined
-            ? await getBlogContentDraftFromKV(this.env.CMS_DRAFT, articleID, parsedDraftKey)
-            : null) ?? (await getBlogContentFromD1(this.env.DB, articleID))
-        : await getContent(apiKey, articleID, parsedDraftKey)
+      (parsedDraftKey !== undefined
+        ? await getBlogContentDraftFromKV(this.env.CMS_DRAFT, articleID, parsedDraftKey)
+        : null) ?? (await getBlogContentFromD1(this.env.DB, articleID))
     const parsed = parse(content.content)
     content.parsed_content = parsed.contents_array
     content.table_of_contents = parsed.table_of_contents
@@ -222,11 +191,8 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     return JSON.parse(JSON.stringify(content))
   }
 
-  // 前後記事（一つ前・一つあと）の取得。D1移行後の新機能のためmicroCMS参照時は前後なしを返す
+  // 前後記事（一つ前・一つあと）の取得
   async fetchAdjacentContents(articleID: string): Promise<adjacentContentsResult> {
-    if (this.env.BLOG_SOURCE !== 'd1') {
-      return { prev: null, next: null }
-    }
     return await getBlogAdjacentContentsFromD1(this.env.DB, articleID)
   }
 
@@ -236,31 +202,25 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     articleID: string,
     draftKey?: string | null
   ): Promise<{ is_secret: boolean; secret_code: string | null }> {
-    const apiKey = this.env.CMS_API_KEY
     const parsedDraftKey = draftKey === null ? undefined : draftKey
-    if (this.env.BLOG_SOURCE === 'd1') {
-      // プレビュー時は下書きの is_secret / secret_code を優先する
-      if (parsedDraftKey !== undefined) {
-        const draftMeta = await getBlogSecretMetaFromDraft(this.env.CMS_DRAFT, articleID, parsedDraftKey)
-        if (draftMeta !== null) {
-          return draftMeta
-        }
+    // プレビュー時は下書きの is_secret / secret_code を優先する
+    if (parsedDraftKey !== undefined) {
+      const draftMeta = await getBlogSecretMetaFromDraft(this.env.CMS_DRAFT, articleID, parsedDraftKey)
+      if (draftMeta !== null) {
+        return draftMeta
       }
-      return await getBlogSecretMetaFromD1(this.env.DB, articleID)
     }
-    return await getSecretMeta(apiKey, articleID, parsedDraftKey)
+    return await getBlogSecretMetaFromD1(this.env.DB, articleID)
   }
 
   async fetchTags(): Promise<categoryAPIResult[]> {
-    const apiKey = this.env.CMS_API_KEY
-    const tags = this.env.BLOG_SOURCE === 'd1' ? await getBlogTagsFromD1(this.env.DB) : await getTags(apiKey)
+    const tags = await getBlogTagsFromD1(this.env.DB)
     // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
     return JSON.parse(JSON.stringify(tags))
   }
 
   async fetchInfo(): Promise<infoAPIResult[]> {
-    const apiKey = this.env.CMS_API_KEY
-    const info = this.env.BLOG_SOURCE === 'd1' ? await getBlogInfoFromD1(this.env.DB) : await getInfo(apiKey)
+    const info = await getBlogInfoFromD1(this.env.DB)
     info.forEach((i) => {
       const parsed = parse(i.main_text)
       i.parsed_content = parsed.contents_array
@@ -272,9 +232,8 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchStatic(): Promise<staticAPIResult> {
-    const apiKey = this.env.CMS_API_KEY
     try {
-      const staticData = this.env.BLOG_SOURCE === 'd1' ? await getBlogStaticFromD1(this.env.DB) : await getStatic(apiKey)
+      const staticData = await getBlogStaticFromD1(this.env.DB)
       // Cheerioオブジェクトに含まれる関数を削ぎ落とすためにJSON経由でシリアライズ
       return JSON.parse(JSON.stringify(staticData))
     } catch (e) {
@@ -289,16 +248,12 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     limit?: string,
     seriesID?: string | null
   ): Promise<{ bandeDessinees: bandeDessineeResult[]; total: number }> {
-    const apiKey = this.env.CMS_API_KEY_BD
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
     const parsedSeriesID = seriesID ? seriesID : undefined
 
     try {
-      const contents =
-        this.env.COMIC_SOURCE === 'd1'
-          ? await getBandeDessineesFromD1(this.env.DB, offsetNum, limitNum, parsedSeriesID)
-          : await getBandeDessinees(apiKey, offsetNum, limitNum, parsedSeriesID)
+      const contents = await getBandeDessineesFromD1(this.env.DB, offsetNum, limitNum, parsedSeriesID)
       contents.bandeDessinees.forEach((bd) => {
         const parsed = parse(bd.description)
         bd.parsed_description = parsed.contents_array
@@ -314,15 +269,11 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchBandeDessinee(contentID: string, draftKey?: string | null): Promise<bandeDessineeResult> {
-    const apiKey = this.env.CMS_API_KEY_BD
     if (contentID === null) {
       throw new Error('contentID is empty')
     }
     try {
-      const content =
-        this.env.COMIC_SOURCE === 'd1'
-          ? await fetchBandeDessineeFromD1(this.env, contentID, draftKey || undefined)
-          : await getBandeDessinee(apiKey, contentID, draftKey || undefined)
+      const content = await fetchBandeDessineeFromD1(this.env, contentID, draftKey || undefined)
       const parsed = parse(content.description)
       content.parsed_description = parsed.contents_array
       content.table_of_contents = parsed.table_of_contents
@@ -336,15 +287,11 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchAteliers(offset?: string, limit?: string): Promise<{ ateliers: atelierResult[]; total: number }> {
-    const apiKey = this.env.CMS_API_KEY_AT
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
 
     try {
-      const atelier =
-        this.env.ATELIER_SOURCE === 'd1'
-          ? await getAteliersFromD1(this.env.DB, offsetNum, limitNum)
-          : await getAteliers(apiKey, offsetNum, limitNum)
+      const atelier = await getAteliersFromD1(this.env.DB, offsetNum, limitNum)
       atelier.ateliers.forEach((a) => {
         if (a.description === null) {
           a.description = ''
@@ -363,7 +310,6 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchAtelier(contentID: string, draftKey?: string | null): Promise<atelierResult> {
-    const apiKey = this.env.CMS_API_KEY_AT
     const parsedDraftKey = draftKey === null ? undefined : draftKey
 
     if (contentID === null) {
@@ -371,13 +317,11 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     }
 
     try {
-      // D1参照時のdraftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
+      // draftKeyプレビュー: KVのドラフトを優先し、不一致・不存在ならD1の公開データを返す
       const atelier =
-        this.env.ATELIER_SOURCE === 'd1'
-          ? (parsedDraftKey !== undefined
-              ? await getAtelierDraftFromKV(this.env.CMS_DRAFT, contentID, parsedDraftKey)
-              : null) ?? (await getAtelierFromD1(this.env.DB, contentID))
-          : await getAtelier(apiKey, contentID, parsedDraftKey)
+        (parsedDraftKey !== undefined
+          ? await getAtelierDraftFromKV(this.env.CMS_DRAFT, contentID, parsedDraftKey)
+          : null) ?? (await getAtelierFromD1(this.env.DB, contentID))
       const parsed = parse(atelier.description)
       atelier.parsed_description = parsed.contents_array
       atelier.table_of_contents = parsed.table_of_contents

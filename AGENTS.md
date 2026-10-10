@@ -26,7 +26,6 @@
 ## セキュリティ（Security considerations）
 
 - API キー・認証情報は `.secrets` および環境変数で管理（`.gitignore` 済み）
-- microCMS API キーは Cloudflare Workers の環境変数として設定
 - SNS 投稿用の認証情報（Twitter, Bluesky, Nostr）は Workers の secrets で管理
 
 ## ビルド＆テスト手順（Build & Test）
@@ -70,7 +69,7 @@ npm run test:sns       # SNS Worker テスト
 ### 主要ライブラリ
 - **公開サイト**: Astro + @astrojs/cloudflare（Hono で Worker を組む。`pages-astro/src/worker.ts`）
 - **管理ページ**: Next.js + @opennextjs/cloudflare
-- **CMS**: microcms-js-sdk
+- **CMS**: 内製（D1 + admin-pages）
 - **UI**: Radix UI, shadcn/ui, Tailwind CSS 4, Lucide React icons
 - **テスト**: Vitest + @cloudflare/vitest-pool-workers
 

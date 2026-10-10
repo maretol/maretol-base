@@ -2,9 +2,9 @@ name = "sns-article-publisher"
 main = "src/index.ts"
 compatibility_date = "2025-05-05"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
-routes = [
-    { pattern = "api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
-]
+# admin-pages から Service Binding の RPC でだけ呼ぶため、HTTP の入口（ルート・workers.dev）は持たない
+# routes を書かないと wrangler は workers.dev を既定で有効にするので明示的に閉じる
+workers_dev = false
 
 [images]
 binding = "IMAGES"
@@ -14,9 +14,7 @@ port = 30254
 
 [env.staging]
 name = "sns-article-publisher-stg"
-routes = [
-    { "pattern" = "dev-api.maretol.xyz/sns-publisher", zone_name = "maretol.xyz" }
-]
+workers_dev = false
 
 [env.staging.images]
 binding = "IMAGES"

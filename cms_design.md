@@ -253,7 +253,7 @@ CREATE TABLE atelier_tag_relations (
 - これによりシークレット管理（admin-pages への SNS_PUB_CMS_KEY / SECRET 設定）と偽 WebhookPayload の組み立てが不要になる
 - sns-article-publisher に RPC メソッド `publishArticle` を追加（既存の投稿処理 `publish()` の薄いラッパー。`waitUntil` で非同期投稿）。投稿可否の判定（新規公開・下書き→公開のみ、is_secret 除外）は呼び出し側（admin-pages）が行う
 - 送信は `SNS_NOTIFY_ENABLED = 'true'` の環境（本番のみ）に限定し、staging・ローカルからの誤投稿を防ぐ
-- 公開 Webhook（fetch ハンドラ + HMAC検証）は microCMS 用として撤去フェーズまで残置する
+- 公開 Webhook（fetch ハンドラ + HMAC検証）は microCMS 用として撤去フェーズまで残置した。#1273 で fetch ハンドラと HTTP のルートを撤去し、sns-article-publisher は RPC だけで呼ぶ Worker になった
 
 ## 5. microCMS からのデータインポート
 
@@ -267,6 +267,8 @@ CREATE TABLE atelier_tag_relations (
 
 SQL ファイル生成方式とするのは、投入前に差分を目視でき、ステージング→本番で同一ファイルを再利用できるため
 
+※ 取り込みは 2026-07-11 に完了した。スクリプト（export_microcms.ts / generate_*_sql.ts）は #1273 で削除した（git の履歴に残る）。いまの D1 は管理ページで更新されているので、再実行すると内容を古いデータで上書きする
+
 ## 確定状況
 
 本ドキュメントの内容はすべて確定済み（2026-07-10）。以降の変更はこのファイルを更新して管理する
@@ -274,5 +276,5 @@ SQL ファイル生成方式とするのは、投入前に差分を目視でき�
 - DDL（static は key-value 方式を含め確定）
 - 変換ライブラリ: markdown-it
 - エディタ: 素の textarea で開始・エディタ内プレビューなし
-- SNS 通知: WebhookPayload 完全互換（sns-article-publisher 無改修）
+- SNS 通知: Service Binding + RPC（4 章。当初の WebhookPayload 完全互換から M6 で変更）
 - インポート: JSON エクスポート → SQL 生成 → wrangler d1 execute の2段階方式
