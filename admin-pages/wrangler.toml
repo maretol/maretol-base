@@ -22,7 +22,10 @@ kv_namespaces = [
 
 services = [
     # blog記事の公開時にSNS自動投稿の通知を送る（WebhookPayload互換。lib/sns.ts 参照）
-    { binding = "SNS_PUBLISHER", service = "sns-article-publisher" }
+    { binding = "SNS_PUBLISHER", service = "sns-article-publisher" },
+    # 公開サイト（Astro 版）の Workers Cache を保存時にパージする（lib/edge_cache.ts 参照）。
+    # 先の Worker（maretol-base-v4）が本番に無いとデプロイに失敗するので、v4 の本番デプロイより後に入れる（astro_milestones.md の M6）
+    { binding = "ASTRO_PAGES", service = "maretol-base-v4" }
 ]
 
 [[d1_databases]]
@@ -56,7 +59,6 @@ kv_namespaces = [
 services = [
     { binding = "SNS_PUBLISHER", service = "sns-article-publisher-stg" },
     # 公開サイト（Astro 版）の Workers Cache を保存時にパージする（lib/edge_cache.ts 参照）
-    # 本番は Astro 版への切替時に追加する
     { binding = "ASTRO_PAGES", service = "maretol-base-v4-stg" }
 ]
 
