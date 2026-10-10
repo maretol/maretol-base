@@ -5,7 +5,8 @@
  * 公開サイトの RPC メソッドを呼び、公開サイト自身にパージさせる
  *
  * - 保存 1 回につき呼び出しは 1 回にし、必要なタグをまとめて渡す（パージにはレート制限がある）
- * - binding が無い環境（Astro 版へ切り替える前の本番・ローカル）では何もしない
+ * - binding が無い環境では何もしない。ローカル（next dev）では binding はあるが先の Worker につながらず失敗するので、
+ *   保存結果に「パージできなかった」の案内が出るだけで、保存そのものは妨げない
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 
