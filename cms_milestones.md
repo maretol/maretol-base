@@ -91,7 +91,7 @@ cms_goal.md のゴール・決定事項を前提とした作業の区切り。�
 - [x] 本番切替（PR #1126 → #1125 マージで本番デプロイ、動作確認済み 2026-07-11。**サイト全体が microCMS 非依存になった**）
 - [x] 撤去の前提: cms-cache-purger の運用機能（手動パージ）を admin-pages のキャッシュ管理ページ（/cache）に移行（PR #1127、本番動作確認済み 2026-07-11）
 - [x] 新規記事公開時のSNS自動投稿の実弾確認（RPC経路）と投稿時キャッシュパージの本番動作確認（2026-07-12）
-- [ ] 撤去: microCMS SDK・API キー・cms-cache-purger・sns公開Webhookハンドラ・*_SOURCE 切替機構の削除（**切替後の安定確認まで保留**）
+- [ ] 撤去: microCMS SDK・API キー・cms-cache-purger・sns公開Webhookハンドラ・*_SOURCE 切替機構の削除（**切替後の安定確認まで保留**。cms-cache-purger は Astro 移行の M7（#1347）で撤去済み）
 - [ ] microCMS 契約解除（最終ゴール達成）
 
 **成果物**: cms_goal.md の最終ゴールが達成された状態
