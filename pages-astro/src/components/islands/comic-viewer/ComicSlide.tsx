@@ -4,6 +4,11 @@ import ComicImage from './ComicImage'
 import SeriesGuideSlide from './SeriesGuideSlide'
 import type { PageState, ViewMode } from './types'
 
+// 見開きの画像。枠の高さいっぱいに出し、幅が枠に収まらないとき（縦長の画面）は object-contain で縦横比を保つ。
+// max-h-fit（画像そのものの高さで頭打ちにする）は使わない。srcset の候補の幅が原本より大きいと、ブラウザが扱う画像の大きさは
+// 原本より小さくなる（DPR が高いほど小さい）ので、原本の小さいページが枠の高さまで広がらなくなる
+const DOUBLE_IMAGE_CLASS = 'object-contain w-auto h-full max-w-full'
+
 type Props = {
   mode: ViewMode
   page: PageState
@@ -51,16 +56,10 @@ function ComicSlide({ mode, page, isActive, loadable, onSettle }: Props) {
   switch (page.position) {
     case 'right':
       // 視覚上の右ページ: 画像を左端（中央のシーム側）に寄せる
-      return (
-        <div className="h-full w-full flex justify-end items-center">{image('w-auto h-full max-h-fit max-w-full')}</div>
-      )
+      return <div className="h-full w-full flex justify-end items-center">{image(DOUBLE_IMAGE_CLASS)}</div>
     case 'left':
       // 視覚上の左ページ: 画像を右端（中央のシーム側）に寄せる
-      return (
-        <div className="h-full w-full flex justify-start items-center">
-          {image('w-auto h-full max-h-fit max-w-full')}
-        </div>
-      )
+      return <div className="h-full w-full flex justify-start items-center">{image(DOUBLE_IMAGE_CLASS)}</div>
   }
 }
 
