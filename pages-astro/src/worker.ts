@@ -8,6 +8,7 @@ import type { PurgeResult, PurgeRPC } from 'cache-tags'
 import { renderErrorPage } from './lib/error_page'
 import { createEvent, describeError, recordLogEvent } from './lib/log'
 import { cacheHeaders } from './mw/cache'
+import { securityHeaders } from './mw/headers'
 import { observe } from './mw/observe'
 import { purgeByTags } from './mw/purge'
 import { normalizeQuery } from './mw/query'
@@ -16,6 +17,8 @@ const app = new Hono<{ Bindings: Env }>()
 
 // cf() は Astro の他のハンドラより前に置く（静的アセットの配信、locals.cfContext などの設定）
 app.use(cf())
+// セキュリティヘッダ。この後ろのミドルウェアが返すリダイレクトやエラーにも付ける。cf() がアセットの応答をそのまま返す経路は public/_headers で付く
+app.use(securityHeaders())
 // 観測（Axiom へのアクセスログとイベントの送信）。レスポンスが確定してから送るので、この後ろが返す 301 / 308 / 500 もそのステータスで残る
 app.use(observe())
 // 末尾のスラッシュの正規化（astro.config.ts の trailingSlash）。クエリの正規化より前に置き、スラッシュとクエリの両方がずれていても
