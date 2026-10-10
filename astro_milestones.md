@@ -104,9 +104,9 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 
 ## M7. 撤去（#1347）
 
-- [ ] `pages/` と Worker `maretol-base-v3` / `maretol-base-v3-stg` の削除
-- [ ] KV `CMS_CACHE`、admin の KV パージ、`packages/cms-cache-key-gen`、`cms-cache-purger` の削除
-- [ ] CI・e2e・root スクリプトから pages を外す
-- [ ] 移行で解消した issue の close、AGENTS.md・設計文書の更新
+- [ ] `pages/` と Worker `maretol-base-v3` / `maretol-base-v3-stg` の削除（リポジトリからは削除。Worker はダッシュボードで削除する）
+- [ ] KV `CMS_CACHE`、admin の KV パージ、`packages/cms-cache-key-gen`、`cms-cache-purger` の削除（admin は #1380、ほかはリポジトリから削除。Worker と KV はダッシュボードで削除する）
+- [x] CI・e2e・root スクリプトから pages を外す（`cms-cache-purger` のジョブと `deploy_stg_astro.yaml` も外した。e2e は M5 で Astro 版に移してある）
+- [ ] 移行で解消した issue の close、AGENTS.md・設計文書の更新（AGENTS.md・README・設計文書は更新済み。issue は #1348 の振り分けで close する）
 
 **成果物**: 公開側から Next.js が消えた状態

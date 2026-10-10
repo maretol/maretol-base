@@ -3,10 +3,8 @@ updates:
   - package-ecosystem: 'npm'
     directories:
       - '/'
-      - 'pages/'
       - 'cms-data-fetcher/'
       - 'ogp-data-fetcher/'
-      - 'cms-cache-purger/'
       - 'sns-article-publisher/'
     schedule:
       interval: 'daily'
@@ -34,10 +32,8 @@ updates:
       - dependency-type: 'all'
     ignore:
       - dependency-name: 'sns-article-publisher'
-      - dependency-name: 'cms-cache-purger'
       - dependency-name: 'cms-data-fetcher'
       - dependency-name: 'ogp-data-fetcher'
-      - dependency-name: 'pages'
       - dependency-name: 'packages/*'
   - package-ecosystem: 'github-actions'
     directory: '/'

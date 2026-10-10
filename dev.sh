@@ -25,4 +25,4 @@ sleep 2
 npm run dev:ogp > dev_ogp.log 2>&1 &
 PIDS+=($!)
 
-npm run next-dev:page
+npm run dev:astro

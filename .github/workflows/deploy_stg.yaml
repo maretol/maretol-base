@@ -20,12 +20,10 @@ jobs:
       name: stg
     outputs:
       workflow: ${{ steps.filter.outputs.workflow }}
-      pages: ${{ steps.filter.outputs.pages }}
       pages-astro: ${{ steps.filter.outputs.pages-astro }}
       admin-pages: ${{ steps.filter.outputs.admin-pages }}
       ogp-data-fetcher: ${{ steps.filter.outputs.ogp-data-fetcher }}
       cms-data-fetcher: ${{ steps.filter.outputs.cms-data-fetcher }}
-      cms-cache-purger: ${{ steps.filter.outputs.cms-cache-purger }}
       sns-article-publisher: ${{ steps.filter.outputs.sns-article-publisher }}
     steps:
       - uses: actions/checkout@v7
@@ -34,10 +32,6 @@ jobs:
         uses: dorny/paths-filter@v4
         with:
           filters: |
-            pages:
-              - "pages/**"
-              - "packages/api-types/**"
-              - "packages/cms-cache-key-gen/**"
             pages-astro:
               - "pages-astro/**"
               - "packages/api-types/**"
@@ -54,51 +48,12 @@ jobs:
               - "packages/api-types/src/cms_types.ts"
               - "packages/api-types/src/cms_db_types.ts"
               - "packages/md-converter/**"
-            cms-cache-purger:
-              - "cms-cache-purger/**"
-              - "packages/cms-cache-key-gen/**"
-              - "packages/api-types/src/cms_webhook_types.ts"
             sns-article-publisher:
               - "sns-article-publisher/**"
               - "packages/api-types/src/sns_pub.ts"
               - "packages/api-types/src/cms_webhook_types.ts"
             workflow:
               - ".github/workflows/**"
-
-  deploy-pages:
-    needs: changes
-    if: ${{ needs.changes.outputs.pages == 'true' || needs.changes.outputs.workflow == 'true' }}
-    runs-on: ubuntu-latest
-    environment:
-      name: stg
-    defaults:
-      run:
-        working-directory: ./pages
-    steps:
-      - uses: actions/checkout@v7
-      - name: setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: npm ci
-        working-directory: ./
-        run: npm ci
-      - name: build
-        working-directory: ./
-        run: npm run build:page
-      - name: deploy by wrangler
-        id: deploy
-        uses: cloudflare/wrangler-action@v4
-        with:
-          wranglerVersion: ${{ env.WRANGLER_VERSION }}
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          workingDirectory: ./pages
-          command: deploy -e staging --config wrangler.toml
-      - name: show done command
-        env:
-          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
-        run: echo $CMD_OUTPUT
 
   deploy-pages-astro:
     needs: changes
@@ -236,37 +191,6 @@ jobs:
           CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
         run: echo $CMD_OUTPUT
 
-  deploy-cms-cache-purger:
-    needs: changes
-    if: ${{ needs.changes.outputs.cms-cache-purger == 'true' || needs.changes.outputs.workflow == 'true' }}
-    runs-on: ubuntu-latest
-    environment:
-      name: stg
-    defaults:
-      run:
-        working-directory: ./cms-cache-purger
-    steps:
-      - uses: actions/checkout@v7
-      - name: setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: pwd
-        run: pwd
-      - name: deploy by wrangler
-        id: deploy
-        uses: cloudflare/wrangler-action@v4
-        with:
-          wranglerVersion: ${{ env.WRANGLER_VERSION }}
-          apiToken: ${{ secrets.CF_API_TOKEN }}
-          accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          workingDirectory: ./cms-cache-purger
-          command: deploy -e staging --config wrangler.toml
-      - name: show done command
-        env:
-          CMD_OUTPUT: ${{ steps.deploy.outputs.command-output }}
-        run: echo $CMD_OUTPUT
-
   deploy-sns-article-publisher:
     needs: changes
     if: ${{ needs.changes.outputs.sns-article-publisher == 'true' || needs.changes.outputs.workflow == 'true' }}
@@ -299,12 +223,10 @@ jobs:
   status:
     needs:
       [
-        deploy-pages,
         deploy-pages-astro,
         deploy-admin-pages,
         deploy-ogp-data-fetcher,
         deploy-cms-data-fetcher,
-        deploy-cms-cache-purger,
         deploy-sns-article-publisher,
       ]
     if: always()
@@ -317,29 +239,23 @@ jobs:
       - name: show error
         if: >-
           ${{
-            needs.deploy-pages.result == 'failure' ||
             needs.deploy-pages-astro.result == 'failure' ||
             needs.deploy-admin-pages.result == 'failure' ||
             needs.deploy-ogp-data-fetcher.result == 'failure' ||
             needs.deploy-cms-data-fetcher.result == 'failure' ||
-            needs.deploy-cms-cache-purger.result == 'failure' ||
             needs.deploy-sns-article-publisher.result == 'failure'
           }}
         env:
-          build_result: ${{ needs.deploy-pages.result }}
           pages_astro_result: ${{ needs.deploy-pages-astro.result }}
           admin_result: ${{ needs.deploy-admin-pages.result }}
           ogp_result: ${{ needs.deploy-ogp-data-fetcher.result }}
           cms_result: ${{ needs.deploy-cms-data-fetcher.result }}
-          cms_cache_result: ${{ needs.deploy-cms-cache-purger.result }}
           sns_result: ${{ needs.deploy-sns-article-publisher.result }}
         run: |
-          echo "build result: $build_result"
           echo "pages astro result: $pages_astro_result"
           echo "admin result: $admin_result"
           echo "ogp result: $ogp_result"
           echo "cms result: $cms_result"
-          echo "cms cache result: $cms_cache_result"
           echo "sns result: $sns_result"
           exit 1
 
@@ -351,7 +267,7 @@ jobs:
     environment:
       name: stg
     env:
-      # Astro 版の staging（pages-astro）に対して走らせる。Next.js 版（maretol-base-v3-stg）は対象にしない
+      # 公開サイト（pages-astro）の staging に対して走らせる
       E2E_BASE_URL: ${{ vars.E2E_BASE_URL || 'https://maretol-base-v4-stg.maretol-ruha.workers.dev' }}
     steps:
       - uses: actions/checkout@v7
