@@ -305,6 +305,8 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
 - `astro check` は TypeScript 7 に未対応のため、このワークスペースだけ TypeScript 6 を使う
 - ローカル開発は `npm run dev:cms` と `npm run dev:ogp` を起動した状態で `npm run dev:astro`。Service Binding はローカルの fetcher につながる。R2 と Images binding は `remote = true` で実物を読む（cms-data-fetcher の D1 と同じ扱い）
 - Workers Cache はローカルでは働かない。キャッシュとパージの確認は staging で行う
+- デプロイ: staging は development への push（`deploy_stg_astro.yaml`）と main 宛て PR（`deploy_stg.yaml`）で `maretol-base-v4-stg` へ、本番は main への push（`deploy_prd.yaml`）で `maretol-base-v4` へ出す。本番の Worker は切替（M6）まで custom domain を付けず workers.dev だけで動くので、本番デプロイを先に始めても公開サイトには影響しない
+- e2e（`e2e/`、Playwright）は main 宛て PR の staging デプロイ後（`deploy_stg.yaml` の e2e ジョブ）に `maretol-base-v4-stg` に対して走る。development への push では走らせない。Next.js 版（`maretol-base-v3-stg`）は対象にしない
 
 ## 6. 限定公開記事
 

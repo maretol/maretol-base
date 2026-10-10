@@ -85,9 +85,9 @@ astro_design.md の決定事項を前提とした作業の区切り。各マイ�
 - [x] Axiom アクセスログの移植、Clarity / Cloudflare beacon（タグは本番だけに出す。staging では出さない）
 - [x] 不完全なページ（`locals.degraded`）と描画中の例外（500）のログを Axiom へ送る（アクセスログと同じ仕組み。設計 5 章「ログと解析」）
 - [ ] head（OGP メタ・canonical・favicon）、セキュリティヘッダ
-- [ ] e2e（Playwright）を `maretol-base-v4-stg` 向けに移植
+- [x] e2e（Playwright）を `maretol-base-v4-stg` 向けに移植（`deploy_stg.yaml` の e2e ジョブの対象を v4-stg に変更。URL の正規化のテストを追加。development への push では走らせない）
 - [ ] 現行サイトとの突き合わせ（全ルートのステータス・リダイレクト、主要ページの見た目）
-- [ ] 本番デプロイの workflow に `pages-astro` を追加（custom domain はまだ付けない）
+- [x] 本番デプロイの workflow に `pages-astro` を追加（custom domain はまだ付けない。`deploy_prd.yaml` の `deploy-pages-astro`）
 
 **成果物**: 切替可能と判断できる状態
 
