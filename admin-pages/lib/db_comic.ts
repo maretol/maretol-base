@@ -5,6 +5,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { bandeDessineeRow, bandeDessineeTagRow, bandeDessineeSeriesRow } from 'api-types'
 import type { ContentFormat } from './content-format'
+import type { ContentStatus } from './status'
 import { paginatedQuery, type PageRange, type Paginated } from './db_pagination'
 
 async function getDB(): Promise<D1Database> {
@@ -106,7 +107,7 @@ export type BandeDessineeInput = {
   first_left_right: ('left' | 'right')[]
   description: string
   description_format: ContentFormat
-  status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
+  status: ContentStatus
 }
 
 export async function createBandeDessinee(input: BandeDessineeInput): Promise<void> {
@@ -148,12 +149,9 @@ export async function createBandeDessinee(input: BandeDessineeInput): Promise<vo
     .run()
 }
 
-export async function updateBandeDessinee(input: BandeDessineeInput): Promise<void> {
+// current は呼び出し側が読み込み済みの保存前の行（status の遷移判定・前後巻の付け替え・SNS 通知の判定にも使うので、ここで読み直さない）
+export async function updateBandeDessinee(input: BandeDessineeInput, current: bandeDessineeRow): Promise<void> {
   const db = await getDB()
-  const current = await getBandeDessinee(input.id)
-  if (!current) {
-    throw new Error(`bande dessinee not found: ${input.id}`)
-  }
   const now = new Date().toISOString()
   // published_at は初公開日時を保持。未公開→公開の遷移時のみ現在時刻を設定する
   const publishedAt = input.status === 'PUBLISH' ? (current.published_at ?? now) : current.published_at

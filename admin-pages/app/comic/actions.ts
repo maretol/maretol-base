@@ -20,19 +20,29 @@ import { saveBandeDessineeDraft } from '@/lib/draft_comic'
 import { notifyComicPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
-import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
+import { parseStatus, statusTransitionError } from '@/lib/status'
+import { saveFailed } from '@/lib/save-error'
+import type { PreviewActionState, PurgeActionState, SaveActionState } from '@/lib/form-state'
 import { text, textOrNull } from '@/lib/form-data'
 
-const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
+
+// 発行日: date入力（YYYY-MM-DD）をJST 0時としてISO 8601 UTCに変換する（microCMSの日付ピッカーと同じ挙動）
+// 形式が崩れた入力で new Date(...).toISOString() が RangeError を投げないよう、先に形式を確かめる（issue #1312）
+function parsePublishDate(raw: string): { value: string | null; error?: string } {
+  if (raw === '') {
+    return { value: null }
+  }
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(`${raw}T00:00:00+09:00`) : null
+  if (date === null || Number.isNaN(date.getTime())) {
+    return { value: null, error: '発行日は YYYY-MM-DD 形式の日付で入力してください' }
+  }
+  return { value: date.toISOString() }
+}
 
 function parseComicForm(formData: FormData): { input: BandeDessineeInput; error?: string } {
   const id = text(formData, 'id') || generateContentID()
-  const status = text(formData, 'status')
-
-  // 発行日: date入力（YYYY-MM-DD）をJST 0時としてISO 8601 UTCに変換する（microCMSの日付ピッカーと同じ挙動）
-  const publishDateRaw = text(formData, 'publish_date')
-  const publishDate = publishDateRaw === '' ? null : new Date(`${publishDateRaw}T00:00:00+09:00`).toISOString()
+  const publishDate = parsePublishDate(text(formData, 'publish_date'))
 
   const firstLeftRight = text(formData, 'first_left_right') === 'right' ? 'right' : 'left'
   const format = text(formData, 'format')
@@ -43,7 +53,7 @@ function parseComicForm(formData: FormData): { input: BandeDessineeInput; error?
   const input: BandeDessineeInput = {
     id,
     title_name: text(formData, 'title_name'),
-    publish_date: publishDate,
+    publish_date: publishDate.value,
     publish_event: textOrNull(formData, 'publish_event'),
     contents_url: text(formData, 'contents_url'),
     next_id: textOrNull(formData, 'next_id'),
@@ -59,9 +69,7 @@ function parseComicForm(formData: FormData): { input: BandeDessineeInput; error?
     first_left_right: [firstLeftRight],
     description: (formData.get('description') as string | null) ?? '',
     description_format: parseContentFormat(formData.get('description_format') as string | null),
-    status: VALID_STATUS.includes(status as (typeof VALID_STATUS)[number])
-      ? (status as BandeDessineeInput['status'])
-      : 'DRAFT',
+    status: parseStatus(text(formData, 'status')),
   }
 
   if (!ID_PATTERN.test(input.id)) {
@@ -73,8 +81,14 @@ function parseComicForm(formData: FormData): { input: BandeDessineeInput; error?
   if (input.tag_id === '') {
     return { input, error: 'タグを選択してください' }
   }
+  if (publishDate.error) {
+    return { input, error: publishDate.error }
+  }
   if (Number.isNaN(input.first_page) || Number.isNaN(input.last_page)) {
     return { input, error: '開始・終了ページ番号は数値で入力してください' }
+  }
+  if (input.first_page < 0 || input.first_page > input.last_page) {
+    return { input, error: '開始ページ番号は 0 以上で、終了ページ番号以下にしてください' }
   }
   return { input }
 }
@@ -98,23 +112,28 @@ async function validateChain(input: BandeDessineeInput): Promise<{ neighbors: Ch
   if (!input.series_id) {
     return { neighbors, error: '前の巻・次の巻を設定するにはシリーズの設定が必要です' }
   }
+  // 前後の巻は互いに独立なので並行して読む
+  const [prev, next] = await Promise.all([
+    input.previous_id ? getBandeDessinee(input.previous_id) : null,
+    input.next_id ? getBandeDessinee(input.next_id) : null,
+  ])
   if (input.previous_id) {
-    neighbors.prev = await getBandeDessinee(input.previous_id)
-    if (!neighbors.prev) {
+    if (!prev) {
       return { neighbors, error: `前の巻 '${input.previous_id}' が見つかりません` }
     }
-    if (neighbors.prev.series_id !== input.series_id) {
-      return { neighbors, error: `前の巻「${neighbors.prev.title_name}」が同じシリーズではありません` }
+    if (prev.series_id !== input.series_id) {
+      return { neighbors, error: `前の巻「${prev.title_name}」が同じシリーズではありません` }
     }
+    neighbors.prev = prev
   }
   if (input.next_id) {
-    neighbors.next = await getBandeDessinee(input.next_id)
-    if (!neighbors.next) {
+    if (!next) {
       return { neighbors, error: `次の巻 '${input.next_id}' が見つかりません` }
     }
-    if (neighbors.next.series_id !== input.series_id) {
-      return { neighbors, error: `次の巻「${neighbors.next.title_name}」が同じシリーズではありません` }
+    if (next.series_id !== input.series_id) {
+      return { neighbors, error: `次の巻「${next.title_name}」が同じシリーズではありません` }
     }
+    neighbors.next = next
   }
   return { neighbors }
 }
@@ -157,62 +176,76 @@ async function syncChainPointers(
   return messages
 }
 
-function chainInfoParam(messages: string[]): string {
-  return messages.length > 0 ? `&info=${encodeURIComponent(messages.join(' / '))}` : ''
+function joinInfo(messages: string[]): string | undefined {
+  return messages.length > 0 ? messages.join(' / ') : undefined
 }
 
-// 保存後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
-function savedURL(comicID: string, syncMessages: string[], purged: boolean): string {
-  return withPurgeResult(`/comic/${comicID}/edit?saved=1${chainInfoParam(syncMessages)}`, purged)
+// 新規作成後の遷移先。チェーン同期の報告とパージの結果は遷移先の画面で知らせる
+function createdURL(comicID: string, syncMessages: string[], purged: boolean): string {
+  const info = joinInfo(syncMessages)
+  const url = `/comic/${comicID}/edit?saved=1${info ? `&info=${encodeURIComponent(info)}` : ''}`
+  return withPurgeResult(url, purged)
 }
 
-export async function createBandeDessineeAction(formData: FormData): Promise<void> {
+// 新規作成。エラーは state で返して入力を保持し、成功したら作成したマンガの編集画面へ遷移する（URL が変わるため）
+export async function createBandeDessineeAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseComicForm(formData)
   if (error) {
-    redirect(`/comic/new?error=${encodeURIComponent(error)}`)
+    return { error }
   }
   if (await getBandeDessinee(input.id)) {
-    redirect(`/comic/new?error=${encodeURIComponent(`ID '${input.id}' は既に使用されています`)}`)
+    return { error: `ID '${input.id}' は既に使用されています` }
   }
   const { neighbors, error: chainError } = await validateChain(input)
   if (chainError) {
-    redirect(`/comic/new?error=${encodeURIComponent(chainError)}`)
+    return { error: chainError }
   }
 
-  await createBandeDessinee(input)
-  const syncMessages = await syncChainPointers(input, neighbors, null)
+  let syncMessages: string[]
+  try {
+    await createBandeDessinee(input)
+    syncMessages = await syncChainPointers(input, neighbors, null)
+  } catch (e) {
+    return saveFailed(e)
+  }
   const purged = await purgeBandeDessineeCache(input.id)
-  await notifyComicPublishToSNS({ input, type: 'new' })
+  await notifyComicPublishToSNS({ input, previouslyPublished: false })
 
   revalidatePath('/comic')
-  // 保存後は一覧へ戻らず、作成したマンガの編集画面へ遷移する（連続編集のため）
-  redirect(savedURL(input.id, syncMessages, purged))
+  redirect(createdURL(input.id, syncMessages, purged))
 }
 
-export async function updateBandeDessineeAction(formData: FormData): Promise<void> {
+// 更新。ページ遷移させず結果を state で返す（遷移すると編集中の内容が消えるため）
+export async function updateBandeDessineeAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseComicForm(formData)
   if (error) {
-    redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(error)}`)
+    return { error }
+  }
+  // 保存前の行は status の遷移判定・前後リンクの付け替え掃除・SNS 通知の判定に使う
+  const [current, chain] = await Promise.all([getBandeDessinee(input.id), validateChain(input)])
+  if (!current) {
+    return { error: `マンガ '${input.id}' が見つかりません` }
+  }
+  if (chain.error) {
+    return { error: chain.error }
+  }
+  const transitionError = statusTransitionError(current, input.status)
+  if (transitionError) {
+    return { error: transitionError }
   }
 
-  const { neighbors, error: chainError } = await validateChain(input)
-  if (chainError) {
-    redirect(`/comic/${input.id}/edit?error=${encodeURIComponent(chainError)}`)
+  let syncMessages: string[]
+  try {
+    await updateBandeDessinee(input, current)
+    syncMessages = await syncChainPointers(input, chain.neighbors, current)
+  } catch (e) {
+    return saveFailed(e)
   }
-
-  // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
-  // （前後リンクの付け替え掃除の判定にも旧値を使う）
-  const current = await getBandeDessinee(input.id)
-  const oldStatus = current?.status
-
-  await updateBandeDessinee(input)
-  const syncMessages = await syncChainPointers(input, neighbors, current)
   const purged = await purgeBandeDessineeCache(input.id)
-  await notifyComicPublishToSNS({ input, type: 'edit', oldStatus })
+  await notifyComicPublishToSNS({ input, previouslyPublished: current.published_at !== null })
 
   revalidatePath('/comic')
-  // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(savedURL(input.id, syncMessages, purged))
+  return { saved: true, info: joinInfo(syncMessages), purgeFailed: !purged }
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）

@@ -1,29 +1,40 @@
+'use client'
+
+import { useActionState } from 'react'
 import type { blogInfoRow } from 'api-types'
 import { createBlogInfoAction, updateBlogInfoAction } from '../actions'
+import type { SaveActionState } from '@/lib/form-state'
+import { submitByIntent } from '@/lib/form-submit'
 import { SubmitButton } from '@/components/submit-button'
 import { ContentTextarea } from '@/components/content-textarea'
-import { PurgeFailedNotice } from '@/components/purge-failed-notice'
+import { SaveResult } from '@/components/save-result'
+import { StatusSelect } from '@/components/status-select'
 
 type Props = {
   mode: 'new' | 'edit'
   info?: blogInfoRow
-  error?: string
-  saved?: boolean
-  // 保存はできたが、公開サイトのキャッシュ削除に失敗した
-  purgeFailed?: boolean
+  // 新規作成から遷移してきたときの結果（作成した・パージに失敗した）。編集ページが URL のクエリから組み立てる
+  initialState?: SaveActionState
 }
 
-export function InfoForm({ mode, info, error, saved, purgeFailed }: Props) {
-  const action = mode === 'new' ? createBlogInfoAction : updateBlogInfoAction
+export function InfoForm({ mode, info, initialState = {} }: Props) {
+  // 保存はページ遷移させず結果を state で受け取る（遷移すると編集中の本文が消えるため）。
+  // 新規作成だけは action 内で作成したページの編集画面へ遷移する（URL が変わるため）
+  const [save, saveDispatch, saving] = useActionState(
+    mode === 'new' ? createBlogInfoAction : updateBlogInfoAction,
+    initialState
+  )
   const inputClass = 'mt-1 w-full rounded-md border border-gray-300 p-2 text-sm'
 
   return (
     <div className="space-y-4">
-      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
-      {purgeFailed && <PurgeFailedNotice />}
-      {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      <SaveResult state={save} />
 
-      <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+      {/* 送信は submit イベントから自分で dispatch する（form action に渡すと完了後に入力が reset されるため。lib/form-submit.ts） */}
+      <form
+        onSubmit={(e) => submitByIntent(e, { save: saveDispatch })}
+        className="space-y-4 rounded-lg border border-gray-200 bg-white p-4"
+      >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <label className="block text-sm font-medium">ID（空欄でランダム生成）</label>
@@ -75,20 +86,11 @@ export function InfoForm({ mode, info, error, saved, purgeFailed }: Props) {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium">公開状態</label>
-          <select
-            name="status"
-            defaultValue={info?.status ?? 'PUBLISH'}
-            className="mt-1 rounded-md border border-gray-300 p-2 text-sm"
-          >
-            <option value="PUBLISH">公開</option>
-            <option value="DRAFT">下書き</option>
-            <option value="CLOSED">非公開</option>
-          </select>
-        </div>
+        <StatusSelect current={info?.status} publishedAt={info?.published_at} defaultStatus="PUBLISH" />
 
-        <SubmitButton pendingText="保存中...">保存</SubmitButton>
+        <SubmitButton name="intent" value="save" pending={saving} pendingText="保存中...">
+          保存
+        </SubmitButton>
       </form>
     </div>
   )
