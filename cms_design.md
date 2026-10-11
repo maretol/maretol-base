@@ -247,9 +247,9 @@ CREATE TABLE atelier_tag_relations (
 
 ### 保存処理と公開状態の遷移（#1404）
 
-- 記事・マンガ・イラスト・固定ページの保存は `useActionState` で結果（保存した・自動連携・パージ失敗・エラー）を受け取り、ページ遷移しない。検証エラーや D1 の例外でも編集中の入力が残る。新規作成だけは作成した ID の編集画面へ `redirect` する（URL が変わるため。遷移先は `?saved=1` などから初期状態を組み立てる）
+- 記事・マンガ・イラスト・固定ページの保存は `useActionState` で結果（保存した・自動連携・警告・パージ失敗・エラー）を受け取り、ページ遷移しない。検証エラーや D1 の例外（保存前の行の読み取りを含む）でも編集中の入力が残る。本体の保存後に行う付随処理（マンガの前後巻の付け替え）の失敗は保存の失敗にせず、警告として知らせる。新規作成だけは作成した ID の編集画面へ `redirect` する（URL が変わるため。遷移先は `?saved=1` などから初期状態を組み立てる）
 - 送信は `<form action>` / `formAction` に渡さず、submit イベントから `startTransition` で dispatch する（`admin-pages/lib/form-submit.ts`）。React 19 は form action の完了後に `form.reset()` を呼ぶので、非制御の入力が保存前の値に戻ってしまうため
-- 公開状態の遷移は DRAFT → PUBLISH、PUBLISH ⇄ CLOSED の 3 本に限る。**一度公開したコンテンツ（published_at あり）は DRAFT に戻せない**（サーバー側で検証し、セレクトの選択肢も 公開 / 下書き か 公開 / 非公開 に出し分ける。`admin-pages/lib/status.ts`）。「下書き」は公開前の原稿、「非公開」は公開済みを閉じたもの、と意味を一本にする
+- 公開状態の遷移は DRAFT → PUBLISH、PUBLISH ⇄ CLOSED の 3 本に限る（同じ状態のまま保存するのは常に可）。判定は保存前の行の status だけで行い、published_at は使わない（初公開日時の記録であって状態ではない）。**一度公開したコンテンツ（PUBLISH / CLOSED）は DRAFT に戻せず**、公開前の DRAFT は CLOSED にできない（サーバー側で検証し、セレクトの選択肢も現在の status から遷移できるものだけに出し分ける。`admin-pages/lib/status.ts`）。「下書き」は公開前の原稿、「非公開」は公開済みを閉じたもの、と意味を一本にする
 
 ## 4. SNS 通知: Service Binding + RPC（M6 レビューで WebhookPayload 互換方式から変更）
 
@@ -257,7 +257,7 @@ CREATE TABLE atelier_tag_relations (
 
 - 当初は「WebhookPayload 完全互換 + HMAC署名で無改修」の方針だったが、APIキー・HMAC署名は**公開エンドポイント（microCMS Webhook 受信）のための防御**であり、Service Binding は同一アカウント内でバインディングを宣言した Worker からしか呼べない（プラットフォームレベルで認証済み）ため、内製CMSからの呼び出しでは不要と判断して排除した
 - これによりシークレット管理（admin-pages への SNS_PUB_CMS_KEY / SECRET 設定）と偽 WebhookPayload の組み立てが不要になる
-- sns-article-publisher に RPC メソッド `publishArticle` を追加（既存の投稿処理 `publish()` の薄いラッパー。`waitUntil` で非同期投稿）。投稿可否の判定は呼び出し側（admin-pages）が行う。条件は**初回公開のみ**（保存前の行の published_at が null で、保存後の status が PUBLISH。blog は is_secret を除外）。#1404 までは「新規公開・下書き→公開」だったが、一度公開したコンテンツは下書きに戻せなくなり、非公開 → 公開の再公開では投稿しない（再告知は管理ページの SNS 投稿から手で行う）
+- sns-article-publisher に RPC メソッド `publishArticle` を追加（既存の投稿処理 `publish()` の薄いラッパー。`waitUntil` で非同期投稿）。投稿可否の判定は呼び出し側（admin-pages）が行う。条件は**初回公開のみ**（保存前の行が公開されたことがなく、保存後の status が PUBLISH。blog は is_secret を除外）。「公開されたことがある」は published_at が null でないか status が PUBLISH かで判定する（published_at の無い PUBLISH 行があっても編集で再投稿しないように）。#1404 までは「新規公開・下書き→公開」だったが、一度公開したコンテンツは下書きに戻せなくなり、非公開 → 公開の再公開では投稿しない（再告知は管理ページの SNS 投稿から手で行う）
 - 送信は `SNS_NOTIFY_ENABLED = 'true'` の環境（本番のみ）に限定し、staging・ローカルからの誤投稿を防ぐ
 - 公開 Webhook（fetch ハンドラ + HMAC検証）は microCMS 用として撤去フェーズまで残置した。#1273 で Webhook の fetch ハンドラと HTTP のルートを撤去し、sns-article-publisher は RPC だけで呼ぶ Worker になった。ただし Cloudflare API はイベントハンドラの無いスクリプトのアップロードを拒否する（code 10068、RPC メソッドは数えない）ため、呼ばれたら例外を投げるだけの `fetch` を残している
 

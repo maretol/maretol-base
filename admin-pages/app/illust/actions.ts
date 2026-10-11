@@ -56,17 +56,20 @@ export async function createAtelierAction(_prev: SaveActionState, formData: Form
   if (error) {
     return { error }
   }
-  if (await getAtelier(input.id)) {
-    return { error: `ID '${input.id}' は既に使用されています` }
-  }
-
+  // D1 の例外（ID の重複確認も含む）は state のエラーにして入力を保持する（issue #1311）。
+  // パージ・SNS 通知は自分で失敗を処理して例外を投げないので、ここで受けるのは実質 D1 の例外だけ。
+  // redirect は例外で遷移するので try の外に置く
+  let purged: boolean
   try {
+    if (await getAtelier(input.id)) {
+      return { error: `ID '${input.id}' は既に使用されています` }
+    }
     await createAtelier(input)
+    purged = await purgeAtelierCache(input.id)
+    await notifyAtelierPublishToSNS({ input, current: null })
   } catch (e) {
     return saveFailed(e)
   }
-  const purged = await purgeAtelierCache(input.id)
-  await notifyAtelierPublishToSNS({ input, previouslyPublished: false })
 
   revalidatePath('/illust')
   redirect(createdURL(input.id, purged))
@@ -78,25 +81,25 @@ export async function updateAtelierAction(_prev: SaveActionState, formData: Form
   if (error) {
     return { error }
   }
-  const current = await getAtelier(input.id)
-  if (!current) {
-    return { error: `イラスト '${input.id}' が見つかりません` }
-  }
-  const transitionError = statusTransitionError(current, input.status)
-  if (transitionError) {
-    return { error: transitionError }
-  }
-
+  // D1 の例外（保存前の行の読み取りも含む）は state のエラーにして入力を保持する（issue #1311）
   try {
+    const current = await getAtelier(input.id)
+    if (!current) {
+      return { error: `イラスト '${input.id}' が見つかりません` }
+    }
+    const transitionError = statusTransitionError(current.status, input.status)
+    if (transitionError) {
+      return { error: transitionError }
+    }
     await updateAtelier(input, current)
+    const purged = await purgeAtelierCache(input.id)
+    await notifyAtelierPublishToSNS({ input, current })
+
+    revalidatePath('/illust')
+    return { saved: true, purgeFailed: !purged }
   } catch (e) {
     return saveFailed(e)
   }
-  const purged = await purgeAtelierCache(input.id)
-  await notifyAtelierPublishToSNS({ input, previouslyPublished: current.published_at !== null })
-
-  revalidatePath('/illust')
-  return { saved: true, purgeFailed: !purged }
 }
 
 // 編集中の内容をKVに保存し、pages本体のプレビューURLを返す（D1には書き込まない）

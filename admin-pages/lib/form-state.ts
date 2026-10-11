@@ -10,6 +10,8 @@ export type SaveActionState = {
   error?: string
   // 保存に伴う自動処理の報告（マンガの前後巻の付け替えなど）
   info?: string
+  // 保存はできたが、付随する処理（マンガの前後巻の付け替えなど）に失敗した
+  warning?: string
   // 保存はできたが、公開サイトのキャッシュ削除に失敗した
   purgeFailed?: boolean
 }

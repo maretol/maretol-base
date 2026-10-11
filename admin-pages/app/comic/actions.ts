@@ -21,23 +21,26 @@ import { notifyComicPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import { parseStatus, statusTransitionError } from '@/lib/status'
-import { saveFailed } from '@/lib/save-error'
+import { errorMessage, saveFailed } from '@/lib/save-error'
 import type { PreviewActionState, PurgeActionState, SaveActionState } from '@/lib/form-state'
 import { text, textOrNull } from '@/lib/form-data'
 
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000
 
-// 発行日: date入力（YYYY-MM-DD）をJST 0時としてISO 8601 UTCに変換する（microCMSの日付ピッカーと同じ挙動）
-// 形式が崩れた入力で new Date(...).toISOString() が RangeError を投げないよう、先に形式を確かめる（issue #1312）
+// 発行日: date 入力（YYYY-MM-DD）を JST 0 時として ISO 8601 UTC に変換する（microCMS の日付ピッカーと同じ挙動）。
+// 入力を UTC の日付として組み立て直し、YYYY-MM-DD に戻して入力と一致するかで、形式と暦の両方を確かめる（issue #1312）。
+// 桁数だけを見ると、暦に無い 2024-02-31 を Date が 03-01 に繰り上げて受理してしまう
 function parsePublishDate(raw: string): { value: string | null; error?: string } {
   if (raw === '') {
     return { value: null }
   }
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? new Date(`${raw}T00:00:00+09:00`) : null
-  if (date === null || Number.isNaN(date.getTime())) {
-    return { value: null, error: '発行日は YYYY-MM-DD 形式の日付で入力してください' }
+  const [year, month, day] = raw.split('-').map(Number)
+  const utcDate = new Date(Date.UTC(year, month - 1, day))
+  if (Number.isNaN(utcDate.getTime()) || utcDate.toISOString().slice(0, 10) !== raw) {
+    return { value: null, error: '発行日は YYYY-MM-DD 形式の実在する日付で入力してください' }
   }
-  return { value: date.toISOString() }
+  return { value: new Date(utcDate.getTime() - JST_OFFSET_MS).toISOString() }
 }
 
 function parseComicForm(formData: FormData): { input: BandeDessineeInput; error?: string } {
@@ -138,53 +141,75 @@ async function validateChain(input: BandeDessineeInput): Promise<{ neighbors: Ch
   return { neighbors }
 }
 
+type ChainSyncResult = { messages: string[]; error?: string }
+
 // 双方向リンクの自動同期（issue #1155）。本体保存後に呼ぶ
 // - 新しい前後の巻の逆ポインタは無条件に上書きする（保存のたびに整合性が収束する）
 // - 付け替え・解除で残った旧リンクは、相手がまだ自分を指している場合のみ解除する
-// 実施内容はメッセージとして返し、保存後の画面で可視化する
+// 実施内容はメッセージとして返し、保存後の画面で可視化する。本体はもう保存できているので、途中で失敗しても
+// 例外にはせず、そこまでの実施内容と失敗の内容を返す（呼び出し側が警告にする）
 async function syncChainPointers(
   input: BandeDessineeInput,
   neighbors: ChainNeighbors,
   current: bandeDessineeRow | null
-): Promise<string[]> {
+): Promise<ChainSyncResult> {
   const messages: string[] = []
-
-  const oldPrevId = current?.previous_id ?? null
-  if (oldPrevId && oldPrevId !== input.previous_id) {
-    const oldPrev = await getBandeDessinee(oldPrevId)
-    if (oldPrev?.next_id === input.id) {
-      await setBandeDessineeNextID(oldPrevId, null)
-      messages.push(`「${oldPrev.title_name}」の次の巻を解除しました`)
+  try {
+    const oldPrevId = current?.previous_id ?? null
+    if (oldPrevId && oldPrevId !== input.previous_id) {
+      const oldPrev = await getBandeDessinee(oldPrevId)
+      if (oldPrev?.next_id === input.id) {
+        await setBandeDessineeNextID(oldPrevId, null)
+        messages.push(`「${oldPrev.title_name}」の次の巻を解除しました`)
+      }
     }
-  }
-  const oldNextId = current?.next_id ?? null
-  if (oldNextId && oldNextId !== input.next_id) {
-    const oldNext = await getBandeDessinee(oldNextId)
-    if (oldNext?.previous_id === input.id) {
-      await setBandeDessineePreviousID(oldNextId, null)
-      messages.push(`「${oldNext.title_name}」の前の巻を解除しました`)
+    const oldNextId = current?.next_id ?? null
+    if (oldNextId && oldNextId !== input.next_id) {
+      const oldNext = await getBandeDessinee(oldNextId)
+      if (oldNext?.previous_id === input.id) {
+        await setBandeDessineePreviousID(oldNextId, null)
+        messages.push(`「${oldNext.title_name}」の前の巻を解除しました`)
+      }
     }
+    if (neighbors.prev && neighbors.prev.next_id !== input.id) {
+      await setBandeDessineeNextID(neighbors.prev.id, input.id)
+      messages.push(`「${neighbors.prev.title_name}」の次の巻をこのマンガに設定しました`)
+    }
+    if (neighbors.next && neighbors.next.previous_id !== input.id) {
+      await setBandeDessineePreviousID(neighbors.next.id, input.id)
+      messages.push(`「${neighbors.next.title_name}」の前の巻をこのマンガに設定しました`)
+    }
+  } catch (e) {
+    console.error('chain sync error:', e)
+    return { messages, error: errorMessage(e) }
   }
-  if (neighbors.prev && neighbors.prev.next_id !== input.id) {
-    await setBandeDessineeNextID(neighbors.prev.id, input.id)
-    messages.push(`「${neighbors.prev.title_name}」の次の巻をこのマンガに設定しました`)
-  }
-  if (neighbors.next && neighbors.next.previous_id !== input.id) {
-    await setBandeDessineePreviousID(neighbors.next.id, input.id)
-    messages.push(`「${neighbors.next.title_name}」の前の巻をこのマンガに設定しました`)
-  }
-  return messages
+  return { messages }
 }
 
 function joinInfo(messages: string[]): string | undefined {
   return messages.length > 0 ? messages.join(' / ') : undefined
 }
 
-// 新規作成後の遷移先。チェーン同期の報告とパージの結果は遷移先の画面で知らせる
-function createdURL(comicID: string, syncMessages: string[], purged: boolean): string {
-  const info = joinInfo(syncMessages)
-  const url = `/comic/${comicID}/edit?saved=1${info ? `&info=${encodeURIComponent(info)}` : ''}`
-  return withPurgeResult(url, purged)
+// 前後巻の付け替えの失敗は保存の失敗にしない（本体は書き込み済み）。警告で知らせ、相手側の巻を開いて直してもらう
+function chainWarning(sync: ChainSyncResult): string | undefined {
+  if (sync.error === undefined) {
+    return undefined
+  }
+  return `前後の巻の自動設定に失敗しました。前の巻・次の巻を開いて設定を確認してください: ${sync.error}`
+}
+
+// 新規作成後の遷移先。チェーン同期の報告・警告とパージの結果は遷移先の画面で知らせる
+function createdURL(comicID: string, sync: ChainSyncResult, purged: boolean): string {
+  const params = new URLSearchParams({ saved: '1' })
+  const info = joinInfo(sync.messages)
+  if (info) {
+    params.set('info', info)
+  }
+  const warning = chainWarning(sync)
+  if (warning) {
+    params.set('warning', warning)
+  }
+  return withPurgeResult(`/comic/${comicID}/edit?${params}`, purged)
 }
 
 // 新規作成。エラーは state で返して入力を保持し、成功したら作成したマンガの編集画面へ遷移する（URL が変わるため）
@@ -193,26 +218,28 @@ export async function createBandeDessineeAction(_prev: SaveActionState, formData
   if (error) {
     return { error }
   }
-  if (await getBandeDessinee(input.id)) {
-    return { error: `ID '${input.id}' は既に使用されています` }
-  }
-  const { neighbors, error: chainError } = await validateChain(input)
-  if (chainError) {
-    return { error: chainError }
-  }
-
-  let syncMessages: string[]
+  // D1 の例外（ID の重複確認・前後巻の検証も含む）は state のエラーにして入力を保持する（issue #1311）
+  let neighbors: ChainNeighbors
   try {
+    if (await getBandeDessinee(input.id)) {
+      return { error: `ID '${input.id}' は既に使用されています` }
+    }
+    const chain = await validateChain(input)
+    if (chain.error) {
+      return { error: chain.error }
+    }
+    neighbors = chain.neighbors
     await createBandeDessinee(input)
-    syncMessages = await syncChainPointers(input, neighbors, null)
   } catch (e) {
     return saveFailed(e)
   }
+  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（前後巻の付け替えは警告、パージは案内、SNS は記録だけ）
+  const sync = await syncChainPointers(input, neighbors, null)
   const purged = await purgeBandeDessineeCache(input.id)
-  await notifyComicPublishToSNS({ input, previouslyPublished: false })
+  await notifyComicPublishToSNS({ input, current: null })
 
   revalidatePath('/comic')
-  redirect(createdURL(input.id, syncMessages, purged))
+  redirect(createdURL(input.id, sync, purged))
 }
 
 // 更新。ページ遷移させず結果を state で返す（遷移すると編集中の内容が消えるため）
@@ -221,31 +248,35 @@ export async function updateBandeDessineeAction(_prev: SaveActionState, formData
   if (error) {
     return { error }
   }
-  // 保存前の行は status の遷移判定・前後リンクの付け替え掃除・SNS 通知の判定に使う
-  const [current, chain] = await Promise.all([getBandeDessinee(input.id), validateChain(input)])
-  if (!current) {
-    return { error: `マンガ '${input.id}' が見つかりません` }
-  }
-  if (chain.error) {
-    return { error: chain.error }
-  }
-  const transitionError = statusTransitionError(current, input.status)
-  if (transitionError) {
-    return { error: transitionError }
-  }
-
-  let syncMessages: string[]
+  // D1 の例外（保存前の行の読み取り・前後巻の検証も含む）は state のエラーにして入力を保持する（issue #1311）
+  let current: bandeDessineeRow
+  let neighbors: ChainNeighbors
   try {
-    await updateBandeDessinee(input, current)
-    syncMessages = await syncChainPointers(input, chain.neighbors, current)
+    // 保存前の行は status の遷移判定・前後リンクの付け替え掃除・SNS 通知の判定に使う
+    const [row, chain] = await Promise.all([getBandeDessinee(input.id), validateChain(input)])
+    if (!row) {
+      return { error: `マンガ '${input.id}' が見つかりません` }
+    }
+    if (chain.error) {
+      return { error: chain.error }
+    }
+    const transitionError = statusTransitionError(row.status, input.status)
+    if (transitionError) {
+      return { error: transitionError }
+    }
+    await updateBandeDessinee(input, row)
+    current = row
+    neighbors = chain.neighbors
   } catch (e) {
     return saveFailed(e)
   }
+  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（前後巻の付け替えは警告、パージは案内、SNS は記録だけ）
+  const sync = await syncChainPointers(input, neighbors, current)
   const purged = await purgeBandeDessineeCache(input.id)
-  await notifyComicPublishToSNS({ input, previouslyPublished: current.published_at !== null })
+  await notifyComicPublishToSNS({ input, current })
 
   revalidatePath('/comic')
-  return { saved: true, info: joinInfo(syncMessages), purgeFailed: !purged }
+  return { saved: true, info: joinInfo(sync.messages), warning: chainWarning(sync), purgeFailed: !purged }
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）

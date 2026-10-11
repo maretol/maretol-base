@@ -12,11 +12,11 @@ export default async function EditComic({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  // saved / info / purge_failed は新規作成から遷移してきたときだけ付く（更新の結果はフォームが state で表示する）
-  searchParams: Promise<{ saved?: string; info?: string; purge_failed?: string }>
+  // saved / info / warning / purge_failed は新規作成から遷移してきたときだけ付く（更新の結果はフォームが state で表示する）
+  searchParams: Promise<{ saved?: string; info?: string; warning?: string; purge_failed?: string }>
 }) {
   const { id } = await params
-  const { saved, info, purge_failed: purgeFailed } = await searchParams
+  const { saved, info, warning, purge_failed: purgeFailed } = await searchParams
 
   const comic = await getBandeDessinee(id)
   if (!comic) {
@@ -28,7 +28,7 @@ export default async function EditComic({
     listBandeDessineeRefs(),
   ])
   const initialState: SaveActionState =
-    saved === '1' ? { saved: true, created: true, info, purgeFailed: purgeFailed === '1' } : {}
+    saved === '1' ? { saved: true, created: true, info, warning, purgeFailed: purgeFailed === '1' } : {}
 
   return (
     <div className="space-y-4">

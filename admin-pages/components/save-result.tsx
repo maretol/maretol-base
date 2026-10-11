@@ -20,6 +20,9 @@ export function SaveResult({ state, purgeHint }: Props) {
       {state.info && (
         <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">自動連携: {state.info}</p>
       )}
+      {state.warning && (
+        <p className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">{state.warning}</p>
+      )}
       {state.purgeFailed &&
         (purgeHint ? (
           <p className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">

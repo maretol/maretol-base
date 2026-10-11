@@ -147,7 +147,7 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, initi
           </p>
         </div>
 
-        <StatusSelect current={atelier?.status} publishedAt={atelier?.published_at}>
+        <StatusSelect current={atelier?.status}>
           <p className="mt-1 text-xs text-gray-400">
             初めて公開するときにSNS自動投稿が送信されます（非公開から公開に戻しても送信されません）
           </p>

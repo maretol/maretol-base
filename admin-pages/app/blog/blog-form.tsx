@@ -184,15 +184,22 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
           </div>
         </div>
 
-        <StatusSelect current={article?.status} publishedAt={article?.published_at}>
+        <StatusSelect current={article?.status}>
           <p className="mt-1 text-xs text-gray-400">
             初めて公開するときにSNS自動投稿が送信されます（限定公開は対象外。非公開から公開に戻しても送信されません）
           </p>
         </StatusSelect>
 
         <div className="space-y-2 border-t border-gray-100 pt-4">
+          {/* カテゴリ追加中は送信しない。追加中に送ると、まだフォームに無い新カテゴリが抜けたまま保存される */}
           <div className="flex gap-3">
-            <SubmitButton name="intent" value="save" pending={saving} disabled={previewing} pendingText="保存中...">
+            <SubmitButton
+              name="intent"
+              value="save"
+              pending={saving}
+              disabled={previewing || addingCategory}
+              pendingText="保存中..."
+            >
               保存
             </SubmitButton>
             <SubmitButton
@@ -200,7 +207,7 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
               value="preview"
               variant="secondary"
               pending={previewing}
-              disabled={saving}
+              disabled={saving || addingCategory}
               pendingText="プレビュー保存中..."
             >
               プレビュー保存（D1には保存しない）

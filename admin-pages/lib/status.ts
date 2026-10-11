@@ -9,32 +9,31 @@ export const STATUS_LABEL: Record<ContentStatus, string> = {
 
 const VALID_STATUS: readonly ContentStatus[] = ['PUBLISH', 'DRAFT', 'CLOSED']
 
-export function parseStatus(value: string, fallback: ContentStatus = 'DRAFT'): ContentStatus {
-  return (VALID_STATUS as readonly string[]).includes(value) ? (value as ContentStatus) : fallback
+// フォームの値を status にする。想定外の値は下書き扱い（公開サイトに出さない側に倒す）
+export function parseStatus(value: string): ContentStatus {
+  return (VALID_STATUS as readonly string[]).includes(value) ? (value as ContentStatus) : 'DRAFT'
 }
 
-// 一度公開したコンテンツ（published_at あり）は下書きに戻せない（issue #1404）。
-// 公開サイトから外すのは「非公開」（CLOSED）だけで、遷移は DRAFT → PUBLISH と PUBLISH ⇄ CLOSED に限る。
-// 「下書き」は公開前の原稿、「非公開」は公開済みを閉じたもの、と意味を一本にするため
-export function statusTransitionError(
-  current: { published_at: string | null },
-  next: ContentStatus
-): string | undefined {
-  if (current.published_at !== null && next === 'DRAFT') {
-    return '一度公開したコンテンツは下書きに戻せません。公開サイトから外す場合は「非公開」を選んでください'
-  }
-  return undefined
+// 公開状態の遷移規則（issue #1404）。保存前の行の status から、保存後に選べる status（同じ状態のまま保存するのを含む）
+// - DRAFT → PUBLISH。「下書き」は公開前の原稿で、公開する前に非公開にはしない
+// - PUBLISH ⇄ CLOSED。「非公開」は公開済みを閉じたもので、一度公開したコンテンツは下書きに戻せない
+// 判定は status だけで行う。published_at は初公開日時の記録であって、状態の判断には使わない
+const NEXT_STATUSES: Record<ContentStatus, readonly ContentStatus[]> = {
+  DRAFT: ['PUBLISH', 'DRAFT'],
+  PUBLISH: ['PUBLISH', 'CLOSED'],
+  CLOSED: ['PUBLISH', 'CLOSED'],
 }
 
-// 公開状態のセレクトに出す選択肢。未公開（新規・published_at が null）は 公開 / 下書き、公開済みは 公開 / 非公開。
-// 想定外の組み合わせの既存行（公開済みで DRAFT など）があっても編集できるよう、現在の status は常に含める
-export function statusOptions(
-  publishedAt: string | null | undefined,
-  current: ContentStatus | undefined
-): ContentStatus[] {
-  const options: ContentStatus[] = publishedAt ? ['PUBLISH', 'CLOSED'] : ['PUBLISH', 'DRAFT']
-  if (current && !options.includes(current)) {
-    options.push(current)
+export function statusTransitionError(current: ContentStatus, next: ContentStatus): string | undefined {
+  if (NEXT_STATUSES[current].includes(next)) {
+    return undefined
   }
-  return options
+  return next === 'DRAFT'
+    ? '一度公開したコンテンツは下書きに戻せません。公開サイトから外す場合は「非公開」を選んでください'
+    : '公開前のコンテンツは非公開にできません。公開するまでは「下書き」のままにしてください'
+}
+
+// 公開状態のセレクトに出す選択肢。新規（current 無し）は下書きの行と同じ 公開 / 下書き
+export function statusOptions(current: ContentStatus = 'DRAFT'): readonly ContentStatus[] {
+  return NEXT_STATUSES[current]
 }

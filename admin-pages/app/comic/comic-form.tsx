@@ -245,7 +245,7 @@ export function ComicForm({ mode, comic, allTags, allSeries, allComics, initialS
               <option value="right">right（右開き）</option>
             </select>
           </div>
-          <StatusSelect current={comic?.status} publishedAt={comic?.published_at} className={inputClass} />
+          <StatusSelect current={comic?.status} className={inputClass} />
         </div>
 
         <div>

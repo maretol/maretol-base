@@ -86,7 +86,7 @@ export function InfoForm({ mode, info, initialState = {} }: Props) {
           />
         </div>
 
-        <StatusSelect current={info?.status} publishedAt={info?.published_at} defaultStatus="PUBLISH" />
+        <StatusSelect current={info?.status} defaultStatus="PUBLISH" />
 
         <SubmitButton name="intent" value="save" pending={saving} pendingText="保存中...">
           保存

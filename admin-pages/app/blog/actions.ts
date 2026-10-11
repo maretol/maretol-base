@@ -68,17 +68,20 @@ export async function createBlogContentAction(_prev: SaveActionState, formData: 
   if (error) {
     return { error }
   }
-  if (await getBlogContent(input.id)) {
-    return { error: `ID '${input.id}' は既に使用されています` }
-  }
-
+  // D1 の例外（ID の重複確認も含む）は state のエラーにして入力を保持する（issue #1311）。
+  // パージ・SNS 通知は自分で失敗を処理して例外を投げないので、ここで受けるのは実質 D1 の例外だけ。
+  // redirect は例外で遷移するので try の外に置く
+  let purged: boolean
   try {
+    if (await getBlogContent(input.id)) {
+      return { error: `ID '${input.id}' は既に使用されています` }
+    }
     await createBlogContent(input)
+    purged = await purgeBlogContentCache(input.id)
+    await notifyBlogPublishToSNS({ input, current: null })
   } catch (e) {
     return saveFailed(e)
   }
-  const purged = await purgeBlogContentCache(input.id)
-  await notifyBlogPublishToSNS({ input, previouslyPublished: false })
 
   revalidatePath('/blog')
   redirect(createdURL(input.id, purged))
@@ -90,25 +93,25 @@ export async function updateBlogContentAction(_prev: SaveActionState, formData: 
   if (error) {
     return { error }
   }
-  const current = await getBlogContent(input.id)
-  if (!current) {
-    return { error: `記事 '${input.id}' が見つかりません` }
-  }
-  const transitionError = statusTransitionError(current, input.status)
-  if (transitionError) {
-    return { error: transitionError }
-  }
-
+  // D1 の例外（保存前の行の読み取りも含む）は state のエラーにして入力を保持する（issue #1311）
   try {
+    const current = await getBlogContent(input.id)
+    if (!current) {
+      return { error: `記事 '${input.id}' が見つかりません` }
+    }
+    const transitionError = statusTransitionError(current.status, input.status)
+    if (transitionError) {
+      return { error: transitionError }
+    }
     await updateBlogContent(input, current)
+    const purged = await purgeBlogContentCache(input.id)
+    await notifyBlogPublishToSNS({ input, current })
+
+    revalidatePath('/blog')
+    return { saved: true, purgeFailed: !purged }
   } catch (e) {
     return saveFailed(e)
   }
-  const purged = await purgeBlogContentCache(input.id)
-  await notifyBlogPublishToSNS({ input, previouslyPublished: current.published_at !== null })
-
-  revalidatePath('/blog')
-  return { saved: true, purgeFailed: !purged }
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
@@ -238,16 +241,17 @@ export async function createBlogInfoAction(_prev: SaveActionState, formData: For
   if (error) {
     return { error }
   }
-  if (await getBlogInfo(input.id)) {
-    return { error: `ID '${input.id}' は既に使用されています` }
-  }
-
+  // D1 の例外（ID の重複確認も含む）は state のエラーにして入力を保持する（issue #1311）。redirect は try の外に置く
+  let purged: boolean
   try {
+    if (await getBlogInfo(input.id)) {
+      return { error: `ID '${input.id}' は既に使用されています` }
+    }
     await createBlogInfo(input)
+    purged = await purgeBlogMetaCache('info')
   } catch (e) {
     return saveFailed(e)
   }
-  const purged = await purgeBlogMetaCache('info')
 
   revalidatePath('/blog/info')
   redirect(withPurgeResult(`/blog/info/${input.id}/edit?saved=1`, purged))
@@ -258,24 +262,24 @@ export async function updateBlogInfoAction(_prev: SaveActionState, formData: For
   if (error) {
     return { error }
   }
-  const current = await getBlogInfo(input.id)
-  if (!current) {
-    return { error: `固定ページ '${input.id}' が見つかりません` }
-  }
-  const transitionError = statusTransitionError(current, input.status)
-  if (transitionError) {
-    return { error: transitionError }
-  }
-
+  // D1 の例外（保存前の行の読み取りも含む）は state のエラーにして入力を保持する（issue #1311）
   try {
+    const current = await getBlogInfo(input.id)
+    if (!current) {
+      return { error: `固定ページ '${input.id}' が見つかりません` }
+    }
+    const transitionError = statusTransitionError(current.status, input.status)
+    if (transitionError) {
+      return { error: transitionError }
+    }
     await updateBlogInfo(input, current)
+    const purged = await purgeBlogMetaCache('info')
+
+    revalidatePath('/blog/info')
+    return { saved: true, purgeFailed: !purged }
   } catch (e) {
     return saveFailed(e)
   }
-  const purged = await purgeBlogMetaCache('info')
-
-  revalidatePath('/blog/info')
-  return { saved: true, purgeFailed: !purged }
 }
 
 export async function updateBlogStaticAction(formData: FormData): Promise<void> {
