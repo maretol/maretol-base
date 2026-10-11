@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import type { atelierRow, atelierTagRow } from 'api-types'
 import { createAtelierAction, updateAtelierAction, previewAtelierAction } from './actions'
 import type { SaveActionState } from '@/lib/form-state'
@@ -8,6 +8,7 @@ import { submitByIntent } from '@/lib/form-submit'
 import { SubmitButton } from '@/components/submit-button'
 import { ContentTextarea } from '@/components/content-textarea'
 import { SaveResult } from '@/components/save-result'
+import { ExistingPreview, PreviewResult } from '@/components/preview-result'
 import { StatusSelect } from '@/components/status-select'
 
 type Props = {
@@ -17,11 +18,20 @@ type Props = {
   allTags: atelierTagRow[]
   // 新規作成から遷移してきたときの結果（作成した・パージに失敗した）。編集ページが URL のクエリから組み立てる
   initialState?: SaveActionState
+  // KV に残っている発行済みのプレビュー URL（編集ページが読む）
+  existingPreviewURL?: string | null
 }
 
 const positions = ['center', 'top', 'bottom', 'left', 'right']
 
-export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, initialState = {} }: Props) {
+export function AtelierForm({
+  mode,
+  atelier,
+  selectedTagIDs = [],
+  allTags,
+  initialState = {},
+  existingPreviewURL = null,
+}: Props) {
   // 保存はページ遷移させず結果を state で受け取る（遷移すると編集中の本文が消えるため）。
   // 新規作成だけは action 内で作成したイラストの編集画面へ遷移する（URL が変わるため）
   const [save, saveDispatch, saving] = useActionState(
@@ -29,25 +39,29 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, initi
     initialState
   )
   const [preview, previewDispatch, previewing] = useActionState(previewAtelierAction, {})
+  // 新規作成で ID を空のままプレビュー URL を発行したとき、サーバーが生成した ID を ID 欄に入れる（保存時も同じ ID になる）。
+  // key を変えて入力を作り直す。以後は利用者の入力を優先するので、生成済みの ID は覚えておく
+  const [generatedID, setGeneratedID] = useState<string | undefined>(undefined)
+  if (preview.generatedID && preview.generatedID !== generatedID) {
+    setGeneratedID(preview.generatedID)
+  }
+  // どの操作の結果を表示するか（最後に実行した操作の結果だけを見せる）
+  const [last, setLast] = useState<'save' | 'preview' | null>(null)
 
   return (
     <div className="space-y-4">
-      <SaveResult state={save} purgeHint="上の「イラストのキャッシュを削除」を実行してください" />
-      {preview.error && (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
+      {last === 'preview' ? (
+        <PreviewResult state={preview} />
+      ) : (
+        <SaveResult state={save} purgeHint="上の「イラストのキャッシュを削除」を実行してください" />
       )}
-      {preview.previewURL && (
-        <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
-          プレビューを保存しました:{' '}
-          <a href={preview.previewURL} target="_blank" rel="noopener noreferrer" className="underline">
-            {preview.previewURL}
-          </a>
-        </p>
+      {last === null && existingPreviewURL && (
+        <ExistingPreview url={existingPreviewURL} draft={atelier !== undefined && atelier.status !== 'PUBLISH'} />
       )}
 
       {/* 送信は submit イベントから自分で dispatch する（form action に渡すと完了後に入力が reset されるため。lib/form-submit.ts） */}
       <form
-        onSubmit={(e) => submitByIntent(e, { save: saveDispatch, preview: previewDispatch })}
+        onSubmit={(e) => setLast(submitByIntent(e, { save: saveDispatch, preview: previewDispatch }))}
         className="space-y-4 rounded-lg border border-gray-200 bg-white p-4"
       >
         <input type="hidden" name="mode" value={mode} />
@@ -59,7 +73,8 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, initi
           {mode === 'new' ? (
             <input
               name="id"
-              defaultValue=""
+              key={generatedID ?? 'blank'}
+              defaultValue={generatedID ?? ''}
               placeholder="例: teto"
               className="mt-1 w-full rounded-md border border-gray-300 p-2 font-mono text-sm"
             />
@@ -164,14 +179,18 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, initi
               variant="secondary"
               pending={previewing}
               disabled={saving}
-              pendingText="プレビュー保存中..."
+              pendingText="発行中..."
             >
-              プレビュー保存（D1には保存しない）
+              プレビュー URL を発行（D1 には保存しない）
             </SubmitButton>
           </div>
+          <p className="text-xs text-gray-500">
+            下書き・非公開で保存すると、同じ内容のプレビュー URL が結果に出ます（下書きの間は失効しません）。
+            「プレビュー URL を発行」は保存せずに今の内容を公開サイトで確認するためのものです
+          </p>
           <label className="flex items-center gap-2 text-xs text-gray-500">
             <input type="checkbox" name="regenerate_draft_key" />
-            プレビューURL（draftKey）を再生成する（未チェックなら既存のプレビューURLのまま内容だけ更新されます）
+            プレビュー URL（draftKey）を再生成する（未チェックなら既存の URL のまま内容だけ更新されます）
           </label>
         </div>
       </form>

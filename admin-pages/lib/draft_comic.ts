@@ -1,27 +1,36 @@
 /**
- * KVプレビュー（draftKey互換）の comic ドラフト保存処理
+ * KVプレビュー（draftKey互換）の comic ドラフト保存処理。TTL の規則は draft_kv.ts
  */
-import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { bandeDessineeDraftRecord, bandeDessineeRow } from 'api-types'
-import { generateDraftKey } from './id'
-import { getBandeDessinee, listComicTags, listComicSeries } from './db_comic'
+import { listComicTags, listComicSeries } from './db_comic'
 import type { BandeDessineeInput } from './db_comic'
+import type { DraftSyncResult } from './form-state'
+import {
+  deleteDraft,
+  getDraftKey,
+  previewURL,
+  publicURL,
+  putDraft,
+  resolveDraftKey,
+  type DraftWriteOptions,
+} from './draft_kv'
 
-const DRAFT_TTL_SECONDS = 3 * 24 * 60 * 60
+const kvKey = (id: string) => `draft_bande_dessinee_${id}`
+const pagePath = (id: string) => `/comics/${id}`
 
-export async function saveBandeDessineeDraft(input: BandeDessineeInput, regenerateKey = false): Promise<string> {
-  const { env } = await getCloudflareContext({ async: true })
+// current は D1 の保存前の行（新規は null）。作成日時・初公開日時をプレビューに引き継ぐ
+export async function saveBandeDessineeDraft(
+  input: BandeDessineeInput,
+  current: bandeDessineeRow | null,
+  { regenerateKey, persistent }: DraftWriteOptions
+): Promise<{ draftKey: string; previewURL: string }> {
   const now = new Date().toISOString()
-  const current = await getBandeDessinee(input.id)
-  const kvKey = `draft_bande_dessinee_${input.id}`
-
-  // 既存ドラフトのdraftKeyを維持する（共有済みのプレビューURLを変えないため）。再生成指定時のみ新しいキーにする
-  let draftKey: string | null = null
-  if (!regenerateKey) {
-    const existing = await env.CMS_DRAFT.get<bandeDessineeDraftRecord>(kvKey, 'json')
-    draftKey = existing?.draftKey ?? null
-  }
-  draftKey ??= generateDraftKey()
+  // draftKey の解決とタグ・シリーズの読み取りは独立しているので並行する
+  const [draftKey, allTags, allSeries] = await Promise.all([
+    resolveDraftKey(kvKey(input.id), regenerateKey),
+    listComicTags(),
+    input.series_id ? listComicSeries() : [],
+  ])
 
   const row: bandeDessineeRow = {
     id: input.id,
@@ -51,11 +60,11 @@ export async function saveBandeDessineeDraft(input: BandeDessineeInput, regenera
   }
 
   // 配信時の表示に必要なタグ・シリーズ情報を埋め込む
-  const tag = (await listComicTags()).find((t) => t.id === input.tag_id)
+  const tag = allTags.find((t) => t.id === input.tag_id)
   if (!tag) {
     throw new Error(`comic tag not found: ${input.tag_id}`)
   }
-  const series = input.series_id ? ((await listComicSeries()).find((s) => s.id === input.series_id) ?? null) : null
+  const series = allSeries.find((s) => s.id === input.series_id) ?? null
 
   const record: bandeDessineeDraftRecord = {
     draftKey,
@@ -63,10 +72,30 @@ export async function saveBandeDessineeDraft(input: BandeDessineeInput, regenera
     tag: { id: tag.id, tag_name: tag.tag_name },
     series: series ? { id: series.id, series_name: series.series_name } : null,
   }
+  await putDraft(kvKey(input.id), record, persistent)
+  return { draftKey, previewURL: await previewURL(pagePath(input.id), draftKey) }
+}
 
-  await env.CMS_DRAFT.put(kvKey, JSON.stringify(record), {
-    expirationTtl: DRAFT_TTL_SECONDS,
-  })
+export async function deleteBandeDessineeDraft(id: string): Promise<void> {
+  await deleteDraft(kvKey(id))
+}
 
-  return draftKey
+// 編集ページで、すでに発行済みのプレビュー URL を表示するために読む。無ければ null
+export async function getBandeDessineeDraftPreviewURL(id: string): Promise<string | null> {
+  const draftKey = await getDraftKey(kvKey(id))
+  return draftKey === null ? null : await previewURL(pagePath(id), draftKey)
+}
+
+// D1 への保存後に KV を同期する。下書き（PUBLISH 以外）なら同じ内容で TTL なしに書いてプレビュー URL を返し、
+// 公開なら古いプレビューを消して公開 URL を返す（#1404）
+export async function syncBandeDessineeDraftAfterSave(
+  input: BandeDessineeInput,
+  current: bandeDessineeRow | null
+): Promise<DraftSyncResult> {
+  if (input.status === 'PUBLISH') {
+    await deleteBandeDessineeDraft(input.id)
+    return { publicURL: await publicURL(pagePath(input.id)) }
+  }
+  const { previewURL } = await saveBandeDessineeDraft(input, current, { regenerateKey: false, persistent: true })
+  return { previewURL }
 }

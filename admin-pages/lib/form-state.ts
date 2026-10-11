@@ -14,12 +14,23 @@ export type SaveActionState = {
   warning?: string
   // 保存はできたが、公開サイトのキャッシュ削除に失敗した
   purgeFailed?: boolean
+  // 下書き（PUBLISH 以外）で保存したときの、公開サイトのプレビュー URL（D1 に下書きがある間は失効しない）
+  previewURL?: string
+  // 公開で保存したときの公開 URL
+  publicURL?: string
 }
 
-// useActionState で受け渡すプレビューアクションの結果
+// 保存後の KV（プレビュー）の同期の結果。下書きならプレビュー URL、公開なら公開 URL、同期に失敗したら警告
+export type DraftSyncResult = Pick<SaveActionState, 'previewURL' | 'publicURL' | 'warning'>
+
+// useActionState で受け渡すプレビュー URL 発行アクションの結果
 // プレビューはページ遷移させない（遷移すると編集中の本文が消えるため）
 export type PreviewActionState = {
   previewURL?: string
+  // D1 に下書きの行があり、プレビューが失効しない（false なら 3 日で失効する保存前プレビュー）
+  persistent?: boolean
+  // 新規作成で ID を空のまま発行したときに、サーバーが生成した ID（フォームの ID 欄に反映して保存時の ID と一致させる）
+  generatedID?: string
   error?: string
 }
 

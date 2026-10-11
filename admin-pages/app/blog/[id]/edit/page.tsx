@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getBlogContent, getBlogContentCategoryIDs, listBlogCategories } from '@/lib/db_blog'
 import type { SaveActionState } from '@/lib/form-state'
+import { getBlogContentDraftPreviewURL } from '@/lib/draft_blog'
 import { BlogForm } from '../../blog-form'
 import { purgeBlogContentCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
@@ -22,7 +23,11 @@ export default async function EditBlogContent({
   if (!article) {
     notFound()
   }
-  const [selectedCategoryIDs, allCategories] = await Promise.all([getBlogContentCategoryIDs(id), listBlogCategories()])
+  const [selectedCategoryIDs, allCategories, existingPreviewURL] = await Promise.all([
+    getBlogContentCategoryIDs(id),
+    listBlogCategories(),
+    getBlogContentDraftPreviewURL(id),
+  ])
   const initialState: SaveActionState =
     saved === '1' ? { saved: true, created: true, purgeFailed: purgeFailed === '1' } : {}
 
@@ -41,6 +46,7 @@ export default async function EditBlogContent({
         selectedCategoryIDs={selectedCategoryIDs}
         allCategories={allCategories}
         initialState={initialState}
+        existingPreviewURL={existingPreviewURL}
       />
     </div>
   )

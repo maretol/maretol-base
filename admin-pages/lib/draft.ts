@@ -1,30 +1,34 @@
 /**
- * KVプレビュー（draftKey互換）のドラフト保存処理
+ * KVプレビュー（draftKey互換）の illust ドラフト保存処理
  * 編集中の内容を D1 レコードと同一形状で CMS_DRAFT に書き込み、
- * cms-data-fetcher が draftKey 付きリクエストで参照する（cms_goal.md 参照）
+ * cms-data-fetcher が draftKey 付きリクエストで参照する（cms_goal.md 参照）。TTL の規則は draft_kv.ts
  */
-import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { atelierDraftRecord, atelierRow } from 'api-types'
-import { generateDraftKey } from './id'
-import { getAtelier, listTags } from './db'
+import { listTags } from './db'
 import type { AtelierInput } from './db'
+import type { DraftSyncResult } from './form-state'
+import {
+  deleteDraft,
+  getDraftKey,
+  previewURL,
+  publicURL,
+  putDraft,
+  resolveDraftKey,
+  type DraftWriteOptions,
+} from './draft_kv'
 
-// プレビューURLの有効期間（KVのTTL）。失効後は再度プレビュー保存すればよい
-const DRAFT_TTL_SECONDS = 3 * 24 * 60 * 60
+const kvKey = (id: string) => `draft_atelier_${id}`
+const pagePath = (id: string) => `/illust/detail/${id}`
 
-export async function saveAtelierDraft(input: AtelierInput, regenerateKey = false): Promise<string> {
-  const { env } = await getCloudflareContext({ async: true })
+// current は D1 の保存前の行（新規は null）。作成日時・初公開日時をプレビューに引き継ぐ
+export async function saveAtelierDraft(
+  input: AtelierInput,
+  current: atelierRow | null,
+  { regenerateKey, persistent }: DraftWriteOptions
+): Promise<{ draftKey: string; previewURL: string }> {
   const now = new Date().toISOString()
-  const current = await getAtelier(input.id)
-  const kvKey = `draft_atelier_${input.id}`
-
-  // 既存ドラフトのdraftKeyを維持する（共有済みのプレビューURLを変えないため）。再生成指定時のみ新しいキーにする
-  let draftKey: string | null = null
-  if (!regenerateKey) {
-    const existing = await env.CMS_DRAFT.get<atelierDraftRecord>(kvKey, 'json')
-    draftKey = existing?.draftKey ?? null
-  }
-  draftKey ??= generateDraftKey()
+  // draftKey の解決とタグの読み取りは独立しているので並行する
+  const [draftKey, allTags] = await Promise.all([resolveDraftKey(kvKey(input.id), regenerateKey), listTags()])
 
   const row: atelierRow = {
     id: input.id,
@@ -42,7 +46,6 @@ export async function saveAtelierDraft(input: AtelierInput, regenerateKey = fals
   }
 
   // 配信時のタグ表示に必要な情報を埋め込む（fetcher側でのJOINを不要にする）
-  const allTags = await listTags()
   const tags = input.tagIDs
     .map((id) => allTags.find((t) => t.id === id))
     .filter((t) => t !== undefined)
@@ -57,10 +60,30 @@ export async function saveAtelierDraft(input: AtelierInput, regenerateKey = fals
     }))
 
   const record: atelierDraftRecord = { draftKey, row, tags }
+  await putDraft(kvKey(input.id), record, persistent)
+  return { draftKey, previewURL: await previewURL(pagePath(input.id), draftKey) }
+}
 
-  await env.CMS_DRAFT.put(kvKey, JSON.stringify(record), {
-    expirationTtl: DRAFT_TTL_SECONDS,
-  })
+export async function deleteAtelierDraft(id: string): Promise<void> {
+  await deleteDraft(kvKey(id))
+}
 
-  return draftKey
+// 編集ページで、すでに発行済みのプレビュー URL を表示するために読む。無ければ null
+export async function getAtelierDraftPreviewURL(id: string): Promise<string | null> {
+  const draftKey = await getDraftKey(kvKey(id))
+  return draftKey === null ? null : await previewURL(pagePath(id), draftKey)
+}
+
+// D1 への保存後に KV を同期する。下書き（PUBLISH 以外）なら同じ内容で TTL なしに書いてプレビュー URL を返し、
+// 公開なら古いプレビューを消して公開 URL を返す（#1404）
+export async function syncAtelierDraftAfterSave(
+  input: AtelierInput,
+  current: atelierRow | null
+): Promise<DraftSyncResult> {
+  if (input.status === 'PUBLISH') {
+    await deleteAtelierDraft(input.id)
+    return { publicURL: await publicURL(pagePath(input.id)) }
+  }
+  const { previewURL } = await saveAtelierDraft(input, current, { regenerateKey: false, persistent: true })
+  return { previewURL }
 }

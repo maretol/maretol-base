@@ -2,7 +2,6 @@
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { getCloudflareContext } from '@opennextjs/cloudflare'
 import {
   createBandeDessinee,
   updateBandeDessinee,
@@ -16,12 +15,12 @@ import {
 import type { bandeDessineeRow } from 'api-types'
 import { purgeBandeDessineeCache } from '@/lib/cache'
 import { withPurgeResult } from '@/lib/purge_result'
-import { saveBandeDessineeDraft } from '@/lib/draft_comic'
+import { saveBandeDessineeDraft, syncBandeDessineeDraftAfterSave } from '@/lib/draft_comic'
 import { notifyComicPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import { parseStatus, statusTransitionError } from '@/lib/status'
-import { errorMessage, saveFailed } from '@/lib/save-error'
+import { errorMessage, saveFailed, draftSyncFailed, previewFailed } from '@/lib/save-error'
 import type { PreviewActionState, PurgeActionState, SaveActionState } from '@/lib/form-state'
 import { text, textOrNull } from '@/lib/form-data'
 
@@ -190,6 +189,12 @@ function joinInfo(messages: string[]): string | undefined {
   return messages.length > 0 ? messages.join(' / ') : undefined
 }
 
+// 保存に付随する処理の警告（前後巻の付け替え・KV の同期）をまとめる
+function joinWarnings(...warnings: (string | undefined)[]): string | undefined {
+  const present = warnings.filter((w): w is string => w !== undefined)
+  return present.length > 0 ? present.join(' / ') : undefined
+}
+
 // 前後巻の付け替えの失敗は保存の失敗にしない（本体は書き込み済み）。警告で知らせ、相手側の巻を開いて直してもらう
 function chainWarning(sync: ChainSyncResult): string | undefined {
   if (sync.error === undefined) {
@@ -233,10 +238,14 @@ export async function createBandeDessineeAction(_prev: SaveActionState, formData
   } catch (e) {
     return saveFailed(e)
   }
-  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（前後巻の付け替えは警告、パージは案内、SNS は記録だけ）
+  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（前後巻の付け替えは警告、パージは案内、KV の同期と SNS は記録だけ）。
+  // パージは前後巻の付け替えが終わってから行う（相手側の詳細も一覧のタグで一緒に消える）。KV の同期・SNS 通知は独立なので並行する
   const sync = await syncChainPointers(input, neighbors, null)
-  const purged = await purgeBandeDessineeCache(input.id)
-  await notifyComicPublishToSNS({ input, current: null })
+  const [purged] = await Promise.all([
+    purgeBandeDessineeCache(input.id),
+    syncBandeDessineeDraftAfterSave(input, null).catch((e) => console.error('draft sync error:', e)),
+    notifyComicPublishToSNS({ input, current: null }),
+  ])
 
   revalidatePath('/comic')
   redirect(createdURL(input.id, sync, purged))
@@ -270,20 +279,32 @@ export async function updateBandeDessineeAction(_prev: SaveActionState, formData
   } catch (e) {
     return saveFailed(e)
   }
-  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（前後巻の付け替えは警告、パージは案内、SNS は記録だけ）
+  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（前後巻の付け替えと KV の同期は警告、パージは案内、SNS は記録だけ）。
+  // パージは前後巻の付け替えが終わってから行う。KV の同期（下書きならプレビューを更新、公開なら削除）・SNS 通知は独立なので並行する
   const sync = await syncChainPointers(input, neighbors, current)
-  const purged = await purgeBandeDessineeCache(input.id)
-  await notifyComicPublishToSNS({ input, current })
+  const [purged, urls] = await Promise.all([
+    purgeBandeDessineeCache(input.id),
+    syncBandeDessineeDraftAfterSave(input, current).catch(draftSyncFailed),
+    notifyComicPublishToSNS({ input, current }),
+  ])
 
   revalidatePath('/comic')
-  return { saved: true, info: joinInfo(sync.messages), warning: chainWarning(sync), purgeFailed: !purged }
+  return {
+    saved: true,
+    info: joinInfo(sync.messages),
+    purgeFailed: !purged,
+    ...urls,
+    warning: joinWarnings(chainWarning(sync), urls.warning),
+  }
 }
 
-// プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
+// プレビュー URL の発行。編集中の内容を KV にだけ書く（D1 には保存しない）。
+// ページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
 export async function previewBandeDessineeAction(
   _prev: PreviewActionState,
   formData: FormData
 ): Promise<PreviewActionState> {
+  const idGiven = text(formData, 'id') !== ''
   const { input, error } = parseComicForm(formData)
   if (error) {
     return { error }
@@ -291,9 +312,15 @@ export async function previewBandeDessineeAction(
 
   // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
   const regenerateKey = formData.get('regenerate_draft_key') === 'on'
-  const draftKey = await saveBandeDessineeDraft(input, regenerateKey)
-  const { env } = await getCloudflareContext({ async: true })
-  return { previewURL: `${env.PAGES_HOST}/comics/${input.id}?draftKey=${draftKey}` }
+  const current = await getBandeDessinee(input.id)
+  // D1 に下書きの行がある間は失効させない。新規・公開済みに対する保存前プレビューは 3 日で失効する
+  const persistent = current !== null && current.status !== 'PUBLISH'
+  try {
+    const { previewURL } = await saveBandeDessineeDraft(input, current, { regenerateKey, persistent })
+    return { previewURL, persistent, generatedID: idGiven ? undefined : input.id }
+  } catch (e) {
+    return previewFailed(e)
+  }
 }
 
 // 編集画面からの手動キャッシュ削除。マンガの詳細も一覧のタグを持つので、一覧・単体まとめて削除される

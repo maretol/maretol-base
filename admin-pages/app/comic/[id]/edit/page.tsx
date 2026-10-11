@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getBandeDessinee, listComicTags, listComicSeries, listBandeDessineeRefs } from '@/lib/db_comic'
 import type { SaveActionState } from '@/lib/form-state'
+import { getBandeDessineeDraftPreviewURL } from '@/lib/draft_comic'
 import { ComicForm } from '../../comic-form'
 import { purgeBandeDessineeCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
@@ -22,10 +23,11 @@ export default async function EditComic({
   if (!comic) {
     notFound()
   }
-  const [allTags, allSeries, allComics] = await Promise.all([
+  const [allTags, allSeries, allComics, existingPreviewURL] = await Promise.all([
     listComicTags(),
     listComicSeries(),
     listBandeDessineeRefs(),
+    getBandeDessineeDraftPreviewURL(id),
   ])
   const initialState: SaveActionState =
     saved === '1' ? { saved: true, created: true, info, warning, purgeFailed: purgeFailed === '1' } : {}
@@ -46,6 +48,7 @@ export default async function EditComic({
         allSeries={allSeries}
         allComics={allComics}
         initialState={initialState}
+        existingPreviewURL={existingPreviewURL}
       />
     </div>
   )

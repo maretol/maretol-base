@@ -31,6 +31,23 @@ export function SaveResult({ state, purgeHint }: Props) {
         ) : (
           <PurgeFailedNotice />
         ))}
+      {state.previewURL && (
+        <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+          下書きのプレビュー URL:{' '}
+          <a href={state.previewURL} target="_blank" rel="noopener noreferrer" className="underline">
+            {state.previewURL}
+          </a>
+          <span className="ml-2 text-xs text-blue-600">下書きの間は失効しません（公開すると消えます）</span>
+        </p>
+      )}
+      {state.publicURL && (
+        <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
+          公開 URL:{' '}
+          <a href={state.publicURL} target="_blank" rel="noopener noreferrer" className="underline">
+            {state.publicURL}
+          </a>
+        </p>
+      )}
       {state.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{state.error}</p>
       )}

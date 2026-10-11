@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getAtelier, getAtelierTagIDs, listTags } from '@/lib/db'
 import type { SaveActionState } from '@/lib/form-state'
+import { getAtelierDraftPreviewURL } from '@/lib/draft'
 import { AtelierForm } from '../../atelier-form'
 import { purgeAtelierCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
@@ -22,7 +23,11 @@ export default async function EditIllust({
   if (!atelier) {
     notFound()
   }
-  const [selectedTagIDs, allTags] = await Promise.all([getAtelierTagIDs(id), listTags()])
+  const [selectedTagIDs, allTags, existingPreviewURL] = await Promise.all([
+    getAtelierTagIDs(id),
+    listTags(),
+    getAtelierDraftPreviewURL(id),
+  ])
   const initialState: SaveActionState =
     saved === '1' ? { saved: true, created: true, purgeFailed: purgeFailed === '1' } : {}
 
@@ -41,6 +46,7 @@ export default async function EditIllust({
         selectedTagIDs={selectedTagIDs}
         allTags={allTags}
         initialState={initialState}
+        existingPreviewURL={existingPreviewURL}
       />
     </div>
   )

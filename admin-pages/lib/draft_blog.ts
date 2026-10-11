@@ -1,27 +1,35 @@
 /**
- * KVプレビュー（draftKey互換）の blog ドラフト保存処理
+ * KVプレビュー（draftKey互換）の blog ドラフト保存処理。TTL の規則は draft_kv.ts
  */
-import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { blogContentDraftRecord, blogContentRow } from 'api-types'
-import { generateDraftKey } from './id'
-import { getBlogContent, listBlogCategories } from './db_blog'
+import { listBlogCategories } from './db_blog'
 import type { BlogContentInput } from './db_blog'
+import type { DraftSyncResult } from './form-state'
+import {
+  deleteDraft,
+  getDraftKey,
+  previewURL,
+  publicURL,
+  putDraft,
+  resolveDraftKey,
+  type DraftWriteOptions,
+} from './draft_kv'
 
-const DRAFT_TTL_SECONDS = 3 * 24 * 60 * 60
+const kvKey = (id: string) => `draft_blog_${id}`
+const pagePath = (id: string) => `/blog/${id}`
 
-export async function saveBlogContentDraft(input: BlogContentInput, regenerateKey = false): Promise<string> {
-  const { env } = await getCloudflareContext({ async: true })
+// current は D1 の保存前の行（新規は null）。作成日時・初公開日時をプレビューに引き継ぐ
+export async function saveBlogContentDraft(
+  input: BlogContentInput,
+  current: blogContentRow | null,
+  { regenerateKey, persistent }: DraftWriteOptions
+): Promise<{ draftKey: string; previewURL: string }> {
   const now = new Date().toISOString()
-  const current = await getBlogContent(input.id)
-  const kvKey = `draft_blog_${input.id}`
-
-  // 既存ドラフトのdraftKeyを維持する（共有済みのプレビューURLを変えないため）。再生成指定時のみ新しいキーにする
-  let draftKey: string | null = null
-  if (!regenerateKey) {
-    const existing = await env.CMS_DRAFT.get<blogContentDraftRecord>(kvKey, 'json')
-    draftKey = existing?.draftKey ?? null
-  }
-  draftKey ??= generateDraftKey()
+  // draftKey の解決とカテゴリの読み取りは独立しているので並行する
+  const [draftKey, allCategories] = await Promise.all([
+    resolveDraftKey(kvKey(input.id), regenerateKey),
+    listBlogCategories(),
+  ])
 
   const row: blogContentRow = {
     id: input.id,
@@ -40,16 +48,35 @@ export async function saveBlogContentDraft(input: BlogContentInput, regenerateKe
     revised_at: now,
   }
 
-  const allCategories = await listBlogCategories()
   const categories = input.categoryIDs
     .map((id) => allCategories.find((c) => c.id === id))
     .filter((c) => c !== undefined)
 
   const record: blogContentDraftRecord = { draftKey, row, categories }
+  await putDraft(kvKey(input.id), record, persistent)
+  return { draftKey, previewURL: await previewURL(pagePath(input.id), draftKey) }
+}
 
-  await env.CMS_DRAFT.put(kvKey, JSON.stringify(record), {
-    expirationTtl: DRAFT_TTL_SECONDS,
-  })
+export async function deleteBlogContentDraft(id: string): Promise<void> {
+  await deleteDraft(kvKey(id))
+}
 
-  return draftKey
+// 編集ページで、すでに発行済みのプレビュー URL を表示するために読む。無ければ null
+export async function getBlogContentDraftPreviewURL(id: string): Promise<string | null> {
+  const draftKey = await getDraftKey(kvKey(id))
+  return draftKey === null ? null : await previewURL(pagePath(id), draftKey)
+}
+
+// D1 への保存後に KV を同期する。下書き（PUBLISH 以外）なら同じ内容で TTL なしに書いてプレビュー URL を返し、
+// 公開なら古いプレビューを消して公開 URL を返す（#1404）
+export async function syncBlogContentDraftAfterSave(
+  input: BlogContentInput,
+  current: blogContentRow | null
+): Promise<DraftSyncResult> {
+  if (input.status === 'PUBLISH') {
+    await deleteBlogContentDraft(input.id)
+    return { publicURL: await publicURL(pagePath(input.id)) }
+  }
+  const { previewURL } = await saveBlogContentDraft(input, current, { regenerateKey: false, persistent: true })
+  return { previewURL }
 }
