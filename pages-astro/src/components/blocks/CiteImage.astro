@@ -1,7 +1,7 @@
 ---
 import CiteImageContent from './CiteImageContent.astro'
 import CiteImageFallback from './CiteImageFallback.astro'
-import { getImageModalHref, toBase64URL } from '@/lib/image'
+import { toBase64URL } from '@/lib/image'
 
 // 外部サイトの画像の引用の枠。画像の取得と表示は Server Island（CiteImageContent.astro）に出し、
 // 記事の HTML にはこの枠と、キャプション・引用元リンクだけを入れる（astro_design.md 決定 14）。
@@ -23,8 +23,10 @@ const anchorID = toBase64URL(url)
 const alt = caption || '引用画像'
 ---
 
-<div class="bg-gray-200 p-3 rounded-lg border-l-8 border-l-gray-500 w-fit max-w-xl" id={anchorID}>
-  <CiteImageContent server:defer url={url} alt={alt} modalHref={getImageModalHref(articleID, anchorID, draftKey)}>
+{/* 枠は列の幅に合わせて縮むブロックにし、箱（CiteImageBox.astro。w-full）の幅は枠で決める。
+    最大幅の 133（532px）は、箱の 500px に左右の p-3 と border-l-8 を足したもの。w-fit にすると箱が縮めず、狭い画面ではみ出す */}
+<div class="bg-gray-200 p-3 rounded-lg border-l-8 border-l-gray-500 max-w-133" id={anchorID}>
+  <CiteImageContent server:defer url={url} alt={alt} articleID={articleID} draftKey={draftKey}>
     <CiteImageFallback slot="fallback" alt={alt} />
   </CiteImageContent>
   <blockquote>
