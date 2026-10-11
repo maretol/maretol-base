@@ -1,0 +1,10 @@
+---
+// 引用画像（CiteImageContent.astro）を取得するまでの表示。画像の寸法は取得するまで分からないので、
+// 取得できなかったときの代わりの表示と同じ 300×400 の無地の枠を出す。
+// JS が動かない閲覧者やクローラにはこの表示のまま残る（引用元へのリンクは枠側の blockquote にある）
+type Props = { alt: string }
+
+const { alt } = Astro.props
+---
+
+<div class="w-[300px] max-w-full aspect-3/4 bg-gray-300 shadow-xl" role="img" aria-label={alt}></div>

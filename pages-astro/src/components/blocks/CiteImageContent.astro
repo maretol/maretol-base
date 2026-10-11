@@ -1,0 +1,45 @@
+---
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { fetchCiteImage } from '@/lib/api/cite_image'
+import { cacheCiteImage } from '@/lib/cache'
+import { getNoImageURL } from '@/lib/image'
+
+// 引用画像の取得と表示。Server Island（server:defer）として、枠（CiteImage.astro）の中に差し込まれる。
+// 記事とは別のリクエストで描画されるので、引用元の応答が遅くても記事の表示を待たせず、記事のキャッシュも引用元の状態に左右されない。
+// 画像はサーバー側で取得して data URL で埋め込む（lib/api/cite_image.ts）。閲覧者のブラウザから引用元へ直接リクエストさせない
+type Props = {
+  url: string
+  alt: string
+  // 画像モーダルの URL。クリックは islands/ImageModal.tsx が横取りする。
+  // 記事 ID（と draftKey）を含むので、同じ引用 URL でも記事ごとに island の URL とキャッシュが分かれる。
+  // リンクを枠側に置けば props を減らせるが、取得できなかったときの代わりの表示までモーダルで開けてしまうので、ここで持つ
+  modalHref: string
+}
+
+const { url, alt, modalHref } = Astro.props
+
+const image = await fetchCiteImage(url)
+// island は記事とは別にエッジへキャッシュさせる。取り直しても直らない失敗は成功と同じ長さで、一時的な失敗は短く保持して時間をおいて取り直す
+cacheCiteImage(Astro.response, image)
+---
+
+{
+  image.ok ? (
+    <a href={modalHref} class="x-blog-image">
+      {/* 画像は HTML に埋め込み済みなので遅延読み込みにしない（遅らせると、読み込み後に枠の大きさが変わる） */}
+      <img
+        src={image.dataURL}
+        alt={alt}
+        width={300}
+        height={400}
+        decoding="async"
+        class="w-full h-auto object-contain shadow-xl"
+      />
+    </a>
+  ) : (
+    <div>
+      <CdnImage src={getNoImageURL()} alt={alt} width={300} height={400} class="object-contain shadow-xl" />
+      <p class="mt-3 text-center text-sm text-gray-800">引用元の画像にアクセスできませんでした</p>
+    </div>
+  )
+}

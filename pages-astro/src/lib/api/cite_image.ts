@@ -4,7 +4,8 @@ import { sha256Hex } from '@/lib/hex'
 
 // 引用画像（外部サイトの画像）をサーバー側で取得し、data URL にして返す。
 // 閲覧者のブラウザから引用元へ直接リクエストさせないためと、引用元が消えても一定期間表示を保つため。
-// 描画時に Worker の中でだけ動く（cloudflare:workers を使うので island からは import できない）。ブラウザには data URL を埋めた HTML だけが届く
+// 呼ぶのは Server Island（components/blocks/CiteImageContent.astro）だけで、記事本体の描画からは呼ばない（記事の表示を引用元の応答で待たせない）。
+// Worker の中でだけ動く（cloudflare:workers を使うので、ブラウザ側の island からは import できない）。ブラウザには data URL を埋めた HTML だけが届く
 
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const CACHE_KEY_PREFIX = 'cite:'
@@ -12,11 +13,11 @@ const CACHE_KEY_PREFIX = 'cite:'
 const IMAGE_CACHE_TTL = 7 * 24 * 60 * 60
 // 取得失敗を表すキャッシュ値の prefix。data URL と区別できればよいので理由を続けて入れる
 const FAILURE_VALUE_PREFIX = 'error:'
-// 取り直しても直らない失敗のキャッシュ値の prefix。現行サイト（pages）も同じ KV を読むので、FAILURE_VALUE_PREFIX で始まる形にしておく
+// 取り直しても直らない失敗のキャッシュ値の prefix。FAILURE_VALUE_PREFIX で始まる形にして、失敗かどうかの判定は prefix 1 つで済ませる
 const PERMANENT_FAILURE_VALUE_PREFIX = `${FAILURE_VALUE_PREFIX}permanent:`
 // 取得失敗を保持する秒数。引用元が落ちている・応答しない間、描画のたびに取りに行かないための短い保持
 const FAILURE_CACHE_TTL = 10 * 60
-// 外部への fetch の待ち時間。引用元が応答しないときに記事全体の描画を止めないための上限
+// 外部への fetch の待ち時間。引用元が応答しないときに island の描画を待たせ続けないための上限
 const FETCH_TIMEOUT_MS = 5 * 1000
 // 取得する画像の上限。画像は data URL（base64 で約 4/3 倍）にして HTML に埋め込むので、そのまま全閲覧者が受け取る HTML の大きさになる。
 // 描画中は画像の全量を何重にもメモリに持つ（mw/cache.ts が本文を最後まで読む）ことにもなるので、小さく抑える。

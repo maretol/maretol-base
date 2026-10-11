@@ -1,4 +1,5 @@
 import { cacheTag } from 'cache-tags'
+import type { CiteImageResult } from '@/lib/api/cite_image'
 
 // エッジで保持する秒数。更新は保存時のタグパージで反映するので、長さはパージ漏れ時の上限としてしか効かない
 const EDGE_TTL = 30 * 24 * 60 * 60
@@ -10,6 +11,10 @@ const DEGRADED_TTL = 10 * 60
 const LINK_CARD_TTL = 3 * 24 * 60 * 60
 // リンク先の情報を取得できなかったリンクカードを保持する秒数。時間をおいて取り直す
 const LINK_CARD_FAILURE_TTL = 10 * 60
+// 引用画像（Server Island）を保持する秒数。取得した画像を KV に持つ期間（lib/api/cite_image.ts）と同じにする
+const CITE_IMAGE_TTL = 7 * 24 * 60 * 60
+// 一時的に取得できなかった引用画像を保持する秒数。時間をおいて取り直す
+const CITE_IMAGE_FAILURE_TTL = 10 * 60
 
 // 最新の記事・漫画・イラストの一覧と、タグの一覧を出すページのタグ。サイドバーとトップページが該当する
 export const latestListTags = [cacheTag.blog, cacheTag.blogList, cacheTag.comicList, cacheTag.illustList]
@@ -60,6 +65,13 @@ export function cacheBadRequest(response: ResponseLike, tags: string[]): void {
 // リンクカード（Server Island）のレスポンスをエッジにキャッシュさせる。記事とは別のリクエストなので、保持期間も記事とは別に決める
 export function cacheLinkCard(response: ResponseLike, fetched: boolean): void {
   cachePage(response, [], { ttl: fetched ? LINK_CARD_TTL : LINK_CARD_FAILURE_TTL })
+}
+
+// 引用画像（Server Island）のレスポンスをエッジにキャッシュさせる。記事とは別のリクエストなので、保持期間も記事とは別に決める。
+// 取り直しても直らない失敗（引用元の 4xx、未対応の形式、大きすぎる画像）は、代わりの表示を成功と同じ長さで保持する
+export function cacheCiteImage(response: ResponseLike, image: CiteImageResult): void {
+  const transient = !image.ok && !image.permanent
+  cachePage(response, [], { ttl: transient ? CITE_IMAGE_FAILURE_TTL : CITE_IMAGE_TTL })
 }
 
 // 取得に失敗した部品を含むページの保持期間を短くする。もともと短いもの（404 など）は延ばさない
