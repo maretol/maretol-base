@@ -24,6 +24,7 @@
     "deploy:astro": "npm run --workspace=pages-astro deploy-prd",
     "test:cms": "npm run --workspace=cms-data-fetcher test",
     "test:md": "npm run --workspace=md-converter test",
+    "test:ogp": "npm run --workspace=ogp-data-fetcher test",
     "test:sns": "npm run --workspace=sns-article-publisher test",
     "test:e2e": "npm run --workspace=e2e test:e2e"
   },
