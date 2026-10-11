@@ -172,7 +172,7 @@ code {
 }
 
 .content-sample {
-  a[class='x-blog-image'] {
+  a.x-blog-image {
     pointer-events: none;
   }
   .annotation-marker {

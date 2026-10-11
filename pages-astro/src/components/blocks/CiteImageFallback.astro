@@ -1,0 +1,11 @@
+---
+import CiteImageBox from './CiteImageBox.astro'
+
+// 引用画像（CiteImageContent.astro）を取得するまでの表示。取得後と同じ箱（CiteImageBox.astro）を空で出す。
+// JS が動かない閲覧者やクローラにはこの表示のまま残る（引用元へのリンクは枠側の blockquote にある）
+type Props = { alt: string }
+
+const { alt } = Astro.props
+---
+
+<CiteImageBox label={alt} />
