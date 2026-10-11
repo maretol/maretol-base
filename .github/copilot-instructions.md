@@ -36,7 +36,7 @@ packages/           # 共有パッケージ（型定義、ユーティリティ�
 ### 認証・認可
 
 - API キーの比較には **タイミングセーフな比較**（`crypto.timingSafeEqual` 等）を使用しているか確認する。単純な `===` 比較はタイミング攻撃のリスクがある
-- Webhook の署名検証には HMAC + `timingSafeEqual` を使用する（本プロジェクトの `sns-article-publisher` の実装を参考にする）
+- Webhook の署名検証には HMAC + `timingSafeEqual` を使用する
 - 下書きコンテンツ（`draftKey`）へのアクセスに適切なアクセス制御があるか確認する
 
 ### 秘密情報の管理

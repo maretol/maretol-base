@@ -29,9 +29,8 @@ microCMS への依存（SDK・APIキー・Webhook）を完全に排除し、以�
 maretol-base/
 ├── pages/                  # 公開サイト（変更しない）
 ├── admin-pages/            # ★新規: 管理ページ Worker（Next.js + OpenNext 想定、Cloudflare Access）
-├── cms-db/                 # ★新規: D1 の DDL・マイグレーション + microCMS インポートスクリプト
-│   ├── migrations/         #   wrangler d1 migrations で管理
-│   └── scripts/            #   インポートスクリプト等
+├── cms-db/                 # ★新規: D1 の DDL・マイグレーション（microCMS インポートスクリプトは取り込み後に #1273 で削除）
+│   └── migrations/         #   wrangler d1 migrations で管理
 ├── cms-data-fetcher/       # D1・KV(draft) バインディング追加、md-converter の呼び出し元
 ├── cms-cache-purger/       # 移行完了後に廃止
 ├── ogp-data-fetcher/       # 変更なし
@@ -128,7 +127,7 @@ microCMS の3サービスを単位に、規模の小さいものから段階的�
 - cms-data-fetcher の該当サービスの参照先を D1 に切り替え
 - ステージング（-stg / dev-api.maretol.xyz）で検証後に本番切り替え
 
-全サービス移行完了後、microCMS SDK・APIキー・cms-cache-purger を撤去する（cms-cache-purger は Astro 移行の M7 で撤去済み）
+全サービス移行完了後、microCMS SDK・APIキー・cms-cache-purger を撤去する（cms-cache-purger は Astro 移行の M7 で、microCMS SDK・切替機構・SNS の Webhook ハンドラは #1273 で撤去した）
 
 ## 移行対象データ（現行 microCMS の構造）
 
@@ -162,7 +161,7 @@ microCMS の3サービスを単位に、規模の小さいものから段階的�
 - D1 のテーブル定義（DDL）→ cms_design.md に全文
 - Markdown 変換ライブラリ → markdown-it
 - 管理ページのエディタ → 素の textarea で開始（エディタ内プレビューなし）
-- SNS 通知 → 現行 WebhookPayload 完全互換
+- SNS 通知 → 現行 WebhookPayload 完全互換（M6 で Service Binding + RPC に変更。cms_design.md 4 章）
 - インポート → JSON エクスポート → SQL 生成 → wrangler d1 execute の2段階方式
 
 ### 決定済み（上記「決定事項」へ反映済み）

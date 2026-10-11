@@ -1,6 +1,6 @@
 /**
  * D1（内製CMS DB）からblogコンテンツを取得する処理
- * micro_cms.ts と同じ結果型を返し、index.ts 側の parse 処理を共有する
+ * api-types の結果型を返し、index.ts 側の parse 処理を共有する
  *
  * cms_design.md「主要クエリの対応表」参照
  * - 一覧系は常に status='PUBLISH' AND is_secret=0 で絞る（限定公開記事は一覧に出さない）
@@ -42,7 +42,7 @@ function toContentsAPIResult(row: blogContentRow, categories: categoryAPIResult[
     ogp_image: row.ogp_image ?? undefined,
     categories,
     is_secret: row.is_secret === 1,
-    // secret_code / sns_text はクライアントへ渡す型に含めない（micro_cms.ts の parseContentsAPIResult と同じ）
+    // secret_code / sns_text はクライアントへ渡す型に含めない
   } as contentsAPIResult // parsed_content / table_of_contents は index.ts が parse() 結果を代入する
 }
 

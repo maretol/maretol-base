@@ -50,7 +50,6 @@ jobs:
             sns-article-publisher:
               - "sns-article-publisher/**"
               - "packages/api-types/src/sns_pub.ts"
-              - "packages/api-types/src/cms_webhook_types.ts"
             workflow:
               - ".github/workflows/**"
 
