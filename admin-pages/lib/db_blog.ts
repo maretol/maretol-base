@@ -5,6 +5,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { blogContentRow, blogCategoryRow, blogInfoRow } from 'api-types'
 import type { ContentFormat } from './content-format'
+import type { ContentStatus } from './status'
 import { paginatedQuery, type PageRange, type Paginated } from './db_pagination'
 
 async function getDB(): Promise<D1Database> {
@@ -55,7 +56,7 @@ export type BlogContentInput = {
   sns_text: string | null
   is_secret: boolean
   secret_code: string | null
-  status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
+  status: ContentStatus
   categoryIDs: string[]
 }
 
@@ -88,12 +89,9 @@ export async function createBlogContent(input: BlogContentInput): Promise<void> 
   await replaceCategoryRelations(db, input.id, input.categoryIDs)
 }
 
-export async function updateBlogContent(input: BlogContentInput): Promise<void> {
+// current は呼び出し側が読み込み済みの保存前の行（status の遷移判定や SNS 通知の判定にも使うので、ここで読み直さない）
+export async function updateBlogContent(input: BlogContentInput, current: blogContentRow): Promise<void> {
   const db = await getDB()
-  const current = await getBlogContent(input.id)
-  if (!current) {
-    throw new Error(`blog content not found: ${input.id}`)
-  }
   const now = new Date().toISOString()
   const publishedAt = input.status === 'PUBLISH' ? (current.published_at ?? now) : current.published_at
   const revisedAt = input.status === 'PUBLISH' ? now : current.revised_at
@@ -195,7 +193,7 @@ export type BlogInfoInput = {
   title: string | null
   main_text: string
   main_text_format: ContentFormat
-  status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
+  status: ContentStatus
 }
 
 export async function createBlogInfo(input: BlogInfoInput): Promise<void> {
@@ -220,12 +218,8 @@ export async function createBlogInfo(input: BlogInfoInput): Promise<void> {
     .run()
 }
 
-export async function updateBlogInfo(input: BlogInfoInput): Promise<void> {
+export async function updateBlogInfo(input: BlogInfoInput, current: blogInfoRow): Promise<void> {
   const db = await getDB()
-  const current = await getBlogInfo(input.id)
-  if (!current) {
-    throw new Error(`blog info not found: ${input.id}`)
-  }
   const now = new Date().toISOString()
   const publishedAt = input.status === 'PUBLISH' ? (current.published_at ?? now) : current.published_at
   const revisedAt = input.status === 'PUBLISH' ? now : current.revised_at

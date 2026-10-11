@@ -3,18 +3,13 @@ import { BlogForm } from '../blog-form'
 
 export const dynamic = 'force-dynamic'
 
-export default async function NewBlogContent({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>
-}) {
-  const { error } = await searchParams
+export default async function NewBlogContent() {
   const allCategories = await listBlogCategories()
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold">ブログ記事新規作成</h1>
-      <BlogForm mode="new" allCategories={allCategories} error={error} />
+      <BlogForm mode="new" allCategories={allCategories} />
     </div>
   )
 }

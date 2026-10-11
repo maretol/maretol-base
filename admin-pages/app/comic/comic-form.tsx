@@ -4,8 +4,12 @@ import { useActionState, useState } from 'react'
 import type { bandeDessineeRow, bandeDessineeTagRow, bandeDessineeSeriesRow } from 'api-types'
 import type { BandeDessineeRef } from '@/lib/db_comic'
 import { createBandeDessineeAction, updateBandeDessineeAction, previewBandeDessineeAction } from './actions'
+import type { SaveActionState } from '@/lib/form-state'
+import { submitByIntent } from '@/lib/form-submit'
 import { SubmitButton } from '@/components/submit-button'
 import { ContentTextarea } from '@/components/content-textarea'
+import { SaveResult } from '@/components/save-result'
+import { StatusSelect } from '@/components/status-select'
 
 type Props = {
   mode: 'new' | 'edit'
@@ -13,11 +17,8 @@ type Props = {
   allTags: bandeDessineeTagRow[]
   allSeries: bandeDessineeSeriesRow[]
   allComics: BandeDessineeRef[]
-  error?: string
-  saved?: boolean
-  info?: string
-  // 保存はできたが、公開サイトのキャッシュ削除に失敗した
-  purgeFailed?: boolean
+  // 新規作成から遷移してきたときの結果（作成した・前後巻の自動連携・パージに失敗した）。編集ページが URL のクエリから組み立てる
+  initialState?: SaveActionState
 }
 
 // ISO 8601 UTC の日時を date input 用の JST 日付（YYYY-MM-DD）に変換する
@@ -27,10 +28,14 @@ function toJSTDateValue(iso: string | null | undefined): string {
   return jst.toISOString().slice(0, 10)
 }
 
-export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, saved, info, purgeFailed }: Props) {
-  const action = mode === 'new' ? createBandeDessineeAction : updateBandeDessineeAction
-  // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
-  const [preview, previewFormAction] = useActionState(previewBandeDessineeAction, {})
+export function ComicForm({ mode, comic, allTags, allSeries, allComics, initialState = {} }: Props) {
+  // 保存はページ遷移させず結果を state で受け取る（遷移すると編集中の本文が消えるため）。
+  // 新規作成だけは action 内で作成したマンガの編集画面へ遷移する（URL が変わるため）
+  const [save, saveDispatch, saving] = useActionState(
+    mode === 'new' ? createBandeDessineeAction : updateBandeDessineeAction,
+    initialState
+  )
+  const [preview, previewDispatch, previewing] = useActionState(previewBandeDessineeAction, {})
   const inputClass = 'mt-1 w-full rounded-md border border-gray-300 p-2 text-sm'
   const monoClass = `${inputClass} font-mono`
 
@@ -43,14 +48,7 @@ export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, s
 
   return (
     <div className="space-y-4">
-      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
-      {purgeFailed && (
-        <p className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-          公開サイトのキャッシュ削除に失敗しました。公開サイトに反映されていない場合は、上の「マンガのキャッシュを削除」を実行してください
-        </p>
-      )}
-      {info && <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">自動連携: {info}</p>}
-      {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      <SaveResult state={save} purgeHint="上の「マンガのキャッシュを削除」を実行してください" />
       {preview.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
       )}
@@ -63,7 +61,11 @@ export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, s
         </p>
       )}
 
-      <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+      {/* 送信は submit イベントから自分で dispatch する（form action に渡すと完了後に入力が reset されるため。lib/form-submit.ts） */}
+      <form
+        onSubmit={(e) => submitByIntent(e, { save: saveDispatch, preview: previewDispatch })}
+        className="space-y-4 rounded-lg border border-gray-200 bg-white p-4"
+      >
         <input type="hidden" name="mode" value={mode} />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -243,14 +245,7 @@ export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, s
               <option value="right">right（右開き）</option>
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium">公開状態</label>
-            <select name="status" defaultValue={comic?.status ?? 'DRAFT'} className={inputClass}>
-              <option value="PUBLISH">公開</option>
-              <option value="DRAFT">下書き</option>
-              <option value="CLOSED">非公開</option>
-            </select>
-          </div>
+          <StatusSelect current={comic?.status} className={inputClass} />
         </div>
 
         <div>
@@ -278,8 +273,17 @@ export function ComicForm({ mode, comic, allTags, allSeries, allComics, error, s
 
         <div className="space-y-2 border-t border-gray-100 pt-4">
           <div className="flex gap-3">
-            <SubmitButton pendingText="保存中...">保存</SubmitButton>
-            <SubmitButton variant="secondary" formAction={previewFormAction} pendingText="プレビュー保存中...">
+            <SubmitButton name="intent" value="save" pending={saving} disabled={previewing} pendingText="保存中...">
+              保存
+            </SubmitButton>
+            <SubmitButton
+              name="intent"
+              value="preview"
+              variant="secondary"
+              pending={previewing}
+              disabled={saving}
+              pendingText="プレビュー保存中..."
+            >
               プレビュー保存（D1には保存しない）
             </SubmitButton>
           </div>

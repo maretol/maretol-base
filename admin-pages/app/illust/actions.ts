@@ -10,10 +10,11 @@ import { saveAtelierDraft } from '@/lib/draft'
 import { notifyAtelierPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
-import type { PreviewActionState, PurgeActionState } from '@/lib/form-state'
+import { parseStatus, statusTransitionError } from '@/lib/status'
+import { saveFailed } from '@/lib/save-error'
+import type { PreviewActionState, PurgeActionState, SaveActionState } from '@/lib/form-state'
 import { text } from '@/lib/form-data'
 
-const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const VALID_POSITION = ['center', 'top', 'bottom', 'left', 'right']
 
 function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: string } {
@@ -22,7 +23,6 @@ function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: st
   const src = text(formData, 'src')
   const objectPosition = text(formData, 'object_position')
   const description = (formData.get('description') as string | null) ?? ''
-  const status = text(formData, 'status')
   const tagIDs = formData.getAll('tag_ids').map((v) => String(v))
 
   const input: AtelierInput = {
@@ -32,9 +32,7 @@ function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: st
     object_position: VALID_POSITION.includes(objectPosition) ? objectPosition : 'center',
     description,
     description_format: parseContentFormat(formData.get('description_format') as string | null),
-    status: VALID_STATUS.includes(status as (typeof VALID_STATUS)[number])
-      ? (status as AtelierInput['status'])
-      : 'DRAFT',
+    status: parseStatus(text(formData, 'status')),
     tagIDs,
   }
 
@@ -47,46 +45,61 @@ function parseAtelierForm(formData: FormData): { input: AtelierInput; error?: st
   return { input }
 }
 
-// 保存後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
-function savedURL(illustID: string, purged: boolean): string {
+// 新規作成後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
+function createdURL(illustID: string, purged: boolean): string {
   return withPurgeResult(`/illust/${illustID}/edit?saved=1`, purged)
 }
 
-export async function createAtelierAction(formData: FormData): Promise<void> {
+// 新規作成。エラーは state で返して入力を保持し、成功したら作成したイラストの編集画面へ遷移する（URL が変わるため）
+export async function createAtelierAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseAtelierForm(formData)
   if (error) {
-    redirect(`/illust/new?error=${encodeURIComponent(error)}`)
+    return { error }
   }
-  if (await getAtelier(input.id)) {
-    redirect(`/illust/new?error=${encodeURIComponent(`ID '${input.id}' は既に使用されています`)}`)
+  // D1 の例外（ID の重複確認も含む）は state のエラーにして入力を保持する（issue #1311）。
+  // パージ・SNS 通知は自分で失敗を処理して例外を投げないので、ここで受けるのは実質 D1 の例外だけ。
+  // redirect は例外で遷移するので try の外に置く
+  let purged: boolean
+  try {
+    if (await getAtelier(input.id)) {
+      return { error: `ID '${input.id}' は既に使用されています` }
+    }
+    await createAtelier(input)
+    purged = await purgeAtelierCache(input.id)
+    await notifyAtelierPublishToSNS({ input, current: null })
+  } catch (e) {
+    return saveFailed(e)
   }
-
-  await createAtelier(input)
-  const purged = await purgeAtelierCache(input.id)
-  await notifyAtelierPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/illust')
-  // 保存後は一覧へ戻らず、作成したイラストの編集画面へ遷移する（連続編集のため）
-  redirect(savedURL(input.id, purged))
+  redirect(createdURL(input.id, purged))
 }
 
-export async function updateAtelierAction(formData: FormData): Promise<void> {
+// 更新。ページ遷移させず結果を state で返す（遷移すると編集中の内容が消えるため）
+export async function updateAtelierAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseAtelierForm(formData)
   if (error) {
-    redirect(`/illust/${input.id}/edit?error=${encodeURIComponent(error)}`)
+    return { error }
   }
+  // D1 の例外（保存前の行の読み取りも含む）は state のエラーにして入力を保持する（issue #1311）
+  try {
+    const current = await getAtelier(input.id)
+    if (!current) {
+      return { error: `イラスト '${input.id}' が見つかりません` }
+    }
+    const transitionError = statusTransitionError(current.status, input.status)
+    if (transitionError) {
+      return { error: transitionError }
+    }
+    await updateAtelier(input, current)
+    const purged = await purgeAtelierCache(input.id)
+    await notifyAtelierPublishToSNS({ input, current })
 
-  // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
-  const current = await getAtelier(input.id)
-  const oldStatus = current?.status
-
-  await updateAtelier(input)
-  const purged = await purgeAtelierCache(input.id)
-  await notifyAtelierPublishToSNS({ input, type: 'edit', oldStatus })
-
-  revalidatePath('/illust')
-  // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(savedURL(input.id, purged))
+    revalidatePath('/illust')
+    return { saved: true, purgeFailed: !purged }
+  } catch (e) {
+    return saveFailed(e)
+  }
 }
 
 // 編集中の内容をKVに保存し、pages本体のプレビューURLを返す（D1には書き込まない）

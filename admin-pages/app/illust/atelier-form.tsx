@@ -3,36 +3,36 @@
 import { useActionState } from 'react'
 import type { atelierRow, atelierTagRow } from 'api-types'
 import { createAtelierAction, updateAtelierAction, previewAtelierAction } from './actions'
+import type { SaveActionState } from '@/lib/form-state'
+import { submitByIntent } from '@/lib/form-submit'
 import { SubmitButton } from '@/components/submit-button'
 import { ContentTextarea } from '@/components/content-textarea'
+import { SaveResult } from '@/components/save-result'
+import { StatusSelect } from '@/components/status-select'
 
 type Props = {
   mode: 'new' | 'edit'
   atelier?: atelierRow
   selectedTagIDs?: string[]
   allTags: atelierTagRow[]
-  error?: string
-  saved?: boolean
-  // 保存はできたが、公開サイトのキャッシュ削除に失敗した
-  purgeFailed?: boolean
+  // 新規作成から遷移してきたときの結果（作成した・パージに失敗した）。編集ページが URL のクエリから組み立てる
+  initialState?: SaveActionState
 }
 
 const positions = ['center', 'top', 'bottom', 'left', 'right']
 
-export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error, saved, purgeFailed }: Props) {
-  const action = mode === 'new' ? createAtelierAction : updateAtelierAction
-  // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
-  const [preview, previewFormAction] = useActionState(previewAtelierAction, {})
+export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, initialState = {} }: Props) {
+  // 保存はページ遷移させず結果を state で受け取る（遷移すると編集中の本文が消えるため）。
+  // 新規作成だけは action 内で作成したイラストの編集画面へ遷移する（URL が変わるため）
+  const [save, saveDispatch, saving] = useActionState(
+    mode === 'new' ? createAtelierAction : updateAtelierAction,
+    initialState
+  )
+  const [preview, previewDispatch, previewing] = useActionState(previewAtelierAction, {})
 
   return (
     <div className="space-y-4">
-      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
-      {purgeFailed && (
-        <p className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-          公開サイトのキャッシュ削除に失敗しました。公開サイトに反映されていない場合は、上の「イラストのキャッシュを削除」を実行してください
-        </p>
-      )}
-      {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      <SaveResult state={save} purgeHint="上の「イラストのキャッシュを削除」を実行してください" />
       {preview.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
       )}
@@ -45,7 +45,11 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error
         </p>
       )}
 
-      <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+      {/* 送信は submit イベントから自分で dispatch する（form action に渡すと完了後に入力が reset されるため。lib/form-submit.ts） */}
+      <form
+        onSubmit={(e) => submitByIntent(e, { save: saveDispatch, preview: previewDispatch })}
+        className="space-y-4 rounded-lg border border-gray-200 bg-white p-4"
+      >
         <input type="hidden" name="mode" value={mode} />
 
         <div>
@@ -143,23 +147,25 @@ export function AtelierForm({ mode, atelier, selectedTagIDs = [], allTags, error
           </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium">公開状態</label>
-          <select
-            name="status"
-            defaultValue={atelier?.status ?? 'DRAFT'}
-            className="mt-1 rounded-md border border-gray-300 p-2 text-sm"
-          >
-            <option value="PUBLISH">公開</option>
-            <option value="DRAFT">下書き</option>
-            <option value="CLOSED">非公開</option>
-          </select>
-        </div>
+        <StatusSelect current={atelier?.status}>
+          <p className="mt-1 text-xs text-gray-400">
+            初めて公開するときにSNS自動投稿が送信されます（非公開から公開に戻しても送信されません）
+          </p>
+        </StatusSelect>
 
         <div className="space-y-2 border-t border-gray-100 pt-4">
           <div className="flex gap-3">
-            <SubmitButton pendingText="保存中...">保存</SubmitButton>
-            <SubmitButton variant="secondary" formAction={previewFormAction} pendingText="プレビュー保存中...">
+            <SubmitButton name="intent" value="save" pending={saving} disabled={previewing} pendingText="保存中...">
+              保存
+            </SubmitButton>
+            <SubmitButton
+              name="intent"
+              value="preview"
+              variant="secondary"
+              pending={previewing}
+              disabled={saving}
+              pendingText="プレビュー保存中..."
+            >
               プレビュー保存（D1には保存しない）
             </SubmitButton>
           </div>

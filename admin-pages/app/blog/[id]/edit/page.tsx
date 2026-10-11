@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { getBlogContent, getBlogContentCategoryIDs, listBlogCategories } from '@/lib/db_blog'
+import type { SaveActionState } from '@/lib/form-state'
 import { BlogForm } from '../../blog-form'
 import { purgeBlogContentCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
@@ -11,16 +12,19 @@ export default async function EditBlogContent({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ error?: string; saved?: string; purge_failed?: string }>
+  // saved / purge_failed は新規作成から遷移してきたときだけ付く（更新の結果はフォームが state で表示する）
+  searchParams: Promise<{ saved?: string; purge_failed?: string }>
 }) {
   const { id } = await params
-  const { error, saved, purge_failed: purgeFailed } = await searchParams
+  const { saved, purge_failed: purgeFailed } = await searchParams
 
   const article = await getBlogContent(id)
   if (!article) {
     notFound()
   }
   const [selectedCategoryIDs, allCategories] = await Promise.all([getBlogContentCategoryIDs(id), listBlogCategories()])
+  const initialState: SaveActionState =
+    saved === '1' ? { saved: true, created: true, purgeFailed: purgeFailed === '1' } : {}
 
   return (
     <div className="space-y-4">
@@ -36,9 +40,7 @@ export default async function EditBlogContent({
         article={article}
         selectedCategoryIDs={selectedCategoryIDs}
         allCategories={allCategories}
-        error={error}
-        saved={saved === '1'}
-        purgeFailed={purgeFailed === '1'}
+        initialState={initialState}
       />
     </div>
   )

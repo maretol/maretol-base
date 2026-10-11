@@ -23,18 +23,12 @@ import { saveBlogContentDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
-import type { PreviewActionState, PurgeActionState, AddCategoryState } from '@/lib/form-state'
+import { parseStatus, statusTransitionError } from '@/lib/status'
+import { saveFailed } from '@/lib/save-error'
+import type { PreviewActionState, PurgeActionState, AddCategoryState, SaveActionState } from '@/lib/form-state'
 import { text, textOrNull } from '@/lib/form-data'
 
-const VALID_STATUS = ['PUBLISH', 'DRAFT', 'CLOSED'] as const
 const ID_PATTERN = /^[a-zA-Z0-9_-]+$/
-
-function parseStatus(formData: FormData): BlogContentInput['status'] {
-  const status = text(formData, 'status')
-  return VALID_STATUS.includes(status as (typeof VALID_STATUS)[number])
-    ? (status as BlogContentInput['status'])
-    : 'DRAFT'
-}
 
 function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: string } {
   const id = text(formData, 'id') || generateContentID()
@@ -47,7 +41,7 @@ function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: s
     sns_text: textOrNull(formData, 'sns_text'),
     is_secret: formData.get('is_secret') === 'on',
     secret_code: textOrNull(formData, 'secret_code'),
-    status: parseStatus(formData),
+    status: parseStatus(text(formData, 'status')),
     categoryIDs: formData.getAll('category_ids').map((v) => String(v)),
   }
 
@@ -63,46 +57,61 @@ function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: s
   return { input }
 }
 
-// 保存後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
-function savedURL(articleID: string, purged: boolean): string {
+// 新規作成後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
+function createdURL(articleID: string, purged: boolean): string {
   return withPurgeResult(`/blog/${articleID}/edit?saved=1`, purged)
 }
 
-export async function createBlogContentAction(formData: FormData): Promise<void> {
+// 新規作成。エラーは state で返して入力を保持し、成功したら作成した記事の編集画面へ遷移する（URL が変わるため）
+export async function createBlogContentAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseBlogForm(formData)
   if (error) {
-    redirect(`/blog/new?error=${encodeURIComponent(error)}`)
+    return { error }
   }
-  if (await getBlogContent(input.id)) {
-    redirect(`/blog/new?error=${encodeURIComponent(`ID '${input.id}' は既に使用されています`)}`)
+  // D1 の例外（ID の重複確認も含む）は state のエラーにして入力を保持する（issue #1311）。
+  // パージ・SNS 通知は自分で失敗を処理して例外を投げないので、ここで受けるのは実質 D1 の例外だけ。
+  // redirect は例外で遷移するので try の外に置く
+  let purged: boolean
+  try {
+    if (await getBlogContent(input.id)) {
+      return { error: `ID '${input.id}' は既に使用されています` }
+    }
+    await createBlogContent(input)
+    purged = await purgeBlogContentCache(input.id)
+    await notifyBlogPublishToSNS({ input, current: null })
+  } catch (e) {
+    return saveFailed(e)
   }
-
-  await createBlogContent(input)
-  const purged = await purgeBlogContentCache(input.id)
-  await notifyBlogPublishToSNS({ input, type: 'new' })
 
   revalidatePath('/blog')
-  // 保存後は一覧へ戻らず、作成した記事の編集画面へ遷移する（連続編集のため）
-  redirect(savedURL(input.id, purged))
+  redirect(createdURL(input.id, purged))
 }
 
-export async function updateBlogContentAction(formData: FormData): Promise<void> {
+// 更新。ページ遷移させず結果を state で返す（遷移すると編集中の本文が消えるため）
+export async function updateBlogContentAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseBlogForm(formData)
   if (error) {
-    redirect(`/blog/${input.id}/edit?error=${encodeURIComponent(error)}`)
+    return { error }
   }
+  // D1 の例外（保存前の行の読み取りも含む）は state のエラーにして入力を保持する（issue #1311）
+  try {
+    const current = await getBlogContent(input.id)
+    if (!current) {
+      return { error: `記事 '${input.id}' が見つかりません` }
+    }
+    const transitionError = statusTransitionError(current.status, input.status)
+    if (transitionError) {
+      return { error: transitionError }
+    }
+    await updateBlogContent(input, current)
+    const purged = await purgeBlogContentCache(input.id)
+    await notifyBlogPublishToSNS({ input, current })
 
-  // SNS通知の「下書き→公開」判定のため保存前のstatusを取得しておく
-  const current = await getBlogContent(input.id)
-  const oldStatus = current?.status
-
-  await updateBlogContent(input)
-  const purged = await purgeBlogContentCache(input.id)
-  await notifyBlogPublishToSNS({ input, type: 'edit', oldStatus })
-
-  revalidatePath('/blog')
-  // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(savedURL(input.id, purged))
+    revalidatePath('/blog')
+    return { saved: true, purgeFailed: !purged }
+  } catch (e) {
+    return saveFailed(e)
+  }
 }
 
 // プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
@@ -215,7 +224,7 @@ function parseInfoForm(formData: FormData): { input: BlogInfoInput; error?: stri
     title: textOrNull(formData, 'title'),
     main_text: (formData.get('main_text') as string | null) ?? '',
     main_text_format: parseContentFormat(formData.get('main_text_format') as string | null),
-    status: parseStatus(formData),
+    status: parseStatus(text(formData, 'status')),
   }
   if (!ID_PATTERN.test(input.id)) {
     return { input, error: 'IDは英数字・ハイフン・アンダースコアのみ使用できます' }
@@ -226,35 +235,51 @@ function parseInfoForm(formData: FormData): { input: BlogInfoInput; error?: stri
   return { input }
 }
 
-export async function createBlogInfoAction(formData: FormData): Promise<void> {
+// 固定ページの新規作成。記事と同じく、エラーは state で返し、成功したら編集画面へ遷移する
+export async function createBlogInfoAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseInfoForm(formData)
   if (error) {
-    redirect(`/blog/info/new?error=${encodeURIComponent(error)}`)
+    return { error }
   }
-  if (await getBlogInfo(input.id)) {
-    redirect(`/blog/info/new?error=${encodeURIComponent(`ID '${input.id}' は既に使用されています`)}`)
+  // D1 の例外（ID の重複確認も含む）は state のエラーにして入力を保持する（issue #1311）。redirect は try の外に置く
+  let purged: boolean
+  try {
+    if (await getBlogInfo(input.id)) {
+      return { error: `ID '${input.id}' は既に使用されています` }
+    }
+    await createBlogInfo(input)
+    purged = await purgeBlogMetaCache('info')
+  } catch (e) {
+    return saveFailed(e)
   }
-
-  await createBlogInfo(input)
-  const purged = await purgeBlogMetaCache('info')
 
   revalidatePath('/blog/info')
-  // 保存後は一覧へ戻らず、作成したページの編集画面へ遷移する
   redirect(withPurgeResult(`/blog/info/${input.id}/edit?saved=1`, purged))
 }
 
-export async function updateBlogInfoAction(formData: FormData): Promise<void> {
+export async function updateBlogInfoAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseInfoForm(formData)
   if (error) {
-    redirect(`/blog/info/${input.id}/edit?error=${encodeURIComponent(error)}`)
+    return { error }
   }
+  // D1 の例外（保存前の行の読み取りも含む）は state のエラーにして入力を保持する（issue #1311）
+  try {
+    const current = await getBlogInfo(input.id)
+    if (!current) {
+      return { error: `固定ページ '${input.id}' が見つかりません` }
+    }
+    const transitionError = statusTransitionError(current.status, input.status)
+    if (transitionError) {
+      return { error: transitionError }
+    }
+    await updateBlogInfo(input, current)
+    const purged = await purgeBlogMetaCache('info')
 
-  await updateBlogInfo(input)
-  const purged = await purgeBlogMetaCache('info')
-
-  revalidatePath('/blog/info')
-  // 保存後は一覧へ戻らず、編集画面に留まる
-  redirect(withPurgeResult(`/blog/info/${input.id}/edit?saved=1`, purged))
+    revalidatePath('/blog/info')
+    return { saved: true, purgeFailed: !purged }
+  } catch (e) {
+    return saveFailed(e)
+  }
 }
 
 export async function updateBlogStaticAction(formData: FormData): Promise<void> {
