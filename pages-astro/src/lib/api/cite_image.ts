@@ -4,19 +4,19 @@ import { sha256Hex } from '@/lib/hex'
 
 // 引用画像（外部サイトの画像）をサーバー側で取得し、data URL にして返す。
 // 閲覧者のブラウザから引用元へ直接リクエストさせないためと、引用元が消えても一定期間表示を保つため。
-// 描画時に Worker の中でだけ動く（cloudflare:workers を使うので island からは import できない）。ブラウザには data URL を埋めた HTML だけが届く
+// 呼ぶのは Server Island（components/blocks/CiteImageContent.astro）だけで、記事本体の描画からは呼ばない（記事の表示を引用元の応答で待たせない）。
+// Worker の中でだけ動く（cloudflare:workers を使うので、ブラウザ側の island からは import できない）。ブラウザには data URL を埋めた HTML だけが届く
 
 const SUPPORTED_FORMATS = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const CACHE_KEY_PREFIX = 'cite:'
-// 取得できた画像を保持する秒数
-const IMAGE_CACHE_TTL = 7 * 24 * 60 * 60
+// 取得できた画像を KV に保持する秒数。island の応答をエッジに保持する期間（citeImageEdgeTTL）も同じにする
+export const CITE_IMAGE_CACHE_TTL = 7 * 24 * 60 * 60
 // 取得失敗を表すキャッシュ値の prefix。data URL と区別できればよいので理由を続けて入れる
 const FAILURE_VALUE_PREFIX = 'error:'
-// 取り直しても直らない失敗のキャッシュ値の prefix。現行サイト（pages）も同じ KV を読むので、FAILURE_VALUE_PREFIX で始まる形にしておく
-const PERMANENT_FAILURE_VALUE_PREFIX = `${FAILURE_VALUE_PREFIX}permanent:`
-// 取得失敗を保持する秒数。引用元が落ちている・応答しない間、描画のたびに取りに行かないための短い保持
-const FAILURE_CACHE_TTL = 10 * 60
-// 外部への fetch の待ち時間。引用元が応答しないときに記事全体の描画を止めないための上限
+// 一時的な取得失敗を KV に保持する秒数。引用元が落ちている・応答しない間、描画のたびに取りに行かないための短い保持。
+// 一時的に失敗した island の応答をエッジに保持する期間も同じにする
+export const CITE_IMAGE_FAILURE_CACHE_TTL = 10 * 60
+// 外部への fetch の待ち時間。引用元が応答しないときに island の描画を待たせ続けないための上限
 const FETCH_TIMEOUT_MS = 5 * 1000
 // 取得する画像の上限。画像は data URL（base64 で約 4/3 倍）にして HTML に埋め込むので、そのまま全閲覧者が受け取る HTML の大きさになる。
 // 描画中は画像の全量を何重にもメモリに持つ（mw/cache.ts が本文を最後まで読む）ことにもなるので、小さく抑える。
@@ -24,8 +24,15 @@ const FETCH_TIMEOUT_MS = 5 * 1000
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024
 
 // 取得の結果。失敗のうち permanent は、取り直しても直らないもの（引用元が画像を消した・拒否している、未対応の形式、大きすぎる画像など）。
-// それ以外の失敗（タイムアウト、引用元の一時的な障害など）は、時間をおけば直る可能性がある
+// それ以外の失敗（タイムアウト、引用元の一時的な障害など）は、時間をおけば直る可能性がある。
+// KV に記録するのは成功と一時的な失敗だけ。取り直しても直らない失敗は、island の応答が成功と同じ長さでエッジにキャッシュされるので、
+// 取り直すのは island のキャッシュミス時だけになり、KV に記録を持たなくてよい（KV とエッジで「直らない」の扱いが食い違わないようにする）
 export type CiteImageResult = { ok: true; dataURL: string } | { ok: false; permanent: boolean }
+
+// island の応答をエッジに保持する秒数。成功と取り直しても直らない失敗は取得した画像を KV に持つ期間と同じ、一時的な失敗は失敗の記録と同じ短さ
+export function citeImageEdgeTTL(image: CiteImageResult): number {
+  return image.ok || image.permanent ? CITE_IMAGE_CACHE_TTL : CITE_IMAGE_FAILURE_CACHE_TTL
+}
 
 type DownloadFailure = { reason: string; permanent: boolean }
 
@@ -39,8 +46,8 @@ export async function fetchCiteImage(url: string): Promise<CiteImageResult> {
       if (!cached.startsWith(FAILURE_VALUE_PREFIX)) {
         return { ok: true, dataURL: cached }
       }
-      // 直近で失敗しているときは、負キャッシュの間は取りに行かない
-      return { ok: false, permanent: cached.startsWith(PERMANENT_FAILURE_VALUE_PREFIX) }
+      // 直近で一時的に失敗しているときは、負キャッシュの間は取りに行かない
+      return { ok: false, permanent: false }
     }
   } catch (e) {
     console.error(`[lib/api/cite_image.ts] Cache get error for ${url}:`, e)
@@ -48,13 +55,14 @@ export async function fetchCiteImage(url: string): Promise<CiteImageResult> {
 
   const downloaded = await downloadImage(url)
   if ('dataURL' in downloaded) {
-    saveCache(cacheKey, downloaded.dataURL, IMAGE_CACHE_TTL)
+    saveCache(cacheKey, downloaded.dataURL, CITE_IMAGE_CACHE_TTL)
     return { ok: true, dataURL: downloaded.dataURL }
   }
-  // 失敗の理由は負キャッシュの値に残す
   console.error(`[lib/api/cite_image.ts] Image fetch failed for ${url}: ${downloaded.reason}`)
-  const prefix = downloaded.permanent ? PERMANENT_FAILURE_VALUE_PREFIX : FAILURE_VALUE_PREFIX
-  saveCache(cacheKey, prefix + downloaded.reason, FAILURE_CACHE_TTL)
+  if (!downloaded.permanent) {
+    // 失敗の理由は負キャッシュの値に残す
+    saveCache(cacheKey, FAILURE_VALUE_PREFIX + downloaded.reason, CITE_IMAGE_FAILURE_CACHE_TTL)
+  }
   return { ok: false, permanent: downloaded.permanent }
 }
 

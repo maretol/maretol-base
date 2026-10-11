@@ -9,12 +9,11 @@
     "dev": "wrangler dev",
     "dev-bg": "wrangler dev > wrangler_dev.log",
     "start": "wrangler dev",
-    "test": "vitest",
+    "test": "vitest run",
     "cf-typegen": "wrangler types",
     "typecheck": "wrangler types && tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.22.0",
     "@cloudflare/workers-types": "^5.20260901.1",
     "html-rewriter-wasm": "^0.4.1",
     "typescript": "^7.0.2",
@@ -22,6 +21,7 @@
     "wrangler": "^4.147.0"
   },
   "dependencies": {
+    "entities": "^4.5.0",
     "open-graph-scraper-lite": "^2.1.0"
   }
 }

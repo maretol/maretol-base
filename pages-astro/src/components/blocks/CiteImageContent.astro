@@ -1,0 +1,58 @@
+---
+import CiteImageBox from './CiteImageBox.astro'
+import CdnImage from '@/components/ui/CdnImage.astro'
+import { citeImageEdgeTTL, fetchCiteImage } from '@/lib/api/cite_image'
+import { cacheIsland, noStore } from '@/lib/cache'
+import { getImageModalHref, getNoImageURL, toBase64URL } from '@/lib/image'
+
+// 引用画像の取得と表示。Server Island（server:defer）として、枠（CiteImage.astro）の中に差し込まれる。
+// 記事とは別のリクエストで描画されるので、引用元の応答が遅くても記事の表示を待たせず、記事のキャッシュも引用元の状態に左右されない。
+// 画像はサーバー側で取得して data URL で埋め込む（lib/api/cite_image.ts）。閲覧者のブラウザから引用元へ直接リクエストさせない。
+// props は暗号化されて island の URL に入る。長くなると Astro は GET ではなく POST で取得し、エッジにキャッシュされなくなるので、
+// モーダルの URL（url の base64url を含む）は渡さず、ここで組む
+type Props = {
+  url: string
+  alt: string
+  // 画像モーダルの URL に使う。クリックは islands/ImageModal.tsx が横取りする
+  articleID: string
+  draftKey?: string
+}
+
+const { url, alt, articleID, draftKey } = Astro.props
+const modalHref = getImageModalHref(articleID, toBase64URL(url), draftKey)
+
+const image = await fetchCiteImage(url)
+if (draftKey) {
+  // 下書きプレビューの island はキャッシュしない。island の URL には draftKey が現れないので、ミドルウェア（mw/cache.ts）では見分けられない
+  noStore(Astro.response)
+} else {
+  // island は記事とは別にエッジへキャッシュさせる。期間は KV と同じで、取り直しても直らない失敗は成功と同じ長さ、一時的な失敗は短く保持して時間をおいて取り直す
+  cacheIsland(Astro.response, citeImageEdgeTTL(image))
+}
+---
+
+{/* 画像は取得前と同じ箱（CiteImageBox.astro）の中に収める。差し替えで枠の大きさが変わらないようにするため */}
+{
+  image.ok ? (
+    <a href={modalHref} class="x-blog-image block">
+      <CiteImageBox>
+        {/* 画像は HTML に埋め込み済みなので遅延読み込みにしない */}
+        <img src={image.dataURL} alt={alt} width={500} height={500} decoding="async" class="w-full h-full object-contain" />
+      </CiteImageBox>
+    </a>
+  ) : (
+    <div>
+      <CiteImageBox>
+        {/* CdnImage の既定の object-top を打ち消して、成功時の画像と同じく箱の中央に置く */}
+        <CdnImage
+          src={getNoImageURL()}
+          alt={alt}
+          width={500}
+          height={500}
+          class="w-full h-full object-contain object-center"
+        />
+      </CiteImageBox>
+      <p class="mt-3 text-center text-sm text-gray-800">引用元の画像にアクセスできませんでした</p>
+    </div>
+  )
+}

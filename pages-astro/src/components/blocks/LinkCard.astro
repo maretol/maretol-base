@@ -1,7 +1,7 @@
 ---
 import LinkCardFrame from './LinkCardFrame.astro'
-import { getOGPData } from '@/lib/api/ogp'
-import { cacheLinkCard } from '@/lib/cache'
+import { getOGPData, OGP_CACHE_TTL, OGP_FAILURE_CACHE_TTL } from '@/lib/api/ogp'
+import { cacheIsland } from '@/lib/cache'
 
 // リンク先の OGP を表示するカード。Server Island（server:defer）として使う（Block.astro）。
 // 記事とは別のリクエストで描画されるので、リンク先の応答が遅くても記事の表示を待たせず、記事のキャッシュもリンク先の状態に左右されない
@@ -12,8 +12,8 @@ const errorDescription = 'リンク先の情報取得でエラーが発生しま
 
 // result が null なのは取得できなかったとき（リンク先のエラー・タイムアウト）
 const result = await getOGPData(link)
-// カードは記事とは別にエッジへキャッシュさせる。取得できなかったときは短く保持して、時間をおいて取り直す
-cacheLinkCard(Astro.response, result !== null)
+// カードは記事とは別にエッジへキャッシュさせる。期間は OGP データを KV に持つ期間と同じで、取得できなかったときは短く保持して時間をおいて取り直す
+cacheIsland(Astro.response, result !== null ? OGP_CACHE_TTL : OGP_FAILURE_CACHE_TTL)
 
 const errorTitle = 'Missing data fetching'
 const title = result?.success ? result.og_title || 'No Page Title' : errorTitle

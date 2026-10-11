@@ -13,6 +13,7 @@
 import ogs from 'open-graph-scraper-lite'
 import { OGPResult } from 'api-types'
 import { fetchAndGetHTMLText } from './fetcher'
+import { resolveHTTPURL } from './url'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 
 export interface Env {
@@ -23,8 +24,9 @@ export default class OGPDataFetcher extends WorkerEntrypoint<Env> {
   async fetch(request: Request): Promise<Response> {
     const env = this.env
     const apiKey = request.headers.get('x-api-key')
+    // キーの不一致は呼び出し側の設定ミスなので、監視で 5xx と区別できるよう 401 にする
     if (apiKey !== env.API_KEY) {
-      return new Response('internal server error', { status: 500 })
+      return new Response('unauthorized', { status: 401 })
     }
 
     const url = new URL(request.url)
@@ -47,7 +49,7 @@ export default class OGPDataFetcher extends WorkerEntrypoint<Env> {
   }
 
   async fetchOGPData(target: string): Promise<OGPResult> {
-    const { title, text } = await fetchAndGetHTMLText(target)
+    const { title, text, url } = await fetchAndGetHTMLText(target)
 
     const options = {
       html: text,
@@ -59,15 +61,10 @@ export default class OGPDataFetcher extends WorkerEntrypoint<Env> {
     const status = ogp.success
     const ogTitle = ogp.ogTitle || title
     const description = ogp.ogDescription || ''
-    let image = ogp.ogImage?.[0].url || ''
-    const ogURL = ogp.ogUrl || ''
     const sitename = ogp.ogSiteName || ''
-
-    // image が相対パスで設定されていた場合、ogURLのドメインを付与する
-    if (image.startsWith('/')) {
-      const url = new URL(target)
-      image = url.origin + image
-    }
+    // og:image と og:url は相対パスやプロトコル相対のことがあるので、リダイレクト後のページの URL を基準に絶対 URL にする
+    const image = resolveHTTPURL(ogp.ogImage?.[0]?.url ?? '', url)
+    const ogURL = resolveHTTPURL(ogp.ogUrl ?? '', url)
 
     const responseBody = {
       success: status,

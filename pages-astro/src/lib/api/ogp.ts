@@ -1,10 +1,11 @@
 import { env, waitUntil } from 'cloudflare:workers'
 import type { OGPResult } from 'api-types'
 
-// OGP データを保持する秒数
-const OGP_CACHE_TTL = 3 * 24 * 60 * 60
-// 取得失敗を保持する秒数。リンク先が落ちている・応答しない間、描画のたびに取りに行かないための短い保持
-const FAILURE_CACHE_TTL = 10 * 60
+// OGP データを KV に保持する秒数。リンクカードの island の応答をエッジに保持する期間（components/blocks/LinkCard.astro）も同じにする
+export const OGP_CACHE_TTL = 3 * 24 * 60 * 60
+// 取得失敗を保持する秒数。リンク先が落ちている・応答しない間、描画のたびに取りに行かないための短い保持。
+// 取得できなかったリンクカードの island の応答をエッジに保持する期間も同じにする
+export const OGP_FAILURE_CACHE_TTL = 10 * 60
 // 取得の待ち時間。リンク先が応答しないときにリンクカードの描画を待たせ続けないための上限
 const FETCH_TIMEOUT_MS = 5 * 1000
 
@@ -44,7 +45,7 @@ async function saveCache(targetURL: string, result: OGPResult | null): Promise<v
   const value: CachedOGP = result ?? { success: false, fetch_failed: true }
   try {
     await env.OGP_FETCHER_CACHE.put(targetURL, JSON.stringify(value), {
-      expirationTtl: result ? OGP_CACHE_TTL : FAILURE_CACHE_TTL,
+      expirationTtl: result ? OGP_CACHE_TTL : OGP_FAILURE_CACHE_TTL,
     })
   } catch (e) {
     console.error(`[lib/api/ogp.ts] Cache put error for key ${targetURL}:`, e)

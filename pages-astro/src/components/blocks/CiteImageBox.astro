@@ -1,0 +1,20 @@
+---
+// 引用画像の表示領域。取得するまでの表示（CiteImageFallback.astro）と取得後の表示（CiteImageContent.astro）で同じ箱を使い、
+// island の差し替えで枠の大きさが変わらないようにする（リンクカードの LinkCardFrame.astro と同じ考え方）。
+// 画像の寸法は取得するまで分からないので、箱は画像に合わせず正方形に固定し、画像は object-contain で中に収める。
+// 幅は枠（CiteImage.astro）に合わせる。枠の最大幅で 500px、狭い画面では列の幅まで縮む（固定幅にすると縮めずにはみ出す）
+type Props = {
+  // 中身が無いとき（取得前）に、画像の代わりとして読み上げる文言
+  label?: string
+}
+
+const { label } = Astro.props
+---
+
+<div
+  class="w-full aspect-square bg-white shadow-xl flex items-center justify-center overflow-hidden"
+  role={label ? 'img' : undefined}
+  aria-label={label}
+>
+  <slot />
+</div>
