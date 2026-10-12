@@ -1,5 +1,7 @@
 import type { SaveActionState } from '@/lib/form-state'
 import { PurgeFailedNotice } from '@/components/purge-failed-notice'
+import { URLNotice } from '@/components/url-notice'
+import { expiryNote } from '@/components/preview-result'
 
 type Props = {
   state: SaveActionState
@@ -31,6 +33,9 @@ export function SaveResult({ state, purgeHint }: Props) {
         ) : (
           <PurgeFailedNotice />
         ))}
+      {/* 下書き・非公開で保存したときの同期結果。TTL なしで書いている（lib/draft_kv.ts） */}
+      {state.previewURL && <URLNotice label="下書きのプレビュー URL" url={state.previewURL} note={expiryNote(true)} />}
+      {state.publicURL && <URLNotice label="公開 URL" url={state.publicURL} />}
       {state.error && (
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{state.error}</p>
       )}

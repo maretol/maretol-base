@@ -250,6 +250,12 @@ CREATE TABLE atelier_tag_relations (
 - 記事・マンガ・イラスト・固定ページの保存は `useActionState` で結果（保存した・自動連携・警告・パージ失敗・エラー）を受け取り、ページ遷移しない。検証エラーや D1 の例外（保存前の行の読み取りを含む）でも編集中の入力が残る。本体の保存後に行う付随処理（マンガの前後巻の付け替え）の失敗は保存の失敗にせず、警告として知らせる。新規作成だけは作成した ID の編集画面へ `redirect` する（URL が変わるため。遷移先は `?saved=1` などから初期状態を組み立てる）
 - 送信は `<form action>` / `formAction` に渡さず、submit イベントから `startTransition` で dispatch する（`admin-pages/lib/form-submit.ts`）。React 19 は form action の完了後に `form.reset()` を呼ぶので、非制御の入力が保存前の値に戻ってしまうため
 - 公開状態の遷移は DRAFT → PUBLISH、PUBLISH ⇄ CLOSED の 3 本に限る（同じ状態のまま保存するのは常に可）。判定は保存前の行の status だけで行い、published_at は使わない（初公開日時の記録であって状態ではない）。**一度公開したコンテンツ（PUBLISH / CLOSED）は DRAFT に戻せず**、公開前の DRAFT は CLOSED にできない（サーバー側で検証し、セレクトの選択肢も現在の status から遷移できるものだけに出し分ける。`admin-pages/lib/status.ts`）。「下書き」は公開前の原稿、「非公開」は公開済みを閉じたもの、と意味を一本にする
+- 下書きの正本は D1、KV（CMS_DRAFT）は公開サイトでプレビューするためのチャネル。操作は「保存」と「プレビュー URL を発行（D1 には保存しない）」の 2 つ。draftKey は発行のたびに新しくなり（前の URL は無効になる）、保存の同期は既存の draftKey を保つ
+  - 保存のあと KV を同期する。DRAFT / CLOSED なら同じ内容を **TTL なし**で書いてプレビュー URL を結果に出す（D1 に下書きがある間は URL が失効しない）。PUBLISH なら KV の下書きを削除し（公開内容と違う古いプレビューを残さない）、公開 URL を結果に出す。同期に失敗しても保存は成立させ、警告で知らせる（新規作成は遷移先へ `?warning=` で渡す）
+  - 「プレビュー URL を発行」は KV にだけ書く。TTL は D1 の現在の行で決める: 下書き（PUBLISH 以外）の行があれば TTL なし、行が無い（新規）か PUBLISH なら 3 日で失効する（保存していない内容のプレビューなので短命でよい）
+  - 新規作成で ID を空のまま発行したときは、生成した ID をフォームの ID 欄に書き戻し、保存時の ID と一致させる
+  - KV のレコードに `preview: { persistent, unsaved }`（TTL なしか、保存していない内容か）を持たせる。編集ページは KV に残っているプレビュー URL をこの値で説明する（保存した下書きか保存前の内容か、失効するか。D1 の行の状態からは推定しない）。preview の無いレコード（#1404 より前のもの）は保存前・3 日扱い
+  - 実装は `admin-pages/lib/draft_kv.ts`（`draftChannel`。TTL・draftKey・レコードの preview の規則）と、レコードの本体を組み立てる `draft.ts` / `draft_blog.ts` / `draft_comic.ts`
 
 ## 4. SNS 通知: Service Binding + RPC（M6 レビューで WebhookPayload 互換方式から変更）
 

@@ -2,7 +2,6 @@
 
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { getCloudflareContext } from '@opennextjs/cloudflare'
 import {
   createBlogContent,
   updateBlogContent,
@@ -18,13 +17,13 @@ import {
   type BlogInfoInput,
 } from '@/lib/db_blog'
 import { purgeBlogContentCache, purgeBlogMetaCache } from '@/lib/cache'
-import { withPurgeResult } from '@/lib/purge_result'
-import { saveBlogContentDraft } from '@/lib/draft_blog'
+import { createdURL, withPurgeResult } from '@/lib/purge_result'
+import { blogDraft } from '@/lib/draft_blog'
 import { notifyBlogPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
 import { parseStatus, statusTransitionError } from '@/lib/status'
-import { saveFailed } from '@/lib/save-error'
+import { saveFailed, draftSyncFailed, previewFailed } from '@/lib/save-error'
 import type { PreviewActionState, PurgeActionState, AddCategoryState, SaveActionState } from '@/lib/form-state'
 import { text, textOrNull } from '@/lib/form-data'
 
@@ -57,34 +56,31 @@ function parseBlogForm(formData: FormData): { input: BlogContentInput; error?: s
   return { input }
 }
 
-// 新規作成後の遷移先。公開サイトのキャッシュ削除に失敗しても保存は成立させ、遷移先の画面で知らせる
-function createdURL(articleID: string, purged: boolean): string {
-  return withPurgeResult(`/blog/${articleID}/edit?saved=1`, purged)
-}
-
 // 新規作成。エラーは state で返して入力を保持し、成功したら作成した記事の編集画面へ遷移する（URL が変わるため）
 export async function createBlogContentAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {
   const { input, error } = parseBlogForm(formData)
   if (error) {
     return { error }
   }
-  // D1 の例外（ID の重複確認も含む）は state のエラーにして入力を保持する（issue #1311）。
-  // パージ・SNS 通知は自分で失敗を処理して例外を投げないので、ここで受けるのは実質 D1 の例外だけ。
-  // redirect は例外で遷移するので try の外に置く
-  let purged: boolean
+  // D1 の例外（ID の重複確認も含む）は state のエラーにして入力を保持する（issue #1311）。redirect は例外で遷移するので try の外に置く
   try {
     if (await getBlogContent(input.id)) {
       return { error: `ID '${input.id}' は既に使用されています` }
     }
     await createBlogContent(input)
-    purged = await purgeBlogContentCache(input.id)
-    await notifyBlogPublishToSNS({ input, current: null })
   } catch (e) {
     return saveFailed(e)
   }
+  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（パージと KV の同期は遷移先で知らせ、SNS は記録だけ）。
+  // 下書きなら KV にもプレビューを書く（遷移先の編集ページが URL を表示する）。パージ・SNS 通知と独立なので並行する
+  const [purged, draft] = await Promise.all([
+    purgeBlogContentCache(input.id),
+    blogDraft.syncAfterSave(input, null).catch(draftSyncFailed),
+    notifyBlogPublishToSNS({ input, current: null }),
+  ])
 
   revalidatePath('/blog')
-  redirect(createdURL(input.id, purged))
+  redirect(createdURL(`/blog/${input.id}/edit`, { purged, warning: draft.warning }))
 }
 
 // 更新。ページ遷移させず結果を state で返す（遷移すると編集中の本文が消えるため）
@@ -104,31 +100,41 @@ export async function updateBlogContentAction(_prev: SaveActionState, formData: 
       return { error: transitionError }
     }
     await updateBlogContent(input, current)
-    const purged = await purgeBlogContentCache(input.id)
-    await notifyBlogPublishToSNS({ input, current })
+    // KV の同期（下書きならプレビューを更新、公開なら削除）はパージ・SNS 通知と独立なので並行する。
+    // パージ・SNS 通知は自分で失敗を処理し、KV の同期は警告にするので、catch に来るのは実質 D1 の例外だけ
+    const [purged, urls] = await Promise.all([
+      purgeBlogContentCache(input.id),
+      blogDraft.syncAfterSave(input, current).catch(draftSyncFailed),
+      notifyBlogPublishToSNS({ input, current }),
+    ])
 
     revalidatePath('/blog')
-    return { saved: true, purgeFailed: !purged }
+    return { saved: true, purgeFailed: !purged, ...urls }
   } catch (e) {
     return saveFailed(e)
   }
 }
 
-// プレビューはページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
+// プレビュー URL の発行。編集中の内容を KV にだけ書く（D1 には保存しない）。
+// ページ遷移させず結果を useActionState で返す（遷移すると編集中の本文が消えるため）
 export async function previewBlogContentAction(
   _prev: PreviewActionState,
   formData: FormData
 ): Promise<PreviewActionState> {
+  const idGiven = text(formData, 'id') !== ''
   const { input, error } = parseBlogForm(formData)
   if (error) {
     return { error }
   }
 
-  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
-  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
-  const draftKey = await saveBlogContentDraft(input, regenerateKey)
-  const { env } = await getCloudflareContext({ async: true })
-  return { previewURL: `${env.PAGES_HOST}/blog/${input.id}?draftKey=${draftKey}` }
+  // 保存前の行の読み取り（D1）と KV の書き込みの例外は state のエラーにし、Next のエラー画面で入力が消えないようにする
+  try {
+    const current = await getBlogContent(input.id)
+    const { previewURL, persistent } = await blogDraft.issuePreview(input, current)
+    return { previewURL, persistent, generatedID: idGiven ? undefined : input.id }
+  } catch (e) {
+    return previewFailed(e)
+  }
 }
 
 // 編集画面からの手動キャッシュ削除。編集中の本文を失わないようページ遷移させない
@@ -254,7 +260,7 @@ export async function createBlogInfoAction(_prev: SaveActionState, formData: For
   }
 
   revalidatePath('/blog/info')
-  redirect(withPurgeResult(`/blog/info/${input.id}/edit?saved=1`, purged))
+  redirect(createdURL(`/blog/info/${input.id}/edit`, { purged }))
 }
 
 export async function updateBlogInfoAction(_prev: SaveActionState, formData: FormData): Promise<SaveActionState> {

@@ -1,4 +1,4 @@
-import type { SaveActionState } from './form-state'
+import type { DraftSyncResult, PreviewActionState, SaveActionState } from './form-state'
 
 export function errorMessage(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
@@ -10,4 +10,16 @@ export function errorMessage(e: unknown): string {
 export function saveFailed(e: unknown): SaveActionState {
   console.error('save error:', e)
   return { error: `保存に失敗しました: ${errorMessage(e)}` }
+}
+
+// D1 への保存は済んでいて、KV のプレビューの同期（更新・削除）だけ失敗したとき。保存できたことは伝え、警告として添える
+export function draftSyncFailed(e: unknown): DraftSyncResult {
+  console.error('draft sync error:', e)
+  return { warning: `保存はできましたが、プレビューの更新に失敗しました: ${errorMessage(e)}` }
+}
+
+// プレビュー URL の発行（KV 書き込み）に失敗したとき
+export function previewFailed(e: unknown): PreviewActionState {
+  console.error('preview error:', e)
+  return { error: `プレビュー URL の発行に失敗しました: ${errorMessage(e)}` }
 }

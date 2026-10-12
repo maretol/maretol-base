@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getAtelier, getAtelierTagIDs, listTags } from '@/lib/db'
 import type { SaveActionState } from '@/lib/form-state'
+import { atelierDraft } from '@/lib/draft'
 import { AtelierForm } from '../../atelier-form'
 import { purgeAtelierCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
@@ -12,19 +13,23 @@ export default async function EditIllust({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  // saved / purge_failed は新規作成から遷移してきたときだけ付く（更新の結果はフォームが state で表示する）
-  searchParams: Promise<{ saved?: string; purge_failed?: string }>
+  // saved / warning / purge_failed は新規作成から遷移してきたときだけ付く（更新の結果はフォームが state で表示する）
+  searchParams: Promise<{ saved?: string; warning?: string; purge_failed?: string }>
 }) {
   const { id } = await params
-  const { saved, purge_failed: purgeFailed } = await searchParams
+  const { saved, warning, purge_failed: purgeFailed } = await searchParams
 
   const atelier = await getAtelier(id)
   if (!atelier) {
     notFound()
   }
-  const [selectedTagIDs, allTags] = await Promise.all([getAtelierTagIDs(id), listTags()])
+  const [selectedTagIDs, allTags, existingPreview] = await Promise.all([
+    getAtelierTagIDs(id),
+    listTags(),
+    atelierDraft.getExistingPreview(id),
+  ])
   const initialState: SaveActionState =
-    saved === '1' ? { saved: true, created: true, purgeFailed: purgeFailed === '1' } : {}
+    saved === '1' ? { saved: true, created: true, warning, purgeFailed: purgeFailed === '1' } : {}
 
   return (
     <div className="space-y-4">
@@ -41,6 +46,7 @@ export default async function EditIllust({
         selectedTagIDs={selectedTagIDs}
         allTags={allTags}
         initialState={initialState}
+        existingPreview={existingPreview}
       />
     </div>
   )

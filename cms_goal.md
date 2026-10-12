@@ -91,7 +91,7 @@ Markdown から現行互換 HTML への変換器を用意する。独自拡張�
 
 - 管理ページの「プレビュー」操作時に、編集中の内容（Markdown 原文または HTML）を **D1 レコードと同一形状の JSON** で KV に書き込む（キー: `draft_{articleID}` 想定、値に draftKey と本体を含める）。変換は配信時に cms-data-fetcher が行うため、管理ページ側にコンパイラは不要
 - cms-data-fetcher は draftKey 付きリクエストのとき KV を参照し、保存された draftKey と一致すればそのデータを返す。不一致・不存在なら D1 の通常データにフォールバック
-- draftKey はランダム生成の推測不能な値とし、KV には TTL を設定してプレビュー URL を自然失効させる
+- draftKey はランダム生成の推測不能な値とし、KV には TTL を設定してプレビュー URL を自然失効させる（#1404 で、D1 に下書きの行がある間は TTL なし、新規・公開済みに対する保存前プレビューだけ 3 日の TTL にした。cms_design.md「保存処理と公開状態の遷移」参照）
 - KV namespace は既存の CMS_CACHE と分離し専用のもの（CMS_DRAFT 等）を新設する。cms-data-fetcher に KV バインディングを追加する（現状バインディングなし）
 
 ### D1 スキーマ（大枠決定済み）
