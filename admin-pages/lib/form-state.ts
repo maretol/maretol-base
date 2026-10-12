@@ -1,4 +1,4 @@
-import type { SNSPostTextResult } from 'api-types'
+import type { SNSPostTextResult, draftPreviewMeta } from 'api-types'
 
 // useActionState で受け渡す保存アクションの結果
 // 更新はページ遷移させず結果を返す（遷移すると編集中の入力が消えるため）。新規作成は URL が /new から /{id}/edit に
@@ -22,6 +22,9 @@ export type SaveActionState = {
 
 // 保存後の KV（プレビュー）の同期の結果。下書きならプレビュー URL、公開なら公開 URL、同期に失敗したら警告
 export type DraftSyncResult = Pick<SaveActionState, 'previewURL' | 'publicURL' | 'warning'>
+
+// 編集ページを開いたときに KV に残っているプレビュー。URL と、レコードの preview（失効の有無・保存していない内容か）
+export type ExistingPreviewInfo = { previewURL: string } & draftPreviewMeta
 
 // useActionState で受け渡すプレビュー URL 発行アクションの結果
 // プレビューはページ遷移させない（遷移すると編集中の本文が消えるため）

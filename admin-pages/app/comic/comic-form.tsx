@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react'
 import type { bandeDessineeRow, bandeDessineeTagRow, bandeDessineeSeriesRow } from 'api-types'
 import type { BandeDessineeRef } from '@/lib/db_comic'
 import { createBandeDessineeAction, updateBandeDessineeAction, previewBandeDessineeAction } from './actions'
-import type { SaveActionState } from '@/lib/form-state'
+import type { ExistingPreviewInfo, SaveActionState } from '@/lib/form-state'
 import { submitByIntent } from '@/lib/form-submit'
 import { SubmitButton } from '@/components/submit-button'
 import { ContentTextarea } from '@/components/content-textarea'
@@ -20,8 +20,8 @@ type Props = {
   allComics: BandeDessineeRef[]
   // 新規作成から遷移してきたときの結果（作成した・前後巻の自動連携・パージに失敗した）。編集ページが URL のクエリから組み立てる
   initialState?: SaveActionState
-  // KV に残っている発行済みのプレビュー URL（編集ページが読む）
-  existingPreviewURL?: string | null
+  // KV に残っているプレビュー（編集ページが読む）
+  existingPreview?: ExistingPreviewInfo | null
 }
 
 // ISO 8601 UTC の日時を date input 用の JST 日付（YYYY-MM-DD）に変換する
@@ -38,7 +38,7 @@ export function ComicForm({
   allSeries,
   allComics,
   initialState = {},
-  existingPreviewURL = null,
+  existingPreview = null,
 }: Props) {
   // 保存はページ遷移させず結果を state で受け取る（遷移すると編集中の本文が消えるため）。
   // 新規作成だけは action 内で作成したマンガの編集画面へ遷移する（URL が変わるため）
@@ -48,7 +48,8 @@ export function ComicForm({
   )
   const [preview, previewDispatch, previewing] = useActionState(previewBandeDessineeAction, {})
   // 新規作成で ID を空のままプレビュー URL を発行したとき、サーバーが生成した ID を ID 欄に入れる（保存時も同じ ID になる）。
-  // key を変えて入力を作り直す。以後は利用者の入力を優先するので、生成済みの ID は覚えておく
+  // key を変えて入力を作り直す（応答待ちの間は readOnly にして、作り直しで消える入力を受けない）。
+  // 以後は利用者の入力を優先するので、生成済みの ID は覚えておく
   const [generatedID, setGeneratedID] = useState<string | undefined>(undefined)
   if (preview.generatedID && preview.generatedID !== generatedID) {
     setGeneratedID(preview.generatedID)
@@ -67,14 +68,15 @@ export function ComicForm({
 
   return (
     <div className="space-y-4">
-      {last === 'preview' ? (
-        <PreviewResult state={preview} />
-      ) : (
-        <SaveResult state={save} purgeHint="上の「マンガのキャッシュを削除」を実行してください" />
-      )}
-      {last === null && existingPreviewURL && (
-        <ExistingPreview url={existingPreviewURL} draft={comic !== undefined && comic.status !== 'PUBLISH'} />
-      )}
+      {/* 応答待ちの間は結果を出さない（前回の、別の操作の結果が最新の結果に見えるため） */}
+      {!saving &&
+        !previewing &&
+        (last === 'preview' ? (
+          <PreviewResult state={preview} />
+        ) : (
+          <SaveResult state={save} purgeHint="上の「マンガのキャッシュを削除」を実行してください" />
+        ))}
+      {last === null && existingPreview && <ExistingPreview preview={existingPreview} />}
 
       {/* 送信は submit イベントから自分で dispatch する（form action に渡すと完了後に入力が reset されるため。lib/form-submit.ts） */}
       <form
@@ -91,6 +93,7 @@ export function ComicForm({
                 name="id"
                 key={generatedID ?? 'blank'}
                 defaultValue={generatedID ?? ''}
+                readOnly={previewing}
                 placeholder="例: the_merged_wind_has_come"
                 className={monoClass}
               />
@@ -309,13 +312,10 @@ export function ComicForm({
             </SubmitButton>
           </div>
           <p className="text-xs text-gray-500">
-            下書き・非公開で保存すると、同じ内容のプレビュー URL が結果に出ます（下書きの間は失効しません）。
-            「プレビュー URL を発行」は保存せずに今の内容を公開サイトで確認するためのものです
+            下書き・非公開で保存すると、同じ内容のプレビュー URL が結果に出ます（公開で保存するまで失効しません）。
+            「プレビュー URL を発行」は保存せずに今の内容を公開サイトで確認するためのもので、押すたびに新しい URL
+            になります（前の URL は無効になります）
           </p>
-          <label className="flex items-center gap-2 text-xs text-gray-500">
-            <input type="checkbox" name="regenerate_draft_key" />
-            プレビュー URL（draftKey）を再生成する（未チェックなら既存の URL のまま内容だけ更新されます）
-          </label>
         </div>
       </form>
     </div>

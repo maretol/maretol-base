@@ -1,4 +1,10 @@
-import type { PreviewActionState } from '@/lib/form-state'
+import type { ExistingPreviewInfo, PreviewActionState } from '@/lib/form-state'
+import { URLNotice } from '@/components/url-notice'
+
+// プレビュー URL の有効期間の説明。KV レコードの preview.persistent（TTL なし）に対応する（lib/draft_kv.ts）
+export function expiryNote(persistent: boolean): string {
+  return persistent ? '公開で保存するまで失効しません' : '3 日で失効します'
+}
 
 type PreviewProps = {
   state: PreviewActionState
@@ -12,37 +18,35 @@ export function PreviewResult({ state }: PreviewProps) {
         <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{state.error}</p>
       )}
       {state.previewURL && (
-        <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
-          プレビュー URL を発行しました（D1 には保存していません）:{' '}
-          <a href={state.previewURL} target="_blank" rel="noopener noreferrer" className="underline">
-            {state.previewURL}
-          </a>
-          <span className="ml-2 text-xs text-blue-600">
-            {state.persistent ? '下書きの間は失効しません（公開すると消えます）' : '3 日で失効します'}
-          </span>
+        <URLNotice
+          label="プレビュー URL を発行しました（D1 には保存していません）"
+          url={state.previewURL}
+          note={expiryNote(state.persistent === true)}
+        >
           {state.generatedID && (
-            <span className="ml-2 text-xs text-blue-600">ID を {state.generatedID} にしました（保存時も同じ ID になります）</span>
+            <span className="ml-2 text-xs text-blue-600">
+              ID を {state.generatedID} にしました（保存時も同じ ID になります）
+            </span>
           )}
-        </p>
+        </URLNotice>
       )}
     </>
   )
 }
 
 type ExistingProps = {
-  url: string
-  // D1 の行が下書き（PUBLISH 以外）か。公開済みなら、残っているのは保存していない内容の保存前プレビュー
-  draft: boolean
+  preview: ExistingPreviewInfo
 }
 
-// 編集ページを開いたときに、すでに発行済みのプレビュー URL（KV に残っているもの）を見せる
-export function ExistingPreview({ url, draft }: ExistingProps) {
+// 編集ページを開いたときに、KV に残っているプレビューを見せる。何を指す URL か（保存した下書きか、保存していない内容か）と
+// 失効の有無は KV レコードの preview から決める（D1 の行の状態から推定しない）
+export function ExistingPreview({ preview }: ExistingProps) {
   return (
-    <p className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-      {draft ? '下書きのプレビュー URL' : '保存前プレビューの URL（保存していない内容。3 日で失効）'}:{' '}
-      <a href={url} target="_blank" rel="noopener noreferrer" className="underline">
-        {url}
-      </a>
-    </p>
+    <URLNotice
+      tone="gray"
+      label={preview.unsaved ? '保存前プレビューの URL（保存していない内容）' : '下書きのプレビュー URL'}
+      url={preview.previewURL}
+      note={expiryNote(preview.persistent)}
+    />
   )
 }

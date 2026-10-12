@@ -14,8 +14,8 @@ import {
 } from '@/lib/db_comic'
 import type { bandeDessineeRow } from 'api-types'
 import { purgeBandeDessineeCache } from '@/lib/cache'
-import { withPurgeResult } from '@/lib/purge_result'
-import { saveBandeDessineeDraft, syncBandeDessineeDraftAfterSave } from '@/lib/draft_comic'
+import { createdURL } from '@/lib/purge_result'
+import { comicDraft } from '@/lib/draft_comic'
 import { notifyComicPublishToSNS } from '@/lib/sns'
 import { generateContentID } from '@/lib/id'
 import { parseContentFormat } from '@/lib/content-format'
@@ -185,13 +185,9 @@ async function syncChainPointers(
   return { messages }
 }
 
-function joinInfo(messages: string[]): string | undefined {
-  return messages.length > 0 ? messages.join(' / ') : undefined
-}
-
-// 保存に付随する処理の警告（前後巻の付け替え・KV の同期）をまとめる
-function joinWarnings(...warnings: (string | undefined)[]): string | undefined {
-  const present = warnings.filter((w): w is string => w !== undefined)
+// 保存に付随する処理の報告・警告（前後巻の付け替え・KV の同期）を 1 行にまとめる。無ければ undefined
+function joinMessages(messages: (string | undefined)[]): string | undefined {
+  const present = messages.filter((m): m is string => m !== undefined)
   return present.length > 0 ? present.join(' / ') : undefined
 }
 
@@ -201,20 +197,6 @@ function chainWarning(sync: ChainSyncResult): string | undefined {
     return undefined
   }
   return `前後の巻の自動設定に失敗しました。前の巻・次の巻を開いて設定を確認してください: ${sync.error}`
-}
-
-// 新規作成後の遷移先。チェーン同期の報告・警告とパージの結果は遷移先の画面で知らせる
-function createdURL(comicID: string, sync: ChainSyncResult, purged: boolean): string {
-  const params = new URLSearchParams({ saved: '1' })
-  const info = joinInfo(sync.messages)
-  if (info) {
-    params.set('info', info)
-  }
-  const warning = chainWarning(sync)
-  if (warning) {
-    params.set('warning', warning)
-  }
-  return withPurgeResult(`/comic/${comicID}/edit?${params}`, purged)
 }
 
 // 新規作成。エラーは state で返して入力を保持し、成功したら作成したマンガの編集画面へ遷移する（URL が変わるため）
@@ -238,17 +220,23 @@ export async function createBandeDessineeAction(_prev: SaveActionState, formData
   } catch (e) {
     return saveFailed(e)
   }
-  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（前後巻の付け替えは警告、パージは案内、KV の同期と SNS は記録だけ）。
+  // 本体は保存できたので、ここから先の失敗は保存の失敗にしない（前後巻の付け替えと KV の同期は警告、パージは案内、SNS は記録だけ）。
   // パージは前後巻の付け替えが終わってから行う（相手側の詳細も一覧のタグで一緒に消える）。KV の同期・SNS 通知は独立なので並行する
   const sync = await syncChainPointers(input, neighbors, null)
-  const [purged] = await Promise.all([
+  const [purged, draft] = await Promise.all([
     purgeBandeDessineeCache(input.id),
-    syncBandeDessineeDraftAfterSave(input, null).catch((e) => console.error('draft sync error:', e)),
+    comicDraft.syncAfterSave(input, null).catch(draftSyncFailed),
     notifyComicPublishToSNS({ input, current: null }),
   ])
 
   revalidatePath('/comic')
-  redirect(createdURL(input.id, sync, purged))
+  redirect(
+    createdURL(`/comic/${input.id}/edit`, {
+      purged,
+      info: joinMessages(sync.messages),
+      warning: joinMessages([chainWarning(sync), draft.warning]),
+    })
+  )
 }
 
 // 更新。ページ遷移させず結果を state で返す（遷移すると編集中の内容が消えるため）
@@ -284,17 +272,17 @@ export async function updateBandeDessineeAction(_prev: SaveActionState, formData
   const sync = await syncChainPointers(input, neighbors, current)
   const [purged, urls] = await Promise.all([
     purgeBandeDessineeCache(input.id),
-    syncBandeDessineeDraftAfterSave(input, current).catch(draftSyncFailed),
+    comicDraft.syncAfterSave(input, current).catch(draftSyncFailed),
     notifyComicPublishToSNS({ input, current }),
   ])
 
   revalidatePath('/comic')
   return {
     saved: true,
-    info: joinInfo(sync.messages),
+    info: joinMessages(sync.messages),
     purgeFailed: !purged,
     ...urls,
-    warning: joinWarnings(chainWarning(sync), urls.warning),
+    warning: joinMessages([chainWarning(sync), urls.warning]),
   }
 }
 
@@ -310,13 +298,10 @@ export async function previewBandeDessineeAction(
     return { error }
   }
 
-  // draftKeyは既定で維持し、チェックされたときのみ再生成する（プレビューURLの変更を任意にする）
-  const regenerateKey = formData.get('regenerate_draft_key') === 'on'
-  const current = await getBandeDessinee(input.id)
-  // D1 に下書きの行がある間は失効させない。新規・公開済みに対する保存前プレビューは 3 日で失効する
-  const persistent = current !== null && current.status !== 'PUBLISH'
+  // 保存前の行の読み取り（D1）と KV の書き込みの例外は state のエラーにし、Next のエラー画面で入力が消えないようにする
   try {
-    const { previewURL } = await saveBandeDessineeDraft(input, current, { regenerateKey, persistent })
+    const current = await getBandeDessinee(input.id)
+    const { previewURL, persistent } = await comicDraft.issuePreview(input, current)
     return { previewURL, persistent, generatedID: idGiven ? undefined : input.id }
   } catch (e) {
     return previewFailed(e)

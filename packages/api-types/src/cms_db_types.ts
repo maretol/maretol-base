@@ -28,9 +28,19 @@ export type atelierTagRow = {
 }
 
 // KVプレビュー（CMS_DRAFT）に保存するドラフトレコード
+// KV プレビューの付帯情報（管理ページが編集ページの表示に使う。cms-data-fetcher は読まない）。
+// 無いレコード（#1404 より前の管理ページが書いたもの）は「保存していない内容、3 日で失効」のプレビューとして扱う
+export type draftPreviewMeta = {
+  // TTL なし（D1 に下書きの行がある間は失効させない）
+  persistent: boolean
+  // 保存せずに「プレビュー URL を発行」で書いた内容（D1 の下書きとは別の内容）
+  unsaved: boolean
+}
+
 // キー: draft_atelier_{id} / 値: このJSON。draftKey の一致で閲覧可否を判定する
 export type atelierDraftRecord = {
   draftKey: string
+  preview?: draftPreviewMeta
   row: atelierRow
   tags: atelierTagAndCategory[]
 }
@@ -82,6 +92,7 @@ export type bandeDessineeSeriesRow = {
 // キー: draft_bande_dessinee_{id}
 export type bandeDessineeDraftRecord = {
   draftKey: string
+  preview?: draftPreviewMeta
   row: bandeDessineeRow
   tag: { id: string; tag_name: string }
   series: { id: string; series_name: string } | null
@@ -129,6 +140,7 @@ export type blogInfoRow = {
 // キー: draft_blog_{id}
 export type blogContentDraftRecord = {
   draftKey: string
+  preview?: draftPreviewMeta
   row: blogContentRow
   categories: blogCategoryRow[]
 }

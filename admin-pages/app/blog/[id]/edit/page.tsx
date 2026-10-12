@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getBlogContent, getBlogContentCategoryIDs, listBlogCategories } from '@/lib/db_blog'
 import type { SaveActionState } from '@/lib/form-state'
-import { getBlogContentDraftPreviewURL } from '@/lib/draft_blog'
+import { blogDraft } from '@/lib/draft_blog'
 import { BlogForm } from '../../blog-form'
 import { purgeBlogContentCacheAction } from '../../actions'
 import { PurgeCacheButton } from '@/components/purge-cache-button'
@@ -13,23 +13,23 @@ export default async function EditBlogContent({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  // saved / purge_failed は新規作成から遷移してきたときだけ付く（更新の結果はフォームが state で表示する）
-  searchParams: Promise<{ saved?: string; purge_failed?: string }>
+  // saved / warning / purge_failed は新規作成から遷移してきたときだけ付く（更新の結果はフォームが state で表示する）
+  searchParams: Promise<{ saved?: string; warning?: string; purge_failed?: string }>
 }) {
   const { id } = await params
-  const { saved, purge_failed: purgeFailed } = await searchParams
+  const { saved, warning, purge_failed: purgeFailed } = await searchParams
 
   const article = await getBlogContent(id)
   if (!article) {
     notFound()
   }
-  const [selectedCategoryIDs, allCategories, existingPreviewURL] = await Promise.all([
+  const [selectedCategoryIDs, allCategories, existingPreview] = await Promise.all([
     getBlogContentCategoryIDs(id),
     listBlogCategories(),
-    getBlogContentDraftPreviewURL(id),
+    blogDraft.getExistingPreview(id),
   ])
   const initialState: SaveActionState =
-    saved === '1' ? { saved: true, created: true, purgeFailed: purgeFailed === '1' } : {}
+    saved === '1' ? { saved: true, created: true, warning, purgeFailed: purgeFailed === '1' } : {}
 
   return (
     <div className="space-y-4">
@@ -46,7 +46,7 @@ export default async function EditBlogContent({
         selectedCategoryIDs={selectedCategoryIDs}
         allCategories={allCategories}
         initialState={initialState}
-        existingPreviewURL={existingPreviewURL}
+        existingPreview={existingPreview}
       />
     </div>
   )

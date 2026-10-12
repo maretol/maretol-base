@@ -1,101 +1,62 @@
 /**
- * KVプレビュー（draftKey互換）の comic ドラフト保存処理。TTL の規則は draft_kv.ts
+ * KVプレビュー（draftKey互換）の comic ドラフト。TTL などの規則は draft_kv.ts
  */
 import type { bandeDessineeDraftRecord, bandeDessineeRow } from 'api-types'
 import { listComicTags, listComicSeries } from './db_comic'
 import type { BandeDessineeInput } from './db_comic'
-import type { DraftSyncResult } from './form-state'
-import {
-  deleteDraft,
-  getDraftKey,
-  previewURL,
-  publicURL,
-  putDraft,
-  resolveDraftKey,
-  type DraftWriteOptions,
-} from './draft_kv'
+import { draftChannel, type DraftRecordBase } from './draft_kv'
 
-const kvKey = (id: string) => `draft_bande_dessinee_${id}`
-const pagePath = (id: string) => `/comics/${id}`
+export const comicDraft = draftChannel<
+  BandeDessineeInput,
+  bandeDessineeRow,
+  Omit<bandeDessineeDraftRecord, keyof DraftRecordBase>
+>({
+  kvPrefix: 'draft_bande_dessinee_',
+  pagePath: (id) => `/comics/${id}`,
+  // current は D1 の保存前の行（新規は null）。作成日時・初公開日時をプレビューに引き継ぐ
+  buildRecord: async (input, current) => {
+    const now = new Date().toISOString()
+    // タグとシリーズの読み取りは独立しているので並行する
+    const [allTags, allSeries] = await Promise.all([listComicTags(), input.series_id ? listComicSeries() : []])
 
-// current は D1 の保存前の行（新規は null）。作成日時・初公開日時をプレビューに引き継ぐ
-export async function saveBandeDessineeDraft(
-  input: BandeDessineeInput,
-  current: bandeDessineeRow | null,
-  { regenerateKey, persistent }: DraftWriteOptions
-): Promise<{ draftKey: string; previewURL: string }> {
-  const now = new Date().toISOString()
-  // draftKey の解決とタグ・シリーズの読み取りは独立しているので並行する
-  const [draftKey, allTags, allSeries] = await Promise.all([
-    resolveDraftKey(kvKey(input.id), regenerateKey),
-    listComicTags(),
-    input.series_id ? listComicSeries() : [],
-  ])
+    const row: bandeDessineeRow = {
+      id: input.id,
+      title_name: input.title_name,
+      publish_date: input.publish_date,
+      publish_event: input.publish_event,
+      contents_url: input.contents_url,
+      next_id: input.next_id,
+      previous_id: input.previous_id,
+      tag_id: input.tag_id,
+      series_id: input.series_id,
+      cover: input.cover,
+      back_cover: input.back_cover,
+      format: JSON.stringify(input.format),
+      filename: input.filename,
+      first_page: input.first_page,
+      last_page: input.last_page,
+      first_left_right: JSON.stringify(input.first_left_right),
+      description: input.description,
+      // フォームで選択された形式でプレビューする（形式変更もプレビューで確認できるようにする）
+      description_format: input.description_format,
+      status: input.status,
+      created_at: current?.created_at ?? now,
+      updated_at: now,
+      published_at: current?.published_at ?? now,
+      revised_at: now,
+    }
 
-  const row: bandeDessineeRow = {
-    id: input.id,
-    title_name: input.title_name,
-    publish_date: input.publish_date,
-    publish_event: input.publish_event,
-    contents_url: input.contents_url,
-    next_id: input.next_id,
-    previous_id: input.previous_id,
-    tag_id: input.tag_id,
-    series_id: input.series_id,
-    cover: input.cover,
-    back_cover: input.back_cover,
-    format: JSON.stringify(input.format),
-    filename: input.filename,
-    first_page: input.first_page,
-    last_page: input.last_page,
-    first_left_right: JSON.stringify(input.first_left_right),
-    description: input.description,
-    // フォームで選択された形式でプレビューする（形式変更もプレビューで確認できるようにする）
-    description_format: input.description_format,
-    status: input.status,
-    created_at: current?.created_at ?? now,
-    updated_at: now,
-    published_at: current?.published_at ?? now,
-    revised_at: now,
-  }
+    // 配信時の表示に必要なタグ・シリーズ情報を埋め込む
+    const tag = allTags.find((t) => t.id === input.tag_id)
+    if (!tag) {
+      throw new Error(`comic tag not found: ${input.tag_id}`)
+    }
+    const series = allSeries.find((s) => s.id === input.series_id) ?? null
 
-  // 配信時の表示に必要なタグ・シリーズ情報を埋め込む
-  const tag = allTags.find((t) => t.id === input.tag_id)
-  if (!tag) {
-    throw new Error(`comic tag not found: ${input.tag_id}`)
-  }
-  const series = allSeries.find((s) => s.id === input.series_id) ?? null
-
-  const record: bandeDessineeDraftRecord = {
-    draftKey,
-    row,
-    tag: { id: tag.id, tag_name: tag.tag_name },
-    series: series ? { id: series.id, series_name: series.series_name } : null,
-  }
-  await putDraft(kvKey(input.id), record, persistent)
-  return { draftKey, previewURL: await previewURL(pagePath(input.id), draftKey) }
-}
-
-export async function deleteBandeDessineeDraft(id: string): Promise<void> {
-  await deleteDraft(kvKey(id))
-}
-
-// 編集ページで、すでに発行済みのプレビュー URL を表示するために読む。無ければ null
-export async function getBandeDessineeDraftPreviewURL(id: string): Promise<string | null> {
-  const draftKey = await getDraftKey(kvKey(id))
-  return draftKey === null ? null : await previewURL(pagePath(id), draftKey)
-}
-
-// D1 への保存後に KV を同期する。下書き（PUBLISH 以外）なら同じ内容で TTL なしに書いてプレビュー URL を返し、
-// 公開なら古いプレビューを消して公開 URL を返す（#1404）
-export async function syncBandeDessineeDraftAfterSave(
-  input: BandeDessineeInput,
-  current: bandeDessineeRow | null
-): Promise<DraftSyncResult> {
-  if (input.status === 'PUBLISH') {
-    await deleteBandeDessineeDraft(input.id)
-    return { publicURL: await publicURL(pagePath(input.id)) }
-  }
-  const { previewURL } = await saveBandeDessineeDraft(input, current, { regenerateKey: false, persistent: true })
-  return { previewURL }
-}
+    return {
+      row,
+      tag: { id: tag.id, tag_name: tag.tag_name },
+      series: series ? { id: series.id, series_name: series.series_name } : null,
+    }
+  },
+})
