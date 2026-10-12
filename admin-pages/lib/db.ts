@@ -5,6 +5,7 @@
 import { getCloudflareContext } from '@opennextjs/cloudflare'
 import type { atelierRow, atelierTagRow } from 'api-types'
 import type { ContentFormat } from './content-format'
+import type { ContentStatus } from './status'
 import { paginatedQuery, type PageRange, type Paginated } from './db_pagination'
 
 async function getDB(): Promise<D1Database> {
@@ -58,7 +59,7 @@ export type AtelierInput = {
   object_position: string
   description: string
   description_format: ContentFormat
-  status: 'PUBLISH' | 'DRAFT' | 'CLOSED'
+  status: ContentStatus
   tagIDs: string[]
 }
 
@@ -90,12 +91,9 @@ export async function createAtelier(input: AtelierInput): Promise<void> {
   await replaceTagRelations(db, input.id, input.tagIDs)
 }
 
-export async function updateAtelier(input: AtelierInput): Promise<void> {
+// current は呼び出し側が読み込み済みの保存前の行（status の遷移判定や SNS 通知の判定にも使うので、ここで読み直さない）
+export async function updateAtelier(input: AtelierInput, current: atelierRow): Promise<void> {
   const db = await getDB()
-  const current = await getAtelier(input.id)
-  if (!current) {
-    throw new Error(`atelier not found: ${input.id}`)
-  }
   const now = new Date().toISOString()
   // published_at は初公開日時を保持。未公開→公開の遷移時のみ現在時刻を設定する
   const publishedAt = input.status === 'PUBLISH' ? (current.published_at ?? now) : current.published_at

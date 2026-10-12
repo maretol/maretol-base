@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import type { blogContentRow, blogCategoryRow } from 'api-types'
 import {
   createBlogContentAction,
@@ -8,60 +8,86 @@ import {
   previewBlogContentAction,
   addBlogCategoryInlineAction,
 } from './actions'
+import type { ExistingPreviewInfo, SaveActionState } from '@/lib/form-state'
+import { submitByIntent } from '@/lib/form-submit'
 import { SubmitButton } from '@/components/submit-button'
 import { ContentTextarea } from '@/components/content-textarea'
 import { PurgeFailedNotice } from '@/components/purge-failed-notice'
+import { SaveResult } from '@/components/save-result'
+import { ExistingPreview, PreviewResult } from '@/components/preview-result'
+import { StatusSelect } from '@/components/status-select'
 
 type Props = {
   mode: 'new' | 'edit'
   article?: blogContentRow
   selectedCategoryIDs?: string[]
   allCategories: blogCategoryRow[]
-  error?: string
-  saved?: boolean
-  // 保存はできたが、公開サイトのキャッシュ削除に失敗した
-  purgeFailed?: boolean
+  // 新規作成から遷移してきたときの結果（作成した・パージに失敗した）。編集ページが URL のクエリから組み立てる
+  initialState?: SaveActionState
+  // KV に残っているプレビュー（編集ページが読む）
+  existingPreview?: ExistingPreviewInfo | null
 }
 
-export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategories, error, saved, purgeFailed }: Props) {
-  const action = mode === 'new' ? createBlogContentAction : updateBlogContentAction
-  // プレビューはページ遷移させず結果だけ受け取る（遷移すると編集中の本文が消えるため）
-  const [preview, previewFormAction] = useActionState(previewBlogContentAction, {})
+export function BlogForm({
+  mode,
+  article,
+  selectedCategoryIDs = [],
+  allCategories,
+  initialState = {},
+  existingPreview = null,
+}: Props) {
+  // 保存はページ遷移させず結果を state で受け取る（遷移すると編集中の本文が消えるため）。
+  // 新規作成だけは action 内で作成した記事の編集画面へ遷移する（URL が変わるため）
+  const [save, saveDispatch, saving] = useActionState(
+    mode === 'new' ? createBlogContentAction : updateBlogContentAction,
+    initialState
+  )
+  const [preview, previewDispatch, previewing] = useActionState(previewBlogContentAction, {})
   // カテゴリのインライン追加もページ遷移させない。追加分は累積されチェック済みで表示する
   const [added, addCategoryFormAction, addingCategory] = useActionState(addBlogCategoryInlineAction, {
     categories: [],
   })
+  // 新規作成で ID を空のままプレビュー URL を発行したとき、サーバーが生成した ID を ID 欄に入れる（保存時も同じ ID になる）。
+  // key を変えて入力を作り直す（応答待ちの間は readOnly にして、作り直しで消える入力を受けない）。
+  // 以後は利用者の入力を優先するので、生成済みの ID は覚えておく
+  const [generatedID, setGeneratedID] = useState<string | undefined>(undefined)
+  if (preview.generatedID && preview.generatedID !== generatedID) {
+    setGeneratedID(preview.generatedID)
+  }
+  // どの操作の結果を表示するか（最後に実行した操作の結果だけを見せる）
+  const [last, setLast] = useState<'save' | 'preview' | null>(null)
   const addedCategories = added.categories.filter((c) => !allCategories.some((a) => a.id === c.id))
   const inputClass = 'mt-1 w-full rounded-md border border-gray-300 p-2 text-sm'
 
   return (
     <div className="space-y-4">
-      {saved && <p className="rounded-md border border-green-200 bg-green-50 p-3 text-sm text-green-700">保存しました</p>}
-      {purgeFailed && (
-        <p className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800">
-          公開サイトのキャッシュ削除に失敗しました。公開サイトに反映されていない場合は、上の「この記事のキャッシュを削除」を実行してください
-        </p>
-      )}
-      {error && <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</p>}
-      {preview.error && (
-        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">{preview.error}</p>
-      )}
-      {preview.previewURL && (
-        <p className="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-700">
-          プレビューを保存しました:{' '}
-          <a href={preview.previewURL} target="_blank" rel="noopener noreferrer" className="underline">
-            {preview.previewURL}
-          </a>
-        </p>
-      )}
+      {/* 応答待ちの間は結果を出さない（前回の、別の操作の結果が最新の結果に見えるため） */}
+      {!saving &&
+        !previewing &&
+        (last === 'preview' ? (
+          <PreviewResult state={preview} />
+        ) : (
+          <SaveResult state={save} purgeHint="上の「この記事のキャッシュを削除」を実行してください" />
+        ))}
+      {last === null && existingPreview && <ExistingPreview preview={existingPreview} />}
 
-      <form action={action} className="space-y-4 rounded-lg border border-gray-200 bg-white p-4">
+      {/* 送信は submit イベントから自分で dispatch する（form action に渡すと完了後に入力が reset されるため。lib/form-submit.ts） */}
+      <form
+        onSubmit={(e) => setLast(submitByIntent(e, { save: saveDispatch, preview: previewDispatch }))}
+        className="space-y-4 rounded-lg border border-gray-200 bg-white p-4"
+      >
         <input type="hidden" name="mode" value={mode} />
 
         <div>
           <label className="block text-sm font-medium">ID（URLの一部。空欄でランダム生成。作成後変更不可）</label>
           {mode === 'new' ? (
-            <input name="id" className={`${inputClass} font-mono`} />
+            <input
+              name="id"
+              key={generatedID ?? 'blank'}
+              defaultValue={generatedID ?? ''}
+              readOnly={previewing}
+              className={`${inputClass} font-mono`}
+            />
           ) : (
             <>
               <input type="hidden" name="id" value={article?.id} />
@@ -180,29 +206,40 @@ export function BlogForm({ mode, article, selectedCategoryIDs = [], allCategorie
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium">公開状態</label>
-          <select name="status" defaultValue={article?.status ?? 'DRAFT'} className="mt-1 rounded-md border border-gray-300 p-2 text-sm">
-            <option value="PUBLISH">公開</option>
-            <option value="DRAFT">下書き</option>
-            <option value="CLOSED">非公開</option>
-          </select>
+        <StatusSelect current={article?.status}>
           <p className="mt-1 text-xs text-gray-400">
-            新規公開・下書き→公開のときにSNS自動投稿が送信されます（限定公開は対象外）
+            初めて公開するときにSNS自動投稿が送信されます（限定公開は対象外。非公開から公開に戻しても送信されません）
           </p>
-        </div>
+        </StatusSelect>
 
         <div className="space-y-2 border-t border-gray-100 pt-4">
+          {/* カテゴリ追加中は送信しない。追加中に送ると、まだフォームに無い新カテゴリが抜けたまま保存される */}
           <div className="flex gap-3">
-            <SubmitButton pendingText="保存中...">保存</SubmitButton>
-            <SubmitButton variant="secondary" formAction={previewFormAction} pendingText="プレビュー保存中...">
-              プレビュー保存（D1には保存しない）
+            <SubmitButton
+              name="intent"
+              value="save"
+              pending={saving}
+              disabled={previewing || addingCategory}
+              pendingText="保存中..."
+            >
+              保存
+            </SubmitButton>
+            <SubmitButton
+              name="intent"
+              value="preview"
+              variant="secondary"
+              pending={previewing}
+              disabled={saving || addingCategory}
+              pendingText="発行中..."
+            >
+              プレビュー URL を発行（D1 には保存しない）
             </SubmitButton>
           </div>
-          <label className="flex items-center gap-2 text-xs text-gray-500">
-            <input type="checkbox" name="regenerate_draft_key" />
-            プレビューURL（draftKey）を再生成する（未チェックなら既存のプレビューURLのまま内容だけ更新されます）
-          </label>
+          <p className="text-xs text-gray-500">
+            下書き・非公開で保存すると、同じ内容のプレビュー URL が結果に出ます（公開で保存するまで失効しません）。
+            「プレビュー URL を発行」は保存せずに今の内容を公開サイトで確認するためのもので、押すたびに新しい URL
+            になります（前の URL は無効になります）
+          </p>
         </div>
       </form>
 

@@ -4,7 +4,9 @@
  * Service Binding は同一アカウント内でバインディングを宣言した Worker からしか呼べないため、
  * microCMS Webhook 時代の APIキー・HMAC署名による認証は不要（cms_design.md「4. SNS 通知」参照）
  *
- * - 送信条件: 「新規公開」または「下書き→公開」（blogのみ is_secret を除外）
+ * - 送信条件: 初回公開（保存前の行が公開されたことがなく、保存後の status が PUBLISH）のみ。blog は is_secret を除外
+ *   一度公開したコンテンツは下書きに戻せず（lib/status.ts）、非公開 → 公開の再公開では投稿しない（issue #1404。
+ *   再告知は管理画面の SNS 投稿から手で行う）
  * - SNS_NOTIFY_ENABLED が 'true' の環境でのみ送信する（staging/ローカルからの誤投稿防止）
  */
 import { getCloudflareContext } from '@opennextjs/cloudflare'
@@ -12,24 +14,24 @@ import type { SNSPostTextResult, SNSPublishArgs } from 'api-types'
 import type { BlogContentInput } from './db_blog'
 import type { BandeDessineeInput } from './db_comic'
 import type { AtelierInput } from './db'
+import type { ContentStatus } from './status'
 
-type ContentStatus = 'PUBLISH' | 'DRAFT' | 'CLOSED'
+// 保存前の行の公開状態。新規作成は null
+type CurrentRow = { status: ContentStatus; published_at: string | null } | null
 
 type NotifyMeta = {
-  type: 'new' | 'edit'
-  // edit の場合のみ。保存前の status
-  oldStatus?: ContentStatus
+  current: CurrentRow
 }
 
-// 送信条件: 「新規公開」または「下書き→公開」。すでに公開済みのコンテンツの編集では投稿しない
-function isPublishEvent(status: ContentStatus, { type, oldStatus }: NotifyMeta): boolean {
-  if (status !== 'PUBLISH') {
-    return false
-  }
-  if (type === 'edit' && oldStatus === 'PUBLISH') {
-    return false
-  }
-  return true
+// 保存前の行が公開されたことがあるか。初公開日時（published_at）か、いま公開中か（status）のどちらかで判断する。
+// published_at の無いまま PUBLISH になっている行（移行データなど）を編集しても再投稿しないよう、status も見る
+function wasPublished(current: CurrentRow): boolean {
+  return current !== null && (current.published_at !== null || current.status === 'PUBLISH')
+}
+
+// 送信条件: 初回公開のみ。すでに公開したことのあるコンテンツの編集・再公開では投稿しない
+function isFirstPublish(status: ContentStatus, current: CurrentRow): boolean {
+  return status === 'PUBLISH' && !wasPublished(current)
 }
 
 async function publishToSNS(...args: SNSPublishArgs): Promise<void> {
@@ -70,11 +72,10 @@ export async function postTextToSNS(text: string): Promise<{ results?: SNSPostTe
 
 export async function notifyBlogPublishToSNS({
   input,
-  type,
-  oldStatus,
+  current,
 }: NotifyMeta & { input: BlogContentInput }): Promise<void> {
   // 限定公開記事（is_secret=true）はSNSへ自動投稿しない
-  if (input.is_secret || !isPublishEvent(input.status, { type, oldStatus })) {
+  if (input.is_secret || !isFirstPublish(input.status, current)) {
     return
   }
   await publishToSNS('blog', {
@@ -88,10 +89,9 @@ export async function notifyBlogPublishToSNS({
 
 export async function notifyAtelierPublishToSNS({
   input,
-  type,
-  oldStatus,
+  current,
 }: NotifyMeta & { input: AtelierInput }): Promise<void> {
-  if (!isPublishEvent(input.status, { type, oldStatus })) {
+  if (!isFirstPublish(input.status, current)) {
     return
   }
   await publishToSNS('illust', {
@@ -103,10 +103,9 @@ export async function notifyAtelierPublishToSNS({
 
 export async function notifyComicPublishToSNS({
   input,
-  type,
-  oldStatus,
+  current,
 }: NotifyMeta & { input: BandeDessineeInput }): Promise<void> {
-  if (!isPublishEvent(input.status, { type, oldStatus })) {
+  if (!isFirstPublish(input.status, current)) {
     return
   }
   // OGP画像は投稿側（sns-article-publisher）で cover または1ページ目（filename + first_page + format）から組み立てる
