@@ -18,10 +18,10 @@
     "html-rewriter-wasm": "^0.4.1",
     "typescript": "^7.0.2",
     "vitest": "5.0.3",
-    "wrangler": "^4.147.0"
+    "wrangler": "^4.148.0"
   },
   "dependencies": {
-    "entities": "^4.5.0",
+    "entities": "^8.1.0",
     "open-graph-scraper-lite": "^2.1.0"
   }
 }

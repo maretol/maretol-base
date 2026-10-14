@@ -14,7 +14,7 @@
     "typecheck": "wrangler types && tsc --noEmit"
   },
   "dependencies": {
-    "@atproto/api": "^0.23.0",
+    "@atproto/api": "^0.23.1",
     "oauth": "^0.10.2"
   },
   "devDependencies": {
