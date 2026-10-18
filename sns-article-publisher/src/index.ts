@@ -5,6 +5,7 @@ import { SNSPostTextResult, SNSPublishArgs } from 'api-types'
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import NoteMisskey, { MisskeyAuthInfo } from './misskey'
 import { addUtmParams, SNSTarget } from './utm'
+import { postToTargets } from './post'
 
 export interface Env {
   TWI_API_KEY: string
@@ -20,14 +21,6 @@ export interface Env {
   MISSKEY_API_TOKEN: string
 
   IMAGES: ImagesBinding
-}
-
-const TARGET = {
-  twitter: true,
-  bluesky: true,
-  nostr: true,
-  mastodon: false,
-  misskey: true,
 }
 
 type ServiceType = SNSPublishArgs[0]
@@ -82,120 +75,52 @@ async function publish(env: Env, content: PublishContent, service: ServiceType) 
   const prefix = postPrefixMap[service]
 
   // SNSごとにUTMパラメータ付きURLを生成し、投稿テキストを作成
-  const createPostText = (snsTarget: SNSTarget): string => {
-    const urlWithUtm = addUtmParams(url, {
+  const createPostURL = (snsTarget: SNSTarget): string =>
+    addUtmParams(url, {
       source: snsTarget,
       medium: 'social',
       campaign: 'auto_post',
       content: service,
     })
-    if (postMessage === undefined || postMessage === null || postMessage === '') {
-      return `${prefix}：${title} | Maretol Base\n${urlWithUtm}`
-    } else {
-      return `${postMessage}\n\n${prefix}：${title} | Maretol Base\n${urlWithUtm}`
-    }
+  const createPostText = (snsTarget: SNSTarget): string => {
+    const urlWithUtm = createPostURL(snsTarget)
+    const text =
+      postMessage === undefined || postMessage === null || postMessage === ''
+        ? `${prefix}：${title} | Maretol Base\n${urlWithUtm}`
+        : `${postMessage}\n\n${prefix}：${title} | Maretol Base\n${urlWithUtm}`
+    console.log(`postText (${snsTarget}): ${text}`)
+    return text
   }
 
-  // 以下各種SNSへのポスト
-  // 1. Twitter
-  if (TARGET['twitter']) {
-    console.log('post to Twitter')
-    const twiAuth = createTwitterAuthInfo(env)
-    const postText = createPostText('twitter')
-    console.log('postText (Twitter): ' + postText)
-    try {
-      await PostTweet(twiAuth, postText)
-    } catch (e) {
-      console.error('Error posting to Twitter:', e)
-    }
-  } else {
-    console.log('skip Twitter')
+  // BlueSky はリンクカード（OGP）付きで投稿する
+  const bskyOGPInfo = {
+    title: title,
+    description: postMessage || '',
+    url: createPostURL('bluesky'),
+    image: ogpImage,
   }
 
-  // 2. BlueSky
-  if (TARGET['bluesky']) {
-    console.log('post to BlueSky')
-    const bskyAuth = createBlueSkyAuthInfo(env)
-    const urlWithUtm = addUtmParams(url, {
-      source: 'bluesky',
-      medium: 'social',
-      campaign: 'auto_post',
-      content: service,
-    })
-    const postText = createPostText('bluesky')
-    console.log('postText (BlueSky): ' + postText)
-    const ogpInfo = {
-      title: title,
-      description: postMessage || '',
-      url: urlWithUtm,
-      image: ogpImage,
-    }
-    try {
-      await PostBlueSky(env, bskyAuth, postText, ogpInfo)
-    } catch (e) {
-      console.error('Error posting to BlueSky:', e)
-    }
-  } else {
-    console.log('skip BlueSky')
-  }
-
-  // 3. Mastodon
-  // 4. Misskey
-  if (TARGET['misskey']) {
-    console.log('post to Misskey')
-    const misskeyAuth = createMisskeyAuthInfo(env)
-    const postText = createPostText('misskey')
-    console.log('postText (Misskey): ' + postText)
-    try {
-      await NoteMisskey(misskeyAuth, postText)
-    } catch (e) {
-      console.error('Error posting to Misskey:', e)
-    }
-  } else {
-    console.log('skip Misskey')
-  }
-
-  // 5. nostr
-  if (TARGET['nostr']) {
-    console.log('post to nostr')
-    const nostrAuth = createNostrAuthInfo(env)
-    const postText = createPostText('nostr')
-    console.log('postText (nostr): ' + postText)
-    try {
-      await PostNostrKind1(nostrAuth, postText)
-    } catch (e) {
-      console.error('Error posting to nostr:', e)
-    }
-  } else {
-    console.log('skip nostr')
-  }
+  const results = await postToTargets([
+    { target: 'twitter', run: () => PostTweet(createTwitterAuthInfo(env), createPostText('twitter')) },
+    {
+      target: 'bluesky',
+      run: () => PostBlueSky(env, createBlueSkyAuthInfo(env), createPostText('bluesky'), bskyOGPInfo),
+    },
+    { target: 'misskey', run: () => NoteMisskey(createMisskeyAuthInfo(env), createPostText('misskey')) },
+    { target: 'nostr', run: () => PostNostrKind1(createNostrAuthInfo(env), createPostText('nostr')) },
+  ])
+  // 記事の投稿は waitUntil で待たないので、結果はログにだけ残す
+  console.log('publish results:', JSON.stringify(results))
 }
 
 // 自由文面を有効な各SNSへそのまま投稿し、SNSごとの成否を返す
 async function postFreeText(env: Env, text: string): Promise<SNSPostTextResult[]> {
-  const results: SNSPostTextResult[] = []
-
-  const post = async (target: SNSTarget, doPost: () => Promise<unknown>) => {
-    if (!TARGET[target]) {
-      console.log(`skip ${target}`)
-      return
-    }
-    console.log(`post to ${target}`)
-    try {
-      await doPost()
-      results.push({ target, success: true })
-    } catch (e) {
-      console.error(`Error posting to ${target}:`, e)
-      results.push({ target, success: false, error: e instanceof Error ? e.message : String(e) })
-    }
-  }
-
-  await post('twitter', () => PostTweet(createTwitterAuthInfo(env), text))
-  await post('bluesky', () => PostBlueSky(env, createBlueSkyAuthInfo(env), text))
-  await post('misskey', () => NoteMisskey(createMisskeyAuthInfo(env), text))
-  await post('nostr', () => PostNostrKind1(createNostrAuthInfo(env), text))
-
-  return results
+  return postToTargets([
+    { target: 'twitter', run: () => PostTweet(createTwitterAuthInfo(env), text) },
+    { target: 'bluesky', run: () => PostBlueSky(env, createBlueSkyAuthInfo(env), text) },
+    { target: 'misskey', run: () => NoteMisskey(createMisskeyAuthInfo(env), text) },
+    { target: 'nostr', run: () => PostNostrKind1(createNostrAuthInfo(env), text) },
+  ])
 }
 
 function createTwitterAuthInfo(env: Env) {
