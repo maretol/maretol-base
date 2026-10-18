@@ -40,7 +40,7 @@ export function BlogForm({
   // 新規作成だけは action 内で作成した記事の編集画面へ遷移する（URL が変わるため）
   const [save, saveDispatch, saving] = useActionState(
     mode === 'new' ? createBlogContentAction : updateBlogContentAction,
-    initialState
+    initialState,
   )
   const [preview, previewDispatch, previewing] = useActionState(previewBlogContentAction, {})
   // カテゴリのインライン追加もページ遷移させない。追加分は累積されチェック済みで表示する
@@ -198,11 +198,7 @@ export function BlogForm({
           </label>
           <div>
             <label className="block text-sm font-medium">シークレットコード</label>
-            <input
-              name="secret_code"
-              defaultValue={article?.secret_code ?? ''}
-              className={`${inputClass} font-mono`}
-            />
+            <input name="secret_code" defaultValue={article?.secret_code ?? ''} className={`${inputClass} font-mono`} />
           </div>
         </div>
 
