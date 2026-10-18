@@ -1,3 +1,5 @@
+import { requestTimeout } from './request'
+
 type MisskeyAuthInfo = {
   apiToken: string
 }
@@ -12,7 +14,12 @@ async function NoteMisskey(authInfo: MisskeyAuthInfo, note: string): Promise<voi
   headers.set('Authorization', `Bearer ${authInfo.apiToken}`)
   headers.set('Content-Type', 'application/json')
 
-  const response = await fetch(endpoint, { body: JSON.stringify(body), method: 'POST', headers })
+  const response = await fetch(endpoint, {
+    body: JSON.stringify(body),
+    method: 'POST',
+    headers,
+    signal: requestTimeout(),
+  })
 
   if (!response.ok) {
     console.error(`Error: ${response.status} ${response.statusText}`)
