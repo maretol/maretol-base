@@ -1,5 +1,6 @@
 import { AtpAgent, RichText } from '@atproto/api'
 import { Env } from '.'
+import { fetchWithTimeout } from './request'
 
 type BlueSkyAuthInfo = {
   username: string
@@ -18,6 +19,8 @@ const defaultOGPSrc = 'https://r2.maretol.xyz/assets/maretol_base_ogp.png'
 async function PostBlueSky(env: Env, authInfo: BlueSkyAuthInfo, postText: string, ogp?: BlueSkyOGPInfo): Promise<void> {
   const agent = new AtpAgent({
     service: 'https://bsky.social',
+    // login・facet の解決・uploadBlob・post の各リクエストにタイムアウトを付ける
+    fetch: fetchWithTimeout,
   })
 
   const richText = new RichText({ text: postText })
@@ -69,7 +72,7 @@ async function PostBlueSky(env: Env, authInfo: BlueSkyAuthInfo, postText: string
 
 async function fetchImageBuffer(src: string): Promise<ReadableStream> {
   console.log('Fetching image from: ' + src)
-  const res = await fetch(src)
+  const res = await fetchWithTimeout(src)
   if (!res.ok) {
     console.error('Failed to fetch image: ', src)
     throw new Error(`Failed to fetch image: ${res.status} ${res.statusText}`)

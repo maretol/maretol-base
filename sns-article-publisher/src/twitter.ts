@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { requestTimeout } from './request'
 
 type TwitterAuthInfo = {
   apiKey: string
@@ -39,6 +40,7 @@ async function PostTweet(authInfo: TwitterAuthInfo, tweet: string): Promise<void
     method: 'POST',
     headers,
     body,
+    signal: requestTimeout(),
   })
 
   if (!response.ok) {
