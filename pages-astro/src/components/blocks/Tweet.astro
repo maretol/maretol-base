@@ -19,6 +19,7 @@ if (tweetID) {
 {
   tweetID ? (
     // allowfullscreen は Tweet 内の動画を全画面再生するため。loading="lazy" で画面外にある間は Twitter 側の JS / XHR を走らせない
+    // height は描き始めの値。Tweet.html からの resize 通知で実際の高さに合わせる（lib/tweet_resize.ts）。data-tweet-id は通知の照合に使う
     <iframe
       src={embedURL.toString()}
       title="埋め込まれたポスト"
@@ -27,8 +28,15 @@ if (tweetID) {
       loading="lazy"
       width="550"
       height="400"
+      data-tweet-id={tweetID}
     />
   ) : (
     <p>Twitterの埋め込みがありましたがURLが不正なようです</p>
   )
 }
+
+<script>
+  import { setupTweetResize } from '@/lib/tweet_resize'
+
+  setupTweetResize()
+</script>
