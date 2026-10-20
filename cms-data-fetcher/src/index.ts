@@ -34,6 +34,7 @@ import {
   getBlogStaticFromD1,
 } from './d1_blog'
 import { WorkerEntrypoint } from 'cloudflare:workers'
+import { parseLimit, parseOffset, parseTagIDs, MAX_TAG_IDS } from './params'
 
 export interface Env {
   API_KEY: string
@@ -66,78 +67,91 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
 
     const url = new URL(request.url)
     const searchParams = url.searchParams
-    const pathname = url.pathname
 
     const offset = searchParams.get('offset') || undefined
     const limit = searchParams.get('limit') || undefined
-    const tagIDsStr = searchParams.get('tag_id')?.split('+') || []
     const articleID = searchParams.get('article_id')
     const contentID = searchParams.get('content_id')
     const draftKey = searchParams.get('draftKey') || undefined
     const seriesID = searchParams.get('series_id') || undefined
 
-    if (pathname.includes('/cms/get_adjacent_contents')) {
-      // 前後記事（一つ前・一つあと）のナビ情報を取得
-      if (articleID === null) {
-        return new Response('articleID is empty', { status: 400 })
+    // パスは完全一致で分岐する。部分一致（includes）だと /cms/get_contents_xxx のような未知のパスまで一覧として動き、
+    // 判定の順序にも依存していた（issue #1307）。未知のパスは 404
+    switch (url.pathname) {
+      case '/cms/get_adjacent_contents': {
+        // 前後記事（一つ前・一つあと）のナビ情報を取得
+        if (articleID === null) {
+          return new Response('articleID is empty', { status: 400 })
+        }
+        const adjacent = await this.fetchAdjacentContents(articleID)
+        return Response.json(adjacent)
       }
-      const adjacent = await this.fetchAdjacentContents(articleID)
-      return Response.json(adjacent)
-    } else if (pathname.includes('/cms/get_contents_with_tag')) {
-      // タグで絞り込んで記事一覧を取得
-      const contents = await this.fetchContentsByTag(tagIDsStr, offset, limit)
-      return Response.json(contents)
-    } else if (pathname.includes('/cms/get_contents')) {
-      // 通常の記事一覧での取得
-      const contents = await this.fetchContents(offset, limit)
-      return Response.json(contents)
-    } else if (pathname.includes('/cms/get_secret_meta')) {
-      // 限定公開記事のコード照合用メタ（is_secret / secret_code）を取得
-      if (articleID === null) {
-        return new Response('articleID is empty', { status: 400 })
-      }
-      const meta = await this.fetchSecretMeta(articleID, draftKey)
-      return Response.json(meta)
-    } else if (pathname.includes('/cms/get_content')) {
-      // 単独の記事を取得
-      if (articleID === null) {
-        return new Response('articleID is empty', { status: 400 })
-      }
-      const content = await this.fetchContent(articleID, draftKey)
-      return Response.json(content)
-    } else if (pathname.includes('/cms/get_tags')) {
-      // タグ一覧を取得
-      const tags = await this.fetchTags()
-      return Response.json(tags)
-    } else if (pathname.includes('/cms/get_info')) {
-      // 固定ページ・一部の特殊なページを取得
-      const info = await this.fetchInfo()
-      return Response.json(info)
-    } else if (pathname.includes('/cms/get_static')) {
-      const staticData = await this.fetchStatic()
-      return Response.json(staticData)
-    } else if (pathname.includes('/cms/bande_dessinee')) {
-      if (contentID === '' || contentID === null) {
-        // マンガの指定がない場合offsetとlimitで一覧を取得（series_id指定時はそのシリーズのみ）
-        const contents = await this.fetchBandeDessinees(offset, limit, seriesID)
+      case '/cms/get_contents_with_tag': {
+        // タグで絞り込んで記事一覧を取得。tag_id は + 区切り（URL では %2B）
+        const tagIDs = parseTagIDs(searchParams.get('tag_id'))
+        if (tagIDs.length === 0 || tagIDs.length > MAX_TAG_IDS) {
+          return new Response(`tag_id must have 1 to ${MAX_TAG_IDS} ids`, { status: 400 })
+        }
+        const contents = await this.fetchContentsByTag(tagIDs, offset, limit)
         return Response.json(contents)
-      } else {
+      }
+      case '/cms/get_contents': {
+        // 通常の記事一覧での取得
+        const contents = await this.fetchContents(offset, limit)
+        return Response.json(contents)
+      }
+      case '/cms/get_secret_meta': {
+        // 限定公開記事のコード照合用メタ（is_secret / secret_code）を取得
+        if (articleID === null) {
+          return new Response('articleID is empty', { status: 400 })
+        }
+        const meta = await this.fetchSecretMeta(articleID, draftKey)
+        return Response.json(meta)
+      }
+      case '/cms/get_content': {
+        // 単独の記事を取得
+        if (articleID === null) {
+          return new Response('articleID is empty', { status: 400 })
+        }
+        const content = await this.fetchContent(articleID, draftKey)
+        return Response.json(content)
+      }
+      case '/cms/get_tags': {
+        // タグ一覧を取得
+        const tags = await this.fetchTags()
+        return Response.json(tags)
+      }
+      case '/cms/get_info': {
+        // 固定ページ・一部の特殊なページを取得
+        const info = await this.fetchInfo()
+        return Response.json(info)
+      }
+      case '/cms/get_static': {
+        const staticData = await this.fetchStatic()
+        return Response.json(staticData)
+      }
+      case '/cms/bande_dessinee': {
+        if (contentID === '' || contentID === null) {
+          // マンガの指定がない場合offsetとlimitで一覧を取得（series_id指定時はそのシリーズのみ）
+          const contents = await this.fetchBandeDessinees(offset, limit, seriesID)
+          return Response.json(contents)
+        }
         // マンガの指定がある場合そのマンガを取得
         const content = await this.fetchBandeDessinee(contentID, draftKey)
         return Response.json(content)
       }
-    } else if (pathname.includes('/cms/atelier')) {
-      if (contentID === '' || contentID === null) {
-        // イラストIDの指定がない場合offsetとlimitで一覧を取得
-        const ateliers = await this.fetchAteliers(offset, limit)
-        return Response.json(ateliers)
-      } else {
+      case '/cms/atelier': {
+        if (contentID === '' || contentID === null) {
+          // イラストIDの指定がない場合offsetとlimitで一覧を取得
+          const ateliers = await this.fetchAteliers(offset, limit)
+          return Response.json(ateliers)
+        }
         // イラストIDの指定がある場合そのアトリエを取得
         const atelier = await this.fetchAtelier(contentID, draftKey)
         return Response.json(atelier)
       }
-    } else {
-      return new Response('ok', { status: 200 })
+      default:
+        return new Response('not found', { status: 404 })
     }
   }
 
@@ -149,9 +163,14 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
     if (tagIDs === null) {
       return { contents: [], total: 0 }
     }
+    // 重複と空文字を落とす（重複があると絞り込みが常に 0 件になる）。上限超えは呼び出し側のバグなので隠さず例外にする
+    const uniqueTagIDs = parseTagIDs(tagIDs)
+    if (uniqueTagIDs.length > MAX_TAG_IDS) {
+      throw new Error(`too many tag ids: ${uniqueTagIDs.length} (max ${MAX_TAG_IDS})`)
+    }
     const offsetNum = parseOffset(offset)
     const limitNum = parseLimit(limit)
-    const contents = await getBlogContentsByTagFromD1(this.env.DB, tagIDs, offsetNum, limitNum)
+    const contents = await getBlogContentsByTagFromD1(this.env.DB, uniqueTagIDs, offsetNum, limitNum)
     contents.contents.forEach((c) => {
       const parsed = parse(c.content)
       c.parsed_content = parsed.contents_array
@@ -333,26 +352,4 @@ export default class CMSDataFetcher extends WorkerEntrypoint<Env> {
       throw new Error('Error fetching atelier')
     }
   }
-}
-
-function parseOffset(offset: string | undefined): number {
-  if (offset === undefined) {
-    return 0
-  }
-  const parsedOffset = parseInt(offset)
-  if (isNaN(parsedOffset)) {
-    return 0
-  }
-  return parsedOffset
-}
-
-function parseLimit(limit: string | undefined): number {
-  if (limit === undefined) {
-    return 10
-  }
-  const parsedLimit = parseInt(limit)
-  if (isNaN(parsedLimit)) {
-    return 10
-  }
-  return parsedLimit
 }
