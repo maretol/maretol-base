@@ -1,6 +1,6 @@
-import type { ParsedContent } from 'api-types'
+import type { ParsedContent, contentsAPIResult } from 'api-types'
 
-// RSS フィードの本文を組み立てる。現行サイト（pages/lib/rss.ts）と同じ出力にする
+// RSS フィードの本文を組み立てる。各ブロックの HTML への変換と、フィード全体（channel / item）の組み立て
 
 // XML のテキストノード・属性値として安全な形にする
 export function escapeXml(text: string): string {
@@ -123,4 +123,67 @@ function convertImageToHtml(src: string, title?: string, caption?: string): stri
 
 function convertLinkToHtml(href: string, label: string): string {
   return `<p><a href="${escapeXml(href)}">${escapeXml(label)}</a></p>`
+}
+
+// --- フィード全体の組み立て ---
+
+// フィードに載せる記事。一覧の取得結果のうち、組み立てに使う項目だけ
+export type FeedArticle = Pick<contentsAPIResult, 'id' | 'title' | 'publishedAt' | 'revisedAt' | 'parsed_content'>
+
+// 載せる記事の件数
+export const FEED_ITEM_COUNT = 20
+// description に含める本文のブロック数（記事の冒頭だけを載せる）
+const DESCRIPTION_BLOCK_COUNT = 10
+
+// RSS 2.0 の pubDate / lastBuildDate は RFC 822 形式。HTTP の Last-Modified も同じ形式
+export function formatRssDate(date: Date): string {
+  return date.toUTCString()
+}
+
+// 日時の文字列のうち最も新しいもの
+function latestDate(dates: string[]): Date {
+  return new Date(Math.max(...dates.map((date) => new Date(date).getTime())))
+}
+
+// RSS フィード（RSS 2.0）の本文と、内容が最後に変わった時刻（Last-Modified に使う）。
+// 本文には描画した時刻を入れず、記事の時刻だけから組み立てる。エッジのキャッシュは Worker のバージョン単位で
+// デプロイのたびに空になるので、描画した時刻を入れるとデプロイだけで本文が変わり、リーダーがフィードの更新と判定する（#1420）。
+// now は記事が 1 件も無いときの時刻にだけ使う
+export function buildRssFeed(host: string, articles: FeedArticle[], now: Date): { body: string; lastModified: Date } {
+  // channel の pubDate は最新の記事の公開時刻。lastBuildDate は載せた記事の公開・更新のうち最新の時刻（記事を直すと進む）
+  const latestPublished = articles.length > 0 ? latestDate(articles.map((article) => article.publishedAt)) : now
+  const lastModified =
+    articles.length > 0 ? latestDate(articles.flatMap((article) => [article.publishedAt, article.revisedAt])) : now
+
+  const items = articles.map((article) => {
+    const link = `${host}/blog/${article.id}`
+    const description = convertParsedContentToHtml(article.parsed_content, DESCRIPTION_BLOCK_COUNT)
+    // guid は記事の URL。リーダーは guid で同じ記事かを判定するので、description の HTML が変わっても別の記事にはならない
+    return `
+      <item>
+        <title>${escapeXml(article.title)}</title>
+        <link>${escapeXml(link)}</link>
+        <guid isPermaLink="true">${escapeXml(link)}</guid>
+        <description><![CDATA[${escapeCdata(description)}]]></description>
+        <pubDate>${formatRssDate(new Date(article.publishedAt))}</pubDate>
+      </item>`
+  })
+
+  const body = `<?xml version="1.0" encoding="UTF-8"?>
+  <rss version="2.0" xml:lang="ja">
+    <channel>
+      <language>ja</language>
+      <title>Maretol Base</title>
+      <link>${escapeXml(host)}</link>
+      <description>maretolの個人サイトです</description>
+      <lastBuildDate>${formatRssDate(lastModified)}</lastBuildDate>
+      <copyright>© ${latestPublished.getFullYear()} Maretol</copyright>
+      <generator>Maretol Base</generator>
+      <pubDate>${formatRssDate(latestPublished)}</pubDate>
+      <ttl>60</ttl>
+      ${items.join('')}
+    </channel>
+  </rss>`
+
+  return { body, lastModified }
 }
