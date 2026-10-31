@@ -7,7 +7,8 @@ compatibility_date = "2026-10-01"
 compatibility_flags = [ "nodejs_compat", "global_fetch_strictly_public" ]
 
 # 本番は www.maretol.xyz の custom domain で配信する（M6 で v3 から付け替え。付け替えはダッシュボードで行い、この設定はそれに追従させた。astro_design.md 7 章）。
-# 切替前の確認に使っていた workers.dev は閉じる（staging は workers.dev のまま）
+# 切替前の確認に使っていた workers.dev は閉じる（staging は workers.dev のまま）。
+# routes は環境に継承されるので、env.staging 側で必ず routes = [] と上書きする（#1443）
 routes = [
     { pattern = "www.maretol.xyz", custom_domain = true }
 ]
@@ -57,6 +58,9 @@ ENV = "PRD"
 
 [env.staging]
 name = "maretol-base-v4-stg"
+# top-level の routes（www.maretol.xyz の custom domain）を継承させない。
+# 空にしないと staging のデプロイのたびに CI の wrangler が本番のドメインを確認なしに stg へ付け替える（#1443）
+routes = []
 workers_dev = true
 services = [
     { binding = "CMS_RPC", service = "cms-data-fetcher-stg" },
