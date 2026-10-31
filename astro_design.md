@@ -326,7 +326,7 @@ head（OGP・canonical・noindex・favicon）は `src/layouts/BaseLayout.astro` 
 - `astro check` は TypeScript 7 に未対応のため、このワークスペースだけ TypeScript 6 を使う
 - ローカル開発は `npm run dev:cms` と `npm run dev:ogp` を起動した状態で `npm run dev:astro`。Service Binding はローカルの fetcher につながる。R2 と Images binding は `remote = true` で実物を読む（cms-data-fetcher の D1 と同じ扱い）
 - Workers Cache はローカルでは働かない。キャッシュとパージの確認は staging で行う
-- デプロイ: staging は main 宛て PR（`deploy_stg.yaml`）で `maretol-base-v4-stg` へ、本番は main への push（`deploy_prd.yaml`）で `maretol-base-v4` へ出す。本番の Worker は `www.maretol.xyz` の custom domain で配信する（M6 で切替済み。7 章）。workers.dev は staging だけ
+- デプロイ: staging は main 宛て PR（`deploy_stg.yaml`）で `maretol-base-v4-stg` へ、本番は main への push（`deploy_prd.yaml`）で `maretol-base-v4` へ出す。本番の Worker は `www.maretol.xyz` の custom domain で配信する（M6 で切替済み。7 章）。workers.dev は staging だけ。wrangler.toml の `routes` は環境に継承されるので、`[env.staging]` には `routes = []` を置いて本番の custom domain を継承させない（無いと staging のデプロイのたびに CI の wrangler が www を stg へ付け替える。#1443）
 - e2e（`e2e/`、Playwright）は main 宛て PR の staging デプロイ後（`deploy_stg.yaml` の e2e ジョブ）に `maretol-base-v4-stg` に対して走る。development への push では走らせない
 
 ## 6. 限定公開記事
