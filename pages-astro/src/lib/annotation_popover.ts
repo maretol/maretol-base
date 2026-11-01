@@ -14,6 +14,8 @@ const LONG_PRESS_MS = 500
 const LONG_PRESS_MOVE_LIMIT = 10
 // ホバーが外れてから閉じるまでの猶予（ミリ秒）。ポインタを popover の上へ動かせるようにする（WCAG 1.4.13）
 const HOVER_LEAVE_DELAY_MS = 150
+// 長押しで開いたあと、指を離してから click の抑止を解くまでの時間（ミリ秒）。click は pointerup の直後に来る
+const SUPPRESS_CLICK_MS = 500
 // マーカーと popover の間隔（px）
 const GAP = 4
 // popover と画面の端の間隔（px）
@@ -52,11 +54,15 @@ function popoverOf(link: HTMLAnchorElement): HTMLElement | null {
   return link.parentElement?.querySelector<HTMLElement>('[popover]') ?? null
 }
 
+function linkOfPopover(popover: HTMLElement): HTMLAnchorElement | null {
+  return popover.parentElement?.querySelector('a') ?? null
+}
+
 // 開いている popover。Esc や外側のタップでブラウザが閉じることもあるので、使うときは :popover-open を確かめる
 let current: HTMLElement | null = null
 
 function place(popover: HTMLElement): void {
-  const link = popover.parentElement?.querySelector('a')
+  const link = linkOfPopover(popover)
   if (!link) {
     return
   }
@@ -133,7 +139,14 @@ export function setupAnnotationPopover(): void {
       return
     }
     window.clearTimeout(hideTimer)
-    hideTimer = window.setTimeout(hide, HOVER_LEAVE_DELAY_MS)
+    const target = current
+    hideTimer = window.setTimeout(() => {
+      // 猶予の間に別の popover が開いていれば触らない。キーボードのフォーカスで開いているものはフォーカスが外れるまで残す
+      if (current !== target || (target && linkOfPopover(target)?.matches(':focus-visible'))) {
+        return
+      }
+      hide()
+    }, HOVER_LEAVE_DELAY_MS)
   })
 
   // キーボードのフォーカス。マウスのクリックや脚注の ↩ で戻ったときのフォーカス（:focus-visible にならない）では開かない
@@ -151,9 +164,15 @@ export function setupAnnotationPopover(): void {
 
   // タッチの長押し
   let pressed: { link: HTMLAnchorElement; x: number; y: number; timer: number } | null = null
-  // 長押しで開いたあとに来る click を 1 回だけ止めて、脚注へ飛ばないようにする。
-  // click が来ない端末で残らないよう、次の pointerdown で必ず戻す
-  let suppressClick = false
+  // 長押しで開いたあとに来る、そのリンクへの click を 1 回だけ止めて、脚注へ飛ばないようにする。
+  // click が来ない端末で残らないよう、次の pointerdown で戻し、指を離してから SUPPRESS_CLICK_MS 経っても戻す
+  // （残るとキーボードの Enter を飲み込む）
+  let suppressClickFor: HTMLAnchorElement | null = null
+  let suppressClearTimer: number | undefined
+  const clearSuppress = () => {
+    window.clearTimeout(suppressClearTimer)
+    suppressClickFor = null
+  }
   const cancelPress = () => {
     if (!pressed) {
       return
@@ -167,11 +186,18 @@ export function setupAnnotationPopover(): void {
     }
     const { link } = pressed
     cancelPress()
-    suppressClick = true
+    suppressClickFor = link
     show(link)
   }
+  const releasePress = () => {
+    cancelPress()
+    if (suppressClickFor) {
+      window.clearTimeout(suppressClearTimer)
+      suppressClearTimer = window.setTimeout(clearSuppress, SUPPRESS_CLICK_MS)
+    }
+  }
   document.addEventListener('pointerdown', (e) => {
-    suppressClick = false
+    clearSuppress()
     cancelPress()
     // マーカー（リンクと popover）の外側を押したら閉じる
     if (current && !current.parentElement?.contains(e.target instanceof Node ? e.target : null)) {
@@ -188,8 +214,8 @@ export function setupAnnotationPopover(): void {
       cancelPress()
     }
   })
-  document.addEventListener('pointerup', cancelPress)
-  document.addEventListener('pointercancel', cancelPress)
+  document.addEventListener('pointerup', releasePress)
+  document.addEventListener('pointercancel', releasePress)
   // Android はリンクの長押しでコンテキストメニューを出す。長押しの途中なら代わりに popover を開く
   document.addEventListener('contextmenu', (e) => {
     if (!pressed || linkOf(e.target) !== pressed.link) {
@@ -200,11 +226,12 @@ export function setupAnnotationPopover(): void {
   })
 
   document.addEventListener('click', (e) => {
-    if (!linkOf(e.target)) {
+    const link = linkOf(e.target)
+    if (!link) {
       return
     }
-    if (suppressClick) {
-      suppressClick = false
+    if (link === suppressClickFor) {
+      clearSuppress()
       e.preventDefault()
       return
     }

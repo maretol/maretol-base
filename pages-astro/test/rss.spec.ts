@@ -4,6 +4,7 @@ import {
   blogFeedItem,
   buildRssFeed,
   comicFeedItem,
+  convertParsedContentToHtml,
   formatRssDate,
   illustFeedItem,
   type FeedArticle,
@@ -130,5 +131,18 @@ describe('illustFeedItem', () => {
     )
     expect(item.publishedAt).toBe('2026-10-05T00:00:00.000Z')
     expect(item.revisedAt).toBe('2026-10-06T00:00:00.000Z')
+  })
+})
+
+describe('convertParsedContentToHtml', () => {
+  test('注釈のマーカーは [N] のリンクだけ残し、popover の注釈文は本文に混ぜない', () => {
+    const link = '<a href="#annotation-1" id="annotation-ref-1" aria-describedby="annotation-popover-1">[1]</a>'
+    const popover = '<span id="annotation-popover-1" popover="manual" role="tooltip">注釈 &lt;b&gt; テキスト</span>'
+    const content = {
+      ...paragraph('本文[1]続き'),
+      inner_html: `本文<sup class="annotation-marker">${link}${popover}</sup>続き`,
+    }
+
+    expect(convertParsedContentToHtml([content])).toBe(`<p>本文<sup class="annotation-marker">${link}</sup>続き</p>`)
   })
 })
