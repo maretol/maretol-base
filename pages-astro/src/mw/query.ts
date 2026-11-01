@@ -28,6 +28,8 @@ const routes: Partial<Record<string, string[]>> = {
   '/secret': [],
   '/artifacts/post-for-nostter': [],
   '/rss/feed.rdf': [],
+  '/rss/comics.rdf': [],
+  '/rss/illust.rdf': [],
   '/sitemap.xml': [],
   '/400': [],
   '/404': [],

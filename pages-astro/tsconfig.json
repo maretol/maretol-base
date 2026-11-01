@@ -4,6 +4,7 @@
     ".astro/types.d.ts",
     "worker-configuration.d.ts",
     "src/**/*",
+    "test/**/*",
     "astro.config.ts",
     "tailwind.config.ts"
   ],

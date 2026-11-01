@@ -1,6 +1,7 @@
 ---
 import '@/styles/global.css'
 import AnalyticsScripts from '@/components/shell/AnalyticsScripts.astro'
+import { feedList, feedURL } from '@/lib/feeds'
 import { getDefaultOGPImageURL, getOGPImageURL } from '@/lib/image'
 import { getHostname, SITE_DESCRIPTION, SITE_NAME, TWITTER_ACCOUNT } from '@/lib/site'
 
@@ -40,6 +41,8 @@ const twitterCard = meta.twitterCard ?? 'summary'
     <meta name="description" content={description} />
     {meta.noindex && <meta name="robots" content="noindex, nofollow" />}
     {meta.canonical && <link rel="canonical" href={meta.canonical} />}
+    {/* RSS フィードの自動検出用（リーダーにサイトの URL を貼ると見つかる）。3 つとも全ページに出す */}
+    {feedList.map((feed) => <link rel="alternate" type="application/rss+xml" title={feed.title} href={feedURL(getHostname(), feed)} />)}
     <meta property="og:title" content={ogTitle} />
     <meta property="og:description" content={ogDescription} />
     <meta property="og:url" content={ogURL} />
