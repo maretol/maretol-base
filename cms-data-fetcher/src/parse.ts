@@ -60,11 +60,17 @@ const inlineMarkupHandlersWithContext: Record<string, InlineMarkupHandlerWithCon
   annotation: (baseText, annotationText, context) => {
     context.annotationCounter++
     const num = context.annotationCounter
-    // annotations には生のテキストを保持し、表示側（React）にエスケープを委ねる
+    // annotations には生のテキストを保持し、表示側（pages-astro の Annotations.astro）にエスケープを委ねる
     context.annotations.push({ number: num, text: annotationText })
     const safeBase = escapeHtml(baseText)
     const safeAnnotation = escapeHtml(annotationText)
-    return `${safeBase}<sup class="annotation-marker" title="${safeAnnotation}"><a href="#annotation-${num}" id="annotation-ref-${num}" aria-label="${safeAnnotation}">[${num}]</a></sup>`
+    // マーカーのリンクは脚注（Annotations.astro の annotation-N）へ飛ぶ。注釈文は隣の popover に置き、
+    // 表示側（pages-astro の lib/annotation_popover.ts）がホバー・フォーカス・タッチの長押しで開く。
+    // リンクは aria-describedby で popover を参照するので、閉じていてもスクリーンリーダーには
+    // リンク名 [N] に続く説明として注釈文が読まれる。
+    // popover は manual（Esc や外側のクリックで閉じるのもスクリプト側）。auto だと長押しの途中で開いた popover を
+    // 指を離したときに閉じてしまう
+    return `${safeBase}<sup class="annotation-marker"><a href="#annotation-${num}" id="annotation-ref-${num}" aria-describedby="annotation-popover-${num}">[${num}]</a><span id="annotation-popover-${num}" popover="manual" role="tooltip">${safeAnnotation}</span></sup>`
   },
 }
 

@@ -3,6 +3,7 @@ import { Drawer } from 'vaul'
 import { LoaderCircleIcon } from 'lucide-react'
 import { getIllustIDFromPath, ILLUST_LIST_PATH, ILLUST_LIST_TITLE } from '@/lib/illust'
 import { setupShareCopy } from '@/lib/share_copy'
+import { setupAnnotationPopover } from '@/lib/annotation_popover'
 
 // イラストの drawer。一覧や記事の上に重ねて表示し、URL も詳細の URL（/illust/detail/{id}）に変える（astro_design.md 決定 13）。
 // - 詳細へのリンクのクリックを横取りし、pushState で URL を変えて開く。中身は詳細ページを取得し、
@@ -205,6 +206,8 @@ function subscribeStore(onChange: () => void, initialID: string | null): () => v
   window.addEventListener('pageshow', onPageShow)
   // 中身にあるコピーのボタンを動かす（components/article/ShareSection.astro）
   setupShareCopy()
+  // 中身にある注釈のマーカーの popover を動かす（components/article/Annotations.astro）
+  setupAnnotationPopover()
   return () => {
     listeners.delete(listener)
     document.removeEventListener('click', onClick)

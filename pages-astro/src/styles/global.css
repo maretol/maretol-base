@@ -180,6 +180,34 @@ code {
   }
 }
 
+/* 注釈のマーカー（cms-data-fetcher の parse.ts が出す sup.annotation-marker）。
+   popover はホバー・フォーカス・タッチの長押しで lib/annotation_popover.ts が開き、位置も同スクリプトが top/left に入れる */
+.annotation-marker {
+  a {
+    /* preflight の sup { line-height: 0 } を継ぐと inline-block のリンクが高さ 0 の箱になり、
+       popover の位置（リンクの矩形が基準）とタップの当たりが取れないので、文字の高さの箱にする */
+    line-height: 1;
+    /* タッチの長押しで popover を開くので、リンクのプレビュー（iOS）と文字の選択を出さない */
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  [popover] {
+    /* popover 未対応のブラウザで注釈文が本文に混ざらないよう、開いているときだけ表示する */
+    display: none;
+    &:popover-open {
+      display: block;
+    }
+    /* UA の inset: 0 と margin: auto（画面の中央）を外し、スクリプトが入れる top/left に置く */
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    max-width: min(20rem, calc(100vw - 1rem));
+    /* 長い注釈でも画面に収め、残りは popover の中でスクロールさせる（overflow: auto は UA の既定） */
+    max-height: calc(100dvh - 1rem);
+    @apply rounded-md border bg-popover p-2 text-left text-sm text-popover-foreground shadow-md;
+  }
+}
+
 .content-sample,
 .content {
   p[class='code-filename'] {
