@@ -1,6 +1,12 @@
-import type { ParsedContent, contentsAPIResult } from 'api-types'
+import type { ParsedContent, atelierResult, bandeDessineeResult, contentsAPIResult } from 'api-types'
+import { cachePage } from '@/lib/cache'
+import { comicPath, getComicFirstPageURL } from '@/lib/comic'
+import { illustDetailPath } from '@/lib/illust'
+import { getFeedImageURL } from '@/lib/image'
 
-// RSS フィードの本文を組み立てる。各ブロックの HTML への変換と、フィード全体（channel / item）の組み立て
+// RSS フィードの組み立て。各ブロックの HTML への変換、フィード全体（channel / item）の組み立て、レスポンスのヘッダ。
+// フィードはブログ（pages/rss/feed.rdf.ts）・漫画（comics.rdf.ts）・イラスト（illust.rdf.ts）の 3 つで、
+// それぞれのページが channel と item を決め、buildRssFeed() と rssResponse() を共用する
 
 // XML のテキストノード・属性値として安全な形にする
 export function escapeXml(text: string): string {
@@ -127,12 +133,16 @@ function convertLinkToHtml(href: string, label: string): string {
 
 // --- フィード全体の組み立て ---
 
-// フィードに載せる記事。一覧の取得結果のうち、組み立てに使う項目だけ
-export type FeedArticle = Pick<contentsAPIResult, 'id' | 'title' | 'publishedAt' | 'revisedAt' | 'parsed_content'>
+// フィードの channel。題名・一覧ページの URL・説明。フィードごとのページが決める
+export type FeedChannel = { title: string; link: string; description: string }
 
-// 載せる記事の件数
+// フィードに載せる 1 件。description は HTML。
+// revisedAt は内容を直した時刻で、channel の lastBuildDate と Last-Modified にだけ使う（item の pubDate は publishedAt）
+export type FeedItem = { title: string; link: string; description: string; publishedAt: string; revisedAt: string }
+
+// 載せる件数
 export const FEED_ITEM_COUNT = 20
-// description に含める本文のブロック数（記事の冒頭だけを載せる）
+// ブログの description に含める本文のブロック数（記事の冒頭だけを載せる）
 const DESCRIPTION_BLOCK_COUNT = 10
 
 // RSS 2.0 の pubDate / lastBuildDate は RFC 822 形式。HTTP の Last-Modified も同じ形式
@@ -145,27 +155,26 @@ function latestDate(dates: string[]): Date {
   return new Date(Math.max(...dates.map((date) => new Date(date).getTime())))
 }
 
-// RSS フィード（RSS 2.0）の本文と、内容が最後に変わった時刻（Last-Modified に使う）。
-// 本文には描画した時刻を入れず、記事の時刻だけから組み立てる。エッジのキャッシュは Worker のバージョン単位で
-// デプロイのたびに空になるので、描画した時刻を入れるとデプロイだけで本文が変わり、リーダーがフィードの更新と判定する（#1420）。
-// now は記事が 1 件も無いときの時刻にだけ使う
-export function buildRssFeed(host: string, articles: FeedArticle[], now: Date): { body: string; lastModified: Date } {
-  // channel の pubDate は最新の記事の公開時刻。lastBuildDate は載せた記事の公開・更新のうち最新の時刻（記事を直すと進む）
-  const latestPublished = articles.length > 0 ? latestDate(articles.map((article) => article.publishedAt)) : now
-  const lastModified =
-    articles.length > 0 ? latestDate(articles.flatMap((article) => [article.publishedAt, article.revisedAt])) : now
+export type RssFeed = { body: string; lastModified: Date }
 
-  const items = articles.map((article) => {
-    const link = `${host}/blog/${article.id}`
-    const description = convertParsedContentToHtml(article.parsed_content, DESCRIPTION_BLOCK_COUNT)
-    // guid は記事の URL。リーダーは guid で同じ記事かを判定するので、description の HTML が変わっても別の記事にはならない
+// RSS フィード（RSS 2.0）の本文と、内容が最後に変わった時刻（Last-Modified に使う）。
+// 本文には描画した時刻を入れず、載せる内容の時刻だけから組み立てる。エッジのキャッシュは Worker のバージョン単位で
+// デプロイのたびに空になるので、描画した時刻を入れるとデプロイだけで本文が変わり、リーダーがフィードの更新と判定する（#1420）。
+// now は載せるものが 1 件も無いときの時刻にだけ使う
+export function buildRssFeed(channel: FeedChannel, items: FeedItem[], now: Date): RssFeed {
+  // channel の pubDate は最新の公開時刻。lastBuildDate は載せたものの公開・更新のうち最新の時刻（内容を直すと進む）
+  const latestPublished = items.length > 0 ? latestDate(items.map((item) => item.publishedAt)) : now
+  const lastModified = items.length > 0 ? latestDate(items.flatMap((item) => [item.publishedAt, item.revisedAt])) : now
+
+  const itemElements = items.map((item) => {
+    // guid はページの URL。リーダーは guid で同じものかを判定するので、description の HTML が変わっても別の item にはならない
     return `
       <item>
-        <title>${escapeXml(article.title)}</title>
-        <link>${escapeXml(link)}</link>
-        <guid isPermaLink="true">${escapeXml(link)}</guid>
-        <description><![CDATA[${escapeCdata(description)}]]></description>
-        <pubDate>${formatRssDate(new Date(article.publishedAt))}</pubDate>
+        <title>${escapeXml(item.title)}</title>
+        <link>${escapeXml(item.link)}</link>
+        <guid isPermaLink="true">${escapeXml(item.link)}</guid>
+        <description><![CDATA[${escapeCdata(item.description)}]]></description>
+        <pubDate>${formatRssDate(new Date(item.publishedAt))}</pubDate>
       </item>`
   })
 
@@ -173,17 +182,83 @@ export function buildRssFeed(host: string, articles: FeedArticle[], now: Date): 
   <rss version="2.0" xml:lang="ja">
     <channel>
       <language>ja</language>
-      <title>Maretol Base</title>
-      <link>${escapeXml(host)}</link>
-      <description>maretolの個人サイトです</description>
+      <title>${escapeXml(channel.title)}</title>
+      <link>${escapeXml(channel.link)}</link>
+      <description>${escapeXml(channel.description)}</description>
       <lastBuildDate>${formatRssDate(lastModified)}</lastBuildDate>
       <copyright>© ${latestPublished.getFullYear()} Maretol</copyright>
       <generator>Maretol Base</generator>
       <pubDate>${formatRssDate(latestPublished)}</pubDate>
       <ttl>60</ttl>
-      ${items.join('')}
+      ${itemElements.join('')}
     </channel>
   </rss>`
 
   return { body, lastModified }
+}
+
+// フィードのレスポンス。エッジにだけキャッシュさせ、フィードリーダーには保持させず毎回エッジに確かめさせる（ほかのページと同じ）。
+// tags は載せた内容の保存でパージされるタグ
+export function rssResponse(feed: RssFeed, tags: string[]): Response {
+  const headers = new Headers({
+    'Content-Type': 'application/rss+xml; charset=utf-8',
+    // 載せた内容の公開・更新のうち最新の時刻。リーダーの If-Modified-Since に対して、変わっていないことを伝えられるようにする
+    'Last-Modified': formatRssDate(feed.lastModified),
+  })
+  cachePage({ headers }, tags)
+  return new Response(feed.body, { headers })
+}
+
+// --- フィードごとの item ---
+
+// ブログの記事。一覧の取得結果のうち、組み立てに使う項目だけ
+export type FeedArticle = Pick<contentsAPIResult, 'id' | 'title' | 'publishedAt' | 'revisedAt' | 'parsed_content'>
+
+// 記事は本文の冒頭を載せる
+export function blogFeedItem(host: string, article: FeedArticle): FeedItem {
+  return {
+    title: article.title,
+    link: `${host}/blog/${article.id}`,
+    description: convertParsedContentToHtml(article.parsed_content, DESCRIPTION_BLOCK_COUNT),
+    publishedAt: article.publishedAt,
+    revisedAt: article.revisedAt,
+  }
+}
+
+export type FeedComic = Pick<
+  bandeDessineeResult,
+  'id' | 'title_name' | 'publishedAt' | 'updatedAt' | 'contents_url' | 'filename' | 'first_page' | 'format'
+>
+
+// 漫画は先頭ページ（表紙ではなく 1 ページ目）の画像と、続きを読むためのページへのリンクを載せる。説明文は載せない。
+// 漫画の取得結果には revisedAt が無いので、更新時刻は updatedAt（一覧の「最終更新」と同じ）
+export function comicFeedItem(host: string, comic: FeedComic): FeedItem {
+  const link = `${host}${comicPath(comic.id)}`
+  return {
+    title: comic.title_name,
+    link,
+    description: imageWithLink(getComicFirstPageURL(comic), comic.title_name, link, '続きを読む'),
+    publishedAt: comic.publishedAt,
+    revisedAt: comic.updatedAt,
+  }
+}
+
+export type FeedIllust = Pick<atelierResult, 'id' | 'title' | 'src' | 'publishedAt' | 'revisedAt'>
+
+// イラストは画像と、詳細ページへのリンクを載せる。説明文は載せない
+export function illustFeedItem(host: string, illust: FeedIllust): FeedItem {
+  const link = `${host}${illustDetailPath(illust.id)}`
+  return {
+    title: illust.title,
+    link,
+    description: imageWithLink(illust.src, illust.title, link, 'サイトで見る'),
+    publishedAt: illust.publishedAt,
+    revisedAt: illust.revisedAt,
+  }
+}
+
+// 画像 1 枚と、その下にページへのリンク。画像は原本ではなく幅を抑えた派生（リーダーは srcset を扱えないものがある）
+function imageWithLink(src: string, alt: string, href: string, label: string): string {
+  const image = `<figure><img src="${escapeXml(getFeedImageURL(src))}" alt="${escapeXml(alt)}"></figure>`
+  return `${image}\n${convertLinkToHtml(href, label)}`
 }

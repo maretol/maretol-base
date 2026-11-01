@@ -29,6 +29,12 @@ export function getNoImageURL(): string {
   return 'https://r2.maretol.xyz/assets/no_image.png'
 }
 
+// RSS フィードに載せる 1 枚の URL（漫画の先頭ページ・イラスト）。リーダーは srcset を扱えないものがあるので 1 枚にし、
+// 原本ではなく幅を抑えた派生にする。幅は WIDTHS の候補から選ぶ。形式はリーダー側の Accept に任せる（f=auto）
+export function getFeedImageURL(src: string): string {
+  return getTransformedImageURL(src, 'w=640,q=80,f=auto')
+}
+
 // 派生画像の幅の候補。任意の幅を作らず、この中から選ぶ（変換数を増やさないため）
 const WIDTHS = [32, 48, 64, 96, 128, 256, 384, 640, 750, 828, 1080, 1200, 1920, 2048, 3840]
 

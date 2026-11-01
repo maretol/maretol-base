@@ -1,11 +1,30 @@
 ---
-import { BookOpenIcon, ImageIcon, InfoIcon, MailIcon, NotebookTextIcon, RssIcon } from '@lucide/astro'
+import {
+  BookOpenIcon,
+  CheckIcon,
+  CopyIcon,
+  ImageIcon,
+  InfoIcon,
+  MailIcon,
+  NotebookTextIcon,
+  RssIcon,
+} from '@lucide/astro'
 import { buttonVariants } from '@/components/ui/button'
+import { feeds, feedURL } from '@/lib/feeds'
+import { getHostname } from '@/lib/site'
 import { cn } from '@/lib/utils'
 
 const iconClassName = 'w-4 h-4'
 const buttonClassName = cn(buttonVariants({ variant: 'outline' }), 'w-full gap-1 font-suse font-semibold')
 const subButtonClassName = cn(buttonVariants({ variant: 'outline' }), 'w-12')
+
+// RSS のメニューに出すフィード。アイコンは上の各ボタンと同じ
+const host = getHostname()
+const rssMenu = [
+  { feed: feeds.blog, Icon: NotebookTextIcon },
+  { feed: feeds.comics, Icon: BookOpenIcon },
+  { feed: feeds.illust, Icon: ImageIcon },
+]
 ---
 
 <div class="grid grid-cols-2 sm:grid-cols-5 gap-1">
@@ -28,8 +47,70 @@ const subButtonClassName = cn(buttonVariants({ variant: 'outline' }), 'w-12')
     <a href="/contact" class={subButtonClassName} aria-label="Contact">
       <MailIcon class={iconClassName} />
     </a>
-    <a href="/rss/feed.rdf" class={subButtonClassName} aria-label="RSS">
-      <RssIcon class={iconClassName} />
-    </a>
+    {
+      /* RSS はフィードが 3 つあるので、ボタンでメニューを開く。details なので JS 無しでも開閉でき、
+         外側のクリックと Esc で閉じることだけを下の script が行う。各行はフィードへのリンクと、URL をコピーするボタン */
+    }
+    <details class="relative" data-rss-menu>
+      <summary
+        class={cn(subButtonClassName, 'list-none cursor-pointer [&::-webkit-details-marker]:hidden')}
+        aria-label="RSS フィード"
+        title="RSS フィード"
+      >
+        <RssIcon class={iconClassName} />
+      </summary>
+      <div class="absolute right-0 z-20 mt-1 w-72 rounded-md border border-input bg-background p-1 shadow-md">
+        {
+          rssMenu.map(({ feed, Icon }) => (
+            <div class="flex items-center gap-1">
+              <a
+                href={feed.path}
+                class="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-2 text-sm hover:bg-accent hover:text-accent-foreground"
+              >
+                <Icon class={cn(iconClassName, 'shrink-0')} />
+                <span class="font-suse font-semibold">{feed.label}</span>
+                <span class="truncate text-xs text-gray-500">{feed.path}</span>
+              </a>
+              <button
+                type="button"
+                class={cn(buttonVariants({ variant: 'ghost', size: 'icon' }), 'group h-8 w-8 shrink-0 cursor-pointer')}
+                data-share-copy
+                data-share-text={feedURL(host, feed)}
+                aria-label={`${feed.label} のフィードの URL をコピー`}
+                title="URL をコピー"
+              >
+                <CopyIcon class={cn(iconClassName, 'group-data-copied:hidden')} />
+                <CheckIcon class={cn(iconClassName, 'hidden group-data-copied:block')} />
+              </button>
+            </div>
+          ))
+        }
+      </div>
+    </details>
   </div>
 </div>
+
+<script>
+  import { setupShareCopy } from '@/lib/share_copy'
+
+  // メニューの URL コピーのボタン（data-share-copy）。記事ページの ShareSection と同じ仕組みで、登録は 1 回だけ行われる
+  setupShareCopy()
+
+  // 開いている RSS のメニューを、外側のクリックと Esc で閉じる
+  const menus = document.querySelectorAll<HTMLDetailsElement>('details[data-rss-menu]')
+  document.addEventListener('click', (e) => {
+    for (const menu of menus) {
+      if (menu.open && e.target instanceof Node && !menu.contains(e.target)) {
+        menu.open = false
+      }
+    }
+  })
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') {
+      return
+    }
+    for (const menu of menus) {
+      menu.open = false
+    }
+  })
+</script>

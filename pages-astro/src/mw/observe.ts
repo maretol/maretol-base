@@ -48,7 +48,7 @@ function detectBot(userAgent: string): string | null {
 // - ブラウザの先読み
 // 静的アセット（favicon や robots.txt など）は Worker の手前で配信されるので、その形のパスがここに来るのは存在しないものへのアクセス。それは残す
 const EXCLUDED_PREFIXES = ['/_server-islands/', '/_astro/', '/_image', '/cdn-cgi/']
-const EXCLUDED_PATHS = ['/sitemap.xml', '/rss/feed.rdf']
+const EXCLUDED_PATHS = ['/sitemap.xml', '/rss/feed.rdf', '/rss/comics.rdf', '/rss/illust.rdf']
 
 function isAccessLogExcluded(url: URL, headers: Headers): boolean {
   const pathname = url.pathname.toLowerCase()

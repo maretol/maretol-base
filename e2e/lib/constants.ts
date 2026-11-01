@@ -12,7 +12,8 @@ export const MAIN_ROUTES = ['/', '/blog', '/illust', '/comics', '/about', '/cont
 export const NOT_FOUND_PATH = '/__e2e_nonexistent_path__'
 
 // フィード（RSS / sitemap）の検証対象パスと、本文に含まれるべきルート要素。
-export const RSS_FEED_PATH = '/rss/feed.rdf'
+// RSS はブログ・漫画・イラストの 3 つ。
+export const RSS_FEED_PATHS = ['/rss/feed.rdf', '/rss/comics.rdf', '/rss/illust.rdf'] as const
 export const RSS_ROOT_ELEMENT = '<rss'
 export const SITEMAP_PATH = '/sitemap.xml'
 export const SITEMAP_ROOT_ELEMENT = '<urlset'
