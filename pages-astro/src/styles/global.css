@@ -184,6 +184,9 @@ code {
    popover はホバー・フォーカス・タッチの長押しで lib/annotation_popover.ts が開き、位置も同スクリプトが top/left に入れる */
 .annotation-marker {
   a {
+    /* preflight の sup { line-height: 0 } を継ぐと inline-block のリンクが高さ 0 の箱になり、
+       popover の位置（リンクの矩形が基準）とタップの当たりが取れないので、文字の高さの箱にする */
+    line-height: 1;
     /* タッチの長押しで popover を開くので、リンクのプレビュー（iOS）と文字の選択を出さない */
     -webkit-touch-callout: none;
     user-select: none;
