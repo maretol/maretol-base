@@ -378,12 +378,28 @@ describe('annotation インラインマークアップのテスト', () => {
   it('annotation パラメータで上付き番号マーカーに変換される', () => {
     const html = '<p>テキスト<span class="inline-markup">@@annotation::注釈テキスト</span></p>'
     const result = parse(html)
-    expect(result.contents_array[0].inner_html).toContain('annotation-marker')
-    expect(result.contents_array[0].inner_html).toContain('[1]')
-    expect(result.contents_array[0].inner_html).toContain('href="#annotation-1"')
-    expect(result.contents_array[0].inner_html).toContain('id="annotation-ref-1"')
+    const innerHtml = result.contents_array[0].inner_html
+    expect(innerHtml).toContain('annotation-marker')
+    expect(innerHtml).toContain('[1]')
+    // マーカーのリンクは脚注へ飛び、注釈文は隣の popover に置く（リンクから aria-describedby で参照）
+    expect(innerHtml).toContain(
+      '<a href="#annotation-1" id="annotation-ref-1" aria-describedby="annotation-popover-1">[1]</a>'
+    )
+    expect(innerHtml).toContain('<span id="annotation-popover-1" popover="manual" role="tooltip">注釈テキスト</span>')
+    // 注釈文はリンク名を置き換えず、title の二重表示もしない
+    expect(innerHtml).not.toContain('aria-label')
+    expect(innerHtml).not.toContain('title=')
     expect(result.annotations).toHaveLength(1)
     expect(result.annotations[0]).toEqual({ number: 1, text: '注釈テキスト' })
+  })
+
+  it('注釈文の HTML 特殊文字は popover の中でエスケープされ、annotations には生のまま入る', () => {
+    const html = '<p><span class="inline-markup">@@annotation::a &lt;b&gt; &amp; c</span></p>'
+    const result = parse(html)
+    const innerHtml = result.contents_array[0].inner_html
+    expect(innerHtml).toContain('role="tooltip">a &lt;b&gt; &amp; c</span>')
+    expect(innerHtml).not.toContain('<b>')
+    expect(result.annotations[0]).toEqual({ number: 1, text: 'a <b> & c' })
   })
 
   it('複数の annotation が出現順にナンバリングされる', () => {
