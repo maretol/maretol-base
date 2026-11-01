@@ -34,9 +34,16 @@ export function getFirstPage(filename: string, firstPageNumber: number, format: 
   return getPageFileName(filename, firstPageNumber, format)
 }
 
+// 漫画の 1 ページ目の URL。RSS フィード（lib/rss.ts）は表紙ではなく先頭ページを見せるのでこちらを使う
+export function getComicFirstPageURL(
+  comic: Pick<bandeDessineeResult, 'contents_url' | 'filename' | 'first_page' | 'format'>,
+): string {
+  return `${getComicBaseURL(comic.contents_url)}/${getFirstPage(comic.filename, comic.first_page, comic.format[0])}`
+}
+
 // 漫画の表紙の URL。表紙が無ければ 1 ページ目を使う
 export function getComicCoverURL(comic: bandeDessineeResult): string {
-  return `${getComicBaseURL(comic.contents_url)}/${comic.cover || getFirstPage(comic.filename, comic.first_page, comic.format[0])}`
+  return comic.cover ? `${getComicBaseURL(comic.contents_url)}/${comic.cover}` : getComicFirstPageURL(comic)
 }
 
 // 一覧の先頭の要素からシリーズ名を取る。シリーズで絞り込んだ一覧の見出しと title で使う

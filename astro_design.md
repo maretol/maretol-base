@@ -86,10 +86,10 @@ admin-pages ──▶ D1 に保存
 | `post:{id}` | 記事詳細 |
 | `tag:{tag_id}` | タグ一覧（現行と同じく、タグは 1 つだけ指定できる） |
 | `info` | about / contact / secret / `artifacts/post-for-nostter`（info の内容を表示するページ）。制作物カードを含む記事詳細 |
-| `list:comics` | 漫画の一覧と、漫画詳細（前後の巻へのリンクが他の巻の公開状態で変わるため、シリーズの有無にかかわらず持つ）。トップと、サイドバーを持つページ。漫画カードを含むページ |
+| `list:comics` | 漫画の一覧と、漫画詳細（前後の巻へのリンクが他の巻の公開状態で変わるため、シリーズの有無にかかわらず持つ）。トップと、サイドバーを持つページ。漫画カードを含むページ。漫画の RSS（`/rss/comics.rdf`） |
 | `comic:{id}` | 漫画詳細 |
 | `series:{id}` | シリーズ作品の漫画詳細と、シリーズで絞り込んだ漫画の一覧（`/comics?series={id}`）。パージには使っていない |
-| `list:illust` | イラストの一覧と、イラスト詳細（背景に一覧の 1 ページ目を出すため）。トップと、サイドバーを持つページ。イラストカードを含むページ |
+| `list:illust` | イラストの一覧と、イラスト詳細（背景に一覧の 1 ページ目を出すため）。トップと、サイドバーを持つページ。イラストカードを含むページ。イラストの RSS（`/rss/illust.rdf`） |
 | `illust:{id}` | イラスト詳細 |
 
 サイドバーを持つページ（ブログ一覧・タグ一覧・記事詳細など、`BlogLayout` を使うページ）は、サイドバーが最新の記事・漫画・イラストとタグの一覧を出すので、`blog` / `list:blog` / `list:comics` / `list:illust` をまとめて持つ（`src/lib/cache.ts` の `latestListTags`）。ページは `cachePage()` に `{ sidebar: true }` を渡して付ける。付け忘れると古いサイドバーが残るので、サイドバーの描画時に確かめて、付いていなければ例外にする（`assertSidebarTagged()`）。漫画やイラストを保存すると、サイドバーを持つページもパージされる。トップページも同じ 4 つを持つ（3 種類の一覧を出すため）。404 と 500 のページはサイドバーを出さない（存在しない URL への連続アクセスで、サイドバーのための取得が増えないようにする）
@@ -204,7 +204,7 @@ pages-astro/
    │  ├─ comics/index.astro, comics/[id].astro
    │  ├─ illust/index.astro, illust/detail/[id].astro
    │  ├─ about.astro, contact.astro, secret.astro
-   │  ├─ rss/feed.rdf.ts, sitemap.xml.ts
+   │  ├─ rss/feed.rdf.ts, rss/comics.rdf.ts, rss/illust.rdf.ts, sitemap.xml.ts
    │  ├─ artifacts/post-for-nostter.astro
    │  ├─ 400.astro, 404.astro, 500.astro
    │  └─ （.well-known/nostr.json と robots.txt は public/ の静的ファイル）
@@ -218,7 +218,7 @@ pages-astro/
 packages/cache-tags/        # Cache-Tag の文字列と、保存操作・手動パージごとのパージ対象
 ```
 
-いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、限定公開記事の解錠（`blog/[article_id]/unlock.ts`）、固定ページ（`about.astro`、`contact.astro`、`secret.astro`、`artifacts/post-for-nostter.astro`）、フィード（`rss/feed.rdf.ts`、`sitemap.xml.ts`）、イラスト一覧（`illust/index.astro`）、イラスト詳細（`illust/detail/[id].astro`）、漫画一覧（`comics/index.astro`）、漫画詳細（`comics/[id].astro`）、`400.astro`、`404.astro`、`500.astro`。現行サイトのページはこれで全部そろった（M4）
+いま存在するのはトップ（`index.astro`）、ブログ一覧（`blog/index.astro`）、タグ一覧（`tag.astro`）、記事詳細（`blog/[article_id].astro` と画像モーダルの URL）、限定公開記事の解錠（`blog/[article_id]/unlock.ts`）、固定ページ（`about.astro`、`contact.astro`、`secret.astro`、`artifacts/post-for-nostter.astro`）、フィード（`rss/feed.rdf.ts`、`rss/comics.rdf.ts`、`rss/illust.rdf.ts`、`sitemap.xml.ts`）、イラスト一覧（`illust/index.astro`）、イラスト詳細（`illust/detail/[id].astro`）、漫画一覧（`comics/index.astro`）、漫画詳細（`comics/[id].astro`）、`400.astro`、`404.astro`、`500.astro`。現行サイトのページはこれで全部そろった（M4）
 
 ### Worker のエントリ（src/worker.ts）
 
@@ -242,7 +242,8 @@ Astro 7 の `src/fetch.ts`（Advanced Routing）は使わず、wrangler の `mai
 ### 固定ページとフィード
 
 - about / contact / secret / `artifacts/post-for-nostter` は、CMS の info をパスで探して表示する（`getInfoPage()`）。取得からキャッシュの指定までは 4 ページ共通で、`src/lib/info_page.ts` の `loadInfoPage()` にまとめている。該当する info が無ければ 404 にし、`info` のタグを付けて、公開されたときに一緒に消えるようにする。`artifacts/post-for-nostter` だけサイドバーを出す（現行と同じ）
-- RSS（`/rss/feed.rdf`）は、最新 20 件の記事の冒頭 10 ブロックを載せる。本文の組み立て（`src/lib/rss.ts`）は現行サイトと同じで、出力も一致する。エッジには `blog` / `list:blog` のタグで 30 日キャッシュし、記事の保存でパージする。フィードリーダーには保持させない（ほかのページと同じ `max-age=0, must-revalidate`。現行サイトは `max-age=3600` を返している）。記事の取得に失敗したときは 500 にする（空のフィードをキャッシュさせない）。本文には描画した時刻を入れない（`src/lib/rss.ts` の `buildRssFeed()`。デプロイでキャッシュが空になるたびに本文が変わり、リーダーがフィードの更新と判定していた #1420）。channel の `pubDate` は最新記事の公開時刻、`lastBuildDate` と `Last-Modified` ヘッダは載せた記事の公開・更新のうち最新の時刻にし、各 item には記事 URL の `<guid isPermaLink="true">` を付ける（description の HTML が変わるリリースでも、リーダーが別の記事と判定しないようにする）
+- ブログの RSS（`/rss/feed.rdf`）は、最新 20 件の記事の冒頭 10 ブロックを載せる。本文の組み立て（`src/lib/rss.ts`）は現行サイトと同じで、出力も一致する。エッジには `blog` / `list:blog` のタグで 30 日キャッシュし、記事の保存でパージする。フィードリーダーには保持させない（ほかのページと同じ `max-age=0, must-revalidate`。現行サイトは `max-age=3600` を返している）。記事の取得に失敗したときは 500 にする（空のフィードをキャッシュさせない）。本文には描画した時刻を入れない（`src/lib/rss.ts` の `buildRssFeed()`。デプロイでキャッシュが空になるたびに本文が変わり、リーダーがフィードの更新と判定していた #1420）。channel の `pubDate` は最新記事の公開時刻、`lastBuildDate` と `Last-Modified` ヘッダは載せた記事の公開・更新のうち最新の時刻にし、各 item には記事 URL の `<guid isPermaLink="true">` を付ける（description の HTML が変わるリリースでも、リーダーが別の記事と判定しないようにする）
+- 漫画・イラストの RSS（`/rss/comics.rdf`、`/rss/illust.rdf`）は、それぞれ最新 20 件を載せる。item の description には説明文を載せず、画像 1 枚（漫画は表紙ではなく先頭ページ、イラストはその画像。`/cdn-cgi/image/` の `w=640,q=80,f=auto` の派生で、リーダーは srcset を扱えないものがあるので 1 枚にする）と、ページへのリンクだけにする。channel と item の組み立て、`Last-Modified` とキャッシュのヘッダはブログと共通（`src/lib/rss.ts` の `buildRssFeed()` / `rssResponse()`。各フィードのページは channel と item を決めるだけ）。タグは `list:comics` / `list:illust` で、漫画・イラストの保存でパージされる。漫画の取得結果には `revisedAt` が無いので、更新時刻は `updatedAt`（一覧の「最終更新」と同じ）。ヘッダーの RSS ボタン（`src/components/shell/HeaderButtons.astro`）はブログのフィードだけを指しており、漫画・イラストのフィードへの導線は未対応
 - sitemap（`/sitemap.xml`）は、現行と同じく入口になる 7 ページだけを載せる。`lastmod` は描画した時刻で、記事の保存でパージされたときに新しくなる。漫画・イラスト・タグ・info の保存には追従させない（現行サイトの `lastmod` も内容の更新には追従していない。追従させるためにタグを足すと、内容と無関係なパージでも全ページの `lastmod` が変わる）
 - `robots.txt` と `/.well-known/nostr.json` は `public/` の静的ファイル。`nostr.json` の CORS のヘッダは `public/_headers` で付ける。`robots.txt` は、現行の `/_next/` と `/api/` の Disallow を外し、`/_server-islands/` だけを Disallow にする（CSS や JS のある `/_astro/` はクローラに見せる）
 
@@ -301,7 +302,7 @@ RPC メソッドの型は `src/env.d.ts` で付ける。`cms-data-fetcher/types.
   - Secrets Store（`AXIOM_ENDPOINT` / `AXIOM_APITOKEN`、`CLARITY_ID`）は `src/lib/cached_read.ts` で isolate ごとに 1 回だけ読む。読めなかったときは null を返し、60 秒は読み直さない（障害の間にすべての描画が読み取りを待たされないようにする）
   - 送信の失敗はページに影響させず、Workers Logs に残す
 - 送るイベントは 4 種類。`type` で区別する
-  - `access_log`（`observe.ts`）: 現行 `pages/middleware.ts` と同じ項目（method / host / path / search / referer / utm_* / is_bot / bot_name / user_agent / country / region / city / connecting_ip）に `status` と `route`（Astro のルート。`/blog/[article_id]` の形）を足したもの。bot 判定は現行のパターンをそのまま使う。地域情報は `request.cf` から読む。残さないのは、Astro の内部ルート（`/_server-islands/`、`/_astro/`、`/_image`）と `/cdn-cgi/`、機械向けのルート（`/rss/feed.rdf`、`/sitemap.xml`）、ブラウザの先読み（`Sec-Purpose` / `Purpose` に prefetch）。静的アセットは Worker の手前で配信されるので、その形のパスが Worker に来るのは存在しないものへのアクセスであり、残す。末尾のスラッシュの 301、クエリの正規化の 308、500 への差し替えも、そのステータスで残る
+  - `access_log`（`observe.ts`）: 現行 `pages/middleware.ts` と同じ項目（method / host / path / search / referer / utm_* / is_bot / bot_name / user_agent / country / region / city / connecting_ip）に `status` と `route`（Astro のルート。`/blog/[article_id]` の形）を足したもの。bot 判定は現行のパターンをそのまま使う。地域情報は `request.cf` から読む。残さないのは、Astro の内部ルート（`/_server-islands/`、`/_astro/`、`/_image`）と `/cdn-cgi/`、機械向けのルート（RSS の `/rss/feed.rdf` / `/rss/comics.rdf` / `/rss/illust.rdf`、`/sitemap.xml`）、ブラウザの先読み（`Sec-Purpose` / `Purpose` に prefetch）。静的アセットは Worker の手前で配信されるので、その形のパスが Worker に来るのは存在しないものへのアクセスであり、残す。末尾のスラッシュの 301、クエリの正規化の 308、500 への差し替えも、そのステータスで残る
   - `degraded_page`（`src/mw/cache.ts`）: 取得に失敗した部品を含むページ（4.1）。`reasons` に `locals.degraded` の内容。キャッシュしないページでも残す
   - `render_error`: 描画中の例外。`stage: 'page'` はページの frontmatter の例外で、Astro が catch して `500.astro` を描くときに渡す `error` prop から `500.astro` が記録する（Astro 自身も `console.error` にスタックを出す）。`stage: 'stream'` は本文の描画中の例外で、`src/mw/cache.ts` が検出して `/500` へ rewrite する。どちらも `error` と `stack`
   - `middleware_error`（`src/worker.ts` の `onError`）: ミドルウェアの例外。`error` と `stack`
