@@ -40,6 +40,17 @@ const voidElements = [
   'wbr',
 ]
 
+// 注釈のマーカー（cms-data-fetcher の parse.ts）は注釈文を隣の popover に持つが、フィードリーダーは popover を知らず
+// 注釈文を本文に混ぜて出すので、popover を除いて [N] のリンクだけ残す
+function stripAnnotationPopovers(html: string): string {
+  return html.replace(/<span id="annotation-popover-\d+"[^>]*>[^<]*<\/span>/g, '')
+}
+
+// ブロックの中身の HTML。inner_html が無いブロックはテキストをエスケープして使う
+function innerHtmlOf(content: ParsedContent): string {
+  return content.inner_html ? stripAnnotationPopovers(content.inner_html) : escapeXml(content.text)
+}
+
 // サイト側では p_option ごとに専用コンポーネント(リンクカード・埋め込み等)で描画しているが、
 // フィードリーダー向けには素の HTML に落とす。埋め込み系は元 URL へのリンクにする。
 // サイト上でも描画されないブロック(null)は数に入れず、表示されるブロックの先頭 limit 件を返す
@@ -61,7 +72,7 @@ function convertBlockToHtml(content: ParsedContent): string | null {
   if (voidElements.includes(tag)) {
     return `<${tag}>`
   }
-  return `<${tag}>${content.inner_html || escapeXml(content.text)}</${tag}>`
+  return `<${tag}>${innerHtmlOf(content)}</${tag}>`
 }
 
 // サイト上でしか描画できないコンテンツの代わりに置くプレースホルダー
@@ -75,7 +86,7 @@ function convertParagraphToHtml(content: ParsedContent): string | null {
 
   switch (pOption) {
     case 'normal':
-      return `<p>${content.inner_html || escapeXml(content.text)}</p>`
+      return `<p>${innerHtmlOf(content)}</p>`
     case 'image':
       return convertImageToHtml(content.text, subTexts.title, subTexts.caption)
     case 'photo':
@@ -114,7 +125,7 @@ function convertParagraphToHtml(content: ParsedContent): string | null {
       return null
     default:
       // 未知のコマンド(/xxx)はサイト側（blocks/Block.astro）と同じく通常段落として出す
-      return `<p>${content.inner_html || escapeXml(content.text)}</p>`
+      return `<p>${innerHtmlOf(content)}</p>`
   }
 }
 
