@@ -25,14 +25,18 @@ const LINK_SELECTOR = `${MARKER_SELECTOR} > a`
 type Rect = { top: number; bottom: number; left: number }
 type Size = { width: number; height: number }
 
-// popover を置く位置（画面に対する座標）。マーカーの左端に揃えて下に出し、下に収まらなければ上に出す。
+// popover を置く位置（画面に対する座標）。popover の左下をマーカーの左上に合わせて上に出し、上に収まらなければ下に出す。
+// 上に出すのは、マーカーに乗せたマウスポインタ（矢印は右下へ伸びる）や指で popover の先頭が隠れないようにするため。
 // 左右は画面の端から EDGE だけ内側に収める
 export function computePopoverPosition(anchor: Rect, popover: Size, viewport: Size): { top: number; left: number } {
   const left = Math.max(EDGE, Math.min(anchor.left, viewport.width - popover.width - EDGE))
-  const below = anchor.bottom + GAP
-  const fitsBelow = below + popover.height + EDGE <= viewport.height
-  const top = fitsBelow ? below : Math.max(EDGE, anchor.top - GAP - popover.height)
-  return { top, left }
+  const above = anchor.top - GAP - popover.height
+  if (above >= EDGE) {
+    return { top: above, left }
+  }
+  // 下にも収まらなければ画面の下端から EDGE だけ内側に寄せる（マーカーに重なっても画面の外には出さない）
+  const below = Math.min(anchor.bottom + GAP, Math.max(EDGE, viewport.height - EDGE - popover.height))
+  return { top: below, left }
 }
 
 function linkOf(target: EventTarget | null): HTMLAnchorElement | null {
