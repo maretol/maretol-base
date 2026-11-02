@@ -30,7 +30,7 @@
     "astro": "^7.4.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "hono": "^4.13.13",
+    "hono": "^4.13.14",
     "lucide-react": "^1.57.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
@@ -47,6 +47,6 @@
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^7.0.2",
     "vitest": "5.0.5",
-    "wrangler": "^4.151.0"
+    "wrangler": "^4.153.0"
   }
 }
